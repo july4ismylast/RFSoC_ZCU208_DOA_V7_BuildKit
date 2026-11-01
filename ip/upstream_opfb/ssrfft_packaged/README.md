@@ -1,0 +1,2 @@
+# SSR FFT
+The upstream OPFB uses a 16-way 4096-point SSR FFT packaged from a System Generator `.slx` model. This adapter reuses the already-packaged IP. To regenerate it, use the upstream MATLAB/System Generator model or replace it with the MATLAB DSP HDL Channelizer/FFT flow in `ip/matlab/channelizer_hdl`. Do not assume a Vivado-only recreation is equivalent to the original SysGen timing architecture.

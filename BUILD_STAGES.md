@@ -1,0 +1,158 @@
+# Restartable build stages
+
+```mermaid
+flowchart TD
+  A["00 Preflight"] --> B["02–05 Build selected IP"]
+  B --> C["06 Collect IP"]
+  C --> D["07 Copy verified ZCU208 base"]
+  D --> E["08 Integrate + 09 validate"]
+  E --> F["10 Synthesis"]
+  F --> G["11 Route + timing gate"]
+  G --> H["12 Bitstream + 13 XSA"]
+  H --> I["14 HIL vectors + 15 package"]
+```
+
+`make` defaults to `make help`. Every numbered target owns one result stamp in
+`build/.stamps` and one complete console log in `build/logs`. A stamp is written
+only after the command exits successfully. The individual targets deliberately
+do not depend on all earlier targets: running `make step10_synth` runs synthesis
+only and reports a clear error if its project prerequisite is absent.
+
+Cleaning steps 08–13 preserves the copied Vivado project and removes only that
+stage's checkpoint/reports/output. The integration Tcl replaces its generated
+`/doa_v7` hierarchy on rerun. Only cleaning step07 deliberately removes the
+isolated project copy.
+
+## Command patterns
+
+| Need | Command |
+|---|---|
+| Show stages | `make help` or `make list` |
+| Inspect checkpoints | `make status` |
+| Run one stage | `make step03_hls_spectrum` |
+| Preview without writes | `make -n step03_hls_spectrum` |
+| Force rerun | `make rebuild STEP=step03_hls_spectrum` |
+| Remove one stage product | `make clean-stage STEP=step03_hls_spectrum` |
+| Resume the production sequence | `make pipeline` |
+| Remove generated build products | `make clean-build` |
+
+## Stage reference
+
+### `step00_preflight`
+
+Checks `make`, Git, Vitis HLS, Vivado, MATLAB, the XCZU48DR part, base-project
+path, selected channelizer, and optionally the exact Vivado version. A real
+build should set `EXPECTED_VIVADO_VERSION` to the release that created
+`BASE_XPR`.
+
+### `step01_fetch_references`
+
+Fetches only the selected set from `config/upstream_repositories.tsv`. Clones
+are resumable, retries are bounded, and each checked-out commit is printed.
+
+```bash
+make step01_fetch_references FETCH_SET=native
+make rebuild STEP=step01_fetch_references FETCH_SET=opfb
+make step01_fetch_references FETCH_SET=RFSoC-MTS
+```
+
+### `step02_hls_covariance`
+
+Runs the exact-match C test, HLS synthesis, and IP Catalog export for the V7
+covariance core. The result is `build/ip_repo/doa_covariance_4ch_v4`.
+
+### `step03_hls_spectrum`
+
+Builds the updated AXI512-to-AXI256 four-lane power statistic. Its test verifies
+every lane and `TLAST`.
+
+### `step04_hls_candidate`
+
+Builds the free-running four-lane frame peak/average detector. It emits one
+candidate record per `TLAST`-delimited spectrum frame and exposes a Q8.8
+peak-to-average threshold. Full CFAR/persistence remains a later detector gate.
+
+### `step04_hls_beam`
+
+Builds an optional four-lane complex-weight diagnostic. This block is not in
+the DOA estimator and may be omitted from a resource-constrained deployment
+after integration Tcl is adjusted.
+
+### `step05_channelizer`
+
+Select exactly one implementation:
+
+| Flow | Selection | Use |
+|---|---|---|
+| MATLAB HDL Coder | `CHANNELIZER_FLOW=matlab_hdl` | Default R2024a fixed-point vector harness |
+| Model Composer/System Generator | `CHANNELIZER_FLOW=model_composer MODEL_COMPOSER_MODEL=...` | Existing tested model with IP Catalog token |
+| MazinLab OPFB | `CHANNELIZER_FLOW=opfb` | High-throughput reference requiring interface/tool-version review |
+| External IP | `CHANNELIZER_FLOW=external EXTERNAL_CHANNELIZER_IP=...` | Previously packaged compatible channelizer |
+
+### `step06_collect_ip`
+
+Validates every required `component.xml` and writes `ip_manifest.tsv`. It does
+not silently accept an incomplete export.
+
+### `step07_vivado_project`
+
+Opens `BASE_XPR`, verifies the part, creates an isolated copy under
+`build/vivado`, and installs the common IP repository. The source base project
+is not modified.
+
+### `step08_vivado_integrate`
+
+Creates the `doa_v7` hierarchy and invokes the only base-specific file,
+`config/zcu208_bd_map.tcl`. The default `mapped` mode fails until actual RFDC,
+clock/reset, AXI control, DMA/FIFO, and detector connections are named.
+
+### `step09_vivado_validate`
+
+Runs `validate_bd_design`, writes an IP-status report, exports the integrated BD
+Tcl, and captures critical warnings/errors. This is the fastest stage for
+debugging interface widths and missing clocks.
+
+### `step10_synth`
+
+Regenerates BD output products, resets only `synth_1`, runs synthesis, and
+writes post-synthesis utilization and timing reports.
+
+### `step11_impl`
+
+Resets only `impl_1`, runs through route, writes route/utilization/timing
+reports, and fails the stage if the worst setup slack is negative.
+
+### `step12_bitstream` and `step13_export_xsa`
+
+These consume the routed design. They do not rerun HLS, MATLAB, synthesis, or
+route. Outputs are written under `build/output`.
+
+### `step14_hil_vectors`
+
+Uses the V7 MATLAB model to generate AXI512 stimulus, calibration registers,
+and the exact 16-word covariance result. Set `V7_MATLAB_ROOT` to the latest V7
+directory.
+
+### `step15_package`
+
+Archives output products, reports, manifests, logs, and HIL vectors and writes
+a SHA-256 checksum. It does not hide missing earlier artifacts.
+
+## Failure recovery examples
+
+If spectrum HLS fails, edit only `ip/custom/spectrum_power4`, then run:
+
+```bash
+make rebuild STEP=step03_hls_spectrum
+```
+
+If block-design validation fails, edit only `config/zcu208_bd_map.tcl`, then:
+
+```bash
+make rebuild STEP=step08_vivado_integrate
+make rebuild STEP=step09_vivado_validate
+```
+
+If timing fails, inspect `build/output/post_route_timing.rpt`, modify the PL
+architecture or constraints, and rerun `step10_synth` only when RTL changed;
+otherwise rerun `step11_impl`.

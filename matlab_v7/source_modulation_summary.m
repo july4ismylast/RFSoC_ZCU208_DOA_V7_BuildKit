@@ -1,0 +1,33 @@
+function textValue=source_modulation_summary(source)
+%SOURCE_MODULATION_SUMMARY Format only the selected waveform's parameters.
+switch upper(char(source.ModulationType))
+    case {'BPSK','QPSK','8PSK','QAM16','QAM64'}
+        textValue=sprintf('symbol rate %.2f Msym/s',source.ChipRateHz/1e6);
+    case {'LFM','CHIRP'}
+        textValue=sprintf('sweep %.1f to %.1f MHz, T=%.2f us', ...
+            source.SweepStartHz/1e6,source.SweepStopHz/1e6, ...
+            source.SweepTimeSeconds*1e6);
+    case 'NLFM'
+        textValue=sprintf('sweep %.1f to %.1f MHz, T=%.2f us, shape %.2f', ...
+            source.SweepStartHz/1e6,source.SweepStopHz/1e6, ...
+            source.SweepTimeSeconds*1e6,source.NLFMShape);
+    case 'PM'
+        textValue=sprintf('tone %.2f MHz, phase index %.2f rad', ...
+            source.ModulationToneHz/1e6,source.PMIndexRad);
+    case 'FM'
+        textValue=sprintf('tone %.2f MHz, deviation %.2f MHz', ...
+            source.ModulationToneHz/1e6,source.FMDeviationHz/1e6);
+    case 'AM'
+        textValue=sprintf('tone %.2f MHz, depth %.2f', ...
+            source.ModulationToneHz/1e6,source.AMDepth);
+    case 'FSK'
+        textValue=sprintf('symbol rate %.2f Msym/s, deviation %.2f MHz', ...
+            source.ChipRateHz/1e6,source.FSKDeviationHz/1e6);
+    case {'PULSED_LFM','LFM_PULSE'}
+        textValue=sprintf('%.1f to %.1f MHz, PW %.2f us, PRF %.1f kHz', ...
+            source.SweepStartHz/1e6,source.SweepStopHz/1e6, ...
+            source.PulseWidthSeconds*1e6,source.PRFHz/1e3);
+    otherwise
+        textValue=sprintf('occupied bandwidth %.1f MHz',source.BandwidthHz/1e6);
+end
+end

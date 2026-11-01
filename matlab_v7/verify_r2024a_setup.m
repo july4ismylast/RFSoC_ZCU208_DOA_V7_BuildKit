@@ -1,0 +1,46 @@
+%% Fast R2024a constructor, path, and toolbox check.
+rehash path;
+run('sim3d_params.m');
+matches=which('SourceModel3D','-all');
+if ischar(matches), matches={matches}; end
+fprintf('SourceModel3D path resolution:\n');
+for index=1:numel(matches), fprintf('  %s\n',matches{index}); end
+if numel(matches)>1
+    warning('DOA3D:DuplicateClass','Multiple SourceModel3D files are on the MATLAB path.');
+end
+assert(exist('matlab.System','class')==8,'matlab.System is unavailable.');
+assert(exist('dsp.Channelizer','class')==8,'DSP System Toolbox is required.');
+
+objects={SourceModel3D('FrameLength',P.PFB.FrameLength), ...
+    RealisticReceiver4('FrameLength',P.PFB.FrameLength), ...
+    PFBFFTChannelizer4('NumBands',P.PFB.NumBands), ...
+    SpectrumEstimator4('NumBands',P.PFB.NumBands), ...
+    NoiseFloorEstimator1D('NumBins',P.PFB.NumBands), ...
+    CACFAR1D('NumBins',P.PFB.NumBands), ...
+    BinClusterEstimator('NumBins',P.PFB.NumBands), ...
+    CandidateSelector('MaxClusters',P.Cluster.MaxClusters), ...
+    SnapshotDecimator4('FrameLength',P.PFB.FrameLength), ...
+    DOAEstimator4Ch('Algorithm',P.DOA.Algorithm), ...
+    TruthErrorMonitor3D('SourcePosition',P.Source.Position), ...
+    SignalMetricsMonitor('SearchCenterHz',P.Source.CenterFreqHz), ...
+    PlatformDynamics3D('InitialPosition',P.Platform.Position0), ...
+    SyntheticFourChannelSource('FrameLength',P.PFB.FrameLength)}; %#ok<NASGU>
+fprintf('PASS: all custom System object constructors accept name-value pairs.\n');
+verify_doa_direction;
+verify_hybrid_doa_2x2;
+verify_rotating_frame_ekf;
+verify_full_attitude_geometry;
+verify_multifrequency_calibration;
+verify_simulink_vector_shapes;
+verify_source_waveforms;
+if exist('dsphdl.Channelizer','class')==8
+    fprintf('PASS: DSP HDL Toolbox found; RFSoC HDL builder is available.\n');
+else
+    fprintf('NOTE: DSP HDL Toolbox not found; behavioral simulation is still available.\n');
+end
+fprintf('Next commands:\n');
+fprintf('  MATLAB:   run_3d_doa_sim\n');
+fprintf('  Accuracy: run_accuracy_campaign(''acceptance'')\n');
+fprintf('  Realism:  run_realistic_accuracy_campaign(''acceptance'')\n');
+fprintf(['  Simulink: build_3d_doa_simulink; simulationOutput=' ...
+    'sim(''DOA_3D_Homing''); plot_simulink_results(simulationOutput)\n']);

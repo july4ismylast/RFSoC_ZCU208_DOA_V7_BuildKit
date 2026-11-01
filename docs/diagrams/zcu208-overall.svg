@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#07111f"/><stop offset="1" stop-color="#102a43"/></linearGradient>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#64d8ff"/></marker>
+    <style>
+      .title{font:700 40px sans-serif;fill:#fff}.sub{font:20px sans-serif;fill:#b9d8ea}
+      .h{font:700 22px sans-serif;fill:#fff}.t{font:17px sans-serif;fill:#d9edf7}
+      .box{stroke-width:3;rx:18;ry:18}.pl{fill:#123f5b;stroke:#49c6e5}.ps{fill:#43305f;stroke:#c79aff}.rf{fill:#4f3b16;stroke:#ffd166}.io{fill:#174b3a;stroke:#7ee2b8}
+      .line{stroke:#64d8ff;stroke-width:4;fill:none;marker-end:url(#arrow)}
+      .dash{stroke:#ffcf66;stroke-width:3;fill:none;stroke-dasharray:12 8;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1800" height="1000" fill="url(#bg)"/>
+  <text x="900" y="62" text-anchor="middle" class="title">ZCU208 DOA V7 Production Partition</text>
+  <text x="900" y="98" text-anchor="middle" class="sub">Coherent 2×2 receiver • continuous search • triggered 4096-snapshot covariance • R5/A53 estimator</text>
+
+  <rect x="60" y="170" width="260" height="170" class="box rf"/>
+  <text x="190" y="212" text-anchor="middle" class="h">RF Front End</text>
+  <text x="190" y="250" text-anchor="middle" class="t">2×2 antenna</text><text x="190" y="280" text-anchor="middle" class="t">matched paths + calibration</text><text x="190" y="310" text-anchor="middle" class="t">common clock / SYSREF</text>
+
+  <rect x="390" y="170" width="300" height="170" class="box pl"/>
+  <text x="540" y="212" text-anchor="middle" class="h">RFDC + MTS</text>
+  <text x="540" y="250" text-anchor="middle" class="t">fine DDC / decimation</text><text x="540" y="280" text-anchor="middle" class="t">four coherent complex channels</text><text x="540" y="310" text-anchor="middle" class="t">verified ZCU208 base project</text>
+
+  <rect x="770" y="150" width="310" height="210" class="box pl"/>
+  <text x="925" y="195" text-anchor="middle" class="h">Search Path (always on)</text>
+  <text x="925" y="235" text-anchor="middle" class="t">gearbox / vector channelizer</text><text x="925" y="265" text-anchor="middle" class="t">4-lane spectrum power</text><text x="925" y="295" text-anchor="middle" class="t">CFAR / peak / candidate</text><text x="925" y="325" text-anchor="middle" class="t">must never be backpressured</text>
+
+  <rect x="1160" y="150" width="300" height="210" class="box pl"/>
+  <text x="1310" y="195" text-anchor="middle" class="h">Triggered DOA Path</text>
+  <text x="1310" y="235" text-anchor="middle" class="t">independent capture FIFO</text><text x="1310" y="265" text-anchor="middle" class="t">4 samples/clock × 4 channels</text><text x="1310" y="295" text-anchor="middle" class="t">Q2.14 calibration</text><text x="1310" y="325" text-anchor="middle" class="t">six-baseline covariance</text>
+
+  <rect x="1510" y="170" width="230" height="170" class="box io"/>
+  <text x="1625" y="212" text-anchor="middle" class="h">AXI Transfer</text>
+  <text x="1625" y="250" text-anchor="middle" class="t">16 × int64 words</text><text x="1625" y="280" text-anchor="middle" class="t">TLAST on word 16</text><text x="1625" y="310" text-anchor="middle" class="t">DMA / FIFO interrupt</text>
+
+  <path d="M320 255 H390" class="line"/><path d="M690 255 H770" class="line"/><path d="M1080 255 H1160" class="dash"/><path d="M1460 255 H1510" class="line"/>
+
+  <rect x="220" y="540" width="310" height="230" class="box ps"/>
+  <text x="375" y="588" text-anchor="middle" class="h">R5 Real-Time Estimator</text>
+  <text x="375" y="630" text-anchor="middle" class="t">decouple covariance</text><text x="375" y="662" text-anchor="middle" class="t">calibrated six-baseline WPI</text><text x="375" y="694" text-anchor="middle" class="t">36-score local ML + 2 GN steps</text><text x="375" y="726" text-anchor="middle" class="t">unit-vector EKF</text>
+
+  <rect x="650" y="540" width="300" height="230" class="box ps"/>
+  <text x="800" y="588" text-anchor="middle" class="h">A53 Supervision</text>
+  <text x="800" y="630" text-anchor="middle" class="t">frequency-dependent calibration</text><text x="800" y="662" text-anchor="middle" class="t">health / logging / network</text><text x="800" y="694" text-anchor="middle" class="t">candidate scheduling</text><text x="800" y="726" text-anchor="middle" class="t">parameter updates</text>
+
+  <rect x="1070" y="540" width="300" height="230" class="box io"/>
+  <text x="1220" y="588" text-anchor="middle" class="h">Navigation / Output</text>
+  <text x="1220" y="630" text-anchor="middle" class="t">navigation-frame unit vector</text><text x="1220" y="662" text-anchor="middle" class="t">azimuth / elevation + quality</text><text x="1220" y="694" text-anchor="middle" class="t">pure pursuit / external autopilot</text><text x="1220" y="726" text-anchor="middle" class="t">timestamped telemetry</text>
+
+  <rect x="1450" y="540" width="290" height="230" class="box rf"/>
+  <text x="1595" y="588" text-anchor="middle" class="h">HIL / Calibration</text>
+  <text x="1595" y="630" text-anchor="middle" class="t">AXI512 vector replay</text><text x="1595" y="662" text-anchor="middle" class="t">exact 16-word covariance</text><text x="1595" y="694" text-anchor="middle" class="t">angle + timing acceptance</text><text x="1595" y="726" text-anchor="middle" class="t">thermal / cable sweep</text>
+
+  <path d="M1625 340 V465 H375 V540" class="line"/><path d="M530 655 H650" class="line"/><path d="M950 655 H1070" class="line"/><path d="M1370 655 H1450" class="dash"/>
+  <text x="900" y="890" text-anchor="middle" class="sub">Accuracy contract: 3-D Monte-Carlo RMSE ≤ 0.1° at SNR ≥ 15 dB, 4096 coherent snapshots; hardware must additionally pass MTS, calibration, timing, and HIL gates.</text>
+</svg>
+

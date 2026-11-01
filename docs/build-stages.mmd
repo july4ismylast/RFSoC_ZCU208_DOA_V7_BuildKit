@@ -1,0 +1,10 @@
+flowchart TD
+  A["00 Preflight"] --> B["02–05 Build selected IP"]
+  B --> C["06 Collect IP repository"]
+  C --> D["07 Copy verified ZCU208 base"]
+  D --> E["08 Integrate + 09 validate"]
+  E --> F["10 Synthesis"]
+  F --> G["11 Route + timing gate"]
+  G --> H["12 Bitstream + 13 XSA"]
+  H --> I["14 HIL vectors + 15 package"]
+
