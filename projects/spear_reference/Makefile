@@ -6,7 +6,7 @@ DESIGN ?= rfsoc_rfdc_v39_100M
 help:
 	@echo "SPEAR upstream is ZCU216/Vivado 2021.1. Build it as a reference; use a verified ZCU208 RFDC/MTS shell for the XCZU48DR port."
 fetch:
-	$(ROOT)/scripts/fetch_upstream.sh
+	$(ROOT)/scripts/fetch_upstream.sh SPEAR
 upstream-bd: fetch
 	$(MAKE) -C $(U) bd DESIGN=$(DESIGN)
 upstream-bit: fetch

@@ -1,8 +1,8 @@
-proc find_unique_ipdef {name} {
-    set defs [get_ipdefs -all -filter "NAME == $name"]
-    if {[llength $defs] == 0} { error "Packaged IP '$name' is not in the catalog" }
-    return [lindex [lsort -dictionary $defs] end]
-}
+# All IP below is instantiated ONLY through doa_create_pinned_ip, i.e. by the
+# exact VLNV variables in config/ip_versions.tcl (V00 version lock).  The old
+# find_unique_ipdef (last sorted NAME match, version ignored) and the
+# xilinx.com:ip:axis_data_fifo:* wildcards were removed on purpose: if a
+# pinned IP is missing, step08 fails here with the available versions listed.
 
 proc create_doa_v7_hier {parent name} {
     set old [current_bd_instance .]
@@ -24,12 +24,12 @@ proc create_doa_v7_hier {parent name} {
     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_CANDIDATE_CTRL
     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_BEAM_CTRL
 
-    set covariance [create_bd_cell -type ip -vlnv [find_unique_ipdef doa_covariance_4ch_v4] covariance]
-    set power [create_bd_cell -type ip -vlnv [find_unique_ipdef spectrum_power4] spectrum_power]
-    set candidate [create_bd_cell -type ip -vlnv [find_unique_ipdef candidate_peak4] candidate_peak]
-    set beam [create_bd_cell -type ip -vlnv [find_unique_ipdef beam_weight_4ch] beam_monitor]
-    set candidate_fifo [create_bd_cell -type ip -vlnv xilinx.com:ip:axis_data_fifo:* candidate_fifo]
-    set covariance_fifo [create_bd_cell -type ip -vlnv xilinx.com:ip:axis_data_fifo:* covariance_fifo]
+    set covariance [doa_create_pinned_ip covariance covariance]
+    set power [doa_create_pinned_ip spectrum spectrum_power]
+    set candidate [doa_create_pinned_ip candidate candidate_peak]
+    set beam [doa_create_pinned_ip beam beam_monitor]
+    set candidate_fifo [doa_create_pinned_ip axis_data_fifo candidate_fifo]
+    set covariance_fifo [doa_create_pinned_ip axis_data_fifo covariance_fifo]
     set_property -dict [list CONFIG.FIFO_DEPTH {32}] $candidate_fifo
     set_property -dict [list CONFIG.FIFO_DEPTH {32}] $covariance_fifo
 

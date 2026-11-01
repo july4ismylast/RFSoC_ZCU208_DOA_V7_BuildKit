@@ -7,7 +7,7 @@ help:
 	@echo "SPEAR-BF upstream is ZCU216/Vivado 2021.1 reference; do not treat it as a ZCU208 project."
 	@echo "Use: make upstream-bd DESIGN=... | make upstream-bit DESIGN=... | make zcu208-shell"
 fetch:
-	$(ROOT)/scripts/fetch_upstream.sh
+	$(ROOT)/scripts/fetch_upstream.sh SPEAR_BF
 upstream-bd: fetch
 	$(MAKE) -C $(U) bd DESIGN=$(DESIGN)
 upstream-bit: fetch

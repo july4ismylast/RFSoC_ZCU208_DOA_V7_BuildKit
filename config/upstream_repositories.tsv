@@ -1,19 +1,26 @@
 # name	set	url	ref
-RFSoC-MTS	native	https://github.com/Xilinx/RFSoC-MTS.git	main
-RFSoC-PYNQ	native	https://github.com/Xilinx/RFSoC-PYNQ.git	master
-rfsoc_sam	native	https://github.com/strath-sdr/rfsoc_sam.git	master
-RFSoC_OPFB	opfb	https://github.com/MazinLab/RFSoC_OPFB.git	main
+# V02 (2026-11-01): every ref is a pinned full commit SHA -- branch names
+# float (e.g. RFSoC-PYNQ master moved 2024.1 -> 2025.2 after these adapters
+# were written).  Fetching anything else invalidates the VLNV comparison in
+# the Vivado audit.  Production base for this project: RFSoC-MTS only
+# (BASE_KIND=mts); PYNQ below is pinned to its last 2024.1 design commit and
+# rfsoc_sam to its 2024.1 design commit for *reference reading* under the
+# 2023.2 lock -- neither builds unmodified in Vivado 2023.2.
+RFSoC-MTS	native	https://github.com/Xilinx/RFSoC-MTS.git	f8e93e7f89d0e80f0e4edf5a2ea4b45f0fcd6d3d
+RFSoC-PYNQ	native	https://github.com/Xilinx/RFSoC-PYNQ.git	29960d03c0d256ac6edc0719225c595cea2d65f9
+rfsoc_sam	native	https://github.com/strath-sdr/rfsoc_sam.git	873c70c887f8b39ce6d4a28a50a8256f0db00df2
+RFSoC_OPFB	opfb	https://github.com/MazinLab/RFSoC_OPFB.git	8ab3d5b6136490ebdf3b24953889decdfc3f40ae
 adc-to-opfb	opfb	https://github.com/MazinLab/adc-to-opfb.git	6e4275bfb3b7337187176ab075a1bafb6b014c18
 opfb-fir-cfg	opfb	https://github.com/MazinLab/opfb-fir-cfg.git	4144f2069c3eb2109ad60d5aeda3421ea2e0e2a9
 opfb-fir-to-fft	opfb	https://github.com/MazinLab/opfb-fir-to-fft.git	e3f1749c51ddd232b856d6b8f0f59bc812962caf
 ssrfft_16x4096	opfb	https://github.com/MazinLab/ssrfft_16x4096.git	9c60a1d551c216ee0000ce62d0633d34b4450111
 pkg-fft-output	opfb	https://github.com/MazinLab/pkg-fft-output.git	9cabd7d8b02c724324ba749fac6c7fe4d60a9c5c
-capture-upsizer	opfb	https://github.com/MazinLab/capture-upsizer.git	HEAD
-dac-replay	opfb	https://github.com/MazinLab/dac-replay.git	HEAD
-iq-capture	opfb	https://github.com/MazinLab/iq-capture.git	HEAD
-opfb-bin-to-res	opfb	https://github.com/MazinLab/opfb-bin-to-res.git	HEAD
-wb2axip	opfb	https://github.com/MazinLab/wb2axip.git	HEAD
-SPEAR	reference	https://github.com/functions-lab/SPEAR.git	master
-SPEAR_BF	reference	https://github.com/functions-lab/SPEAR_BF.git	master
-SPEAR_plus	reference	https://github.com/functions-lab/SPEAR_plus.git	master
-rfsoc4x2_public	reference	https://github.com/leoeltipo/rfsoc4x2_public.git	main
+capture-upsizer	opfb	https://github.com/MazinLab/capture-upsizer.git	35884fa3e41ccfcc841efca97b30e43229bb96a7
+dac-replay	opfb	https://github.com/MazinLab/dac-replay.git	671bf8151d6af9e2d945b0e1d9a44f875f452df7
+iq-capture	opfb	https://github.com/MazinLab/iq-capture.git	ee121b94ec7415bf075c7be14ea8723005bcd95e
+opfb-bin-to-res	opfb	https://github.com/MazinLab/opfb-bin-to-res.git	3f89dfa068d0023e65b05f5bb14daf2ee0456244
+wb2axip	opfb	https://github.com/MazinLab/wb2axip.git	c0e4bbc4159197ccd5da141efc86d804be43ad65
+SPEAR	reference	https://github.com/functions-lab/SPEAR.git	4b2428c655e81ba8aed3125f850f43ac8c047d90
+SPEAR_BF	reference	https://github.com/functions-lab/SPEAR_BF.git	0549416fb9f45a85e5a6aaeaad6363f274b7cc39
+SPEAR_plus	reference	https://github.com/functions-lab/SPEAR_plus.git	5b5e63e399bb216eae6290c9cbef8b3965bfd121
+rfsoc4x2_public	reference	https://github.com/leoeltipo/rfsoc4x2_public.git	3d7991ec9b9b752a2f1be81a6de7852259e897e5

@@ -6,7 +6,7 @@ DESIGN ?= rfsoc_rfdc_v45_rt_4ch_mts
 help:
 	@echo "SPEAR+ upstream is a ZCU216 multi-channel/MTS reference. Port RFDC/tile assignments separately for ZCU208."
 fetch:
-	$(ROOT)/scripts/fetch_upstream.sh
+	$(ROOT)/scripts/fetch_upstream.sh SPEAR_plus
 upstream-bd: fetch
 	$(MAKE) -C $(U) bd DESIGN=$(DESIGN)
 upstream-bit: fetch

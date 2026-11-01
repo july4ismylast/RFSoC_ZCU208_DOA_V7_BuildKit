@@ -40,11 +40,17 @@ puts "Found [llength $files] HDL files; top source=[lindex $top_matches 0]"
 add_files $files
 set_property top $top [current_fileset]
 update_compile_order -fileset sources_1
-ipx::package_project -root_dir $ip_root -vendor openai -library doa -taxonomy /UserIP -import_files -set_current false
+# Vendor/library/version from config.mk variables (V00/V01), matching
+# config/ip_versions.tcl.  NOTE (stage V06): this packager still defines no
+# AXI bus interfaces -- that is the V06 work item, not hidden here.
+set ip_vendor [expr {[info exists ::env(CUSTOM_IP_VENDOR)] ? $::env(CUSTOM_IP_VENDOR) : "openai"}]
+set ip_library [expr {[info exists ::env(CUSTOM_IP_LIBRARY)] ? $::env(CUSTOM_IP_LIBRARY) : "doa"}]
+set ip_version [expr {[info exists ::env(IPVER_CHANNELIZER)] ? $::env(IPVER_CHANNELIZER) : "7.0"}]
+ipx::package_project -root_dir $ip_root -vendor $ip_vendor -library $ip_library -taxonomy /UserIP -import_files -set_current false
 set core [ipx::open_core [file join $ip_root component.xml]]
 set_property name matlab_channelizer $core
 set_property display_name "MATLAB DSP HDL Four-Lane Channelizer" $core
-set_property version 7.0 $core
+set_property version $ip_version $core
 ipx::update_checksums $core
 ipx::save_core $core
 close_project

@@ -40,15 +40,22 @@ isolated project copy.
 
 ### `step00_preflight`
 
-Checks `make`, Git, Vitis HLS, Vivado, MATLAB, the XCZU48DR part, base-project
-path, selected channelizer, and optionally the exact Vivado version. A real
-build should set `EXPECTED_VIVADO_VERSION` to the release that created
-`BASE_XPR`.
+Checks `make`, Git, Python 3, Vitis HLS, Vivado, MATLAB, the XCZU48DR part
+and pinned ZCU208 board part, base-project path, and selected channelizer.
+The Vivado/Vitis version lock is hard: `EXPECTED_VIVADO_VERSION` defaults to
+**2023.2** in `config.mk`, both tools must match it, and the stage finishes
+by running `common/vivado/00_check_ip_catalog.tcl`, which proves every AMD
+catalog VLNV in `config/ip_versions.tcl` against the installed Vivado and
+writes `build/output/ip_catalog_lock.txt` (`SKIP_IP_CATALOG_CHECK=1` is for
+tool-presence smoke tests only).
 
 ### `step01_fetch_references`
 
-Fetches only the selected set from `config/upstream_repositories.tsv`. Clones
-are resumable, retries are bounded, and each checked-out commit is printed.
+Fetches only the selected set from `config/upstream_repositories.tsv`. Every
+ref there is a **pinned full commit SHA** (branch names float and would
+invalidate the VLNV audit). Clones are resumable, retries are bounded, and
+each checked-out commit is printed. The production base is fetched with
+`FETCH_SET=RFSoC-MTS`; see `V03_MTS_BASE_2023P2.md`.
 
 ```bash
 make step01_fetch_references FETCH_SET=native

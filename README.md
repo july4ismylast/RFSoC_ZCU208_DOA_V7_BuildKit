@@ -24,10 +24,17 @@ The critical design decisions are:
 ```bash
 make help
 make status
+# Vivado/Vitis are locked to 2023.2 (V00): every IP VLNV lives in
+# config/ip_versions.tcl and step00 proves it against your installed catalog.
 make step00_preflight \
-  BASE_XPR=/absolute/path/verified_zcu208_base.xpr \
-  EXPECTED_VIVADO_VERSION=<base-project-version>
+  BASE_XPR=/absolute/path/verified_zcu208_base.xpr
 ```
+
+Vivado-first flow: the production base is the pinned Xilinx RFSoC-MTS
+ZCU208 design. See [V03_MTS_BASE_2023P2.md](V03_MTS_BASE_2023P2.md) for how
+that 2022.1.2 base is brought under the 2023.2 lock before step07, and
+[V00_V01_V02_CHANGES.md](V00_V01_V02_CHANGES.md) for the version-pinning
+changes (branch `vivado-2023.2-v00-v01`).
 
 Run or debug any stage directly:
 

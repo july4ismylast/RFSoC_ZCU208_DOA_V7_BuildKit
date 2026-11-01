@@ -3,9 +3,9 @@ include $(ROOT)/config.mk
 U := $(ROOT)/upstream/rfsoc_sam/boards/ZCU208/rfsoc_sam
 .PHONY: help fetch bd bit all clean
 help:
-	@echo "Native ZCU208 spectrum-analyzer reference. Current upstream documents Vivado 2024.1."
+	@echo "Reference only under the 2023.2 lock: pinned commit is the 2024.1 design update. Production base is RFSoC-MTS; borrow SAM patterns, do not build here in 2023.2."
 fetch:
-	$(ROOT)/scripts/fetch_upstream.sh
+	$(ROOT)/scripts/fetch_upstream.sh rfsoc_sam
 bd: fetch
 	$(MAKE) -C $(U) block_design
 bit: fetch

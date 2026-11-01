@@ -2,8 +2,8 @@ set script_dir [file dirname [file normalize [info script]]]
 source [file join $script_dir common.tcl]
 open_work_project
 set ip_repo [file normalize [require_env IP_REPO]]
-set_property ip_repo_paths [list $ip_repo] [current_project]
-update_ip_catalog
+# Append (never overwrite): keep any base-project IP repositories visible.
+doa_append_ip_repo_paths [list $ip_repo]
 select_base_bd
 source [file join $script_dir create_doa_v7_hier.tcl]
 if {[llength [get_bd_cells -quiet /doa_v7]]} {

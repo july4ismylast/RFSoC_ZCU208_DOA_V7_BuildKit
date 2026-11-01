@@ -13,7 +13,11 @@ extern "C" void beam_weight_4ch(hls::stream<axis512_beam_t>& s_axis,
 #pragma HLS INTERFACE s_axilite port=w1 bundle=ctrl
 #pragma HLS INTERFACE s_axilite port=w2 bundle=ctrl
 #pragma HLS INTERFACE s_axilite port=w3 bundle=ctrl
-#pragma HLS INTERFACE s_axilite port=return bundle=ctrl
+// Free-running one-beat datapath like spectrum_power4/candidate_peak4: the
+// weights stay AXI-Lite registers, but there must be no ap_start handshake
+// per beat.  (v2.0 used s_axilite port=return, i.e. ap_ctrl_hs, which stalls
+// a single-beat top function in the BD; fixed in IP version 2.1, V01.)
+#pragma HLS INTERFACE ap_ctrl_none port=return
 #pragma HLS PIPELINE II=1
     axis512_beam_t input=s_axis.read();
     axis256_beam_t output;

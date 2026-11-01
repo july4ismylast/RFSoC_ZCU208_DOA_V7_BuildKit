@@ -23,8 +23,12 @@ extern "C" void doa_covariance_4ch_v4(hls::stream<axis512_t>& s_axis,
                                         ap_uint<32> cal2,
                                         ap_uint<32> cal3,
                                         ap_uint<16> frameSamples) {
-#pragma HLS INTERFACE axis port=s_axis
-#pragma HLS INTERFACE axis port=m_axis
+// register_mode=both (as on spectrum/beam/candidate): register the 512-bit
+// input before its fan-out to 16 calibration multipliers.  Interface change
+// is timing-only (no register-map change); IP version bumped 7.0 -> 7.1 so a
+// stale packaged core can never be confused with this one (V01).
+#pragma HLS INTERFACE axis register_mode=both port=s_axis
+#pragma HLS INTERFACE axis register_mode=both port=m_axis
 #pragma HLS INTERFACE s_axilite port=cal0 bundle=ctrl
 #pragma HLS INTERFACE s_axilite port=cal1 bundle=ctrl
 #pragma HLS INTERFACE s_axilite port=cal2 bundle=ctrl

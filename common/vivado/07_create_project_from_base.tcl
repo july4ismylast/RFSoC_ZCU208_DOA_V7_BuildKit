@@ -1,4 +1,5 @@
 source [file join [file dirname [file normalize [info script]]] common.tcl]
+doa_require_vivado_lock
 set base [file normalize [require_env BASE_XPR]]
 set work [file normalize [require_env WORK_XPR]]
 set project_name [require_env PROJECT_NAME]
@@ -16,8 +17,8 @@ if {[get_property PART [current_project]] ne [require_env PART]} {
     error "BASE_XPR targets [get_property PART [current_project]], not [require_env PART]"
 }
 save_project_as -force $project_name $work_dir
-set_property ip_repo_paths [list $ip_repo] [current_project]
-update_ip_catalog
+# Append (never overwrite): the verified base may carry its own IP repo(s).
+doa_append_ip_repo_paths [list $ip_repo]
 save_project
 puts "Created isolated ZCU208 project: $work"
 close_project

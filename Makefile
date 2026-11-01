@@ -129,7 +129,7 @@ step13_export_xsa: $(STAMP_DIR)/step13_export_xsa.done
 step14_hil_vectors: $(STAMP_DIR)/step14_hil_vectors.done
 step15_package: $(STAMP_DIR)/step15_package.done
 
-$(STAMP_DIR)/step00_preflight.done: Makefile config.mk scripts/preflight.sh scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step00_preflight.done: Makefile config.mk config/ip_versions.tcl common/vivado/common.tcl common/vivado/00_check_ip_catalog.tcl scripts/preflight.sh scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step00_preflight --stamp "$@" --log "$(LOG_DIR)/step00_preflight.log" -- ./scripts/preflight.sh
 
 $(STAMP_DIR)/step01_fetch_references.done: scripts/fetch_upstream.sh scripts/run_stage.sh config/upstream_repositories.tsv $(FORCE_DEP)
@@ -150,28 +150,28 @@ $(STAMP_DIR)/step04_hls_beam.done: $(shell find ip/custom/beam_weight_4ch -type 
 $(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/model_composer/channelizer -type f 2>/dev/null) scripts/build_channelizer.sh scripts/run_matlab_clean.sh config.mk scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step05_channelizer --stamp "$@" --log "$(LOG_DIR)/step05_channelizer.log" -- ./scripts/build_channelizer.sh "$(CHANNELIZER_FLOW)"
 
-$(STAMP_DIR)/step06_collect_ip.done: scripts/collect_ip.sh config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step06_collect_ip.done: scripts/collect_ip.sh config.mk config/ip_versions.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step06_collect_ip --stamp "$@" --log "$(LOG_DIR)/step06_collect_ip.log" -- ./scripts/collect_ip.sh
 
-$(STAMP_DIR)/step07_vivado_project.done: common/vivado/07_create_project_from_base.tcl config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step07_vivado_project.done: common/vivado/07_create_project_from_base.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step07_vivado_project --stamp "$@" --log "$(LOG_DIR)/step07_vivado_project.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/07_create_project_from_base.tcl
 
-$(STAMP_DIR)/step08_vivado_integrate.done: common/vivado/08_integrate_doa_v7.tcl common/vivado/create_doa_v7_hier.tcl config/zcu208_bd_map.tcl config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step08_vivado_integrate.done: common/vivado/08_integrate_doa_v7.tcl common/vivado/create_doa_v7_hier.tcl config/zcu208_bd_map.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step08_vivado_integrate --stamp "$@" --log "$(LOG_DIR)/step08_vivado_integrate.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/08_integrate_doa_v7.tcl
 
-$(STAMP_DIR)/step09_vivado_validate.done: common/vivado/09_validate.tcl config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step09_vivado_validate.done: common/vivado/09_validate.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step09_vivado_validate --stamp "$@" --log "$(LOG_DIR)/step09_vivado_validate.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/09_validate.tcl
 
-$(STAMP_DIR)/step10_synth.done: common/vivado/10_synth.tcl config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step10_synth.done: common/vivado/10_synth.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step10_synth --stamp "$@" --log "$(LOG_DIR)/step10_synth.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/10_synth.tcl
 
-$(STAMP_DIR)/step11_impl.done: common/vivado/11_impl.tcl config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step11_impl.done: common/vivado/11_impl.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step11_impl --stamp "$@" --log "$(LOG_DIR)/step11_impl.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/11_impl.tcl
 
-$(STAMP_DIR)/step12_bitstream.done: common/vivado/12_bitstream.tcl config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step12_bitstream.done: common/vivado/12_bitstream.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step12_bitstream --stamp "$@" --log "$(LOG_DIR)/step12_bitstream.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/12_bitstream.tcl
 
-$(STAMP_DIR)/step13_export_xsa.done: common/vivado/13_export_xsa.tcl config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step13_export_xsa.done: common/vivado/13_export_xsa.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step13_export_xsa --stamp "$@" --log "$(LOG_DIR)/step13_export_xsa.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/13_export_xsa.tcl
 
 $(STAMP_DIR)/step14_hil_vectors.done: hil/matlab/generate_zcu208_hil_vectors.m scripts/generate_hil.sh scripts/run_matlab_clean.sh config.mk scripts/run_stage.sh $(FORCE_DEP)
