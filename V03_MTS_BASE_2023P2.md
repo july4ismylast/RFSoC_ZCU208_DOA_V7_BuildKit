@@ -95,9 +95,16 @@ A bitstream that fails its own timing check is **not** signoff, so gate 3
 below is *not* passed yet and step07 stays blocked until timing closes.
 
 Timing-closure path (implementation-only — still no BD/clock/RFDC edits):
-first run the non-destructive probe
-`common/vivado/v03_postroute_physopt_probe.tcl` on the existing routed
-checkpoint (`phys_opt_design -directive AggressiveExplore`). If it closes
+first run the non-destructive probe on the existing routed checkpoint
+(`phys_opt_design -directive AggressiveExplore`), **from the repo root**
+(it locates the checkpoint under `build/mts_base_src_2023p2/...` itself):
+
+```bash
+vivado -mode batch -source common/vivado/v03_postroute_physopt_probe.tcl 2>&1 | tee $HOME/mts_v03_physopt_probe.log
+grep "PROBE RESULT" $HOME/mts_v03_physopt_probe.log
+```
+
+If it closes
 the −17 ps, the recorded adaptation becomes “enable the post-route
 phys-opt step” in the adapted `mts.tcl` (prepared by
 `scripts/prepare_mts_2023p2_patch.sh`, visible in its diff), V03 is re-run

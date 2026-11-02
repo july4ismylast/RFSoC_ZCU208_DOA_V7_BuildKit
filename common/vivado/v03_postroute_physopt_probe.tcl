@@ -12,18 +12,34 @@
 # timing closes.  Only if it does will the post-route phys-opt step be
 # encoded into scripts/prepare_mts_2023p2_patch.sh and V03 re-run cleanly.
 #
-# Usage (from build/mts_base_src_2023p2/boards/ZCU208/build_mts):
-#   vivado -mode batch -source ../../../../common/vivado/v03_postroute_physopt_probe.tcl \
+# Usage (from the REPO ROOT -- no cd into build_mts needed):
+#   vivado -mode batch -source common/vivado/v03_postroute_physopt_probe.tcl \
 #       [-tclargs [routed.dcp] [directive] [output_prefix]]
-# Defaults: ./mts/mts.runs/impl_1/mts_wrapper_routed.dcp, AggressiveExplore,
-#           $HOME/mts_v03_physopt_probe
+# Defaults: <BUILD>/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/
+#           mts.runs/impl_1/mts_wrapper_routed.dcp (BUILD env, else
+#           <repo>/build; a ./mts/... checkpoint next to the CWD also works),
+#           AggressiveExplore, $HOME/mts_v03_physopt_probe
 
 set running [version -short]
 if {[string first "2023.2" $running] == -1} {
     error "V03 probe: this flow is locked to Vivado 2023.2, running $running"
 }
 
-set dcp "./mts/mts.runs/impl_1/mts_wrapper_routed.dcp"
+# Default checkpoint: derive it from this script's location so the probe
+# works from any working directory (repo common/vivado/<this file> ->
+# repo root -> build/mts_base_src_2023p2/...).  $BUILD overrides the build
+# root; a checkpoint under ./mts/... (running inside build_mts) is the
+# fallback.  An explicit first -tclargs argument always wins.
+set _script_dir [file dirname [file normalize [info script]]]
+set _repo_root [file normalize [file join $_script_dir .. ..]]
+set _build_root [file join $_repo_root build]
+if {[info exists ::env(BUILD)] && [string trim $::env(BUILD)] ne ""} {
+    set _build_root [file normalize $::env(BUILD)]
+}
+set dcp [file join $_build_root mts_base_src_2023p2 boards ZCU208 build_mts mts mts.runs impl_1 mts_wrapper_routed.dcp]
+if {![file exists $dcp] && [file exists "./mts/mts.runs/impl_1/mts_wrapper_routed.dcp"]} {
+    set dcp "./mts/mts.runs/impl_1/mts_wrapper_routed.dcp"
+}
 if {$argc >= 1} { set dcp [lindex $argv 0] }
 set directive "AggressiveExplore"
 if {$argc >= 2} { set directive [lindex $argv 1] }
