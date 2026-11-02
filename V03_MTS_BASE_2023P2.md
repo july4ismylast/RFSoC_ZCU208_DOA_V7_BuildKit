@@ -79,6 +79,33 @@ complete Vivado log and send it; each incompatibility gets one recorded patch
 line in `scripts/prepare_mts_2023p2_patch.sh` (same pattern as the PS VLNV),
 then re-run from a clean `build/mts_base_src_2023p2`.
 
+### First-run evidence (2026-11-02, user Vivado 2023.2 PC)
+
+Better than expected: **no PS-property failure at all.** With only the PS
+3.4→3.5 substitution, `mts.tcl` created the project, the BD validated, and
+`make bitstream` ran synth + impl + `write_bitstream` to completion
+(DRC 0 errors; `mts_wrapper.bit` written). The one failing gate is upstream
+`make check_timing`: the routed timing summary ends at
+**WNS = −0.017 ns, TNS = −0.050 ns, WHS = +0.010 ns** (hold is fine), all in
+clock `clk_out1_mts_MTSclkwiz_0` (the 500 MHz `clkRF` domain). The worst
+endpoints sit in `deepCapture` (`axis_data_fifo_adc` BRAM output,
+`axis_dwidth_converter_0` upsizer) fed by RFDC `m12_axis`; the router's
+built-in physical synthesis already improved WNS from −0.180 to −0.017.
+A bitstream that fails its own timing check is **not** signoff, so gate 3
+below is *not* passed yet and step07 stays blocked until timing closes.
+
+Timing-closure path (implementation-only — still no BD/clock/RFDC edits):
+first run the non-destructive probe
+`common/vivado/v03_postroute_physopt_probe.tcl` on the existing routed
+checkpoint (`phys_opt_design -directive AggressiveExplore`). If it closes
+the −17 ps, the recorded adaptation becomes “enable the post-route
+phys-opt step” in the adapted `mts.tcl` (prepared by
+`scripts/prepare_mts_2023p2_patch.sh`, visible in its diff), V03 is re-run
+from a clean adapted tree, and the final post-route timing summary must
+show WNS ≥ 0 before gate 4. If the probe does not close, the next lever is
+an Explore-class implementation strategy — decided from the probe report,
+not by trial-and-error hand edits.
+
 ## V03 acceptance gates (all must pass before V04 touches RFDC settings)
 
 1. Adapted `mts.tcl` completes in Vivado **2023.2**; `validate_bd_design` = 0 errors.
@@ -89,6 +116,8 @@ then re-run from a clean `build/mts_base_src_2023p2`.
    (`make` in build_mts, i.e. block_design → `build_bitstream.tcl` wrapper →
    bitstream → `check_timing.tcl` → `handoff.tcl`) with timing met. This
    proves tool + board clocking before we change a single RFDC setting.
+   *(Status 2026-11-02: bitstream ✅, timing ❌ by −17 ps — see first-run
+   evidence above; `handoff` has consequently not run yet.)*
 4. The result is the base for step07: `config.mk` now defaults (for
    `BASE_KIND=mts`) to
    `BASE_XPR=$(BUILD)/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr`
