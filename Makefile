@@ -135,19 +135,19 @@ $(STAMP_DIR)/step00_preflight.done: Makefile config.mk config/ip_versions.tcl co
 $(STAMP_DIR)/step01_fetch_references.done: scripts/fetch_upstream.sh scripts/run_stage.sh config/upstream_repositories.tsv $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step01_fetch_references --stamp "$@" --log "$(LOG_DIR)/step01_fetch_references.log" -- ./scripts/fetch_upstream.sh "$(FETCH_SET)"
 
-$(STAMP_DIR)/step02_hls_covariance.done: $(shell find ip/custom/doa_covariance_4ch_v4 -type f 2>/dev/null) config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step02_hls_covariance.done: $(shell find ip/custom/doa_covariance_4ch_v4 -type f 2>/dev/null) config.mk common/scripts/check_component_vlnv.sh scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step02_hls_covariance --stamp "$@" --log "$(LOG_DIR)/step02_hls_covariance.log" -- make --no-print-directory -C ip/custom/doa_covariance_4ch_v4 all
 
-$(STAMP_DIR)/step03_hls_spectrum.done: $(shell find ip/custom/spectrum_power4 -type f 2>/dev/null) config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step03_hls_spectrum.done: $(shell find ip/custom/spectrum_power4 -type f 2>/dev/null) config.mk common/scripts/check_component_vlnv.sh scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step03_hls_spectrum --stamp "$@" --log "$(LOG_DIR)/step03_hls_spectrum.log" -- make --no-print-directory -C ip/custom/spectrum_power4 all
 
-$(STAMP_DIR)/step04_hls_candidate.done: $(shell find ip/custom/candidate_peak4 -type f 2>/dev/null) config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step04_hls_candidate.done: $(shell find ip/custom/candidate_peak4 -type f 2>/dev/null) config.mk common/scripts/check_component_vlnv.sh scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step04_hls_candidate --stamp "$@" --log "$(LOG_DIR)/step04_hls_candidate.log" -- make --no-print-directory -C ip/custom/candidate_peak4 all
 
-$(STAMP_DIR)/step04_hls_beam.done: $(shell find ip/custom/beam_weight_4ch -type f 2>/dev/null) config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step04_hls_beam.done: $(shell find ip/custom/beam_weight_4ch -type f 2>/dev/null) config.mk common/scripts/check_component_vlnv.sh scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step04_hls_beam --stamp "$@" --log "$(LOG_DIR)/step04_hls_beam.log" -- make --no-print-directory -C ip/custom/beam_weight_4ch all
 
-$(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/model_composer/channelizer ip/upstream_opfb -type f 2>/dev/null) scripts/build_channelizer.sh scripts/fetch_upstream.sh common/scripts/import_packaged_ip.sh common/vivado/create_catalog_project.tcl scripts/run_matlab_clean.sh config.mk config/upstream_repositories.tsv scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/model_composer/channelizer ip/upstream_opfb -type f 2>/dev/null) scripts/build_channelizer.sh scripts/fetch_upstream.sh common/scripts/import_packaged_ip.sh common/scripts/check_component_vlnv.sh common/vivado/create_catalog_project.tcl scripts/run_matlab_clean.sh config.mk config/upstream_repositories.tsv scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step05_channelizer --stamp "$@" --log "$(LOG_DIR)/step05_channelizer.log" -- ./scripts/build_channelizer.sh "$(CHANNELIZER_FLOW)"
 
 $(STAMP_DIR)/step06_collect_ip.done: scripts/collect_ip.sh config.mk config/ip_versions.tcl scripts/run_stage.sh $(FORCE_DEP)

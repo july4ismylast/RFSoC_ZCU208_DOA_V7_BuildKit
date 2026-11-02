@@ -7,7 +7,17 @@ set part [expr {[info exists ::env(PART)] ? $::env(PART) : "xczu48dr-fsvg1517-2-
 set period [expr {[info exists ::env(PL_CLOCK_PERIOD_NS)] ? $::env(PL_CLOCK_PERIOD_NS) : "7.8125"}]
 set ip_vendor [expr {[info exists ::env(CUSTOM_IP_VENDOR)] ? $::env(CUSTOM_IP_VENDOR) : "openai"}]
 set ip_library [expr {[info exists ::env(CUSTOM_IP_LIBRARY)] ? $::env(CUSTOM_IP_LIBRARY) : "doa"}]
-set ip_version [expr {[info exists ::env(IPVER_BEAM)] ? $::env(IPVER_BEAM) : "2.1"}]
+# Keep the version as a Tcl *string*.  Do not select it with expr{}: the
+# Tcl 8.5 embedded in Vivado/Vitis can give a numeric-looking expr result a
+# double internal representation, which export then serializes as
+# 7.0999999999999996 instead of the pinned 7.1.
+set ip_version "2.1"
+if {[info exists ::env(IPVER_BEAM)] && [string trim $::env(IPVER_BEAM)] ne ""} {
+    set ip_version [string trim $::env(IPVER_BEAM)]
+}
+if {![regexp {^[0-9]+\.[0-9]+$} $ip_version]} {
+    error "IPVER_BEAM must be a major.minor version string, got '$ip_version'"
+}
 open_project -reset beam_weight_4ch_hls
 add_files src/beam_weight_4ch.cpp -cflags "-Isrc"
 add_files -tb tb/beam_weight_4ch_tb.cpp -cflags "-Isrc"

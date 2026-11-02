@@ -45,7 +45,17 @@ update_compile_order -fileset sources_1
 # AXI bus interfaces -- that is the V06 work item, not hidden here.
 set ip_vendor [expr {[info exists ::env(CUSTOM_IP_VENDOR)] ? $::env(CUSTOM_IP_VENDOR) : "openai"}]
 set ip_library [expr {[info exists ::env(CUSTOM_IP_LIBRARY)] ? $::env(CUSTOM_IP_LIBRARY) : "doa"}]
-set ip_version [expr {[info exists ::env(IPVER_CHANNELIZER)] ? $::env(IPVER_CHANNELIZER) : "7.0"}]
+# Keep the version as a Tcl *string*.  Do not select it with expr{}: the
+# Tcl 8.5 embedded in Vivado/Vitis can give a numeric-looking expr result a
+# double internal representation, which export then serializes as
+# 7.0999999999999996 instead of the pinned 7.1.
+set ip_version "7.0"
+if {[info exists ::env(IPVER_CHANNELIZER)] && [string trim $::env(IPVER_CHANNELIZER)] ne ""} {
+    set ip_version [string trim $::env(IPVER_CHANNELIZER)]
+}
+if {![regexp {^[0-9]+\.[0-9]+$} $ip_version]} {
+    error "IPVER_CHANNELIZER must be a major.minor version string, got '$ip_version'"
+}
 ipx::package_project -root_dir $ip_root -vendor $ip_vendor -library $ip_library -taxonomy /UserIP -import_files -set_current false
 set core [ipx::open_core [file join $ip_root component.xml]]
 set_property name matlab_channelizer $core

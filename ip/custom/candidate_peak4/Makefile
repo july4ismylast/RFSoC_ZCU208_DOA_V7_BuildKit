@@ -2,12 +2,14 @@ ROOT := $(abspath ../../..)
 include $(ROOT)/config.mk
 IP_OUT := $(CURDIR)/candidate_peak4_hls/solution1/impl/ip
 DEST := $(IP_REPO)/candidate_peak4
+IP_VLNV := $(CUSTOM_IP_VENDOR):$(CUSTOM_IP_LIBRARY):candidate_peak4:$(IPVER_CANDIDATE)
 .PHONY: all hls install clean
 all: hls install
 hls:
 	$(VITIS_HLS) -f build_hls.tcl
 install: hls
 	@test -f "$(IP_OUT)/component.xml" || { echo "Missing HLS export $(IP_OUT)/component.xml"; exit 2; }
+	@$(ROOT)/common/scripts/check_component_vlnv.sh "$(IP_OUT)/component.xml" "$(IP_VLNV)"
 	rm -rf "$(DEST)"
 	mkdir -p "$(DEST)"
 	cp -a "$(IP_OUT)/." "$(DEST)/"
