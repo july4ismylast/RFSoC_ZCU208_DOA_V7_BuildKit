@@ -92,8 +92,9 @@ clock `clk_out1_mts_MTSclkwiz_0` (the 500 MHz `clkRF` domain). The worst
 endpoints sit in `deepCapture` (`axis_data_fifo_adc` BRAM output,
 `axis_dwidth_converter_0` upsizer) fed by RFDC `m12_axis`; the router's
 built-in physical synthesis already improved WNS from −0.180 to −0.017.
-A bitstream that fails its own timing check is **not** signoff, so gate 3
-below is *not* passed yet and step07 stays blocked until timing closes.
+A bitstream that fails its own timing check is **not** signoff, so at that
+point gate 3 was not passed and step07 stayed blocked (timing closure
+below).
 
 Timing-closure path (implementation-only — still no BD/clock/RFDC edits):
 first run the non-destructive probe on the existing routed checkpoint
@@ -123,27 +124,40 @@ make 2>&1 | tee $HOME/mts_v03_extratimingopt_make.log
 # = block_design -> bitstream -> check_timing -> handoff
 ```
 
-Gate 3 passes only if `check_timing` passes (final summary WNS ≥ 0) and
-`handoff` produces `mts.xsa`/`mts.bit`/`mts.hwh`. If it still fails, the
-fallback recorded in the prepare script is
-`Performance_ExplorePostRoutePhysOpt` — decided from that run's worst-path
-report (send the `Design Timing Summary` plus the first
-`Slack (VIOLATED)` path section), still implementation-only.
+**Second-run evidence (2026-11-02): gate 3 PASS.** The clean re-run above
+completed block_design → bitstream → check_timing → handoff
+(“Built overlays successfully!!”, XSA validated): routed summary
+**WNS = +0.021 ns, TNS = 0.000 (0/199255 failing), WHS = +0.009 ns,
+THS = 0.000** — “All user specified timing constraints are met” — with
+`mts.bit` (33 MB), `mts.hwh` (1.2 MB) and `mts.xsa` (3.6 MB) produced.
+The `Performance_ExplorePostRoutePhysOpt` fallback is therefore not
+needed; it stays recorded in the prepare script only as the next lever if
+a future re-run regresses.
+
+Remaining before step07 are gates 2 + 4, now one command from the repo
+root (read-only audit; never saves the base):
+
+```bash
+vivado -mode batch -source common/vivado/v03_report_mts_base.tcl 2>&1 | tee $HOME/mts_v03_base_audit.log
+grep -iE "locked|outdated" build/output/v03_mts_report_ip_status.rpt   # gate 2: must be clean
+make step07_vivado_project && make status
+```
 
 ## V03 acceptance gates (all must pass before V04 touches RFDC settings)
 
 1. Adapted `mts.tcl` completes in Vivado **2023.2**; `validate_bd_design` = 0 errors.
+   *(✅ 2026-11-02.)*
 2. In that project: *Report IP Status* shows **no locked/outdated IP**
    (Tcl: `report_ip_status`); `get_property PART` = `xczu48dr-fsvg1517-2-e`,
    `BOARD_PART` = `xilinx.com:zcu208:part0:2.0`.
+   *(Run `common/vivado/v03_report_mts_base.tcl` — pending at time of writing.)*
 3. **Unmodified base** (still no DOA blocks) synthesises
    (`make` in build_mts, i.e. block_design → `build_bitstream.tcl` wrapper →
    bitstream → `check_timing.tcl` → `handoff.tcl`) with timing met. This
    proves tool + board clocking before we change a single RFDC setting.
-   *(Status 2026-11-02: bitstream ✅ with defaults, timing ❌ −17 ps
-   (post-route phys-opt probe: −9 ps); clean re-run with the recorded
-   `Performance_ExtraTimingOpt` impl strategy is pending — see first-run
-   evidence above. `handoff` has consequently not run yet.)*
+   *(✅ 2026-11-02 with the recorded `Performance_ExtraTimingOpt` impl
+   strategy: WNS +0.021 ns / WHS +0.009 ns, XSA validated — see evidence
+   above. Defaults had failed by −17 ps; post-route phys-opt probe −9 ps.)*
 4. The result is the base for step07: `config.mk` now defaults (for
    `BASE_KIND=mts`) to
    `BASE_XPR=$(BUILD)/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr`
