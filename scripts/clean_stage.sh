@@ -7,6 +7,7 @@ case "$stage" in
     step03_hls_spectrum) rm -rf ip/custom/spectrum_power4/spectrum_power4_hls "$ip_repo/spectrum_power4" ;;
     step04_hls_candidate) rm -rf ip/custom/candidate_peak4/candidate_peak4_hls "$ip_repo/candidate_peak4" ;;
     step04_hls_beam) rm -rf ip/custom/beam_weight_4ch/beam_weight_4ch_hls "$ip_repo/beam_weight_4ch" ;;
+    step05_hls_repack) rm -rf ip/custom/rfdc_repack4/rfdc_repack4_hls "$ip_repo/rfdc_repack4" ;;
     step05_channelizer) rm -rf ip/matlab/channelizer_hdl/hdl_prj "$ip_repo/matlab_channelizer" ip/model_composer/channelizer/build "$ip_repo/model_composer_channelizer" ;;
     step06_collect_ip) rm -f "$ip_repo/ip_manifest.tsv" ;;
     step07_vivado_project) rm -rf "$build/vivado/$project_name" "$build/output" ;;

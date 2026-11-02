@@ -45,10 +45,10 @@ spectrum inverted. The default tuned window is:
 | Instantaneous band | **2.25 – 3.75 GHz** (1.5 GHz) |
 | Alias centre `Fs − F_C` | 1.000 GHz |
 | Alias band | 0.25 – 1.75 GHz (250 MHz guard to both zone edges) |
-| RFDC DDC | fine mixer (Real→I/Q) tuned to the alias centre, decimation **2×** |
+| RFDC DDC | fine mixer (Real→I/Q), NCO property **`-F_C` = -3.000 GHz** (PG269 absolute-NCO convention; effective sampled-domain shift +1.000 GHz), decimation **2×** |
 | Complex output rate | **2.000 GS/s per channel** (≈1.6 GHz usable DDC passband ≥ 1.5 GHz band + guard) |
-| Baseband frequency of a tone | `f_bb = F_C − f_RF` (inverted axis) |
-| RF frequency of FFT/PFB bin `k` | `f_RF(k) = F_C − f_bb(k)` |
+| Baseband frequency of a tone | `f_bb = f_RF − F_C` (normal, non-inverted axis) |
+| RF frequency of FFT/PFB bin `k` | `f_RF(k) = F_C + f_bb(k)` |
 
 Keeping the full 1.5 GHz inside both the Nyquist zone and the DDC passband
 constrains the *tunable* centre to roughly **2.8 – 3.2 GHz**; outside that
@@ -56,15 +56,18 @@ range the usable instant bandwidth shrinks (zone/filter edges are physics,
 not firmware). `F_C` is therefore a runtime variable (PS/RFdc driver NCO
 update later), with 3.000 GHz as the BD default.
 
-**Phase convention (must be honoured by the estimator):** Zone‑2 sampling +
-down‑conversion conjugates the complex envelope. The spatial covariance
-produced by the HLS core is therefore the conjugate of the Zone‑1
-convention; the PS estimator either conjugates the covariance or uses the
-conjugate steering vector, and uses `f_RF(k)` above for the array manifold.
-The exact sign is locked by the loopback‑tone HIL test (V12), not by hope.
-Per-frequency calibration already exists in the MATLAB side
-(`estimate_multifrequency_calibration.m`); the array remains unambiguous
-across the band: diagonal baseline 35.4 mm < λ/2 up to ≈4.24 GHz.
+**Phase convention (must be honoured by the estimator):** the raw Zone‑2
+alias is spectrally inverted, but the RFDC NCO sign selects which alias
+image is translated to baseband. Following PG269's NCO example, setting the
+absolute NCO to `-F_C` returns the **desired, non-inverted** complex
+envelope. This contract therefore uses the normal Zone‑1 steering/covariance
+convention at the actual RF frequency `f_RF(k)=F_C+f_bb(k)`. (Setting the
+opposite effective sign would deliberately select the conjugated/inverted
+image; do not do that.) The loopback‑tone HIL test still proves the sign on
+hardware before the estimator is trusted. Per-frequency calibration already
+exists in the MATLAB side (`estimate_multifrequency_calibration.m`); the
+array remains unambiguous across the band: diagonal baseline 35.4 mm < λ/2
+up to ≈4.24 GHz.
 
 **Analog prerequisite:** a preselector/band‑pass in front of the 4 ADCs
 must reject Zone‑1/Zone‑3 energy that would alias into the band; the
@@ -72,32 +75,49 @@ digital DDC filter cannot undo analog aliasing. ADC Nyquist‑zone and
 calibration settings for Zone‑2 operation are applied with the RFDC
 configuration (initial BD values + runtime driver where PG269 requires it).
 
-## 3. RFDC target configuration (logical values; enums proven by dump)
+## 3. RFDC target configuration (2023.2 property evidence)
 
-Applied identically to the four used datapaths (`00/02` in Tile 0,
-`10/12` in Tile 1) — **identical settings are a coherence requirement**;
-any per‑channel difference is a DOA defect:
+The user-PC dump (2026-11-02) proved RFDC VLNV
+`xilinx.com:ip:usp_rf_data_converter:2.6`, cell
+`/usp_rf_data_converter_1`, Tiles 0+1 at 4 GSPS/MTS, all eight datapath
+slices `00..03/10..13` enabled, current streams only
+`m00/m02/m10/m12_axis`, and the exact property spellings below. (The
+dump's `list_property_value` section is empty because BD `CONFIG.*`
+properties are string-typed in Vivado; the enum labels live in the IP-XACT
+`component.xml`, which the revised dump now extracts. The numeric R2C
+pattern itself is independently proven by the pinned upstream SAM/PYNQ
+ZCU208 BD Tcl and by AMD's RFdc driver constants.)
 
-* Sampling rate 4.000 GSPS (unchanged), MTS on Tiles 0+1 (unchanged),
-  clock source/distribution unchanged.
-* Digital output data: **I/Q**; mixer type **Fine**; mixer mode
-  **Real → I/Q**; NCO set so the alias centre (`Fs − F_C`, default
-  1.000 GHz) lands at DC. The *sign* written to the NCO property follows
-  the PG269/frontend convention and is proven by the tone test; it is
-  stored as one named variable, never buried as a magic enum.
-* Decimation **2×**; samples per AXI4‑Stream cycle **8** (per I and per Q
-  stream); tile fabric frequency + AXIS clock for ADC streams **250 MHz**
-  (`2.0 GS/s ÷ 8 = 250 MHz`, the existing `clkRFdiv2` domain). The MTS
-  ADC BRAM/DDR capture hierarchies are built for the old 500 MHz real
-  contract, so V07 disconnects/removes them **in the work BD only** (the
-  V03-proven base stays untouched) and connects the DOA path instead.
-* Nyquist zone **2**; calibration mode per PG269 for the Zone‑2 band.
-* Unused ADC tiles (2/3) stay disabled (already so in MTS).
+Applied identically to the four physical 4 GSPS ADCs, whose GUI pair
+indices are `00/02` (Tile 0) and `10/12` (Tile 1) — **identical settings
+are a coherence requirement**; any per-channel difference is a DOA defect.
+Following the upstream generated Tcl, the apply Tcl writes the even pair
+indices and then *reads back* all eight slices plus the resulting stream
+pins (odd slices are the Q legs of each pair); it must not assume the odd
+values propagated.
 
-Exact Tcl property names/allowed enum values are **not guessed**:
-`common/vivado/v04_dump_rfdc.tcl` dumps them from the built work project
-on the 2023.2 PC first; the V07 apply Tcl is then written against that
-evidence and reviewed as an RFDC CONFIG diff, slice by slice.
+| Property (per pair `XX` = 00,02,10,12) | MTS now | V04 target | Meaning |
+|---|---:|---:|---|
+| `CONFIG.ADC_Data_TypeXX` | 0 | **1** | Real → **I/Q** |
+| `CONFIG.ADC_Decimation_ModeXX` | 1 | **2** | **2×** |
+| `CONFIG.ADC_Mixer_ModeXX` | 2 | **0** | bypass/R2R encoding → **Real→I/Q** encoding used by SAM/PYNQ R2C designs |
+| `CONFIG.ADC_Mixer_TypeXX` | 1 | **2** | Coarse → **Fine** |
+| `CONFIG.ADC_Data_WidthXX` | 8 | **8** | 8 samples/AXIS cycle per I and Q stream |
+| `CONFIG.ADC_NCO_FreqXX` | 0.0 | **-3.0** | GHz, absolute `-F_C`; default centre 3.000 GHz |
+| `CONFIG.ADC_NCO_PhaseXX` | 0 | **0** | identical phase; runtime SYSREF/tile-event reset still required |
+| `CONFIG.ADC_NyquistXX` | 0 | **even-zone XML choice** | Zone 2; numeric value is taken from the 2.6 `component.xml`, not guessed |
+| `CONFIG.ADC_CalOpt_ModeXX` | 1 | **Mode 2 XML choice** | PG269: Mode 1 only within ±10% of `Fs/2`; the 2.25–3.75 GHz band is otherwise |
+| `CONFIG.ADC0_Fabric_Freq`, `ADC1_Fabric_Freq` | 500.000 | **250.000 after validate** | required AXIS clock `2.0 GS/s ÷ 8`; `ADCn_Outclk_Freq` stays 250.000 |
+
+Sampling rate, clock source/distribution, MTS membership, dither and the
+enabled-slice set stay as in the V03-proven MTS base; ADC tiles 2/3 stay
+disabled. In R2C mode the stream set becomes, per physical channel,
+even stream = **I** and next odd stream = **Q**:
+`ch0=m00/m01`, `ch1=m02/m03`, `ch2=m10/m11`, `ch3=m12/m13`.
+The MTS ADC BRAM/DDR capture hierarchies are built for the old 500 MHz
+real contract, so V07 disconnects/removes them **in the work BD only**
+(the base stays untouched), moves `m0/m1_axis_aclk` to `clkRFdiv2`
+(250 MHz), and connects the DOA path instead.
 
 ## 4. PL stream / clock contract
 
@@ -129,14 +149,17 @@ architecture at our rates). The existing 64‑band scalar harness in
 * MTS DAC loopback structure (retained for bring‑up/HIL; removal is a
   separate, reviewed V07/V12 decision).
 * Physical SMA/XM650 → antenna element order: default
-  `ch0←m00, ch1←m02, ch2←m10, ch3←m12`; confirmed against the actual
-  board wiring at calibration time, then frozen in `bd_map`.
+  `ch0←vin0_01 (m00 I/m01 Q), ch1←vin0_23 (m02/m03),
+  ch2←vin1_01 (m10/m11), ch3←vin1_23 (m12/m13)`; confirmed against the
+  actual board wiring at calibration time, then frozen in `bd_map`.
 
 ## 6. V04 acceptance checklist
 
 - [x] Centre/band/decimation/clock numbers locked above and mirrored in `config.mk`.
-- [ ] `v04_dump_rfdc.tcl` output reviewed (property names + enum values + current MTS settings) on the 2023.2 PC.
-- [ ] V05 gearbox spec written against §4 (SSR‑8 pairing + capture selector).
+- [x] First `v04_dump_rfdc.tcl` run reviewed: RFDC 2.6 property names, current MTS values and stream set proven on the 2023.2 PC.
+- [ ] Revised dump run: IP-XACT choice labels for `ADC_Nyquist00`/`ADC_CalOpt_Mode00` (and mixer/data enums), `MTSclkwiz` outputs, RFDC stream `TDATA` widths.
+- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect.
+- [x] V05 gearbox source/testbench implemented against §4 (`ip/custom/rfdc_repack4`, `V05_RFDC_REPACK4_SPEC.md`); Vitis HLS 2023.2 acceptance run is tracked by that spec's gates. Post-channelizer capture selector is specified with V06's output format.
 - [ ] V06 channelizer feasibility evidence (1‑ch synth) before any step08 integration attempt.
 
 Next stages: **V05** `rfdc_repack4` + bin‑select/capture gate →

@@ -85,6 +85,13 @@ Builds an optional four-lane complex-weight diagnostic. This block is not in
 the DOA estimator and may be omitted from a resource-constrained deployment
 after integration Tcl is adjusted.
 
+### `step05_hls_repack`
+
+Builds the stage-V05 RFDC gearbox (`V05_RFDC_REPACK4_SPEC.md`): pairs the
+eight 128-bit RFDC I/Q streams into four 256-bit SSR-8 complex streams at
+250 MHz. The C test is bit-exact over beats × channels × lanes; csynth uses
+`WIDEBAND_CLOCK_PERIOD_NS` (4.0 ns), not the low-rate DOA clock.
+
 ### `step05_channelizer`
 
 Select exactly one implementation:

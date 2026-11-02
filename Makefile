@@ -13,6 +13,7 @@ STAGES := \
 	step03_hls_spectrum \
 	step04_hls_candidate \
 	step04_hls_beam \
+	step05_hls_repack \
 	step05_channelizer \
 	step06_collect_ip \
 	step07_vivado_project \
@@ -26,7 +27,7 @@ STAGES := \
 	step15_package
 
 PRODUCTION_STAGES := step00_preflight step02_hls_covariance step03_hls_spectrum \
-	step04_hls_candidate step04_hls_beam step05_channelizer step06_collect_ip step07_vivado_project \
+	step04_hls_candidate step04_hls_beam step05_hls_repack step05_channelizer step06_collect_ip step07_vivado_project \
 	step08_vivado_integrate step09_vivado_validate step10_synth step11_impl \
 	step12_bitstream step13_export_xsa step14_hil_vectors step15_package
 
@@ -54,6 +55,7 @@ help:
 	@echo "  step03_hls_spectrum      C-sim, synth, and export 4-lane spectrum-power IP"
 	@echo "  step04_hls_candidate     C-sim, synth, and export streaming peak/noise candidate IP"
 	@echo "  step04_hls_beam          C-sim, synth, and export optional vector beam monitor IP"
+	@echo "  step05_hls_repack        C-sim, synth, and export V05 RFDC SSR-8 I/Q gearbox IP (250 MHz)"
 	@echo "  step05_channelizer       Build selected channelizer flow"
 	@echo "                             CHANNELIZER_FLOW=matlab_hdl|model_composer|opfb|external"
 	@echo "  step06_collect_ip        Validate component.xml files and assemble one IP repository"
@@ -117,6 +119,7 @@ step02_hls_covariance: $(STAMP_DIR)/step02_hls_covariance.done
 step03_hls_spectrum: $(STAMP_DIR)/step03_hls_spectrum.done
 step04_hls_candidate: $(STAMP_DIR)/step04_hls_candidate.done
 step04_hls_beam: $(STAMP_DIR)/step04_hls_beam.done
+step05_hls_repack: $(STAMP_DIR)/step05_hls_repack.done
 step05_channelizer: $(STAMP_DIR)/step05_channelizer.done
 step06_collect_ip: $(STAMP_DIR)/step06_collect_ip.done
 step07_vivado_project: $(STAMP_DIR)/step07_vivado_project.done
@@ -146,6 +149,9 @@ $(STAMP_DIR)/step04_hls_candidate.done: $(shell find ip/custom/candidate_peak4 -
 
 $(STAMP_DIR)/step04_hls_beam.done: $(shell find ip/custom/beam_weight_4ch -type f 2>/dev/null) config.mk common/scripts/check_component_vlnv.sh scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step04_hls_beam --stamp "$@" --log "$(LOG_DIR)/step04_hls_beam.log" -- make --no-print-directory -C ip/custom/beam_weight_4ch all
+
+$(STAMP_DIR)/step05_hls_repack.done: $(shell find ip/custom/rfdc_repack4 -type f 2>/dev/null) config.mk common/scripts/check_component_vlnv.sh scripts/run_stage.sh $(FORCE_DEP)
+	@./scripts/run_stage.sh --id step05_hls_repack --stamp "$@" --log "$(LOG_DIR)/step05_hls_repack.log" -- make --no-print-directory -C ip/custom/rfdc_repack4 all
 
 $(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/model_composer/channelizer ip/upstream_opfb -type f 2>/dev/null) scripts/build_channelizer.sh scripts/fetch_upstream.sh common/scripts/import_packaged_ip.sh common/scripts/check_component_vlnv.sh common/vivado/create_catalog_project.tcl scripts/run_matlab_clean.sh config.mk config/upstream_repositories.tsv scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step05_channelizer --stamp "$@" --log "$(LOG_DIR)/step05_channelizer.log" -- ./scripts/build_channelizer.sh "$(CHANNELIZER_FLOW)"

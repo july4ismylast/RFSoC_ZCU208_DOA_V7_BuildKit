@@ -10,7 +10,8 @@ for required in \
     ip/custom/doa_covariance_4ch_v4/tb/doa_covariance_4ch_v4_tb.cpp \
     ip/custom/spectrum_power4/tb/spectrum_power4_tb.cpp \
     ip/custom/candidate_peak4/tb/candidate_peak4_tb.cpp \
-    ip/custom/beam_weight_4ch/tb/beam_weight_4ch_tb.cpp; do
+    ip/custom/beam_weight_4ch/tb/beam_weight_4ch_tb.cpp \
+    ip/custom/rfdc_repack4/tb/rfdc_repack4_tb.cpp; do
     [[ -s "$required" ]] || { echo "Missing required file: $required" >&2; exit 2; }
 done
 if command -v tclsh >/dev/null 2>&1; then

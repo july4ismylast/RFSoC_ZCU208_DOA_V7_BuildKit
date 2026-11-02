@@ -53,6 +53,7 @@ set ::IPVER_COVARIANCE  [::doa_versions::env_or IPVER_COVARIANCE  "7.1"]
 set ::IPVER_SPECTRUM    [::doa_versions::env_or IPVER_SPECTRUM    "2.0"]
 set ::IPVER_CANDIDATE   [::doa_versions::env_or IPVER_CANDIDATE   "1.0"]
 set ::IPVER_BEAM        [::doa_versions::env_or IPVER_BEAM        "2.1"]
+set ::IPVER_RFDC_REPACK4 [::doa_versions::env_or IPVER_RFDC_REPACK4 "1.0"]
 set ::IPVER_CHANNELIZER [::doa_versions::env_or IPVER_CHANNELIZER "7.0"]
 
 # --- AMD catalog IP for Vivado 2023.2 -----------------------------------------
@@ -100,6 +101,7 @@ set ::IPVLNV(covariance) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_covarianc
 set ::IPVLNV(spectrum)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:spectrum_power4:$::IPVER_SPECTRUM"
 set ::IPVLNV(candidate)  "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:candidate_peak4:$::IPVER_CANDIDATE"
 set ::IPVLNV(beam)       "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:beam_weight_4ch:$::IPVER_BEAM"
+set ::IPVLNV(rfdc_repack4) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:rfdc_repack4:$::IPVER_RFDC_REPACK4"
 set ::IPVLNV(channelizer) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:matlab_channelizer:$::IPVER_CHANNELIZER"
 
 # Keys that must exist in the *installed AMD catalog* at step00 (custom IP is
@@ -113,7 +115,7 @@ set ::IP_CATALOG_KEYS {
     axis_switch fir_compiler util_ds_buf xpm_cdc_gen xlconcat xlconstant
     xlslice util_reduced_logic util_vector_logic ila vio
 }
-set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam channelizer}
+set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam rfdc_repack4 channelizer}
 
 # -----------------------------------------------------------------------------
 # Procedures.  They call Vivado-only commands (version, get_ipdefs,
