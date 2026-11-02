@@ -28,6 +28,28 @@ create_project -force $project_name $outdir -part $part
 set_property BOARD_PART $board_part [current_project]
 doa_append_ip_repo_paths [list $ip_repo]
 
+# If the argument is one packaged-IP directory, report the VLNV that is
+# physically present in its component.xml.  This turns a repo-name/VLNV typo
+# (for example capture-upsizer vs capture_upsizer) into an actionable error.
+proc doa_component_xml_vlnv {xml_path} {
+    if {![file isfile $xml_path]} { return "" }
+    set stream [open $xml_path r]
+    set text [read $stream]
+    close $stream
+    set parts {}
+    foreach tag {vendor library name version} {
+        if {![regexp "<spirit:${tag}>\[ \t\r\n\]*(\[^<\]+)\[ \t\r\n\]*</spirit:${tag}>" $text whole value]} {
+            return ""
+        }
+        lappend parts [string trim $value]
+    }
+    return [join $parts :]
+}
+set packaged_vlnv [doa_component_xml_vlnv [file join $ip_repo component.xml]]
+if {$packaged_vlnv ne ""} {
+    puts "Packaged component.xml VLNV in $ip_repo: $packaged_vlnv"
+}
+
 if {[string match "*:*" $keyword]} {
     set matches [get_ipdefs -all -filter "VLNV == $keyword"]
 } else {
@@ -39,7 +61,11 @@ if {[string match "*:*" $keyword]} {
 }
 puts "Matching IP definitions for '$keyword': $matches"
 if {[llength $matches] != 1} {
-    error "Need exactly one IP matching '$keyword' in $ip_repo, found [llength $matches]: $matches. Pass the full pinned VLNV instead."
+    set detail ""
+    if {$packaged_vlnv ne ""} {
+        set detail " The component.xml in that directory is '$packaged_vlnv'."
+    }
+    error "Need exactly one IP matching '$keyword' in $ip_repo, found [llength $matches]: $matches.$detail Pass the full pinned VLNV instead."
 }
 create_bd_design design_1
 set vlnv [lindex $matches 0]

@@ -41,6 +41,24 @@ IPVER_CANDIDATE ?= 1.0
 IPVER_BEAM ?= 2.1
 IPVER_CHANNELIZER ?= 7.0
 
+# --- OPFB Plan-B IP lock -------------------------------------------------------
+# Exact custom-IP VLNVs used by the pinned RFSoC_OPFB bd/opfb_streaming.tcl
+# (RFSoC_OPFB 8ab3d5b6136490ebdf3b24953889decdfc3f40ae).  The three HLS blocks
+# are rebuilt for the ZU48DR part, but keep these upstream identities so the
+# catalog checks and any later OPFB BD adaptation never have to guess a repo
+# name or "latest" packaged folder.  These are evaluation/Plan-B identities;
+# they are not production DOA IPs in config/ip_versions.tcl.
+OPFB_VLNV_ADC_TO_OPFB ?= mazinlab:mkidgen3:adc_to_opfb:1.32
+OPFB_VLNV_OPFB_FIR_CFG ?= mazinlab:mkidgen3:opfb_fir_cfg:1.31
+OPFB_VLNV_FIR_TO_FFT ?= mazinlab:mkidgen3:fir_to_fft:1.31
+OPFB_VLNV_SSRFFT ?= MazinLab:mkidgen3:ssrfft_16x4096_axis:1.0
+OPFB_VLNV_PKG_FFT_OUTPUT ?= mazinlab:mkidgen3:pkg_fft_output:1.31
+OPFB_VLNV_CAPTURE_UPSIZER ?= mazinlab:mkidgen3:capture_upsizer:0.5
+OPFB_VLNV_FILTER_IQ ?= mazinlab:mkidgen3:filter_iq:0.3
+OPFB_VLNV_FILTER_PHASE ?= mazinlab:mkidgen3:filter_phase:0.5
+OPFB_VLNV_PAIR_IQ ?= mazinlab:mkidgen3:pair_iq:0.4
+OPFB_VLNV_BIN_TO_RES ?= mazinlab:mkidgen3:bin_to_res:1.33
+
 # --- DOA / RF conditions (user-confirmed) -------------------------------------
 # Target RF band 2-4 GHz, fed by 4 ADC channels (2x2 array).  The RFDC
 # sample-rate / decimation / Nyquist-zone plan that realises this band on the
@@ -77,6 +95,10 @@ export PART BOARD_PART PROJECT_NAME VIVADO VITIS_HLS MATLAB JOBS
 export BUILD UPSTREAM IP_REPO RELEASE_DIR EXPECTED_VIVADO_VERSION EXPECTED_MATLAB_RELEASE
 export SKIP_IP_CATALOG_CHECK BASE_KIND CUSTOM_IP_VENDOR CUSTOM_IP_LIBRARY
 export IPVER_COVARIANCE IPVER_SPECTRUM IPVER_CANDIDATE IPVER_BEAM IPVER_CHANNELIZER
+export OPFB_VLNV_ADC_TO_OPFB OPFB_VLNV_OPFB_FIR_CFG OPFB_VLNV_FIR_TO_FFT
+export OPFB_VLNV_SSRFFT OPFB_VLNV_PKG_FFT_OUTPUT OPFB_VLNV_CAPTURE_UPSIZER
+export OPFB_VLNV_FILTER_IQ OPFB_VLNV_FILTER_PHASE OPFB_VLNV_PAIR_IQ
+export OPFB_VLNV_BIN_TO_RES
 export TARGET_RF_LOW_HZ TARGET_RF_HIGH_HZ ADC_CHANNEL_COUNT
 export CHANNELIZER_FLOW MODEL_COMPOSER_MODEL EXTERNAL_CHANNELIZER_IP
 export FETCH_SET FETCH_RETRIES FETCH_TIMEOUT_SECONDS

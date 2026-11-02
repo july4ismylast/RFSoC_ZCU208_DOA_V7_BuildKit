@@ -11,5 +11,5 @@ upstream-project: fetch
 upstream-bit: fetch
 	$(MAKE) -C $(U) bitstream
 zcu208-ips:
-	@echo "The old root target opfb-ips never existed. OPFB is channelizer Plan-B only: build individual adapters under ip/upstream_opfb after pinning their VLNVs from bd/opfb_streaming.tcl (stage V06)."
+	@echo "The old root target opfb-ips never existed. OPFB is channelizer Plan-B only: ip/upstream_opfb now builds the exact BD IP set with VLNVs pinned in config.mk (see ip/upstream_opfb/README.md); DOA integration remains stage V06."
 	@exit 2

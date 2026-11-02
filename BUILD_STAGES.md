@@ -93,7 +93,7 @@ Select exactly one implementation:
 |---|---|---|
 | MATLAB HDL Coder | `CHANNELIZER_FLOW=matlab_hdl` | Default R2024a fixed-point vector harness |
 | Model Composer/System Generator | `CHANNELIZER_FLOW=model_composer MODEL_COMPOSER_MODEL=...` | Existing tested model with IP Catalog token |
-| MazinLab OPFB | `CHANNELIZER_FLOW=opfb` | High-throughput reference requiring interface/tool-version review |
+| MazinLab OPFB | `CHANNELIZER_FLOW=opfb` | Plan-B only: fetches the pinned set once and builds/imports exactly the ten MazinLab IP definitions used by RFSoC_OPFB `bd/opfb_streaming.tcl` (see `ip/upstream_opfb/README.md`); DOA rate/interface adaptation is still stage V06 |
 | External IP | `CHANNELIZER_FLOW=external EXTERNAL_CHANNELIZER_IP=...` | Previously packaged compatible channelizer |
 
 ### `step06_collect_ip`

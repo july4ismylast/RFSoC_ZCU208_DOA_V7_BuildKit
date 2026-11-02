@@ -42,9 +42,21 @@ case "${CHANNELIZER_FLOW:-matlab_hdl}" in
     model_composer) required+=("$IP_REPO/model_composer_channelizer|-") ;;
     external) required+=("${EXTERNAL_CHANNELIZER_IP:-}|-") ;;
     opfb)
-        if ! find "$IP_REPO" -path '*/component.xml' -print -quit | grep -q .; then
-            echo "ERROR: no OPFB component.xml files were collected" >&2; exit 4
-        fi
+        # Exact MazinLab IP set instantiated by the pinned RFSoC_OPFB
+        # bd/opfb_streaming.tcl.  "Any component.xml exists" is not enough:
+        # every directory below must carry the VLNV pinned in config.mk.
+        required+=(
+            "$IP_REPO/adc_to_opfb|${OPFB_VLNV_ADC_TO_OPFB:-mazinlab:mkidgen3:adc_to_opfb:1.32}"
+            "$IP_REPO/opfb_fir_cfg|${OPFB_VLNV_OPFB_FIR_CFG:-mazinlab:mkidgen3:opfb_fir_cfg:1.31}"
+            "$IP_REPO/fir_to_fft|${OPFB_VLNV_FIR_TO_FFT:-mazinlab:mkidgen3:fir_to_fft:1.31}"
+            "$IP_REPO/ssrfft_16x4096_axis|${OPFB_VLNV_SSRFFT:-MazinLab:mkidgen3:ssrfft_16x4096_axis:1.0}"
+            "$IP_REPO/pkg_fft_output|${OPFB_VLNV_PKG_FFT_OUTPUT:-mazinlab:mkidgen3:pkg_fft_output:1.31}"
+            "$IP_REPO/capture_upsizer|${OPFB_VLNV_CAPTURE_UPSIZER:-mazinlab:mkidgen3:capture_upsizer:0.5}"
+            "$IP_REPO/filter_iq|${OPFB_VLNV_FILTER_IQ:-mazinlab:mkidgen3:filter_iq:0.3}"
+            "$IP_REPO/filter_phase|${OPFB_VLNV_FILTER_PHASE:-mazinlab:mkidgen3:filter_phase:0.5}"
+            "$IP_REPO/pair_iq|${OPFB_VLNV_PAIR_IQ:-mazinlab:mkidgen3:pair_iq:0.4}"
+            "$IP_REPO/bin_to_res|${OPFB_VLNV_BIN_TO_RES:-mazinlab:mkidgen3:bin_to_res:1.33}"
+        )
         ;;
 esac
 

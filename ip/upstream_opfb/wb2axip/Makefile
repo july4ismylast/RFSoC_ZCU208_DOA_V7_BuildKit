@@ -1,19 +1,25 @@
 ROOT := $(abspath ../../..)
 include $(ROOT)/config.mk
-NAME := wb2axip
 SRC := $(UPSTREAM)/wb2axip
-DST := $(IP_REPO)
-.PHONY: help fetch list import catalog all clean
+# RFSoC_OPFB does not use wb2axip as packaged Vivado IP.  Its
+# vivado/write_prj.tcl adds these three Verilog files directly to sources_1,
+# and bd/opfb_streaming.tcl instantiates axis2mm as a module reference.
+# There is intentionally no component.xml, VLNV, import, or catalog step here.
+RTL_FILES := $(SRC)/rtl/sfifo.v $(SRC)/rtl/axis2mm.v $(SRC)/rtl/skidbuffer.v
+.PHONY: help fetch list check all clean
 help:
-	@echo "Standalone adapter for MazinLab/wb2axip. If upstream already contains packaged Vivado IP, import it; otherwise inspect/build its native source first."
+	@echo "Check the three wb2axip RTL files used directly by RFSoC_OPFB write_prj.tcl."
+	@echo "This is module-reference RTL, not packaged IP; it is not part of step05 IP collection."
 fetch:
-	$(ROOT)/scripts/fetch_upstream.sh opfb
+	@if [ "$(OPFB_FETCH_DONE)" != "1" ]; then $(ROOT)/scripts/fetch_upstream.sh opfb; fi
 list: fetch
-	find $(SRC) -name component.xml -o -name '*.tcl' -o -name 'Makefile' | sort
-import: fetch
-	$(ROOT)/common/scripts/import_packaged_ip.sh $(SRC) $(DST) $(NAME)
-catalog: import
-	cd $(ROOT) && $(VIVADO) -mode batch -source common/vivado/create_catalog_project.tcl -tclargs wb2axip_catalog $(DST)/$(NAME) $(NAME) $(PART) "$(BOARD_PART)"
-all: catalog
+	@for file in $(RTL_FILES); do echo "$$file"; done
+check: fetch
+	@for file in $(RTL_FILES); do \
+		test -s "$$file" || { echo "ERROR: required wb2axip RTL is missing: $$file"; exit 1; }; \
+		echo "PASS $$file"; \
+	done
+	@echo "wb2axip is ready for direct RTL/module-reference use; no Vivado IP catalog entry is expected."
+all: check
 clean:
-	rm -rf $(DST)/$(NAME)
+	@true

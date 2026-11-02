@@ -147,7 +147,7 @@ $(STAMP_DIR)/step04_hls_candidate.done: $(shell find ip/custom/candidate_peak4 -
 $(STAMP_DIR)/step04_hls_beam.done: $(shell find ip/custom/beam_weight_4ch -type f 2>/dev/null) config.mk scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step04_hls_beam --stamp "$@" --log "$(LOG_DIR)/step04_hls_beam.log" -- make --no-print-directory -C ip/custom/beam_weight_4ch all
 
-$(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/model_composer/channelizer -type f 2>/dev/null) scripts/build_channelizer.sh scripts/run_matlab_clean.sh config.mk scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/model_composer/channelizer ip/upstream_opfb -type f 2>/dev/null) scripts/build_channelizer.sh scripts/fetch_upstream.sh common/scripts/import_packaged_ip.sh common/vivado/create_catalog_project.tcl scripts/run_matlab_clean.sh config.mk config/upstream_repositories.tsv scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step05_channelizer --stamp "$@" --log "$(LOG_DIR)/step05_channelizer.log" -- ./scripts/build_channelizer.sh "$(CHANNELIZER_FLOW)"
 
 $(STAMP_DIR)/step06_collect_ip.done: scripts/collect_ip.sh config.mk config/ip_versions.tcl scripts/run_stage.sh $(FORCE_DEP)
