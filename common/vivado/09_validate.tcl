@@ -11,7 +11,8 @@ set messages [get_messages -severity {CRITICAL WARNING ERROR}]
 set file [open [file join $output validation_messages.txt] w]
 foreach message $messages { puts $file $message }
 close $file
-save_project
+# No "save_project" Tcl command exists in Vivado; save_bd_design above is
+# the persistence operation for BD state.
 puts "BD validation passed; reports are in $output"
 close_project
 

@@ -31,7 +31,25 @@ if {$_base_board ne "" && $_base_board ne $::BOARD_PART_PINNED} {
 save_project_as -force $project_name $work_dir
 # Append (never overwrite): the verified base may carry its own IP repo(s).
 doa_append_ip_repo_paths [list $ip_repo]
-save_project
-puts "Created isolated ZCU208 project: $work"
+# NOTE: there is no "save_project" Tcl command in Vivado (proved on the
+# 2023.2 PC: it errors asking for save_project_as usage).  In project mode,
+# property changes such as ip_repo_paths persist to the .xpr automatically;
+# block-design edits are persisted with save_bd_design instead.  Prove the
+# copy is complete by reopening it exactly as step08 will.
+close_project
+open_project $work
+if {[get_property PART [current_project]] ne [require_env PART]} {
+    error "Work project part [get_property PART [current_project]] does not match [require_env PART]"
+}
+set _work_board [get_property BOARD_PART [current_project]]
+if {$_work_board ne "" && $_work_board ne $::BOARD_PART_PINNED} {
+    error "Work project board part '$_work_board' does not match pinned '$::BOARD_PART_PINNED'"
+}
+set _work_repos [get_property ip_repo_paths [current_project]]
+if {[lsearch -exact $_work_repos $ip_repo] < 0} {
+    error "Work project ip_repo_paths does not contain $ip_repo (found: $_work_repos)"
+}
+puts "Created + verified isolated ZCU208 project: $work"
+puts "Work project ip_repo_paths: $_work_repos"
 close_project
 
