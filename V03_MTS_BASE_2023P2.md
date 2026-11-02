@@ -65,7 +65,8 @@ make step06_collect_ip
 # 2) fetch the pinned MTS base and make the controlled 2023.2 adaptation copy
 make step01_fetch_references FETCH_SET=RFSoC-MTS
 ./scripts/prepare_mts_2023p2_patch.sh
-#    -> diff printed by the script must show ONLY zynq_ultra_ps_e 3.4 -> 3.5
+#    -> diff printed by the script must show ONLY: PS 3.4->3.5 (x2) +
+#       impl_1 strategy -> Performance_ExtraTimingOpt (x3)
 
 # 3) create the unmodified MTS project in 2023.2 (first failure = information)
 cd build/mts_base_src_2023p2/boards/ZCU208/build_mts
@@ -104,14 +105,30 @@ vivado -mode batch -source common/vivado/v03_postroute_physopt_probe.tcl 2>&1 | 
 grep "PROBE RESULT" $HOME/mts_v03_physopt_probe.log
 ```
 
-If it closes
-the −17 ps, the recorded adaptation becomes “enable the post-route
-phys-opt step” in the adapted `mts.tcl` (prepared by
-`scripts/prepare_mts_2023p2_patch.sh`, visible in its diff), V03 is re-run
-from a clean adapted tree, and the final post-route timing summary must
-show WNS ≥ 0 before gate 4. If the probe does not close, the next lever is
-an Explore-class implementation strategy — decided from the probe report,
-not by trial-and-error hand edits.
+**Probe result (2026-11-02): improved but not closed** — worst setup slack
+−0.017 → **−0.009 ns** (TNS −0.033, only 6 failing endpoints of 199244,
+WHS +0.010). So adaptation #2 is now encoded in
+`scripts/prepare_mts_2023p2_patch.sh`: `impl_1` strategy
+`Vivado Implementation Defaults` → **`Performance_ExtraTimingOpt`**
+(timing-driven place/route; implementation effort only — synthesis, BD,
+clocks, RFDC and constraints unchanged; the routed timing summary remains
+the signoff report upstream `check_timing.tcl` reads). Re-run V03 from a
+clean adapted tree:
+
+```bash
+./scripts/prepare_mts_2023p2_patch.sh
+# diff must show ONLY: PS 3.4->3.5 (x2) + impl strategy (x3)
+cd build/mts_base_src_2023p2/boards/ZCU208/build_mts
+make 2>&1 | tee $HOME/mts_v03_extratimingopt_make.log
+# = block_design -> bitstream -> check_timing -> handoff
+```
+
+Gate 3 passes only if `check_timing` passes (final summary WNS ≥ 0) and
+`handoff` produces `mts.xsa`/`mts.bit`/`mts.hwh`. If it still fails, the
+fallback recorded in the prepare script is
+`Performance_ExplorePostRoutePhysOpt` — decided from that run's worst-path
+report (send the `Design Timing Summary` plus the first
+`Slack (VIOLATED)` path section), still implementation-only.
 
 ## V03 acceptance gates (all must pass before V04 touches RFDC settings)
 
@@ -123,8 +140,10 @@ not by trial-and-error hand edits.
    (`make` in build_mts, i.e. block_design → `build_bitstream.tcl` wrapper →
    bitstream → `check_timing.tcl` → `handoff.tcl`) with timing met. This
    proves tool + board clocking before we change a single RFDC setting.
-   *(Status 2026-11-02: bitstream ✅, timing ❌ by −17 ps — see first-run
-   evidence above; `handoff` has consequently not run yet.)*
+   *(Status 2026-11-02: bitstream ✅ with defaults, timing ❌ −17 ps
+   (post-route phys-opt probe: −9 ps); clean re-run with the recorded
+   `Performance_ExtraTimingOpt` impl strategy is pending — see first-run
+   evidence above. `handoff` has consequently not run yet.)*
 4. The result is the base for step07: `config.mk` now defaults (for
    `BASE_KIND=mts`) to
    `BASE_XPR=$(BUILD)/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr`

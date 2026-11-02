@@ -80,8 +80,9 @@ FETCH_TIMEOUT_SECONDS ?= 60
 # Mandatory for steps 07 onward: a known-good ZCU208 RFDC/MTS base project.
 # For the locked production base (BASE_KIND=mts) no manual setting is needed:
 # stage V03 produces exactly this file -- scripts/prepare_mts_2023p2_patch.sh
-# copies the pinned RFSoC-MTS tree to build/mts_base_src_2023p2/ (only the PS
-# VLNV 3.4 -> 3.5 change), and running boards/ZCU208/build_mts/mts.tcl there
+# copies the pinned RFSoC-MTS tree to build/mts_base_src_2023p2/ (recorded
+# adaptations: PS VLNV 3.4 -> 3.5, impl strategy Performance_ExtraTimingOpt),
+# and running boards/ZCU208/build_mts/mts.tcl there
 # creates project "mts" (mts/mts.xpr, BD name "mts").  Override BASE_XPR /
 # BASE_BD only when deliberately using a different verified ZCU208 base.
 ifeq ($(BASE_KIND),mts)
