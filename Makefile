@@ -68,8 +68,8 @@ help:
 	@echo "  step15_package           Package outputs, reports, manifests, and logs"
 	@echo
 	@echo "Important configuration:"
-	@echo "  BASE_XPR=/absolute/path/to/verified_ZCU208_project.xpr"
-	@echo "  BASE_BD=<block_design_name>  ZCU208_BD_MAP=config/zcu208_bd_map.tcl"
+	@echo "  BASE_XPR  (BASE_KIND=mts default: stage-V03 output build/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr)"
+	@echo "  BASE_BD   (BASE_KIND=mts default: mts)   ZCU208_BD_MAP=config/zcu208_bd_map.tcl"
 	@echo "  EXPECTED_VIVADO_VERSION=<version used by the base project>"
 	@echo "  V7_MATLAB_ROOT=/absolute/path/to/DOA_2x2_Realistic_HIL_R2024a_ZU48DR_V7"
 	@echo

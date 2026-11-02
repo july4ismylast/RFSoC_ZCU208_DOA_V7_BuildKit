@@ -103,9 +103,14 @@ not silently accept an incomplete export.
 
 ### `step07_vivado_project`
 
-Opens `BASE_XPR`, verifies the part, creates an isolated copy under
-`build/vivado`, and installs the common IP repository. The source base project
-is not modified.
+Opens `BASE_XPR`, verifies the part and board part, creates an isolated copy
+under `build/vivado`, and appends the common IP repository. The source base
+project is not modified. For the locked base (`BASE_KIND=mts`, default),
+`BASE_XPR`/`BASE_BD` default to the stage-V03 output
+(`build/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr`, BD `mts`);
+if that file does not exist yet, run stage V03 first — see
+`V03_MTS_BASE_2023P2.md` (fetch `RFSoC-MTS`, run
+`scripts/prepare_mts_2023p2_patch.sh`, then build the unmodified MTS project).
 
 ### `step08_vivado_integrate`
 

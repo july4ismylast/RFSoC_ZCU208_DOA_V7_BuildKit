@@ -52,6 +52,10 @@ make step00_preflight
 #    If one line FAILs, send me that file; we fix one line in ip_versions.tcl.
 
 # 1) build the custom IP so step07 can run later (Vitis HLS 2023.2, exact TBs)
+#    STATUS 2026-11-02: DONE on the user PC -- step00..step06 all PASS
+#    (step05/06 proven with CHANNELIZER_FLOW=opfb; the production matlab_hdl
+#    channelizer run is still owed before final V06 integration, but step07
+#    only needs the step06 manifest, which exists).
 make step02_hls_covariance step03_hls_spectrum step04_hls_candidate step04_hls_beam
 make step05_channelizer CHANNELIZER_FLOW=matlab_hdl   # + MATLAB R2024a
 make step06_collect_ip
@@ -85,13 +89,17 @@ then re-run from a clean `build/mts_base_src_2023p2`.
    (`make` in build_mts, i.e. block_design → `build_bitstream.tcl` wrapper →
    bitstream → `check_timing.tcl` → `handoff.tcl`) with timing met. This
    proves tool + board clocking before we change a single RFDC setting.
-4. Save the result as the base for step07 and record it:
-   `BASE_XPR=<…>/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr`,
-   `BASE_BD=mts`; export `write_bd_tcl` + `report_ip_status` outputs into
-   `build/output/` so the 2022.1.2 → 2023.2 delta stays reviewable.
+4. The result is the base for step07: `config.mk` now defaults (for
+   `BASE_KIND=mts`) to
+   `BASE_XPR=$(BUILD)/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr`
+   and `BASE_BD=mts`, so no manual environment setting is needed. Still
+   export `write_bd_tcl` + `report_ip_status` outputs into `build/output/`
+   so the 2022.1.2 → 2023.2 delta stays reviewable.
 
-Only after gate 4: `make step07_vivado_project` (which now refuses any
-non-2023.2 Vivado and appends — never overwrites — IP repo paths), then V04
+Only after gate 4: `make step07_vivado_project` (which refuses any
+non-2023.2 Vivado, verifies part + board part, and appends — never
+overwrites — IP repo paths; if the V03 output is missing it now stops with
+the exact V03 commands instead of a bare "BASE_XPR is empty"), then V04
 (4-slice RFDC + 2–4 GHz sample-rate plan), V05 (gearbox `rfdc_repack4`),
 V06 (channelizer), V07 (bd_map integration).
 

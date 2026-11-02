@@ -77,9 +77,20 @@ FETCH_SET ?= native
 FETCH_RETRIES ?= 3
 FETCH_TIMEOUT_SECONDS ?= 60
 
-# Mandatory for steps 07 onward. Use a known-good ZCU208 RFDC/MTS project.
+# Mandatory for steps 07 onward: a known-good ZCU208 RFDC/MTS base project.
+# For the locked production base (BASE_KIND=mts) no manual setting is needed:
+# stage V03 produces exactly this file -- scripts/prepare_mts_2023p2_patch.sh
+# copies the pinned RFSoC-MTS tree to build/mts_base_src_2023p2/ (only the PS
+# VLNV 3.4 -> 3.5 change), and running boards/ZCU208/build_mts/mts.tcl there
+# creates project "mts" (mts/mts.xpr, BD name "mts").  Override BASE_XPR /
+# BASE_BD only when deliberately using a different verified ZCU208 base.
+ifeq ($(BASE_KIND),mts)
+BASE_XPR ?= $(BUILD)/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr
+BASE_BD ?= mts
+else
 BASE_XPR ?=
 BASE_BD ?=
+endif
 ZCU208_BD_MAP ?= $(CURDIR)/config/zcu208_bd_map.tcl
 INTEGRATION_MODE ?= mapped
 WORK_XPR ?= $(BUILD)/vivado/$(PROJECT_NAME)/$(PROJECT_NAME).xpr
