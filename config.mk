@@ -60,13 +60,26 @@ OPFB_VLNV_PAIR_IQ ?= mazinlab:mkidgen3:pair_iq:0.4
 OPFB_VLNV_BIN_TO_RES ?= mazinlab:mkidgen3:bin_to_res:1.33
 
 # --- DOA / RF conditions (user-confirmed) -------------------------------------
-# Target RF band 2-4 GHz, fed by 4 ADC channels (2x2 array).  The RFDC
-# sample-rate / decimation / Nyquist-zone plan that realises this band on the
-# MTS base is decided and proven in stage V04; do not change PL_CLOCK or the
-# MATLAB Fs independently of that decision (see VIVADO_AUDIT_AND_STAGE_PLAN).
+# Target RF band 2-4 GHz, fed by 4 ADC channels (2x2 array), with a 1.5 GHz
+# realtime instantaneous bandwidth (user, 2026-11-02).  Stage V04 locks the
+# plan (V04_RFDC_DOA_CONTRACT.md): MTS 4.000 GSPS clock kept, band sampled in
+# Nyquist Zone 2 around RF_CENTER_HZ, RFDC hardened DDC decimates 2x to a
+# 2.0 GS/s complex stream per channel (SSR-8 at 250 MHz), channelised into
+# CHANNELIZER_NUM_BANDS bins.  Keep these variables, PL_CLOCK and the MATLAB
+# reference Fs in sync -- never change one independently of the contract.
 TARGET_RF_LOW_HZ ?= 2000000000
 TARGET_RF_HIGH_HZ ?= 4000000000
 ADC_CHANNEL_COUNT ?= 4
+RF_CENTER_HZ ?= 3000000000
+RF_INSTANT_BW_HZ ?= 1500000000
+ADC_SAMPLE_RATE_HZ ?= 4000000000
+RFDC_DECIMATION ?= 2
+COMPLEX_SAMPLE_RATE_HZ ?= 2000000000
+WIDEBAND_FABRIC_CLOCK_HZ ?= 250000000
+WIDEBAND_SAMPLES_PER_CLOCK ?= 8
+CHANNELIZER_NUM_BANDS ?= 1024
+CHANNELIZER_BIN_SPACING_HZ ?= 1953125
+DOA_CLOCK_HZ ?= 125000000
 
 # matlab_hdl, model_composer, opfb, or external.
 CHANNELIZER_FLOW ?= matlab_hdl
