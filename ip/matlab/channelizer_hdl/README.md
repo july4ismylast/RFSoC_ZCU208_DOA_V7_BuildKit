@@ -1,4 +1,16 @@
 # MATLAB/DSP HDL four-lane channelizer generation harness
+
+> **Stage V06 note:** the Simulink harness in this directory is still the
+> legacy **64-band / four-sample** model. It is not the production
+> 1024-band SSR-8 channelizer. The current V06 Gate-0 test is only:
+>
+> ```bash
+> make -C ip/matlab/channelizer_hdl probe
+> ```
+>
+> See `V06_CHANNELIZER_FEASIBILITY.md` at the repository root. Do not use
+> a successful legacy `make hdl`/`make package` run as V06 evidence.
+
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
 `dsp.Channelizer` for synthesizable hardware. The generated model supplies a
 four-element complex `fixdt(1,16,15)` column vector per valid cycle and a scalar

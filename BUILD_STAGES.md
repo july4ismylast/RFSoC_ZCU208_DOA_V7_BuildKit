@@ -103,6 +103,13 @@ Select exactly one implementation:
 | MazinLab OPFB | `CHANNELIZER_FLOW=opfb` | Plan-B only: fetches the pinned set once and builds/imports exactly the ten MazinLab IP definitions used by RFSoC_OPFB `bd/opfb_streaming.tcl` (see `ip/upstream_opfb/README.md`); DOA rate/interface adaptation is still stage V06 |
 | External IP | `CHANNELIZER_FLOW=external EXTERNAL_CHANNELIZER_IP=...` | Previously packaged compatible channelizer |
 
+**Stage V06 warning:** the current `matlab_hdl` harness remains a legacy
+64-band/four-lane model, not the production SSR-8/1024-band channelizer.
+Do not treat `step05_channelizer`/`step06_collect_ip` with that harness as
+V06 completion. The current feasibility gate is
+`make -C ip/matlab/channelizer_hdl probe`; see
+`V06_CHANNELIZER_FEASIBILITY.md`.
+
 ### `step06_collect_ip`
 
 Validates every required `component.xml` and writes `ip_manifest.tsv`. It does
