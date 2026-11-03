@@ -44,6 +44,19 @@
 # logic cleared it, and hard-asserts MTS plus the captured invariants
 # on the persisted readback.
 #
+# v1.3 (after the v1.2 user-PC run, 2026-11-03): v1.2 localized the MTS
+# flip to stage 2 (Data_Width/Decimation dict; ADC fabric 500 -> 250 MHz
+# while DAC0/1 stayed MTS-true at 500 MHz), and both late restores failed.
+# v1.3 therefore reports every RFDC sync/PL-clock property, normalizes
+# CONFIG.PL_Clock_Freq to the 500 MHz common PL clock before stage 2 if
+# that property exists, and -- only if MTS still flips -- runs ordered,
+# fully logged diagnostics: PL clock 500/250, ADC-first sequencing with
+# DAC MTS temporarily off, ADC AXIS clock pins moved to the existing
+# 250 MHz clkRFdiv2 net, an equal-fabric DAC-interpolation-2 branch, and
+# finally an ADC Data_Width=4/fabric-500 probe (reverted).  A DAC-250
+# success is reported as PASS-DIAGNOSTIC, never as production PASS: it
+# changes the DAC loopback contract and needs an explicit V04 decision.
+#
 # Usage (from the repo root, after step07):
 #   vivado -mode batch -nojournal -nolog -source common/vivado/v04_scratch_apply_rfdc.tcl
 # Env overrides: WORK_XPR, V04_SCRATCH_DIR, V04_SCRATCH_NAME.
@@ -183,7 +196,44 @@ proc v04a_checkpoint {fh rfdc label} {
             lappend parts "${kind}${tile}_FABRIC={[v04a_get CONFIG.${kind}${tile}_Fabric_Freq $rfdc]}"
         }
     }
+    lappend parts "PL_Clock_Freq={[v04a_get CONFIG.PL_Clock_Freq $rfdc]}"
     v04a_log $fh [join $parts " "]
+}
+
+proc v04a_checkpoint_all_tiles {fh rfdc label} {
+    set parts [list "ALL-TILE CHECKPOINT $label:"]
+    foreach kind {ADC DAC} {
+        foreach tile {0 1 2 3} {
+            lappend parts "${kind}${tile}_EN={[v04a_get CONFIG.${kind}${tile}_Enable $rfdc]}"
+            lappend parts "${kind}${tile}_MTS={[v04a_get CONFIG.${kind}${tile}_Multi_Tile_Sync $rfdc]}"
+            lappend parts "${kind}${tile}_FABRIC={[v04a_get CONFIG.${kind}${tile}_Fabric_Freq $rfdc]}"
+        }
+    }
+    lappend parts "PL_Clock_Freq={[v04a_get CONFIG.PL_Clock_Freq $rfdc]}"
+    v04a_log $fh [join $parts " "]
+}
+
+proc v04a_report_sync_props {fh rfdc label} {
+    # Generated BD Tcl omits properties still at their component default
+    # (PL_Clock_Freq is the known example), so enumerate the live cell
+    # instead of trusting upstream Tcl exports.
+    set selected {}
+    foreach prop [lsort [list_property $rfdc]] {
+        set take 0
+        if {[regexp -nocase {(PL_Clock|PLClock|Sysref|Multi_Tile|Master_Tile)} $prop]} {
+            set take 1
+        } elseif {[string match "CONFIG.*" $prop] && \
+                  ![string match "CONFIG.ADC*" $prop] && \
+                  ![string match "CONFIG.DAC*" $prop] && \
+                  [regexp -nocase {(Clock|Sync|Freq)} $prop]} {
+            set take 1
+        }
+        if {$take} { lappend selected $prop }
+    }
+    v04a_log $fh "SYNC/PL-CLOCK PROPERTIES ($label): [llength $selected] live properties"
+    foreach prop $selected {
+        v04a_log $fh "  $prop = {[v04a_get $prop $rfdc]}"
+    }
 }
 
 proc v04a_capture_tile_invariants {rfdc} {
@@ -233,8 +283,274 @@ proc v04a_restore_mts {fh rfdc label} {
     return $now
 }
 
+proc v04a_mts_kind_true {rfdc kind} {
+    return [expr {[v04a_bool_true [v04a_get "CONFIG.${kind}0_Multi_Tile_Sync" $rfdc]] && \
+                  [v04a_bool_true [v04a_get "CONFIG.${kind}1_Multi_Tile_Sync" $rfdc]]}]
+}
+
+proc v04a_set_mts_kind {fh rfdc kind value label} {
+    set propdict [dict create \
+        "CONFIG.${kind}0_Multi_Tile_Sync" $value \
+        "CONFIG.${kind}1_Multi_Tile_Sync" $value]
+    v04a_set_dict $fh $rfdc "$kind MTS <- $value ($label)" $propdict
+    set want_true [v04a_bool_true $value]
+    if {[v04a_mts_kind_true $rfdc $kind] != $want_true} {
+        set dummy_failures {}
+        foreach tile {0 1} {
+            v04a_set $fh $rfdc "CONFIG.${kind}${tile}_Multi_Tile_Sync" $value 0 dummy_failures
+        }
+    }
+    set now [v04a_mts_kind_true $rfdc $kind]
+    v04a_log $fh "$kind MTS SET RESULT ($label)=[expr {$now == $want_true ? {PASS} : {FAIL}}] ${kind}0={[v04a_get CONFIG.${kind}0_Multi_Tile_Sync $rfdc]} ${kind}1={[v04a_get CONFIG.${kind}1_Multi_Tile_Sync $rfdc]}"
+    v04a_checkpoint $fh $rfdc "after $kind MTS <- $value ($label)"
+    return [expr {$now == $want_true}]
+}
+
+proc v04a_restore_mts_sequence {fh rfdc label} {
+    # Stronger ordering probe than the all-at-once restore: first make ADC
+    # the only MTS group in ONE dict (ADC on + DAC off, so the final state
+    # still has an MTS group and the user_sysref pins should not vanish),
+    # then bring DAC MTS back.  Each step is checkpointed so a cross-group
+    # side effect cannot hide; persisted user_sysref connectivity is also
+    # asserted at the end of the script.
+    v04a_log $fh "MTS SEQUENCE PROBE ($label): atomic ADC-on/DAC-off -> DAC on"
+    set propdict [dict create \
+        CONFIG.ADC0_Multi_Tile_Sync true \
+        CONFIG.ADC1_Multi_Tile_Sync true \
+        CONFIG.DAC0_Multi_Tile_Sync false \
+        CONFIG.DAC1_Multi_Tile_Sync false]
+    v04a_set_dict $fh $rfdc "MTS sequence atomic ADC-on/DAC-off ($label)" $propdict
+    set adc_ok [v04a_mts_kind_true $rfdc ADC]
+    if {!$adc_ok} {
+        set adc_ok [v04a_set_mts_kind $fh $rfdc ADC true "$label sequence ADC retry"]
+    }
+    if {!$adc_ok} {
+        v04a_set_mts_kind $fh $rfdc DAC true "$label sequence DAC restore after ADC fail"
+        v04a_ensure_user_sysref_connected $fh $rfdc "$label sequence after ADC fail"
+        v04a_log $fh "MTS SEQUENCE RESULT ($label)=FAIL (ADC could not be enabled as sole MTS group)"
+        return 0
+    }
+    if {[v04a_mts_kind_true $rfdc DAC]} {
+        v04a_set_mts_kind $fh $rfdc DAC false "$label sequence ensure DAC off"
+    }
+    set dac_ok [v04a_set_mts_kind $fh $rfdc DAC true "$label sequence DAC on"]
+    v04a_ensure_user_sysref_connected $fh $rfdc "$label sequence complete"
+    set now [v04a_mts_true $rfdc]
+    v04a_log $fh "MTS SEQUENCE RESULT ($label)=[expr {$now ? {PASS} : {FAIL}}] (ADC sole-group step=$adc_ok DAC-on step=$dac_ok)"
+    return $now
+}
+
+proc v04a_restore_mts_with_sequence {fh rfdc label} {
+    if {[v04a_restore_mts $fh $rfdc $label]} { return 1 }
+    return [v04a_restore_mts_sequence $fh $rfdc $label]
+}
+
+proc v04a_pl_clock_exists {rfdc} {
+    return [expr {[lsearch -exact [list_property $rfdc] CONFIG.PL_Clock_Freq] >= 0}]
+}
+
+proc v04a_set_pl_clock {fh rfdc value label} {
+    if {![v04a_pl_clock_exists $rfdc]} {
+        v04a_log $fh "PL CLOCK SET ($label): CONFIG.PL_Clock_Freq is ABSENT on this RFDC cell; branch skipped"
+        return 0
+    }
+    set dummy_failures {}
+    set ok [v04a_set $fh $rfdc CONFIG.PL_Clock_Freq $value 0 dummy_failures]
+    set got [v04a_get CONFIG.PL_Clock_Freq $rfdc]
+    set now [expr {$ok && [v04a_num_eq $got $value]}]
+    v04a_log $fh "PL CLOCK RESULT ($label)=[expr {$now ? {PASS} : {FAIL}}] PL_Clock_Freq={$got} expected {$value}"
+    v04a_checkpoint $fh $rfdc "after PL clock set ($label)"
+    return $now
+}
+
+proc v04a_try_pl_all {fh rfdc freq label} {
+    # Test both groups from a real false->true transition at this PL clock
+    # value; a pre-existing true that was never re-evaluated is not proof.
+    if {![v04a_set_pl_clock $fh $rfdc $freq $label]} { return 0 }
+    set adc_ok [v04a_set_mts_kind $fh $rfdc ADC true "$label ADC"]
+    if {!$adc_ok} {
+        v04a_log $fh "PL-CLOCK BRANCH RESULT ($label)=FAIL at ADC restore (PL_Clock_Freq=$freq)"
+        return 0
+    }
+    v04a_set_mts_kind $fh $rfdc DAC false "$label DAC retoggle off"
+    set dac_ok [v04a_set_mts_kind $fh $rfdc DAC true "$label DAC retoggle on"]
+    set now [v04a_mts_true $rfdc]
+    v04a_log $fh "PL-CLOCK BRANCH RESULT ($label)=[expr {$now ? {PASS} : {FAIL}}] (PL_Clock_Freq=$freq ADC=$adc_ok DAC-retoggle=$dac_ok)"
+    return $now
+}
+
+proc v04a_normalize_dac_mts_500 {fh rfdc label} {
+    # Return to the known-good DAC baseline between diagnostic branches.
+    if {[v04a_pl_clock_exists $rfdc]} {
+        v04a_set_pl_clock $fh $rfdc 500.000 "$label normalize"
+    }
+    set ok [v04a_set_mts_kind $fh $rfdc DAC true "$label normalize"]
+    v04a_checkpoint $fh $rfdc "after DAC baseline normalize ($label)"
+    return $ok
+}
+
+proc v04a_pin_drivers {pin} {
+    set drivers {}
+    if {$pin eq ""} { return $drivers }
+    set net [lindex [get_bd_nets -quiet -of_objects $pin] 0]
+    if {$net ne ""} {
+        foreach peer [get_bd_pins -quiet -of_objects $net] {
+            if {$peer ne $pin} { lappend drivers $peer }
+        }
+    }
+    return $drivers
+}
+
+proc v04a_capture_user_sysref_source {rfdc} {
+    foreach syspin {user_sysref_adc user_sysref_dac} {
+        set pin [lindex [get_bd_pins -quiet "$rfdc/$syspin"] 0]
+        foreach driver [v04a_pin_drivers $pin] {
+            if {![string match "$rfdc/*" $driver]} { return $driver }
+        }
+    }
+    return ""
+}
+
+proc v04a_ensure_user_sysref_connected {fh rfdc label} {
+    # Toggling MTS can regenerate the RFDC user_sysref pins.  If a pin
+    # reappears unconnected, reconnect it to the exact source captured
+    # from the MTS base so later branches/validate see the same BD graph.
+    if {![info exists ::v04a_user_sysref_source] || $::v04a_user_sysref_source eq ""} {
+        v04a_log $fh "USER_SYSREF ENSURE ($label): no source captured; skipped"
+        return 0
+    }
+    set source [lindex [get_bd_pins -quiet $::v04a_user_sysref_source] 0]
+    if {$source eq ""} {
+        v04a_log $fh "USER_SYSREF ENSURE ($label): captured source {$::v04a_user_sysref_source} not found"
+        return 0
+    }
+    set all_ok 1
+    foreach syspin {user_sysref_adc user_sysref_dac} {
+        set pin [lindex [get_bd_pins -quiet "$rfdc/$syspin"] 0]
+        if {$pin eq ""} {
+            v04a_log $fh "USER_SYSREF ENSURE ($label): $syspin pin ABSENT"
+            set all_ok 0
+            continue
+        }
+        set drivers [v04a_pin_drivers $pin]
+        if {[lsearch -exact $drivers $source] >= 0} {
+            v04a_log $fh "USER_SYSREF ENSURE ($label): $syspin already driven by $source"
+            continue
+        }
+        if {[llength $drivers] > 0} {
+            v04a_log $fh "USER_SYSREF ENSURE ($label): $syspin driven by {$drivers}; left unchanged"
+            continue
+        }
+        if {[catch {connect_bd_net $source $pin} err]} {
+            v04a_log $fh "USER_SYSREF ENSURE ($label): reconnect $syspin ERROR: $err"
+            set info [v04a_errinfo]
+            if {$info ne "" && $info ne $err} { v04a_log $fh "  errorInfo: $info" }
+            set all_ok 0
+        } else {
+            v04a_log $fh "USER_SYSREF ENSURE ($label): reconnected $syspin to $source; drivers now {[v04a_pin_drivers $pin]}"
+        }
+    }
+    return $all_ok
+}
+
+proc v04a_move_adc_aclk {fh rfdc target_name target_label} {
+    # Scratch-only clock move between the two existing MTSclkwiz outputs:
+    # clkRF (500 MHz) and clkRFdiv2 (250 MHz).  The 250 MHz move is the
+    # direction V07 must make anyway; restoring 500 MHz after a failed D4
+    # branch keeps D5/D6 isolated.  Downstream capture hierarchies stay on
+    # 500 MHz in scratch, so validate remains classified, not the gate.
+    set target [lindex [get_bd_pins -quiet "/clocktreeMTS/$target_name"] 0]
+    if {$target eq ""} {
+        foreach candidate [get_bd_pins -quiet -hierarchical "*$target_name"] {
+            if {[get_property NAME $candidate] eq $target_name} {
+                set target $candidate
+                break
+            }
+        }
+    }
+    if {$target eq ""} {
+        v04a_log $fh "ADC ACLK REWIRE ERROR: $target_name ($target_label) pin not found"
+        return 0
+    }
+    v04a_log $fh "ADC ACLK REWIRE: target $target_label source pin = $target"
+    foreach clkpin {m0_axis_aclk m1_axis_aclk} {
+        set pin [lindex [get_bd_pins -quiet "$rfdc/$clkpin"] 0]
+        if {$pin eq ""} {
+            v04a_log $fh "ADC ACLK REWIRE ERROR: $rfdc/$clkpin not found"
+            return 0
+        }
+        set drivers [v04a_pin_drivers $pin]
+        v04a_log $fh "ADC ACLK REWIRE: $clkpin currently driven by {$drivers}"
+        if {[lsearch -exact $drivers $target] >= 0} {
+            v04a_log $fh "ADC ACLK REWIRE: $clkpin already on $target_name"
+            continue
+        }
+        set net [lindex [get_bd_nets -quiet -of_objects $pin] 0]
+        if {$net ne ""} {
+            if {[catch {disconnect_bd_net $net $pin} err]} {
+                v04a_log $fh "ADC ACLK REWIRE ERROR disconnect $clkpin: $err"
+                set info [v04a_errinfo]
+                if {$info ne "" && $info ne $err} { v04a_log $fh "  errorInfo: $info" }
+                return 0
+            }
+        }
+        if {[catch {connect_bd_net $target $pin} err]} {
+            v04a_log $fh "ADC ACLK REWIRE ERROR connect $clkpin: $err"
+            set info [v04a_errinfo]
+            if {$info ne "" && $info ne $err} { v04a_log $fh "  errorInfo: $info" }
+            return 0
+        }
+        v04a_log $fh "ADC ACLK REWIRE: $clkpin now driven by {[v04a_pin_drivers $pin]}"
+    }
+    return 1
+}
+
+proc v04a_rewire_adc_aclk_250 {fh rfdc} {
+    return [v04a_move_adc_aclk $fh $rfdc clkRFdiv2 "250 MHz"]
+}
+
+proc v04a_restore_adc_aclk_500 {fh rfdc} {
+    return [v04a_move_adc_aclk $fh $rfdc clkRF "500 MHz"]
+}
+
+proc v04a_set_dac_interpolation {fh rfdc value label} {
+    # Active DAC slices in the MTS base are 00/02, 10/12 and 20 (tile 2 is
+    # enabled without MTS).  Move every active tile together, then per
+    # tile on retry, for the same shared-fabric-clock reason as the ADCs.
+    set active_ids {00 02 10 12 20}
+    set build_ids {{00 02 10 12 20} {00 02} {10 12} {20}}
+    foreach ids $build_ids {
+        set propdict {}
+        foreach xx $ids {
+            lappend propdict "CONFIG.DAC_Data_Width${xx}" 8
+            lappend propdict "CONFIG.DAC_Interpolation_Mode${xx}" $value
+        }
+        v04a_set_dict $fh $rfdc "DAC width8 + interpolation$value ($label; slices $ids)" $propdict
+        set all_ok 1
+        set parts {}
+        foreach xx $active_ids {
+            set got [v04a_get "CONFIG.DAC_Interpolation_Mode${xx}" $rfdc]
+            lappend parts "${xx}={$got}"
+            if {![v04a_num_eq $got $value]} { set all_ok 0 }
+        }
+        v04a_log $fh "DAC interpolation readback ($label; after slices $ids): [join $parts { }]"
+        if {$all_ok} { break }
+    }
+    v04a_checkpoint_all_tiles $fh $rfdc "after DAC interpolation$value ($label)"
+    return $all_ok
+}
+
 proc v04a_report_state {fh rfdc label} {
     v04a_log $fh "## STATE: $label"
+    v04a_report_sync_props $fh $rfdc $label
+    set dac_parts [list "DAC active slices:"]
+    foreach xx {00 02 10 12 20} {
+        lappend dac_parts "${xx}_EN={[v04a_get CONFIG.DAC_Slice${xx}_Enable $rfdc]}"
+        lappend dac_parts "${xx}_WIDTH={[v04a_get CONFIG.DAC_Data_Width${xx} $rfdc]}"
+        lappend dac_parts "${xx}_INTERP={[v04a_get CONFIG.DAC_Interpolation_Mode${xx} $rfdc]}"
+    }
+    v04a_log $fh [join $dac_parts " "]
+    v04a_checkpoint_all_tiles $fh $rfdc $label
     foreach tile {0 1} {
         foreach suffix {Enable Sampling_Rate Refclk_Freq Fabric_Freq Outclk_Freq \
                         PLL_Enable Clock_Source Clock_Dist Multi_Tile_Sync Band} {
@@ -292,13 +608,29 @@ proc v04a_report_state {fh rfdc label} {
         }
         v04a_log $fh "$clkpin driven by {$srcs} (V07 must move this to the 250 MHz clk_out2 domain)"
     }
+    foreach syspin {user_sysref_adc user_sysref_dac} {
+        set pin [lindex [get_bd_pins -quiet "$rfdc/$syspin"] 0]
+        if {$pin eq ""} {
+            v04a_log $fh "$syspin pin ABSENT"
+        } else {
+            v04a_log $fh "$syspin driven by {[v04a_pin_drivers $pin]}"
+        }
+    }
     v04a_log $fh ""
 }
 
 set failures {}
 set warnings {}
+set ::v04a_diag_results {}
+set ::v04a_diag_solution ""
+set ::v04a_pl_clock_before "<unknown>"
+set ::v04a_pl_clock_preset_500 0
+set ::v04a_expected_pl_clock ""
+set ::v04a_expected_dac_interpolation ""
+set ::v04a_adc_aclk_rewired_250 0
+set ::v04a_user_sysref_source ""
 
-v04a_log $fh "# V04 scratch RFDC apply v1.2 atomic-dict + MTS invariant (scratch project only) - Vivado [lindex [version] 1]"
+v04a_log $fh "# V04 scratch RFDC apply v1.3 atomic-dict + MTS root-cause diagnostics (scratch project only) - Vivado [lindex [version] 1]"
 v04a_log $fh "# input_xpr=$input_xpr"
 v04a_log $fh "# scratch_xpr=$scratch_xpr"
 v04a_log $fh ""
@@ -348,7 +680,16 @@ v04a_log $fh "RFDC cell=$rfdc vlnv=$rfdc_vlnv"
 v04a_report_state $fh $rfdc "BEFORE (scratch copy of MTS work BD)"
 set ::v04a_before_tiles [v04a_capture_tile_invariants $rfdc]
 v04a_log $fh "TILE INVARIANTS CAPTURED ([expr {[dict size $::v04a_before_tiles]}] properties; asserted again after reopen)"
+if {[v04a_pl_clock_exists $rfdc]} {
+    set ::v04a_pl_clock_before [v04a_get CONFIG.PL_Clock_Freq $rfdc]
+} else {
+    set ::v04a_pl_clock_before "<absent>"
+}
+v04a_log $fh "PL_Clock_Freq BEFORE = {$::v04a_pl_clock_before}"
+set ::v04a_user_sysref_source [v04a_capture_user_sysref_source $rfdc]
+v04a_log $fh "USER_SYSREF SOURCE CAPTURED = {$::v04a_user_sysref_source}"
 v04a_checkpoint $fh $rfdc "BEFORE"
+v04a_checkpoint_all_tiles $fh $rfdc "BEFORE"
 
 # --- Apply candidate CONFIG (pair heads; staged atomic dicts) ---------------
 v04a_log $fh "## APPLY (staged atomic dicts; see header for why)"
@@ -370,6 +711,23 @@ if {![v04a_set_dict $fh $rfdc "mode: I/Q + Real->I/Q + Fine" \
 }
 
 v04a_checkpoint $fh $rfdc "after stage 1 mode dict"
+
+# v1.3 ordering probe: if the live RFDC cell has PL_Clock_Freq, put it at
+# the MTS base's 500 MHz common PL clock BEFORE the stage-2 transaction
+# that flipped MTS in v1.2.  500 MHz is an integer multiple of both the
+# target ADC AXIS clock (250 MHz) and the unchanged DAC AXIS clock
+# (500 MHz).  If it is already 500 this is deliberately a logged no-op.
+if {[v04a_pl_clock_exists $rfdc]} {
+    if {[v04a_num_eq $::v04a_pl_clock_before 500.000]} {
+        v04a_log $fh "PL CLOCK PRE-STAGE: already 500.000; no write needed"
+    } else {
+        set ::v04a_pl_clock_preset_500 \
+            [v04a_set_pl_clock $fh $rfdc 500.000 "pre-stage-2 normalize"]
+    }
+    v04a_checkpoint $fh $rfdc "after PL clock pre-stage"
+} else {
+    v04a_log $fh "PL CLOCK PRE-STAGE: CONFIG.PL_Clock_Freq absent; continuing with clock/connectivity diagnostics only"
+}
 
 # Stage 2: rate change.  Width+decimation for ALL pairs in one dict: both
 # pairs of a tile share that tile's fabric clock, so no intermediate state
@@ -430,13 +788,246 @@ foreach tile {0 1} {
 v04a_checkpoint $fh $rfdc "after Fabric_Freq stage"
 v04a_report_state $fh $rfdc "AFTER SET (pre-validate)"
 
-# If a datapath stage already cleared MTS, restore it before validate so
-# validate sees (and keeps) the MTS SYSREF ports/nets from the base BD.
-if {![v04a_mts_true $rfdc]} {
-    lappend warnings "MTS was cleared during the datapath apply; restore attempted before validate (see CHECKPOINT lines for the stage)"
-    if {![v04a_restore_mts $fh $rfdc "pre-validate"]} {
-        lappend failures "Multi_Tile_Sync could not be restored before validate"
+# If a datapath stage cleared MTS, run the v1.3 root-cause branches before
+# validate so a successful branch is the state validate actually sees.
+# PG269 allows different ADC/DAC AXIS clocks when the PL clock is a common
+# integer multiple and PL SYSREF is captured in each AXIS domain, so the
+# preferred branches keep ADC fabric 250 MHz + DAC fabric 500 MHz.  The
+# equal-fabric DAC-250 branch is diagnostic until explicitly adopted.
+if {[v04a_mts_true $rfdc]} {
+    if {$::v04a_pl_clock_preset_500} {
+        set ::v04a_diag_solution "PL500_PRESET_BEFORE_STAGE2"
+        set ::v04a_expected_pl_clock 500.000
+    } elseif {[v04a_pl_clock_exists $rfdc]} {
+        set ::v04a_diag_solution "NO_MTS_FLIP"
+        set ::v04a_expected_pl_clock [v04a_get CONFIG.PL_Clock_Freq $rfdc]
+    } else {
+        set ::v04a_diag_solution "NO_MTS_FLIP_NO_PL_CLOCK_PROPERTY"
     }
+    lappend ::v04a_diag_results "$::v04a_diag_solution=PASS"
+    v04a_log $fh "MTS DIAGNOSTIC SOLUTION=$::v04a_diag_solution (no restore branch needed)"
+} else {
+    lappend warnings "MTS was cleared during the datapath apply; v1.3 diagnostic branches attempted before validate (see CHECKPOINT and BRANCH RESULT lines)"
+    v04a_log $fh "## MTS ROOT-CAUSE DIAGNOSTICS (final ADC datapath already applied)"
+    v04a_report_sync_props $fh $rfdc "diagnostics entry"
+    v04a_checkpoint_all_tiles $fh $rfdc "diagnostics entry"
+
+    # D0: exact v1.2 all-at-once restore, now under the reported PL state.
+    if {[v04a_restore_mts $fh $rfdc "D0 baseline pre-validate"]} {
+        set ::v04a_diag_solution "BASELINE_RESTORE_AFTER_DATAPATH"
+        if {[v04a_pl_clock_exists $rfdc]} {
+            set ::v04a_expected_pl_clock [v04a_get CONFIG.PL_Clock_Freq $rfdc]
+        }
+        lappend ::v04a_diag_results "D0_BASELINE_RESTORE=PASS"
+    } else {
+        lappend ::v04a_diag_results "D0_BASELINE_RESTORE=FAIL"
+    }
+
+    # D1/D2: PL clock value, with both MTS groups forced through a real
+    # false->true transition (v04a_try_pl_all retoggles DAC explicitly).
+    if {$::v04a_diag_solution eq "" && [v04a_pl_clock_exists $rfdc]} {
+        if {[v04a_try_pl_all $fh $rfdc 500.000 "D1 PL500 split ADC250/DAC500"]} {
+            set ::v04a_diag_solution "PL500_SPLIT_FABRIC"
+            set ::v04a_expected_pl_clock 500.000
+            lappend ::v04a_diag_results "D1_PL500_SPLIT_FABRIC=PASS"
+        } else {
+            lappend ::v04a_diag_results "D1_PL500_SPLIT_FABRIC=FAIL"
+            v04a_normalize_dac_mts_500 $fh $rfdc "D1"
+            if {[v04a_mts_true $rfdc]} {
+                set ::v04a_diag_solution "PL500_ADC_THEN_DAC_NORMALIZE"
+                set ::v04a_expected_pl_clock 500.000
+                lappend ::v04a_diag_results "D1_PL500_AFTER_DAC_NORMALIZE=PASS"
+            }
+        }
+    }
+    if {$::v04a_diag_solution eq "" && [v04a_pl_clock_exists $rfdc]} {
+        if {[v04a_try_pl_all $fh $rfdc 250.000 "D2 PL250 split ADC250/DAC500"]} {
+            set ::v04a_diag_solution "PL250_SPLIT_FABRIC"
+            set ::v04a_expected_pl_clock 250.000
+            lappend ::v04a_diag_results "D2_PL250_SPLIT_FABRIC=PASS"
+        } else {
+            if {[v04a_mts_kind_true $rfdc ADC]} {
+                lappend ::v04a_diag_results "D2_PL250_ADC_ONLY=PASS_DAC_RETOGGLE_FAIL"
+            } else {
+                lappend ::v04a_diag_results "D2_PL250_SPLIT_FABRIC=FAIL"
+            }
+            v04a_normalize_dac_mts_500 $fh $rfdc "D2"
+            if {[v04a_mts_true $rfdc]} {
+                set ::v04a_diag_solution "PL250_ADC_THEN_PL500_DAC_NORMALIZE"
+                set ::v04a_expected_pl_clock 500.000
+                lappend ::v04a_diag_results "D2_AFTER_PL500_DAC_NORMALIZE=PASS"
+            }
+        }
+    }
+
+    # D3: cross-group sequencing (DAC MTS off -> ADC on -> DAC on).
+    if {$::v04a_diag_solution eq ""} {
+        v04a_normalize_dac_mts_500 $fh $rfdc "D3 entry"
+        if {[v04a_restore_mts_sequence $fh $rfdc "D3 sequence at PL500/current"]} {
+            set ::v04a_diag_solution "SEQUENCE_DAC_OFF_ADC_ON_DAC_ON_PL500"
+            if {[v04a_pl_clock_exists $rfdc]} { set ::v04a_expected_pl_clock 500.000 }
+            lappend ::v04a_diag_results "D3_SEQUENCE_PL500=PASS"
+        } elseif {[v04a_pl_clock_exists $rfdc]} {
+            lappend ::v04a_diag_results "D3_SEQUENCE_PL500=FAIL"
+            v04a_set_pl_clock $fh $rfdc 250.000 "D3 sequence PL250 entry"
+            if {[v04a_restore_mts_sequence $fh $rfdc "D3 sequence at PL250"]} {
+                set ::v04a_diag_solution "SEQUENCE_DAC_OFF_ADC_ON_DAC_ON_PL250"
+                set ::v04a_expected_pl_clock 250.000
+                lappend ::v04a_diag_results "D3_SEQUENCE_PL250=PASS"
+            } else {
+                lappend ::v04a_diag_results "D3_SEQUENCE_PL250=FAIL"
+                v04a_normalize_dac_mts_500 $fh $rfdc "D3"
+            }
+        } else {
+            lappend ::v04a_diag_results "D3_SEQUENCE=FAIL"
+            v04a_normalize_dac_mts_500 $fh $rfdc "D3"
+        }
+    }
+
+    # D4: connected-clock dependency.  Move only the RFDC ADC AXIS clock
+    # pins to clkRFdiv2/250 MHz (the V07 direction), then retry MTS.
+    if {$::v04a_diag_solution eq ""} {
+        v04a_normalize_dac_mts_500 $fh $rfdc "D4 entry"
+        if {[v04a_rewire_adc_aclk_250 $fh $rfdc]} {
+            set ::v04a_adc_aclk_rewired_250 1
+            v04a_report_state $fh $rfdc "AFTER ADC ACLK REWIRE (pre-restore)"
+            if {[v04a_restore_mts $fh $rfdc "D4 ADC aclk250 baseline"]} {
+                set ::v04a_diag_solution "ADC_ACLK250_BASELINE"
+                if {[v04a_pl_clock_exists $rfdc]} {
+                    set ::v04a_expected_pl_clock [v04a_get CONFIG.PL_Clock_Freq $rfdc]
+                }
+                lappend ::v04a_diag_results "D4_ADC_ACLK250_BASELINE=PASS"
+            } elseif {[v04a_pl_clock_exists $rfdc] && \
+                      [v04a_try_pl_all $fh $rfdc 500.000 "D4 ADC aclk250 + PL500"]} {
+                set ::v04a_diag_solution "ADC_ACLK250_PL500"
+                set ::v04a_expected_pl_clock 500.000
+                lappend ::v04a_diag_results "D4_ADC_ACLK250_PL500=PASS"
+            } elseif {[v04a_pl_clock_exists $rfdc] && \
+                      [v04a_try_pl_all $fh $rfdc 250.000 "D4 ADC aclk250 + PL250"]} {
+                set ::v04a_diag_solution "ADC_ACLK250_PL250"
+                set ::v04a_expected_pl_clock 250.000
+                lappend ::v04a_diag_results "D4_ADC_ACLK250_PL250=PASS"
+            } else {
+                if {[v04a_mts_kind_true $rfdc ADC]} {
+                    lappend ::v04a_diag_results "D4_ADC_ACLK250_ADC_ONLY=PASS_DAC_FAIL"
+                } else {
+                    lappend ::v04a_diag_results "D4_ADC_ACLK250=FAIL"
+                }
+                v04a_normalize_dac_mts_500 $fh $rfdc "D4"
+                if {[v04a_mts_true $rfdc]} {
+                    set ::v04a_diag_solution "ADC_ACLK250_AFTER_PL500_DAC_NORMALIZE"
+                    if {[v04a_pl_clock_exists $rfdc]} { set ::v04a_expected_pl_clock 500.000 }
+                    lappend ::v04a_diag_results "D4_ADC_ACLK250_AFTER_DAC_NORMALIZE=PASS"
+                } elseif {[v04a_restore_adc_aclk_500 $fh $rfdc]} {
+                    set ::v04a_adc_aclk_rewired_250 0
+                    lappend ::v04a_diag_results "D4_ADC_ACLK_RESTORED_500=PASS"
+                } else {
+                    lappend ::v04a_diag_results "D4_ADC_ACLK_RESTORED_500=FAIL"
+                    lappend warnings "D4 failed and ADC AXIS clock pins could not be restored to 500 MHz; D5/D6 are therefore not fully isolated from the 250 MHz clock-pin state"
+                }
+            }
+        } else {
+            lappend ::v04a_diag_results "D4_ADC_ACLK250=REWIRE_ERROR"
+        }
+    }
+
+    # D5: equal-fabric probe.  DAC interpolation 2 on every active DAC
+    # slice makes DAC fabric 250 MHz like the ADCs.  Success here proves
+    # a workaround/root-cause class, but changes the HIL DAC contract, so
+    # it is labelled PASS-DIAGNOSTIC at the end, not production PASS.
+    if {$::v04a_diag_solution eq ""} {
+        v04a_normalize_dac_mts_500 $fh $rfdc "D5 entry"
+        if {[v04a_set_dac_interpolation $fh $rfdc 2 "D5 equal-fabric"]} {
+            set dac250_ok 0
+            set dac250_pl ""
+            if {[v04a_pl_clock_exists $rfdc] && \
+                [v04a_try_pl_all $fh $rfdc 250.000 "D5 DAC250 + PL250"]} {
+                set dac250_ok 1
+                set dac250_pl 250.000
+                lappend ::v04a_diag_results "D5_DAC250_PL250=PASS"
+                # Distinguish "PL must equal fabric" from "ADC/DAC fabric
+                # must match": force an ADC false->true at PL500 as well.
+                v04a_set_pl_clock $fh $rfdc 500.000 "D5 DAC250 PL500 distinguish"
+                v04a_set_mts_kind $fh $rfdc ADC false "D5 DAC250 PL500 ADC retoggle off"
+                v04a_set_mts_kind $fh $rfdc ADC true "D5 DAC250 PL500 ADC retoggle on"
+                if {[v04a_mts_true $rfdc]} {
+                    set dac250_pl 500.000
+                    lappend ::v04a_diag_results "D5_DAC250_PL500_ALSO=PASS"
+                } elseif {[v04a_try_pl_all $fh $rfdc 250.000 "D5 DAC250 recover PL250"]} {
+                    set dac250_pl 250.000
+                    lappend ::v04a_diag_results "D5_DAC250_PL500=FAIL_PL250_RECOVERED"
+                } else {
+                    set dac250_ok 0
+                    lappend ::v04a_diag_results "D5_DAC250_PL500=FAIL_PL250_RECOVERY_FAIL"
+                }
+            } elseif {[v04a_pl_clock_exists $rfdc] && \
+                      [v04a_try_pl_all $fh $rfdc 500.000 "D5 DAC250 + PL500"]} {
+                set dac250_ok 1
+                set dac250_pl 500.000
+                lappend ::v04a_diag_results "D5_DAC250_PL500=PASS"
+            } elseif {![v04a_pl_clock_exists $rfdc] && \
+                      [v04a_restore_mts $fh $rfdc "D5 DAC250 no PL property"]} {
+                set dac250_ok 1
+                lappend ::v04a_diag_results "D5_DAC250_NO_PL_PROPERTY=PASS"
+            } else {
+                lappend ::v04a_diag_results "D5_DAC250_EQUAL_FABRIC=FAIL"
+            }
+            if {$dac250_ok} {
+                set pl_label "NONE"
+                if {$dac250_pl ne ""} { set pl_label [format %.0f $dac250_pl] }
+                set ::v04a_diag_solution "DAC250_EQUAL_FABRIC_PL${pl_label}"
+                set ::v04a_expected_pl_clock $dac250_pl
+                set ::v04a_expected_dac_interpolation 2
+                lappend warnings "MTS restored only in the DAC250 equal-fabric diagnostic branch; adopting DAC interpolation 2 / DAC AXIS 250 MHz is a separate V04/V07 production decision"
+            } else {
+                v04a_set_dac_interpolation $fh $rfdc 1 "D5 revert"
+                v04a_normalize_dac_mts_500 $fh $rfdc "D5 revert"
+            }
+        } else {
+            lappend ::v04a_diag_results "D5_DAC250_EQUAL_FABRIC=SET_ERROR"
+            v04a_set_dac_interpolation $fh $rfdc 1 "D5 error revert"
+            v04a_normalize_dac_mts_500 $fh $rfdc "D5 error revert"
+        }
+    }
+
+    # D6: last property probe, always reverted.  ADC Data_Width=4 with
+    # decimation 2 should compute fabric 500 MHz again; if MTS restores
+    # only here, the dependency is tied to ADC fabric/PL equality at
+    # 500 MHz rather than decimation itself.  Width 8 is restored so the
+    # persisted datapath assertions still test the V04 target.
+    if {$::v04a_diag_solution eq ""} {
+        v04a_log $fh "D6 ADC WIDTH4 PROBE: temporary Data_Width=4 + decimation2 (expect ADC fabric 500 MHz)"
+        v04a_set_dict $fh $rfdc "D6 rate: width4 + decimation2 (all pairs)" \
+            [v04a_build_dict {{Data_Width 4} {Decimation_Mode 2}} $pair_ids]
+        v04a_decimation_is_2 $fh $rfdc $pair_ids "D6 width4"
+        v04a_checkpoint_all_tiles $fh $rfdc "D6 width4 pre-restore"
+        set width4_ok [v04a_restore_mts $fh $rfdc "D6 width4 baseline"]
+        if {!$width4_ok && [v04a_pl_clock_exists $rfdc]} {
+            set width4_ok [v04a_try_pl_all $fh $rfdc 500.000 "D6 width4 + PL500"]
+        }
+        lappend ::v04a_diag_results "D6_ADC_WIDTH4_FABRIC500=[expr {$width4_ok ? {PASS} : {FAIL}}]"
+        if {$width4_ok} {
+            lappend warnings "ADC MTS restored only in the temporary Data_Width=4/fabric-500 probe; width8/250 MHz was restored, so this is root-cause evidence, not a V04 pass"
+        }
+        v04a_log $fh "D6 REVERT: Data_Width=8 + decimation2 (expect ADC fabric 250 MHz; MTS may flip again)"
+        v04a_set_dict $fh $rfdc "D6 revert rate: width8 + decimation2 (all pairs)" \
+            [v04a_build_dict $rate_groups $pair_ids]
+        v04a_decimation_is_2 $fh $rfdc $pair_ids "D6 revert width8"
+        v04a_normalize_dac_mts_500 $fh $rfdc "D6 revert"
+        v04a_checkpoint_all_tiles $fh $rfdc "D6 after revert"
+    }
+
+    foreach result $::v04a_diag_results {
+        v04a_log $fh "MTS DIAGNOSTIC RESULT: $result"
+    }
+    if {$::v04a_diag_solution eq ""} {
+        v04a_log $fh "MTS DIAGNOSTIC SOLUTION=NONE (all branches failed; see BRANCH RESULT lines above)"
+        lappend failures "Multi_Tile_Sync could not be restored by any v1.3 diagnostic branch before validate"
+    } else {
+        v04a_log $fh "MTS DIAGNOSTIC SOLUTION=$::v04a_diag_solution expected_PL_Clock_Freq={$::v04a_expected_pl_clock} expected_DAC_interpolation={$::v04a_expected_dac_interpolation} adc_aclk_rewired_250=$::v04a_adc_aclk_rewired_250"
+    }
+    v04a_ensure_user_sysref_connected $fh $rfdc "after MTS diagnostics"
+    v04a_report_state $fh $rfdc "AFTER MTS DIAGNOSTICS (pre-validate)"
 }
 
 # --- Validate (reported separately; V07 rewiring still pending) -------------
@@ -463,7 +1054,7 @@ v04a_checkpoint $fh $rfdc "after validate #1"
 # REVIEW warning distinguishes that fragile case from a clean pass.
 if {![v04a_mts_true $rfdc]} {
     lappend warnings "MTS is off after validate #1; restore + validate #2 attempted"
-    if {[v04a_restore_mts $fh $rfdc "after validate #1"]} {
+    if {[v04a_restore_mts_with_sequence $fh $rfdc "after validate #1"]} {
         v04a_log $fh "V04 SCRATCH: validate_bd_design #2 after MTS restore ..."
         set validate2_rc [catch {validate_bd_design} validate2_msg]
         if {$validate2_rc} {
@@ -480,7 +1071,7 @@ if {![v04a_mts_true $rfdc]} {
         v04a_checkpoint $fh $rfdc "after MTS restore + validate #2"
         if {![v04a_mts_true $rfdc]} {
             lappend warnings "validate #2 cleared MTS again; final restore is after validate, so V07 must re-check MTS after every validate until the clock/SYSREF condition is identified"
-            if {![v04a_restore_mts $fh $rfdc "final, after validate #2"]} {
+            if {![v04a_restore_mts_with_sequence $fh $rfdc "final, after validate #2"]} {
                 lappend failures "Multi_Tile_Sync could not be restored after validate #2"
             }
         }
@@ -542,9 +1133,59 @@ foreach tile {0 1} {
         }
     }
 }
+foreach result $::v04a_diag_results {
+    v04a_log $fh "MTS DIAGNOSTIC RESULT (persisted): $result"
+}
+v04a_log $fh "MTS DIAGNOSTIC SOLUTION (persisted check)=$::v04a_diag_solution"
+if {$::v04a_expected_pl_clock ne ""} {
+    set got_pl [v04a_get CONFIG.PL_Clock_Freq $rfdc]
+    if {![v04a_num_eq $got_pl $::v04a_expected_pl_clock]} {
+        lappend failures "PL_Clock_Freq: got {$got_pl}, expected {$::v04a_expected_pl_clock} from solution $::v04a_diag_solution"
+        v04a_log $fh "ASSERT FAIL CONFIG.PL_Clock_Freq = {$got_pl} (expected {$::v04a_expected_pl_clock})"
+    }
+}
+if {$::v04a_expected_dac_interpolation ne ""} {
+    foreach xx {00 02 10 12 20} {
+        set got_dac_interp [v04a_get "CONFIG.DAC_Interpolation_Mode${xx}" $rfdc]
+        if {![v04a_num_eq $got_dac_interp $::v04a_expected_dac_interpolation]} {
+            lappend failures "DAC_Interpolation_Mode${xx}: got {$got_dac_interp}, expected {$::v04a_expected_dac_interpolation} from solution $::v04a_diag_solution"
+            v04a_log $fh "ASSERT FAIL CONFIG.DAC_Interpolation_Mode${xx} = {$got_dac_interp} (expected {$::v04a_expected_dac_interpolation})"
+        }
+    }
+    foreach tile {0 1 2} {
+        set got_dac_fabric [v04a_get "CONFIG.DAC${tile}_Fabric_Freq" $rfdc]
+        if {![v04a_num_eq $got_dac_fabric 250.000]} {
+            lappend failures "DAC${tile}_Fabric_Freq: got {$got_dac_fabric}, expected 250.000 in DAC250 diagnostic branch"
+            v04a_log $fh "ASSERT FAIL CONFIG.DAC${tile}_Fabric_Freq = {$got_dac_fabric} (expected 250.000)"
+        }
+    }
+}
+if {$::v04a_adc_aclk_rewired_250} {
+    foreach clkpin {m0_axis_aclk m1_axis_aclk} {
+        set pin [lindex [get_bd_pins -quiet "$rfdc/$clkpin"] 0]
+        set drivers [v04a_pin_drivers $pin]
+        if {[lsearch -glob $drivers *clkRFdiv2] < 0} {
+            lappend failures "$clkpin is not driven by clkRFdiv2 after reopen (drivers: $drivers)"
+            v04a_log $fh "ASSERT FAIL $clkpin drivers={$drivers} (expected *clkRFdiv2)"
+        }
+    }
+}
+foreach syspin {user_sysref_adc user_sysref_dac} {
+    set pin [lindex [get_bd_pins -quiet "$rfdc/$syspin"] 0]
+    set drivers [v04a_pin_drivers $pin]
+    if {$pin eq "" || [llength $drivers] == 0} {
+        lappend failures "$syspin is absent or unconnected after reopen (pin={$pin}, drivers={$drivers}); MTS property values alone are not a pass"
+        v04a_log $fh "ASSERT FAIL $syspin pin={$pin} drivers={$drivers} (expected connected)"
+    }
+}
 if {[info exists ::v04a_before_tiles]} {
     dict for {prop expected} $::v04a_before_tiles {
         if {$expected eq "<unavailable>"} { continue }
+        if {[string match "DAC250*" $::v04a_diag_solution] && \
+            ($prop eq "CONFIG.DAC0_Fabric_Freq" || $prop eq "CONFIG.DAC1_Fabric_Freq")} {
+            v04a_log $fh "INVARIANT WAIVED $prop: DAC250 diagnostic branch intentionally changes 500.000 -> 250.000"
+            continue
+        }
         set got_inv [v04a_get $prop $rfdc]
         if {![string equal -nocase $got_inv $expected] && ![v04a_num_eq $got_inv $expected]} {
             lappend failures "tile invariant $prop changed: before {$expected}, persisted {$got_inv}"
@@ -585,13 +1226,22 @@ if {[llength $failures] > 0} {
     close_project
     error "V04 scratch apply FAILED with [llength $failures] assertion failures (report: $out_file). Input project was not modified."
 }
-if {$validate_rc} {
-    v04a_log $fh "V04 SCRATCH CONFIG RESULT=PASS (full-BD validate still FAILS as expected until V07 moves ADC streams to 250 MHz and replaces the MTS capture path)"
+if {[string match "DAC250*" $::v04a_diag_solution]} {
+    if {$validate_rc} {
+        v04a_log $fh "V04 SCRATCH CONFIG RESULT=PASS-DIAGNOSTIC solution=$::v04a_diag_solution (MTS persists only with DAC interpolation 2 / DAC fabric 250 MHz; production adoption is a separate V04/V07 decision; full-BD validate still FAILS until V07 rewires clocks/streams/SYSREF)"
+    } else {
+        v04a_log $fh "V04 SCRATCH CONFIG RESULT=PASS-DIAGNOSTIC solution=$::v04a_diag_solution (MTS persists only with DAC interpolation 2 / DAC fabric 250 MHz; production adoption is a separate V04/V07 decision; full-BD validate also passed in scratch)"
+    }
+    set final_puts "V04 SCRATCH APPLY PASS-DIAGNOSTIC solution=$::v04a_diag_solution (report: $out_file)"
+} elseif {$validate_rc} {
+    v04a_log $fh "V04 SCRATCH CONFIG RESULT=PASS solution=$::v04a_diag_solution (full-BD validate still FAILS as expected until V07 moves ADC streams to 250 MHz and replaces the MTS capture path)"
+    set final_puts "V04 SCRATCH APPLY PASS solution=$::v04a_diag_solution (report: $out_file)"
 } else {
-    v04a_log $fh "V04 SCRATCH CONFIG RESULT=PASS (full-BD validate also passed in scratch)"
+    v04a_log $fh "V04 SCRATCH CONFIG RESULT=PASS solution=$::v04a_diag_solution (full-BD validate also passed in scratch)"
+    set final_puts "V04 SCRATCH APPLY PASS solution=$::v04a_diag_solution (report: $out_file)"
 }
 v04a_log $fh "Input project untouched: $input_xpr"
 v04a_log $fh "Scratch project (deletable): $scratch_xpr"
 close $fh
 close_project
-puts "V04 SCRATCH APPLY PASS (report: $out_file)"
+puts $final_puts

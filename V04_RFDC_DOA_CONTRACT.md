@@ -156,10 +156,45 @@ stage, skips the direct `Fabric_Freq` write if 250 is already computed,
 tests re-enabling ADC/DAC MTS as a late transaction (before validate and,
 if necessary, after validate + a second validate), and hard-asserts
 MTS plus captured tile clock/source/distribution invariants on the
-persisted readback. A v1.2 pass is *clean* only if MTS never flips or a
-restore survives validate; if every validate clears MTS and only a
-post-validate restore persists, V04 remains open until the underlying
-clock/SYSREF condition is identified.
+persisted readback.
+
+**Third scratch attempt (2026-11-03, script v1.2) — correctly FAIL:**
+the checkpoint sequence localized the flip exactly. Before the apply and
+after the stage-1 mode dict, ADC0/1 and DAC0/1 were all MTS `true` at
+500 MHz fabric. After the stage-2 rate dict/retries
+(`Data_Width=8` + `Decimation_Mode=2`, ADC fabric 250 MHz), ADC0/1 MTS
+was `false`; DAC0/1 stayed `true` at 500 MHz. Stage 3 tuning and the
+conditional `Fabric_Freq` step changed nothing. The pre-validate MTS
+restore failed, full-BD validate #1 passed with ADC MTS still off, and
+the post-validate restore also failed, so validate #2 was not entered.
+Persisted state remained ADC MTS `false`/250 MHz and DAC MTS
+`true`/500 MHz, with exactly six failures (two restores, two ADC MTS
+assertions, two ADC MTS invariants) and no datapath assertion failures.
+This eliminates the mixer-mode stage, tuning stage, direct
+`Fabric_Freq` write and `validate_bd_design` as the *initial* trigger;
+the blocker is the RFDC dependency evaluated by the ADC rate
+transaction as a whole.
+
+Script **v1.3** is therefore a recorded root-cause experiment, not a
+blind retry. It enumerates the live RFDC sync/PL-clock properties
+(generated Tcl can omit defaults such as `CONFIG.PL_Clock_Freq`), sets
+`PL_Clock_Freq=500.000` before stage 2 if that property exists and is
+not already 500 (500 MHz is the common integer multiple of ADC AXIS
+250 MHz and DAC AXIS 500 MHz), and only if MTS still flips runs ordered
+branches: PL clock 500/250 with both MTS groups forced through a real
+false→true transition; ADC-sole-group sequencing; ADC `m0/m1_axis_aclk`
+moved to the existing 250 MHz `clkRFdiv2` net (restored to 500 MHz if
+that branch fails); DAC interpolation 2×/fabric 250 MHz on every active
+DAC slice; and a temporary, always-reverted ADC `Data_Width=4`/fabric
+500 MHz probe. PG269 permits different ADC/DAC AXIS frequencies with a
+common-multiple PL clock and separate PL-SYSREF capture in each AXIS
+domain, so a split-clock branch is preferred. If only the DAC-250
+branch restores MTS, v1.3 reports **PASS-DIAGNOSTIC**, not production
+PASS: changing the DAC loopback to interpolation 2×/250 MHz AXIS is a
+separate V04/V07 decision. If no branch restores ADC MTS, the branch
+table in the report is the evidence for the next hypothesis (for
+example MTS tile-group/clock-distribution state) — production step08
+remains blocked meanwhile.
 
 ## 4. PL stream / clock contract
 
@@ -201,7 +236,7 @@ architecture at our rates). The existing 64‑band scalar harness in
 - [x] Centre/band/decimation/clock numbers locked above and mirrored in `config.mk`.
 - [x] First `v04_dump_rfdc.tcl` run reviewed: RFDC 2.6 property names, current MTS values and stream set proven on the 2023.2 PC.
 - [x] Revised dump run (2026-11-03, dump v2.1): IP-XACT choice labels for all V04 enums (`Zone 2=1`, `Mode2=1`, `Real->I/Q=0`, `Fine=2`, `I/Q=1`, `2x=2`), `MTSclkwiz` outputs (500/250 MHz, both used), RFDC streams 128-bit with no TKEEP/TLAST/TSTRB.
-- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect **and ADC MTS remains true**. v1.0 proved everything except decimation; v1.1 proved decimation 2×/`Fabric_Freq=250.000` persisted but exposed `ADC0/1_Multi_Tile_Sync=true→false`. Script v1.2 (stage checkpoints + MTS restore/invariant assertions) rerun pending: `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched).
+- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect **and ADC MTS remains true**. v1.0 proved everything except decimation; v1.1 proved decimation 2×/`Fabric_Freq=250.000` persisted but exposed `ADC0/1_Multi_Tile_Sync=true→false`; v1.2 correctly **FAIL**ed with six MTS failures and localized the flip to the stage-2 rate transaction (both late restores failed; validate was not the trigger). Script v1.3 (live `PL_Clock_Freq`/sync-property dump + ordered PL-clock, sequencing, ADC-clock-rewire, DAC-250 and ADC-width4 diagnostic branches; DAC-250 success is `PASS-DIAGNOSTIC` only) rerun pending: `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched).
 - [x] V05 gearbox implemented against §4 and accepted on Vitis HLS 2023.2 (2026-11-03: `step05_hls_repack` PASS — CSim bit-exact, csynth II=1/depth 2, estimated Fmax 500 MHz, VLNV `openai:doa:rfdc_repack4:1.0` verified; details in `V05_RFDC_REPACK4_SPEC.md`). Post-channelizer capture selector is specified with V06's output format.
 - [ ] V06 channelizer feasibility evidence (1‑ch synth) before any step08 integration attempt.
 
