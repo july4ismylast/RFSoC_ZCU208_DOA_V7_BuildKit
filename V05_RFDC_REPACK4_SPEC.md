@@ -84,12 +84,32 @@ reversal inside this one block plus a version bump — nowhere else.
 
 ## 5. Acceptance gates
 
-- [ ] `make step05_hls_repack` on Vitis HLS 2023.2: C-sim PASS
-      (`PASS: rfdc_repack4 SSR-8 I/Q packing, 5 beats x 4 channels x 8 lanes`).
-- [ ] Csynth report: II=1, clock estimate meets 4.0 ns on
-      `xczu48dr-fsvg1517-2-e`, utilisation recorded here after the run.
-- [ ] Exported `component.xml` VLNV exactly
-      `openai:doa:rfdc_repack4:1.0` (enforced by the IP Makefile and
-      step06 `collect_ip`).
+- [x] `make step05_hls_repack` PASS on Vitis HLS 2023.2 (user PC,
+      2026-11-03): CSim printed
+      `PASS: rfdc_repack4 SSR-8 I/Q packing, 5 beats x 4 channels x 8 lanes`
+      and finished with 0 errors.
+- [x] Csynth on `xczu48dr-fsvg1517-2-e` @ 4.0 ns: **Final II=1, pipeline
+      depth 2, estimated Fmax 500 MHz** (2× margin over the 250 MHz
+      contract); all 12 ports generated as `axis (register, both mode)`,
+      control `ap_ctrl_none`, as specified.
+- [ ] Record the csynth utilisation numbers from
+      `ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/rfdc_repack4_csynth.rpt`
+      (not in the pasted terminal log; bookkeeping only — the block is
+      pure wiring plus interface registers).
+- [x] Exported `component.xml` VLNV exactly
+      `openai:doa:rfdc_repack4:1.0` (`PASS packaged VLNV ...` in
+      step05, and `PASS openai:doa:rfdc_repack4:1.0` again inside
+      step06 before step06 stopped on the not-yet-built V06
+      channelizer — see note below).
 - [ ] (V12) Hardware ramp/tone capture proves lane order I/Q assignment
       and cross-channel beat alignment end-to-end.
+
+**step06 status note (2026-11-03):** overall `step06_collect_ip`
+currently FAILS at `build/ip_repo/matlab_channelizer/component.xml`
+missing. That is the V06 channelizer not existing yet (the existing
+64-band scalar MATLAB harness does not meet the V04 SSR‑8/1024-band
+contract and must not be collected as if it did). It is **not** a V05
+defect: every present IP, including `rfdc_repack4:1.0`, printed PASS.
+step06 goes green only after the V06 channelizer stage produces the
+selected IP; do not run the legacy `step05_channelizer` just to force
+step06 green.

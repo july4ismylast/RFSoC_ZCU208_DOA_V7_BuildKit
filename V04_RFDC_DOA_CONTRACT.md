@@ -77,16 +77,26 @@ configuration (initial BD values + runtime driver where PG269 requires it).
 
 ## 3. RFDC target configuration (2023.2 property evidence)
 
-The user-PC dump (2026-11-02) proved RFDC VLNV
+The user-PC dumps (2026-11-02/03) proved RFDC VLNV
 `xilinx.com:ip:usp_rf_data_converter:2.6`, cell
 `/usp_rf_data_converter_1`, Tiles 0+1 at 4 GSPS/MTS, all eight datapath
 slices `00..03/10..13` enabled, current streams only
-`m00/m02/m10/m12_axis`, and the exact property spellings below. (The
-dump's `list_property_value` section is empty because BD `CONFIG.*`
-properties are string-typed in Vivado; the enum labels live in the IP-XACT
-`component.xml`, which the revised dump now extracts. The numeric R2C
-pattern itself is independently proven by the pinned upstream SAM/PYNQ
-ZCU208 BD Tcl and by AMD's RFdc driver constants.)
+`m00/m02/m10/m12_axis`, and the exact property spellings below. The
+revised dump also extracted the enum labels from the installed RFDC 2.6
+IP-XACT `component.xml` (2,789,086 bytes / 53,472 lines in Vivado
+2023.2): Data Type `Real=0, I/Q=1`; Decimation values are the literal
+factors (`2x=2`); Mixer Mode `Real->I/Q=0, I/Q->I/Q=1, Real->Real=2`;
+Mixer Type `Bypassed=0, Coarse=1, Fine=2, Off=3`; Nyquist
+`Zone 1=0, Zone 2=1`; Calibration `Mode1=0, Mode2=1, Autocal=2`.
+(The first dump's `list_property_value` section is empty because BD
+`CONFIG.*` properties are string-typed in Vivado — the IP-XACT choices
+above are the authoritative labels. The numeric R2C pattern is also
+independently proven by the pinned upstream SAM/PYNQ ZCU208 BD Tcl and
+by AMD's RFdc driver constants.) The same run proved the current
+streams are 128-bit (`TDATA_NUM_BYTES=16`, `HAS_TKEEP/TLAST/TSTRB=0`,
+`HAS_TREADY=1`) on `MTSclkwiz_clk_out1` at 500 MHz, and that
+`MTSclkwiz` already generates the needed 250 MHz on `clk_out2`
+(`NUM_OUT_CLKS=2`, both outputs used).
 
 Applied identically to the four physical 4 GSPS ADCs, whose GUI pair
 indices are `00/02` (Tile 0) and `10/12` (Tile 1) — **identical settings
@@ -100,13 +110,13 @@ values propagated.
 |---|---:|---:|---|
 | `CONFIG.ADC_Data_TypeXX` | 0 | **1** | Real → **I/Q** |
 | `CONFIG.ADC_Decimation_ModeXX` | 1 | **2** | **2×** |
-| `CONFIG.ADC_Mixer_ModeXX` | 2 | **0** | bypass/R2R encoding → **Real→I/Q** encoding used by SAM/PYNQ R2C designs |
+| `CONFIG.ADC_Mixer_ModeXX` | 2 | **0** | XML-proven: `Real->Real=2` → **`Real->I/Q=0`** (same value SAM/PYNQ R2C designs use) |
 | `CONFIG.ADC_Mixer_TypeXX` | 1 | **2** | Coarse → **Fine** |
 | `CONFIG.ADC_Data_WidthXX` | 8 | **8** | 8 samples/AXIS cycle per I and Q stream |
 | `CONFIG.ADC_NCO_FreqXX` | 0.0 | **-3.0** | GHz, absolute `-F_C`; default centre 3.000 GHz |
 | `CONFIG.ADC_NCO_PhaseXX` | 0 | **0** | identical phase; runtime SYSREF/tile-event reset still required |
-| `CONFIG.ADC_NyquistXX` | 0 | **even-zone XML choice** | Zone 2; numeric value is taken from the 2.6 `component.xml`, not guessed |
-| `CONFIG.ADC_CalOpt_ModeXX` | 1 | **Mode 2 XML choice** | PG269: Mode 1 only within ±10% of `Fs/2`; the 2.25–3.75 GHz band is otherwise |
+| `CONFIG.ADC_NyquistXX` | 0 | **1** | XML-proven: `Zone 1=0` → **`Zone 2=1`** |
+| `CONFIG.ADC_CalOpt_ModeXX` | 1 | **1 (no numeric change)** | XML-proven: `Mode1=0, Mode2=1, Autocal=2` — MTS already selects **Mode 2**, which is also the PG269 choice here (Mode 1 is only for inputs within ±10% of `Fs/2`; the 2.25–3.75 GHz band is otherwise). The scratch apply writes `1` explicitly so the intent is recorded, not inherited by luck. |
 | `CONFIG.ADC0_Fabric_Freq`, `ADC1_Fabric_Freq` | 500.000 | **250.000 after validate** | required AXIS clock `2.0 GS/s ÷ 8`; `ADCn_Outclk_Freq` stays 250.000 |
 
 Sampling rate, clock source/distribution, MTS membership, dither and the
@@ -157,9 +167,9 @@ architecture at our rates). The existing 64‑band scalar harness in
 
 - [x] Centre/band/decimation/clock numbers locked above and mirrored in `config.mk`.
 - [x] First `v04_dump_rfdc.tcl` run reviewed: RFDC 2.6 property names, current MTS values and stream set proven on the 2023.2 PC.
-- [ ] Revised dump run: IP-XACT choice labels for `ADC_Nyquist00`/`ADC_CalOpt_Mode00` (and mixer/data enums), `MTSclkwiz` outputs, RFDC stream `TDATA` widths.
-- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect.
-- [x] V05 gearbox source/testbench implemented against §4 (`ip/custom/rfdc_repack4`, `V05_RFDC_REPACK4_SPEC.md`); Vitis HLS 2023.2 acceptance run is tracked by that spec's gates. Post-channelizer capture selector is specified with V06's output format.
+- [x] Revised dump run (2026-11-03, dump v2.1): IP-XACT choice labels for all V04 enums (`Zone 2=1`, `Mode2=1`, `Real->I/Q=0`, `Fine=2`, `I/Q=1`, `2x=2`), `MTSclkwiz` outputs (500/250 MHz, both used), RFDC streams 128-bit with no TKEEP/TLAST/TSTRB.
+- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect. Script ready: `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched). User-PC run pending.
+- [x] V05 gearbox implemented against §4 and accepted on Vitis HLS 2023.2 (2026-11-03: `step05_hls_repack` PASS — CSim bit-exact, csynth II=1/depth 2, estimated Fmax 500 MHz, VLNV `openai:doa:rfdc_repack4:1.0` verified; details in `V05_RFDC_REPACK4_SPEC.md`). Post-channelizer capture selector is specified with V06's output format.
 - [ ] V06 channelizer feasibility evidence (1‑ch synth) before any step08 integration attempt.
 
 Next stages: **V05** `rfdc_repack4` + bin‑select/capture gate →
