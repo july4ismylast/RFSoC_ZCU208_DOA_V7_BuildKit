@@ -1,11 +1,18 @@
 classdef ZU48DRChannelizer < matlab.System
-    % HDL-oriented channelizer wrapper used with a four-sample vector harness.
-    % Generated HDL must still prove the required sample rate and timing.
+    % HDL-oriented one-channel channelizer wrapper.
+    %
+    % build_model.m supplies the production-size NumBands, prototype
+    % Coefficients and NormalizeFFT values from config.mk.  The defaults
+    % below identify the V06 candidate configuration, but the short
+    % fallback coefficient vector is only a placeholder for an
+    % unconfigured block and must never be used for generated hardware.
     properties (Nontunable)
-        NumBands = 64
-        % build_model overrides this fallback with a production 768-tap
-        % prototype stored as a constant in the model workspace.
+        NumBands = 1024
         Coefficients = [-0.032 0.121 0.318 0.482 0.546 0.482 0.318 0.121 -0.032]
+        % Gate-0 probe v2 proved Normalize=false for the 1024-band,
+        % SSR-8 fixed-point configuration.  Normalize=true underflowed
+        % to about two output LSBs in attempt 1.
+        NormalizeFFT = false
     end
     properties(Access=private)
         H
@@ -16,7 +23,7 @@ classdef ZU48DRChannelizer < matlab.System
                 FilterCoefficients=obj.Coefficients, ...
                 FilterStructure='Direct form systolic', ...
                 OutputSize='Same as input size', ...
-                Normalize=true);
+                Normalize=logical(obj.NormalizeFFT));
         end
         function [y,v] = stepImpl(obj,x,valid)
             % R2024a requires a column-vector data input and logical scalar

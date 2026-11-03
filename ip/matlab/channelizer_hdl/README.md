@@ -1,24 +1,31 @@
-# MATLAB/DSP HDL four-lane channelizer generation harness
+# MATLAB/DSP HDL SSR channelizer generation harness
 
-> **Stage V06 note:** the Simulink harness in this directory is still the
-> legacy **64-band / four-sample** model. It is not the production
-> 1024-band SSR-8 channelizer. The current V06 Gate-0 test is only:
+> **Stage V06 status:** Gate 0 passed on MATLAB R2024a for one
+> 1024-band / SSR-8 fixed-point `dsphdl.Channelizer` with
+> `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24
+> output, and 1760-cycle latency. The current Gate-1 test is only:
 >
 > ```bash
-> make -C ip/matlab/channelizer_hdl probe
+> make -C ip/matlab/channelizer_hdl gate1
+> cat build/output/v06_gate1_hdl_generation.rpt
 > ```
 >
-> See `V06_CHANNELIZER_FEASIBILITY.md` at the repository root. Do not use
-> a successful legacy `make hdl`/`make package` run as V06 evidence.
+> See `V06_CHANNELIZER_FEASIBILITY.md` at the repository root. Gate 1
+> generates one channel of RTL and catalogs it; it does not package a
+> production IP or prove Vivado timing/resources.
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
-`dsp.Channelizer` for synthesizable hardware. The generated model supplies a
-four-element complex `fixdt(1,16,15)` column vector per valid cycle and a scalar
-Boolean valid signal. `build_model.m` uses `dsp.Channelizer` at model-build time
-to create a 64-band, 12-taps-per-band prototype with 80 dB stopband attenuation,
-then stores those 768 coefficients as a constant in the model workspace. The
-HDL object uses a direct-form-systolic polyphase filter, a four-sample streaming
-output, and normalized FFT stages.
+`dsp.Channelizer` for synthesizable hardware. `build_model.m` now reads
+the production values exported by `config.mk` (1024 bands, eight complex
+samples/cycle, 12 taps/band, 100 dB stopband target, and
+`CHANNELIZER_NORMALIZE=0`). It supplies an eight-element complex
+`fixdt(1,16,15)` column vector per valid cycle and uses `tf()` to store
+the 12,288 prototype coefficients as a model-workspace constant. The
+legacy 64-band/four-lane configuration remains reproducible only by
+explicit environment overrides. The HDL object uses a
+direct-form-systolic polyphase filter and an output vector the same size
+as the input; with `Normalize=false`, Gate 0 measured the output type as
+signed 26-bit/fraction-24.
 
 MATLAB R2024a does not support the `PreservePhase` property. This design does
 not use it. Every antenna channel must use an identical channelizer; the
@@ -26,8 +33,10 @@ deterministic per-bin phase rotation is then common to all four receiver
 channels and cancels in cross-channel phase and covariance measurements. Verify
 this again in the four-channel HIL test.
 
-The four-sample input is an architecture choice, not a timing proof. Verify the
-generated utilization, latency, and achieved clock rate for the ZCU208 build.
+SSR-8 at 250 MHz is the production-rate architecture choice, not a
+timing proof. Gate 2 must still verify one-channel out-of-context
+utilization and achieved clock rate for the ZCU208 part before any x4
+extrapolation.
 
 `Channelizer_DUT` is an explicit atomic Simulink Subsystem. Its internal
 `ChannelizerCore` MATLAB System block contains the `dsphdl.Channelizer` object.
@@ -35,15 +44,15 @@ This hierarchy is required because `makehdl` accepts a model, subsystem, or
 model reference as its DUT; it does not accept the leaf MATLAB System block as
 the DUT path.
 
-`make hdl` generates RTL. `make package TOP=<actual_generated_top>` packages
-the generated RTL. The HDL top can differ by MATLAB release, so inspect
-`hdl_prj/hdlsrc` before packaging.
-
-The local Makefile tracks the generated top RTL and packaged `component.xml`
-as real file targets. If HDL generation succeeds but Vivado packaging fails,
-fix the Tcl and run `make package` or `make package-only`; the existing RTL is
-reused. The packaging Tcl searches recursively because R2024a writes files
-under `hdl_prj/hdlsrc/zu48dr_channelizer_ip`.
+`make gate1` is the current V06 generation entry point; `make hdl`
+remains the underlying file-target form. Packaging is intentionally
+blocked during V06 (`ALLOW_CHANNELIZER_PACKAGE=1` is required to unlock
+the old package targets) because the generated DUT is still a raw
+data/valid subsystem, not the frozen AXI4-Stream production wrapper.
+Do not bypass that guard until the later wrapper stage. The packaging
+Tcl remains available for that future stage and searches recursively
+because R2024a writes files under
+`hdl_prj/hdlsrc/zu48dr_channelizer_ip`.
 
 The Makefile launches MATLAB through `scripts/run_matlab_clean.sh`. This keeps
 the real user home and MATLAB licence configuration, copies MATLAB's factory

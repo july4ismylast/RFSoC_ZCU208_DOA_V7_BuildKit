@@ -2,8 +2,11 @@
 
 **Status after V04/V05:** the RFDC configuration transaction is proven in
 scratch (4 GSPS, Fine Real→I/Q DDC, decimation 2, MTS persisted), and
-`rfdc_repack4` is accepted in Vitis HLS. V06 must now prove **one**
-channelizer channel before any V07/`step08` integration is attempted.
+`rfdc_repack4` is accepted in Vitis HLS. **V06 Gate 0 passed on the user
+PC (MATLAB R2024a, 2026-11-03)** for the one-channel SSR-8/1024
+`dsphdl.Channelizer` object configuration. V06 must still prove HDL
+generation, one-channel OOC timing/resources and numerical ordering
+before any V07/`step08` integration is attempted.
 
 ## 1. One-channel target contract
 
@@ -16,16 +19,19 @@ channelizer channel before any V07/`step08` integration is attempted.
 | Clock gate | one channel must synthesize for `xczu48dr-fsvg1517-2-e` at **4.0 ns** with non-negative slack before x4 extrapolation is reviewed |
 | Coherence gate | all four production channels must be identical instances with identical latency, scaling and bin ordering |
 
-The existing `ip/matlab/channelizer_hdl` model/package flow is a legacy
-**64-band, four-sample/cycle** harness. It is useful code to adapt, but a
-successful run of that harness is **not** V06 evidence and its packaged IP
-must not be used as the production channelizer.
+The existing `ip/matlab/channelizer_hdl` harness originated as a legacy
+**64-band, four-sample/cycle** model. Gate 1 parameterizes that code to
+the `config.mk` production values, but until the Gate-1 generation run
+passes on MATLAB R2024a, the parameterized harness is not yet V06 HDL
+evidence. Its packaged IP must not be used as the production
+channelizer; packaging is blocked in the local Makefile until the
+AXI4-Stream wrapper contract is frozen.
 
 ## 2. Candidate comparison
 
 | Candidate | Why it is considered | Main risk / adaptation | V06 order |
 |---|---|---|---|
-| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html> | Gate-0 attempt 1 proved construction/streaming/latency but failed fixed-point tone scaling; generated 1024-band resource/timing and bin ordering remain unproven on ZU48DR | **Plan A — probe v2 first** |
+| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency | HDL generation, generated 1024-band resource/timing, steady-state scaling/phase and complete bin ordering remain unproven on ZU48DR | **Plan A — Gate-1 HDL generation next** |
 | **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`. This is also the user's selected **step05/step06 IP-collection flow** (always pass `CHANNELIZER_FLOW=opfb` on the user PC) | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Plan B if Plan A fails API/scaling/resource/timing; collection alone does not close V06 |
 | **AMD FIR Compiler + AMD FFT, hand-assembled SSR PFB** | FIR Compiler 7.2 is already pinned; AMD IP would be native to Vivado 2023.2 | AMD FFT VLNV/version is not yet checked or pinned (required by the V00 rule); commutator, coefficient banks, scaling and SSR ordering become custom design work | Plan C |
 | **Custom HLS/RTL PFB** | Maximum control over interface and scaling | No exact SSR-8/1024 implementation exists in the audited repos; highest verification and timing-closure risk | Last resort |
@@ -36,7 +42,7 @@ SSR-8 PFB channelizer for this stage.
 
 ## 3. V06 gates
 
-### Gate 0 — MATLAB API/vector probe (current gate)
+### Gate 0 — MATLAB API/vector probe (PASS, 2026-11-03)
 
 **Attempt 1 result (user PC, MATLAB R2024a, 2026-11-03): FAIL, with the
 API portion proven.** The 1024-band × 12-tap/band prototype had 12,288
@@ -64,7 +70,23 @@ identifies whether coefficient extraction, filter-output casting or FFT
 scaling is responsible. `V06_NORMALIZE=1` reproduces attempt 1 if ever
 needed; do not use it for the v2 gate run.
 
-Run exactly:
+**Attempt 2 / probe v2 result: PASS.** `coeffs()` and `tf()` were
+exactly identical (`COEFFS_TF_MAX_ABS_DIFF=0`, maximum coefficient
+`0.0009765625 = 1/1024`, coefficient sum `1.00001110531`). With
+`Normalize=false`, the output type became signed
+**26-bit/fraction-length-24**; the object produced 512 valid SSR-8 beats
+(4096 outputs) after the same 1760-cycle latency. Every collected
+snapshot peaked at serial index **192**, exactly the nominal tone bin.
+The asserted fourth snapshot had peak magnitude
+`0.00666898489238` (**111887 output LSBs**),
+`TOP1_ENERGY_FRACTION=0.792960089099` and
+`TOP5_ENERGY_FRACTION=0.997469835074`, ending in
+`V06 CHANNELIZER PROBE RESULT=PASS`. Gate 0 is closed. The peak
+magnitude was still increasing over snapshots 1–4, so this result does
+not freeze steady-state gain; Gate 3 must run beyond the 12-snapshot
+prototype-fill interval before comparing absolute gain and phase.
+
+Run exactly (regression/reproduction only):
 
 ```bash
 make -C ip/matlab/channelizer_hdl probe
@@ -106,14 +128,44 @@ make rebuild STEP=step06_collect_ip CHANNELIZER_FLOW=opfb
 If probe v2 fails, stop. Do not run `make hdl`, `make package` or
 `step08`; return the full v2 probe report for diagnosis.
 
-### Gate 1 — parameterize the Simulink/HDL harness
+### Gate 1 — parameterize the Simulink/HDL harness (current gate)
 
-Adapt the legacy harness from 64 bands/4 lanes to the `config.mk`
-values (1024 bands/8 lanes), generate Verilog for one channel, and record
-the generated top, port list, output type, latency and HDL Coder reports.
-Do not package it as production IP until an explicit AXI4-Stream wrapper
-contract (TDATA packing, TVALID/TREADY behaviour, bin index/time order)
-is written.
+The harness code is now parameterized from `config.mk`:
+`CHANNELIZER_NUM_BANDS=1024`, `WIDEBAND_SAMPLES_PER_CLOCK=8`,
+`CHANNELIZER_TAPS_PER_BAND=12`, `CHANNELIZER_STOPBAND_DB=100`, and
+`CHANNELIZER_NORMALIZE=0`. `ZU48DRChannelizer.NormalizeFFT` carries the
+proved scaling choice into the Simulink MATLAB System block, while
+`build_model.m` creates an 8×1 complex `fixdt(1,16,15)` input and the
+12,288-coefficient prototype through `tf()`.
+
+Run exactly:
+
+```bash
+make -C ip/matlab/channelizer_hdl gate1
+cat build/output/v06_gate1_hdl_generation.rpt
+```
+
+`v06_gate1_generate_hdl.m` first requires the preserved Gate-0 PASS
+report to match the production settings, exact tone/peak bin and
+26/24 output type. It then rebuilds the model and calls HDL Coder for
+one channel only. The report must record:
+
+- generated top path and module name (`Channelizer_DUT`);
+- generated top size/line count and every top-level port declaration
+  (up to the script's 250-line logging cap);
+- generated-file count/total bytes and HDL Coder report/log filenames;
+- Gate-0 latency (1760 cycles) and output type (signed 26/24);
+- `PACKAGING_PERFORMED=0`; and
+- final `V06 GATE1 HDL GENERATION RESULT=PASS`.
+
+This gate proves only that HDL Coder can emit one-channel RTL for the
+proved object settings. It does not prove Vivado synthesis, timing,
+resources, numerical equivalence, or an AXI4-Stream interface. Do not
+run `make package`, `make package-only`, `step05_channelizer` with the
+MATLAB flow, or `step08` from a Gate-1 pass. The local package targets
+are intentionally blocked unless a later wrapper stage explicitly sets
+`ALLOW_CHANNELIZER_PACKAGE=1`. Gate 2 will synthesize the generated
+one-channel RTL out-of-context before any packaging decision.
 
 ### Gate 2 — one-channel Vivado OOC synthesis
 
@@ -125,7 +177,9 @@ V03 MTS base, V05 gearbox, search/DOA logic and routing margin.
 ### Gate 3 — numerical ordering and phase
 
 Compare the HDL-oriented object/RTL against the floating-point
-`dsp.Channelizer` reference after latency alignment. Freeze:
+`dsp.Channelizer` reference after latency alignment. Run beyond the
+12-snapshot prototype-fill interval and discard startup snapshots
+before measuring steady-state gain/phase. Freeze:
 
 - output scalar order over the 128 SSR-8 beats of one snapshot;
 - bin index → baseband/RF frequency mapping;
@@ -133,7 +187,6 @@ Compare the HDL-oriented object/RTL against the floating-point
 - common per-bin phase rotation (acceptable for cross-channel DOA only
   if bit-identical across all four channels).
 
-Only after Gates 0–3 pass is Plan A selected for V07. If Gate-0 probe
-v2 cannot produce a usable fixed-point scaling, or if Gate 1 or 2 fails,
-the same feasibility gates are applied to the MazinLab OPFB Plan B
-before any production BD work resumes.
+Only after Gates 0–3 pass is Plan A selected for V07. If Gate 1 or 2
+fails, the same feasibility gates are applied to the MazinLab OPFB
+Plan B before any production BD work resumes.
