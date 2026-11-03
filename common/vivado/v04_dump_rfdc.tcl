@@ -67,7 +67,7 @@ proc v04_clip {line} {
 }
 
 set fh [open $out_file w]
-puts $fh "# V04 RFDC dump v2 (read-only) - Vivado [lindex [version] 1]"
+puts $fh "# V04 RFDC dump v2.1 streaming (read-only) - Vivado [lindex [version] 1]"
 puts $fh "# project=$work_xpr"
 puts $fh "# bd=$bd_file"
 puts $fh "# cell=$rfdc vlnv=$rfdc_vlnv"
@@ -104,72 +104,153 @@ foreach slice {00 01 02 03 10 11 12 13} {
 puts $fh ""
 
 # --- IP-XACT enum evidence ---------------------------------------------------
+# v2.1: stream the XML in two line-by-line passes and print progress to the
+# console.  (v2 read/split the whole component.xml and rescanned the line
+# list once per parameter, which can look hung for minutes on the RFDC XML.)
 puts $fh "## IP-XACT PARAMETER CHOICES"
+puts "V04 DUMP: locating RFDC IP definition / component.xml ..."
 set ipdef ""
-catch {set ipdef [lindex [get_ipdefs -all -quiet -filter "VLNV == $rfdc_vlnv"] 0]}
-if {$ipdef eq ""} {
-    catch {set ipdef [lindex [get_ipdefs -all -quiet $rfdc_vlnv] 0]}
-}
 set xml_file ""
+catch {set ipdef [get_property IPDEF $rfdc]}
 if {$ipdef ne ""} {
     catch {set xml_file [get_property XML_FILE_NAME $ipdef]}
 }
+if {$xml_file eq ""} {
+    set ipdef2 ""
+    catch {set ipdef2 [lindex [get_ipdefs -all -quiet -filter "VLNV == $rfdc_vlnv"] 0]}
+    if {$ipdef2 eq ""} {
+        catch {set ipdef2 [lindex [get_ipdefs -all -quiet $rfdc_vlnv] 0]}
+    }
+    if {$ipdef2 ne ""} {
+        set ipdef $ipdef2
+        catch {set xml_file [get_property XML_FILE_NAME $ipdef]}
+    }
+}
 puts $fh "ipdef={$ipdef}"
 puts $fh "component_xml={$xml_file}"
+flush $fh
 if {$xml_file ne "" && [file exists $xml_file]} {
+    puts $fh "component_xml_bytes=[file size $xml_file]"
+    set target_params {ADC_Data_Type00 ADC_Data_Width00 ADC_Decimation_Mode00 \
+        ADC_Mixer_Mode00 ADC_Mixer_Type00 ADC_Coarse_Mixer_Freq00 \
+        ADC_Nyquist00 ADC_CalOpt_Mode00 ADC_Slice00_Enable}
+
+    # Pass 1: stream once, printing +/- context around every target
+    # parameter name and collecting the choiceRef(s) each parameter uses.
+    puts "V04 DUMP: component.xml pass 1/2 (parameter blocks) ..."
+    array set param_seen {}
+    array set param_refs {}
+    set prev_lines [list "" ""]
+    set pending {}
+    set line_no 0
     set xfh [open $xml_file r]
-    set xml_text [read $xfh]
-    close $xfh
-    set lines [split $xml_text "\n"]
-    set nlines [llength $lines]
-    puts $fh "component_xml_lines=$nlines"
-
-    # Locate one <...:choice> definition by its <...:name>REF</...> line and
-    # print it once per dump.  The enumerations carry value -> GUI label.
-    proc v04_print_choice {fh lines ref seen_var} {
-        upvar $seen_var seen
-        if {[info exists seen($ref)]} { return }
-        set seen($ref) 1
-        set n [llength $lines]
-        for {set i 0} {$i < $n} {incr i} {
-            if {[string first ">${ref}<" [lindex $lines $i]] < 0} { continue }
-            puts $fh "  choiceRef=$ref definition:"
-            for {set j $i} {$j < $n && $j < $i + 60} {incr j} {
-                set line [lindex $lines $j]
-                puts $fh "    [v04_clip [string trim $line]]"
-                if {$j > $i && [string match "*</*choice>*" $line]} { break }
-            }
-            return
+    while {[gets $xfh line] >= 0} {
+        incr line_no
+        set trimmed [string trim $line]
+        if {[regexp {choiceRef="([^"]+)"} $line -> line_ref]} {
+            set has_ref 1
+        } else {
+            set has_ref 0
+            set line_ref ""
         }
-        puts $fh "  choiceRef=$ref definition: <not found>"
-    }
-
-    array set choice_seen {}
-    foreach param {ADC_Data_Type00 ADC_Data_Width00 ADC_Decimation_Mode00 \
-                   ADC_Mixer_Mode00 ADC_Mixer_Type00 ADC_Coarse_Mixer_Freq00 \
-                   ADC_Nyquist00 ADC_CalOpt_Mode00 ADC_Slice00_Enable} {
-        puts $fh "--- parameter $param"
-        set found 0
-        for {set i 0} {$i < $nlines} {incr i} {
-            if {[string first ">${param}<" [lindex $lines $i]] < 0} { continue }
-            incr found
-            set lo [expr {max(0, $i - 2)}]
-            set hi [expr {min($nlines - 1, $i + 8)}]
-            for {set j $lo} {$j <= $hi} {incr j} {
-                puts $fh "  [v04_clip [string trim [lindex $lines $j]]]"
-            }
-            for {set j $i} {$j <= $hi} {incr j} {
-                if {[regexp {choiceRef="([^"]+)"} [lindex $lines $j] -> ref]} {
-                    v04_print_choice $fh $lines $ref choice_seen
+        # A new <...:name> element ends earlier look-ahead windows, so a
+        # neighbouring parameter cannot steal this parameter's choiceRef.
+        if {[regexp {<[^>]*:name>} $line]} { set pending {} }
+        # Service look-ahead windows opened by earlier parameter hits.
+        if {[llength $pending] > 0} {
+            puts $fh "  [v04_clip $trimmed]"
+            set still_pending {}
+            foreach item $pending {
+                lassign $item pparam remaining
+                if {$has_ref && [lsearch -exact $param_refs($pparam) $line_ref] < 0} {
+                    lappend param_refs($pparam) $line_ref
                 }
+                incr remaining -1
+                if {$remaining > 0} { lappend still_pending [list $pparam $remaining] }
+            }
+            set pending $still_pending
+        }
+        # Start a new context window on a target parameter name.
+        foreach param $target_params {
+            if {[string first ">${param}<" $line] < 0} { continue }
+            set param_seen($param) 1
+            if {![info exists param_refs($param)]} { set param_refs($param) {} }
+            puts $fh "--- parameter $param (xml line $line_no)"
+            foreach prev $prev_lines {
+                if {$prev ne ""} { puts $fh "  [v04_clip [string trim $prev]]" }
+            }
+            puts $fh "  [v04_clip $trimmed]"
+            if {$has_ref && [lsearch -exact $param_refs($param) $line_ref] < 0} {
+                lappend param_refs($param) $line_ref
+            }
+            lappend pending [list $param 8]
+            break
+        }
+        set prev_lines [list [lindex $prev_lines 1] $line]
+    }
+    close $xfh
+    puts $fh "component_xml_lines=$line_no"
+    foreach param $target_params {
+        if {![info exists param_seen($param)]} {
+            puts $fh "--- parameter $param"
+            puts $fh "  <parameter name not found as an XML element>"
+        } else {
+            puts $fh "parameter $param choiceRefs={$param_refs($param)}"
+        }
+    }
+    flush $fh
+
+    # Pass 2: stream again and print only the referenced choice definitions
+    # (enumeration value -> GUI label).
+    set needed_refs {}
+    foreach param $target_params {
+        if {![info exists param_refs($param)]} { continue }
+        foreach ref $param_refs($param) {
+            if {[lsearch -exact $needed_refs $ref] < 0} { lappend needed_refs $ref }
+        }
+    }
+    puts "V04 DUMP: component.xml pass 2/2 ([llength $needed_refs] choice definitions) ..."
+    if {[llength $needed_refs] == 0} {
+        puts $fh "<no choiceRef found for the target parameters>"
+    } else {
+        array set choice_done {}
+        set capture_ref ""
+        set capture_left 0
+        set xfh [open $xml_file r]
+        while {[gets $xfh line] >= 0} {
+            if {$capture_ref ne ""} {
+                puts $fh "    [v04_clip [string trim $line]]"
+                incr capture_left -1
+                if {$capture_left <= 0 || [string match "*</*choice>*" $line]} {
+                    set capture_ref ""
+                }
+                continue
+            }
+            foreach ref $needed_refs {
+                if {[info exists choice_done($ref)]} { continue }
+                if {[string first ">${ref}<" $line] < 0} { continue }
+                set choice_done($ref) 1
+                puts $fh "choiceRef=$ref definition:"
+                puts $fh "    [v04_clip [string trim $line]]"
+                set capture_ref $ref
+                set capture_left 59
+                break
             }
         }
-        if {!$found} { puts $fh "  <parameter name not found as an XML element>" }
+        close $xfh
+        foreach ref $needed_refs {
+            if {![info exists choice_done($ref)]} {
+                puts $fh "choiceRef=$ref definition: <not found>"
+            }
+        }
     }
+    flush $fh
 } else {
     puts $fh "<component.xml not located; enum labels still unproven>"
+    flush $fh
 }
 puts $fh ""
+puts "V04 DUMP: RFDC interface/clock pins ..."
 
 # --- RFDC stream interfaces + physical widths --------------------------------
 puts $fh "## RFDC INTERFACE PINS"
