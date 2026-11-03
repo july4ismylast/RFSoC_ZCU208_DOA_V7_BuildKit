@@ -9,9 +9,10 @@ MATLAB_SOURCES := build_model.m generate_hdl.m ZU48DRChannelizer.m
 V06_PROBE_REPORT := $(ROOT)/build/output/v06_channelizer_probe.rpt
 V06_GATE1_REPORT := $(ROOT)/build/output/v06_gate1_hdl_generation.rpt
 V06_GATE2_REPORT := $(ROOT)/build/output/v06_gate2_ooc_synthesis.rpt
+V06_GATE2R_BRAM_REPORT := $(ROOT)/build/output/v06_gate2r_bram_ooc_synthesis.rpt
 ALLOW_CHANNELIZER_PACKAGE ?= 0
 
-.PHONY: all model hdl package package-only require-package-allowed probe gate1 gate2 clean
+.PHONY: all model hdl package package-only require-package-allowed probe gate1 gate2 gate2r-bram clean
 all: package
 # Stage V06 Gate 0 (passed on the user PC, 2026-11-03): the installed
 # dsphdl.Channelizer accepts the production-size SSR-8/1024-band
@@ -43,6 +44,21 @@ gate2: v06_gate2_ooc_synth.tcl v06_gate2_ooc.xdc
 	$(VIVADO) -mode batch -nojournal -nolog -source v06_gate2_ooc_synth.tcl
 	@test -f "$(V06_GATE2_REPORT)" || { echo "ERROR: V06 Gate-2 report missing: $(V06_GATE2_REPORT)"; exit 1; }
 	@grep -q "V06 GATE2 OOC SYNTHESIS RESULT=PASS" "$(V06_GATE2_REPORT)" || { echo "ERROR: V06 Gate-2 did not PASS (see $(V06_GATE2_REPORT))"; exit 1; }
+
+# Stage V06 Gate 2R (current resource experiment): re-synthesize the
+# exact Gate-1 systolic RTL with only synth_design changed to
+# -directive AreaMapLargeShiftRegToBRAM.  The Gate-2 hierarchical
+# report showed 55,952 of 63,439 FilterBank LUTs were SRLs and the
+# channelizer used no BRAM.  Isolated v06_gate2r_bram_* outputs keep
+# the Gate-2 default-directive evidence intact; no MATLAB rerun,
+# implementation, packaging, or block-design change is performed.
+gate2r-bram: v06_gate2_ooc_synth.tcl v06_gate2_ooc.xdc
+	@test -f "$(V06_GATE1_REPORT)" || { echo "ERROR: Gate-1 report missing; run make -C ip/matlab/channelizer_hdl gate1 first"; exit 1; }
+	@grep -q "V06 GATE1 HDL GENERATION RESULT=PASS" "$(V06_GATE1_REPORT)" || { echo "ERROR: Gate-1 has not PASSed; see $(V06_GATE1_REPORT)"; exit 1; }
+	@test -f "$(HDL_TOP_FILE)" || { echo "ERROR: generated HDL top missing: $(HDL_TOP_FILE); run make -C ip/matlab/channelizer_hdl gate1 first"; exit 1; }
+	V06_GATE2_VARIANT=bram $(VIVADO) -mode batch -nojournal -nolog -source v06_gate2_ooc_synth.tcl
+	@test -f "$(V06_GATE2R_BRAM_REPORT)" || { echo "ERROR: V06 Gate-2R BRAM report missing: $(V06_GATE2R_BRAM_REPORT)"; exit 1; }
+	@grep -q "V06 GATE2R BRAM OOC SYNTHESIS RESULT=PASS" "$(V06_GATE2R_BRAM_REPORT)" || { echo "ERROR: V06 Gate-2R BRAM did not PASS (see $(V06_GATE2R_BRAM_REPORT))"; exit 1; }
 
 model:
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "build_model"

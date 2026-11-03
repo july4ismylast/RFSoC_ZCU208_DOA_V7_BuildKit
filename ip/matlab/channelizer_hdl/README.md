@@ -7,9 +7,18 @@
 > `Channelizer_DUT` top and 227 Verilog files with no HDL-check errors,
 > warnings or messages. Gate-2 one-channel OOC synthesis returned
 > script PASS at 4.0 ns (setup WNS +1.630 ns), but four systolic
-> channels alone extrapolate to 83.27% of CLB LUTs. The current work is
-> the Gate-2 x4 resource review in `V06_CHANNELIZER_FEASIBILITY.md`;
-> do not treat the one-channel PASS as integrated fit/timing proof.
+> channels alone extrapolate to 83.27% of CLB LUTs. Hierarchy review
+> found 55,952 SRLs inside the 63,439-LUT FilterBank and no BRAM use.
+> The current Gate-2R experiment is:
+>
+> ```bash
+> make -C ip/matlab/channelizer_hdl gate2r-bram
+> cat build/output/v06_gate2r_bram_ooc_synthesis.rpt
+> ```
+>
+> It resynthesizes the same Gate-1 RTL with only
+> `AreaMapLargeShiftRegToBRAM` changed. Do not treat either one-channel
+> PASS as integrated fit/timing proof.
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
 `dsp.Channelizer` for synthesizable hardware. `build_model.m` now reads
@@ -41,9 +50,10 @@ This hierarchy is required because `makehdl` accepts a model, subsystem, or
 model reference as its DUT; it does not accept the leaf MATLAB System block as
 the DUT path.
 
-`make gate1` is the V06 HDL-generation entry point and `make gate2` is
-the current one-channel OOC synthesis entry point; `make hdl` remains
-the underlying generation file-target form. Packaging is intentionally
+`make gate1` is the V06 HDL-generation entry point, `make gate2` is
+the proved default-directive one-channel OOC baseline, and
+`make gate2r-bram` is the current same-RTL BRAM shift-register A/B;
+`make hdl` remains the underlying generation file-target form. Packaging is intentionally
 blocked during V06 (`ALLOW_CHANNELIZER_PACKAGE=1` is required to unlock
 the old package targets) because the generated DUT is still a raw
 data/valid subsystem, not the frozen AXI4-Stream production wrapper.

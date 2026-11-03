@@ -8,10 +8,14 @@ the user PC (MATLAB R2024a, 2026-11-03)**: the one-channel SSR-8/1024
 Coder generated the corresponding one-channel Verilog with no HDL-check
 errors, warnings or messages. **Gate-2 one-channel OOC synthesis also
 returned script PASS**, with strong post-synthesis setup slack, but the
-four-channel LUT extrapolation is a major integration risk (see Gate 2
-review below). Plan A is therefore not selected yet: x4 resource review
-and Gate-3 numerical ordering remain before any V07/`step08`
-integration is attempted.
+four-channel LUT extrapolation is a major integration risk. The
+hierarchical review identifies the mechanism: the polyphase FilterBank
+uses 63,439 of 88,534 LUTs, including 55,952 SRL delay LUTs, while the
+FFT uses 25,095 LUTs and the whole channelizer uses no BRAM. **Gate 2R
+is therefore the current experiment:** re-synthesize the exact Gate-1
+RTL with only `AreaMapLargeShiftRegToBRAM` changed. Plan A is not
+selected yet; Gate-2R, the integrated x4 budget and Gate-3 numerical
+ordering remain before any V07/`step08` integration is attempted.
 
 ## 1. One-channel target contract
 
@@ -36,7 +40,7 @@ AXI4-Stream wrapper contract is frozen.
 
 | Candidate | Why it is considered | Main risk / adaptation | V06 order |
 |---|---|---|---|
-| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files; Gate-2 one-channel OOC synthesis met setup timing at 4.0 ns (WNS +1.630 ns) | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**, leaving only 71,144 LUTs for the MTS base, V05, serializer, DOA/control logic and routing margin; steady-state scaling/phase and complete bin ordering also remain unproven | **Plan A candidate — x4 LUT review before Gate 3** |
+| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files; Gate-2 one-channel OOC synthesis met setup timing at 4.0 ns (WNS +1.630 ns) | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**, leaving only 71,144 LUTs for the MTS base, V05, serializer, DOA/control logic and routing margin. Hierarchical utilization shows the FilterBank is 63,439 LUTs (55,952 SRLs), versus 25,095 LUTs for the FFT; steady-state scaling/phase and complete bin ordering also remain unproven | **Plan A candidate — Gate-2R BRAM-shift-register A/B next** |
 | **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`. This is also the user's selected **step05/step06 IP-collection flow** (always pass `CHANNELIZER_FLOW=opfb` on the user PC) | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Plan B if Plan A fails API/scaling/resource/timing; collection alone does not close V06 |
 | **AMD FIR Compiler + AMD FFT, hand-assembled SSR PFB** | FIR Compiler 7.2 is already pinned; AMD IP would be native to Vivado 2023.2 | AMD FFT VLNV/version is not yet checked or pinned (required by the V00 rule); commutator, coefficient banks, scaling and SSR ordering become custom design work | Plan C |
 | **Custom HLS/RTL PFB** | Maximum control over interface and scaling | No exact SSR-8/1024 implementation exists in the audited repos; highest verification and timing-closure risk | Last resort |
@@ -195,7 +199,7 @@ are intentionally blocked unless a later wrapper stage explicitly sets
 `ALLOW_CHANNELIZER_PACKAGE=1`. Gate 2 will synthesize the generated
 one-channel RTL out-of-context before any packaging decision.
 
-### Gate 2 — one-channel Vivado OOC synthesis (script PASS; x4 review pending)
+### Gate 2 — one-channel Vivado OOC synthesis (script PASS; hierarchy reviewed)
 
 **One-channel result (user PC, Vivado 2023.2, 2026-11-03): PASS by the
 predefined setup/resource script criteria.** Synthesis of the 227
@@ -215,29 +219,40 @@ well as setup.
 | URAM | 0 / 80 | 0 | 80 |
 | DSPs | 312 / 4272 (7.30%) | 1248 (29.21%) | 3024 (70.79%) |
 
+The detailed reports supplied on 2026-11-03 split the one-channel LUT
+use as follows:
+
+| Block / LUT class | LUTs | Share of 88,534 | Interpretation |
+|---|---:|---:|---|
+| `u_FilterBank` | 63,439 | 71.65% | Dominant block; 7,487 logic LUTs, **55,952 SRLs**, 31,002 FFs, 192 DSPs |
+| `u_FFT` | 25,095 | 28.35% | 19,553 logic LUTs, 3,824 LUTRAM, 1,718 SRLs, 43,571 FFs, 120 DSPs |
+| LUT as Logic (whole DUT) | 27,040 | 30.54% | Not the main problem |
+| LUT as Memory (whole DUT) | 61,494 | 69.46% | 3,824 distributed RAM + **57,670 SRLs** |
+| Block RAM / URAM | 0 / 0 | — | The long FilterBank histories were not mapped to dedicated RAM by default synthesis |
+
+Each of the 16 real/imaginary `subFilter` instances uses about 3,850
+LUTs, of which 3,497 are SRLs, plus 12 DSPs. Thus the first resource
+experiment should target the FilterBank delay implementation, not a
+narrower FFT datapath. A `Direct form transposed` A/B remains a valid
+later test, but it would confound architecture and delay-mapping
+changes if run before the synthesis-only BRAM test in Gate 2R.
+
 **Review status: amber/red on LUT capacity.** Four generated
 channelizers alone would leave only 71,144 LUTs for the MTS base that
 remains after V04/V07 edits, V05 `rfdc_repack4`, the SSR-8-to-serial
 snapshot logic, AXI/control/DMA logic, all DOA/search blocks, and
 routing margin. Do not treat the script PASS as proof that the complete
-four-channel design fits. Before Gate 3, inspect
-`v06_gate2_utilization_hierarchical.rpt` to split FIR versus FFT LUT
-use and compare the remaining budget with the implemented V03 MTS
-base utilization. That evidence decides whether the next experiment is
-the `Direct form transposed` variant, a narrower normalized/scaled FFT
-datapath, or a move to Plan B/custom. Preserve the Gate-2 summary and
-detailed reports before any variant rerun.
+four-channel design fits. Gate 2R below is the next controlled test.
+The implemented V03 MTS utilization is still needed for the final x4
+budget; the first grep attempt matched only one row because Vivado
+pads utilization labels to different column widths, so it is not MTS
+evidence yet.
 
-Collect the existing review evidence (no rebuild) with:
+The Gate-2 detailed evidence already collected is:
 
 ```bash
 sed -n '1,180p' build/output/v06_gate2_utilization.rpt
 sed -n '1,220p' build/output/v06_gate2_utilization_hierarchical.rpt
-find build/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.runs \
-  -mindepth 2 -maxdepth 2 \
-  \( -iname '*utilization_placed.rpt' -o -iname '*utilization_synth.rpt' \) \
-  -print -exec grep -H -E \
-  '^\| (CLB LUTs\*?|CLB Registers|Block RAM Tile|URAM|DSPs) \|' {} \;
 ```
 
 Run exactly (regression/reproduction only):
@@ -279,6 +294,45 @@ total already exceeds the whole part. A PASS still requires the
 follow-on assistant review of x4 channels plus the V03 MTS base, V05
 gearbox, search/DOA logic and routing margin; it is not production
 timing closure and does not authorize packaging or `step08`.
+
+### Gate 2R — BRAM shift-register A/B on the same RTL (current experiment)
+
+Run exactly:
+
+```bash
+make -C ip/matlab/channelizer_hdl gate2r-bram
+cat build/output/v06_gate2r_bram_ooc_synthesis.rpt
+```
+
+This is deliberately a **one-variable synthesis experiment**. The Tcl
+requires the same Gate-1 systolic PASS report and generated top, reads
+the same generated Verilog, uses the same pinned part and
+`v06_gate2_ooc.xdc`, and changes only:
+
+```tcl
+synth_design ... -directive AreaMapLargeShiftRegToBRAM
+```
+
+All outputs are isolated under the `v06_gate2r_bram_` prefix and
+`build/v06_gate2r_bram_ooc/`; the Gate-2 baseline reports/checkpoint
+are not overwritten. No MATLAB model, generated RTL, filter structure,
+coefficients, scaling, part, clock, XDC, block design or packaged IP is
+changed.
+
+The Gate-2R summary records total and x4 resources and timing exactly
+as Gate 2, plus LUT-as-Logic, LUT-as-Memory, distributed-RAM,
+shift-register, RAMB36 and RAMB18 rows and deltas against the Gate-2
+baseline. Its script PASS keeps the Gate-2 meaning—synthesis completed,
+post-synthesis setup WNS/TNS passed, and no crude x4 resource exceeded
+the whole part. `RESOURCE_IMPROVEMENT_MATERIAL=1` is a separate review
+marker requiring BRAM Tile > 0, at least 20% total-LUT reduction, and
+an SRL reduction. Even a material result is not production selection:
+the assistant must still review x4 BRAM use, timing, the MTS-base LUT
+budget and routing risk. If BRAM mapping is not material, the next
+controlled Plan-A test is the `Direct form transposed` architecture;
+if neither produces a credible integrated budget, move to the OPFB /
+AMD-IP feasibility path instead of proceeding to Gate 3 on an
+unfittable candidate.
 
 ### Gate 3 — numerical ordering and phase
 
