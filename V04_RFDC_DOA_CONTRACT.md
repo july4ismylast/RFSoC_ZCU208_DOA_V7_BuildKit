@@ -119,6 +119,7 @@ values propagated.
 | `CONFIG.ADC_CalOpt_ModeXX` | 1 | **1 (no numeric change)** | XML-proven: `Mode1=0, Mode2=1, Autocal=2` — MTS already selects **Mode 2**, which is also the PG269 choice here (Mode 1 is only for inputs within ±10% of `Fs/2`; the 2.25–3.75 GHz band is otherwise). The scratch apply writes `1` explicitly so the intent is recorded, not inherited by luck. |
 | `CONFIG.ADC0_Fabric_Freq`, `ADC1_Fabric_Freq` | 500.000 | **250.000 after validate** | required AXIS clock `2.0 GS/s ÷ 8`; `ADCn_Outclk_Freq` stays 250.000 |
 | `CONFIG.ADC0_Multi_Tile_Sync`, `ADC1_Multi_Tile_Sync` | true | **true (hard invariant)** | MTS is what makes Tile 0/Tile 1 latency and digital-feature alignment deterministic; a persisted `false` is a V04 failure even if every datapath value is correct |
+| `CONFIG.PL_Clock_Freq` (top level) | **100.0** live default (omitted from generated MTS Tcl) | **500.000** | common MTS PL clock: integer multiple of ADC AXIS 250 MHz and DAC AXIS 500 MHz. Write explicitly before the datapath transaction and restore MTS after it; leaving the 100 MHz default made the late ADC MTS restore fail in scratch v1.2, while 500 MHz made the same restore pass and persist in v1.3. Mirrored as `RFDC_PL_CLOCK_HZ` in `config.mk`. |
 
 Sampling rate, clock source/distribution, MTS membership, dither and the
 enabled-slice set stay as in the V03-proven MTS base; ADC tiles 2/3 stay
@@ -175,26 +176,45 @@ This eliminates the mixer-mode stage, tuning stage, direct
 the blocker is the RFDC dependency evaluated by the ADC rate
 transaction as a whole.
 
-Script **v1.3** is therefore a recorded root-cause experiment, not a
-blind retry. It enumerates the live RFDC sync/PL-clock properties
+Script **v1.3** was therefore run as a recorded root-cause experiment,
+not a blind retry. It enumerates the live RFDC sync/PL-clock properties
 (generated Tcl can omit defaults such as `CONFIG.PL_Clock_Freq`), sets
 `PL_Clock_Freq=500.000` before stage 2 if that property exists and is
 not already 500 (500 MHz is the common integer multiple of ADC AXIS
 250 MHz and DAC AXIS 500 MHz), and only if MTS still flips runs ordered
-branches: PL clock 500/250 with both MTS groups forced through a real
-false→true transition; ADC-sole-group sequencing; ADC `m0/m1_axis_aclk`
-moved to the existing 250 MHz `clkRFdiv2` net (restored to 500 MHz if
-that branch fails); DAC interpolation 2×/fabric 250 MHz on every active
-DAC slice; and a temporary, always-reverted ADC `Data_Width=4`/fabric
-500 MHz probe. PG269 permits different ADC/DAC AXIS frequencies with a
-common-multiple PL clock and separate PL-SYSREF capture in each AXIS
-domain, so a split-clock branch is preferred. If only the DAC-250
-branch restores MTS, v1.3 reports **PASS-DIAGNOSTIC**, not production
-PASS: changing the DAC loopback to interpolation 2×/250 MHz AXIS is a
-separate V04/V07 decision. If no branch restores ADC MTS, the branch
-table in the report is the evidence for the next hypothesis (for
-example MTS tile-group/clock-distribution state) — production step08
-remains blocked meanwhile.
+branches: the ordinary late restore; PL clock 500/250 with both MTS
+groups forced through a real false→true transition; ADC-sole-group
+sequencing; ADC `m0/m1_axis_aclk` moved to the existing 250 MHz
+`clkRFdiv2` net; DAC interpolation 2×/fabric 250 MHz; and a temporary
+ADC `Data_Width=4`/fabric 500 MHz probe.
+
+**Fourth scratch attempt (2026-11-03, script v1.3) — PASS, root cause
+found:** the live before-state had `CONFIG.PL_Clock_Freq={100.0}` even
+though all four MTS flags were true at 500 MHz fabric. v1.3 set it to
+`500.000` before stage 2. The stage-2 rate transaction **still**
+transiently cleared ADC0/1 MTS (so the pre-write alone is not the whole
+rule), but this time the ordinary `D0` late restore immediately after
+the final datapath values **passed**. No D1–D6 branch was needed:
+`adc_aclk_rewired_250=0`, DAC interpolation/fabric stayed 1×/500 MHz,
+full-BD validate passed, and the persisted reopened state was ADC0/1
+MTS `true` at 250 MHz, DAC0/1 MTS `true` at 500 MHz, and
+`PL_Clock_Freq={500.000}`. The only review warning was that MTS had
+been cleared during the apply and restored by diagnostics entry D0.
+Compared with v1.2 on the same input BD, the controlled difference is
+the explicit PL clock value: **100 MHz default → restore rejected;
+500 MHz common PL clock → restore accepted and persisted**.
+
+**Production RFDC transaction locked for V07:** (1) verify the pinned
+RFDC 2.6 cell and captured MTS-base invariants; (2) write
+`CONFIG.PL_Clock_Freq=500.000` explicitly (from
+`RFDC_PL_CLOCK_HZ=500000000`); (3) apply the staged atomic mode, rate
+and tuning dictionaries above; (4) re-enable ADC0/1 + DAC0/1
+`Multi_Tile_Sync=true` as a late transaction after the final datapath
+state; (5) validate, save, reopen and hard-assert MTS, PL clock,
+datapath values, streams and `user_sysref_adc/dac` connectivity. This
+proves the RFDC CONFIG transaction only: V07 still has to move the ADC
+AXIS clocks/resets to 250 MHz, split PL-SYSREF capture by AXIS domain,
+replace the old 500 MHz capture path, and connect the eight I/Q streams.
 
 ## 4. PL stream / clock contract
 
@@ -236,7 +256,7 @@ architecture at our rates). The existing 64‑band scalar harness in
 - [x] Centre/band/decimation/clock numbers locked above and mirrored in `config.mk`.
 - [x] First `v04_dump_rfdc.tcl` run reviewed: RFDC 2.6 property names, current MTS values and stream set proven on the 2023.2 PC.
 - [x] Revised dump run (2026-11-03, dump v2.1): IP-XACT choice labels for all V04 enums (`Zone 2=1`, `Mode2=1`, `Real->I/Q=0`, `Fine=2`, `I/Q=1`, `2x=2`), `MTSclkwiz` outputs (500/250 MHz, both used), RFDC streams 128-bit with no TKEEP/TLAST/TSTRB.
-- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect **and ADC MTS remains true**. v1.0 proved everything except decimation; v1.1 proved decimation 2×/`Fabric_Freq=250.000` persisted but exposed `ADC0/1_Multi_Tile_Sync=true→false`; v1.2 correctly **FAIL**ed with six MTS failures and localized the flip to the stage-2 rate transaction (both late restores failed; validate was not the trigger). Script v1.3 (live `PL_Clock_Freq`/sync-property dump + ordered PL-clock, sequencing, ADC-clock-rewire, DAC-250 and ADC-width4 diagnostic branches; DAC-250 success is `PASS-DIAGNOSTIC` only) rerun pending: `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched).
+- [x] Scratch-copy apply proof (2026-11-03, script v1.3): candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices is identical in effect, full-BD validate passed, and ADC/DAC MTS persisted `true` after save/reopen. Root cause of the earlier MTS regression was the live default `CONFIG.PL_Clock_Freq={100.0}`: setting it explicitly to `500.000`, then restoring MTS after the stage-2 transient clear, gave `V04 SCRATCH CONFIG RESULT=PASS solution=BASELINE_RESTORE_AFTER_DATAPATH` with ADC fabric 250 MHz and DAC fabric 500 MHz. Evidence: user-PC `build/output/v04_rfdc_scratch_apply.rpt` from `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched).
 - [x] V05 gearbox implemented against §4 and accepted on Vitis HLS 2023.2 (2026-11-03: `step05_hls_repack` PASS — CSim bit-exact, csynth II=1/depth 2, estimated Fmax 500 MHz, VLNV `openai:doa:rfdc_repack4:1.0` verified; details in `V05_RFDC_REPACK4_SPEC.md`). Post-channelizer capture selector is specified with V06's output format.
 - [ ] V06 channelizer feasibility evidence (1‑ch synth) before any step08 integration attempt.
 
