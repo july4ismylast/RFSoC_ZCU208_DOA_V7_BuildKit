@@ -6,8 +6,11 @@ scratch (4 GSPS, Fine Real→I/Q DDC, decimation 2, MTS persisted), and
 the user PC (MATLAB R2024a, 2026-11-03)**: the one-channel SSR-8/1024
 `dsphdl.Channelizer` object configuration works in fixed point, and HDL
 Coder generated the corresponding one-channel Verilog with no HDL-check
-errors, warnings or messages. V06 must still prove one-channel OOC
-timing/resources and numerical ordering before any V07/`step08`
+errors, warnings or messages. **Gate-2 one-channel OOC synthesis also
+returned script PASS**, with strong post-synthesis setup slack, but the
+four-channel LUT extrapolation is a major integration risk (see Gate 2
+review below). Plan A is therefore not selected yet: x4 resource review
+and Gate-3 numerical ordering remain before any V07/`step08`
 integration is attempted.
 
 ## 1. One-channel target contract
@@ -33,7 +36,7 @@ AXI4-Stream wrapper contract is frozen.
 
 | Candidate | Why it is considered | Main risk / adaptation | V06 order |
 |---|---|---|---|
-| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files for the exact `Channelizer_DUT` top | One-channel 1024-band OOC resource/timing, steady-state scaling/phase and complete bin ordering remain unproven on ZU48DR | **Plan A — Gate-2 OOC synthesis next** |
+| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files; Gate-2 one-channel OOC synthesis met setup timing at 4.0 ns (WNS +1.630 ns) | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**, leaving only 71,144 LUTs for the MTS base, V05, serializer, DOA/control logic and routing margin; steady-state scaling/phase and complete bin ordering also remain unproven | **Plan A candidate — x4 LUT review before Gate 3** |
 | **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`. This is also the user's selected **step05/step06 IP-collection flow** (always pass `CHANNELIZER_FLOW=opfb` on the user PC) | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Plan B if Plan A fails API/scaling/resource/timing; collection alone does not close V06 |
 | **AMD FIR Compiler + AMD FFT, hand-assembled SSR PFB** | FIR Compiler 7.2 is already pinned; AMD IP would be native to Vivado 2023.2 | AMD FFT VLNV/version is not yet checked or pinned (required by the V00 rule); commutator, coefficient banks, scaling and SSR ordering become custom design work | Plan C |
 | **Custom HLS/RTL PFB** | Maximum control over interface and scaling | No exact SSR-8/1024 implementation exists in the audited repos; highest verification and timing-closure risk | Last resort |
@@ -192,9 +195,52 @@ are intentionally blocked unless a later wrapper stage explicitly sets
 `ALLOW_CHANNELIZER_PACKAGE=1`. Gate 2 will synthesize the generated
 one-channel RTL out-of-context before any packaging decision.
 
-### Gate 2 — one-channel Vivado OOC synthesis (current gate)
+### Gate 2 — one-channel Vivado OOC synthesis (script PASS; x4 review pending)
 
-Run exactly:
+**One-channel result (user PC, Vivado 2023.2, 2026-11-03): PASS by the
+predefined setup/resource script criteria.** Synthesis of the 227
+Gate-1 Verilog files completed in 306 s. Post-synthesis setup timing at
+4.000 ns was **WNS +1.630 ns, TNS 0.000 ns, 0/270030 failing
+endpoints**. The same summary recorded post-synthesis hold estimates
+**WHS −0.075 ns, THS −19.523 ns, 265/270030 failing endpoints**; this
+is not a routed hold signoff result and was not a Gate-2 script
+criterion, but integrated implementation must eventually close hold as
+well as setup.
+
+| Resource | One systolic channel | x4 extrapolation | Remaining after x4 |
+|---|---:|---:|---:|
+| CLB LUTs | 88,534 / 425,280 (20.82%) | 354,136 (83.27%) | **71,144 (16.73%)** |
+| CLB registers | 74,573 / 850,560 (8.77%) | 298,292 (35.07%) | 552,268 (64.93%) |
+| Block RAM Tile | 0 / 1080 | 0 | 1080 |
+| URAM | 0 / 80 | 0 | 80 |
+| DSPs | 312 / 4272 (7.30%) | 1248 (29.21%) | 3024 (70.79%) |
+
+**Review status: amber/red on LUT capacity.** Four generated
+channelizers alone would leave only 71,144 LUTs for the MTS base that
+remains after V04/V07 edits, V05 `rfdc_repack4`, the SSR-8-to-serial
+snapshot logic, AXI/control/DMA logic, all DOA/search blocks, and
+routing margin. Do not treat the script PASS as proof that the complete
+four-channel design fits. Before Gate 3, inspect
+`v06_gate2_utilization_hierarchical.rpt` to split FIR versus FFT LUT
+use and compare the remaining budget with the implemented V03 MTS
+base utilization. That evidence decides whether the next experiment is
+the `Direct form transposed` variant, a narrower normalized/scaled FFT
+datapath, or a move to Plan B/custom. Preserve the Gate-2 summary and
+detailed reports before any variant rerun.
+
+Collect the existing review evidence (no rebuild) with:
+
+```bash
+sed -n '1,180p' build/output/v06_gate2_utilization.rpt
+sed -n '1,220p' build/output/v06_gate2_utilization_hierarchical.rpt
+find build/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.runs \
+  -mindepth 2 -maxdepth 2 \
+  \( -iname '*utilization_placed.rpt' -o -iname '*utilization_synth.rpt' \) \
+  -print -exec grep -H -E \
+  '^\| (CLB LUTs\*?|CLB Registers|Block RAM Tile|URAM|DSPs) \|' {} \;
+```
+
+Run exactly (regression/reproduction only):
 
 ```bash
 make -C ip/matlab/channelizer_hdl gate2

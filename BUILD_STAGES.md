@@ -104,11 +104,12 @@ Select exactly one implementation:
 | External IP | `CHANNELIZER_FLOW=external EXTERNAL_CHANNELIZER_IP=...` | Previously packaged compatible channelizer |
 
 **Stage V06 warning:** Gates 0 and 1 passed for the production-size
-SSR-8 / 1024-band MATLAB object and its generated one-channel RTL.
-That still does not make `step05_channelizer`/`step06_collect_ip` a V06
-completion proof: one-channel OOC synthesis, numerical ordering and
-the AXI4-Stream wrapper remain gated. The current feasibility gate is
-`make -C ip/matlab/channelizer_hdl gate2`; see
+SSR-8 / 1024-band MATLAB object and its generated one-channel RTL, and
+Gate-2 one-channel OOC synthesis returned script PASS at 4.0 ns. That
+still does not make `step05_channelizer`/`step06_collect_ip` a V06
+completion proof: four systolic channels alone extrapolate to 83.27%
+of CLB LUTs, so the x4 resource review, numerical ordering and the
+AXI4-Stream wrapper remain gated. See
 `V06_CHANNELIZER_FEASIBILITY.md`. MATLAB packaging is blocked in the
 local Makefile until the wrapper contract is frozen.
 

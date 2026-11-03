@@ -5,16 +5,11 @@
 > `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24
 > output, and 1760-cycle latency. HDL Coder generated the
 > `Channelizer_DUT` top and 227 Verilog files with no HDL-check errors,
-> warnings or messages. The current Gate-2 test is only:
->
-> ```bash
-> make -C ip/matlab/channelizer_hdl gate2
-> cat build/output/v06_gate2_ooc_synthesis.rpt
-> ```
->
-> See `V06_CHANNELIZER_FEASIBILITY.md` at the repository root. Gate 2 is
-> one-channel Vivado out-of-context synthesis at 4.0 ns; it does not
-> package a production IP or prove integrated timing/resources.
+> warnings or messages. Gate-2 one-channel OOC synthesis returned
+> script PASS at 4.0 ns (setup WNS +1.630 ns), but four systolic
+> channels alone extrapolate to 83.27% of CLB LUTs. The current work is
+> the Gate-2 x4 resource review in `V06_CHANNELIZER_FEASIBILITY.md`;
+> do not treat the one-channel PASS as integrated fit/timing proof.
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
 `dsp.Channelizer` for synthesizable hardware. `build_model.m` now reads
