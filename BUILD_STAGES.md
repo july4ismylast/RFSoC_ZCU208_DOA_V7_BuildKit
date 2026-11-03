@@ -108,9 +108,12 @@ SSR-8 / 1024-band MATLAB object and its generated one-channel RTL, and
 Gate-2 one-channel OOC synthesis returned script PASS at 4.0 ns. That
 still does not make `step05_channelizer`/`step06_collect_ip` a V06
 completion proof: four systolic channels alone extrapolate to 83.27%
-of CLB LUTs, dominated by FilterBank SRL delay LUTs. The current
-Gate-2R same-RTL `AreaMapLargeShiftRegToBRAM` A/B, integrated x4
-budget, numerical ordering and AXI4-Stream wrapper remain gated. See
+of CLB LUTs, dominated by FilterBank SRL delay LUTs. Gate-2R's
+same-RTL `AreaMapLargeShiftRegToBRAM` A/B completed with exactly zero
+resource change and is rejected. The current isolated Gate-2T
+`Direct form transposed` probe/Gate-1/OOC sequence, actual MTS-base
+utilization, integrated x4 budget, numerical ordering and
+AXI4-Stream wrapper remain gated. See
 `V06_CHANNELIZER_FEASIBILITY.md`. MATLAB packaging is blocked in the
 local Makefile until the wrapper contract is frozen.
 

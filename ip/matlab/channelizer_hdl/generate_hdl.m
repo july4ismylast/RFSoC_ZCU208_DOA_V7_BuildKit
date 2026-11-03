@@ -10,7 +10,16 @@ function generatedTopFile = generate_hdl()
 model = 'zu48dr_channelizer_ip';
 dut = [model '/Channelizer_DUT'];
 scriptDir = fileparts(mfilename('fullpath'));
-targetDirectory = fullfile(scriptDir, 'hdl_prj', 'hdlsrc');
+filterStructureChoice = env_choice('V06_FILTER_STRUCTURE', ...
+    env_choice('CHANNELIZER_FILTER_STRUCTURE', 'systolic', ...
+        {'systolic', 'transposed'}), {'systolic', 'transposed'});
+switch filterStructureChoice
+    case 'systolic'
+        targetSubdirectory = 'hdlsrc';
+    case 'transposed'
+        targetSubdirectory = 'hdlsrc_transposed';
+end
+targetDirectory = fullfile(scriptDir, 'hdl_prj', targetSubdirectory);
 
 part = strtrim(getenv('PART'));
 if isempty(part)
@@ -44,6 +53,20 @@ else
     generatedTopFile = fullfile(matches(1).folder, matches(1).name);
 end
 
+fprintf('HDL filter-structure choice: %s\n', filterStructureChoice);
 fprintf('HDL generated top: %s\n', generatedTopFile);
 fprintf('Packaging is intentionally not performed by generate_hdl.\n');
+end
+
+function value = env_choice(name, defaultValue, allowedValues)
+text = lower(strtrim(getenv(name)));
+if isempty(text)
+    value = defaultValue;
+    return;
+end
+if ~ismember(text, allowedValues)
+    error('V06:BadEnvironment', '%s must be one of {%s}, got "%s".', ...
+        name, strjoin(allowedValues, ', '), text);
+end
+value = text;
 end

@@ -27,11 +27,14 @@ function v06_probe_ssr8_1024()
 %   V06_MAX_CYCLES              (default 8192 SSR beats)
 %   V06_NORMALIZE               (default 0; set 1 to reproduce attempt 1)
 %   V06_COEFF_SOURCE            (default tf; alternative: coeffs)
-%   V06_FILTER_STRUCTURE        (default systolic; alternative: transposed)
+%   V06_FILTER_STRUCTURE        (default CHANNELIZER_FILTER_STRUCTURE,
+%                                normally systolic; alternative: transposed)
 %   V06_FILTER_OUTPUT_FULL_PRECISION (default 0; diagnostic only)
 %   V06_SNAPSHOTS_TO_COLLECT    (default 4; assertion uses the last one)
 %
-% Report: <repo>/build/output/v06_channelizer_probe.rpt
+% Reports: systolic uses <repo>/build/output/v06_channelizer_probe.rpt;
+% transposed uses v06_channelizer_probe_transposed.rpt so the proved
+% Gate-0 baseline evidence is not overwritten.
 
 numBands = env_integer('CHANNELIZER_NUM_BANDS', 1024);
 ssr = env_integer('WIDEBAND_SAMPLES_PER_CLOCK', 8);
@@ -44,12 +47,15 @@ filterOutputFullPrecision = ...
 snapshotsToCollect = env_integer('V06_SNAPSHOTS_TO_COLLECT', 4);
 coeffSource = env_choice('V06_COEFF_SOURCE', 'tf', {'tf', 'coeffs'});
 filterStructureChoice = env_choice('V06_FILTER_STRUCTURE', ...
-    'systolic', {'systolic', 'transposed'});
+    env_choice('CHANNELIZER_FILTER_STRUCTURE', 'systolic', ...
+        {'systolic', 'transposed'}), {'systolic', 'transposed'});
 switch filterStructureChoice
     case 'systolic'
         filterStructure = 'Direct form systolic';
+        reportSuffix = '';
     case 'transposed'
         filterStructure = 'Direct form transposed';
+        reportSuffix = '_transposed';
 end
 
 scriptDir = fileparts(mfilename('fullpath'));
@@ -58,7 +64,8 @@ reportDir = fullfile(repoRoot, 'build', 'output');
 if ~exist(reportDir, 'dir')
     mkdir(reportDir);
 end
-reportFile = fullfile(reportDir, 'v06_channelizer_probe.rpt');
+reportFile = fullfile(reportDir, ...
+    ['v06_channelizer_probe' reportSuffix '.rpt']);
 fid = fopen(reportFile, 'w');
 if fid < 0
     error('V06:ReportOpenFailed', 'Cannot open probe report: %s', reportFile);
@@ -76,6 +83,7 @@ log_line('TAPS_PER_BAND=%d', tapsPerBand);
 log_line('STOPBAND_DB=%d', stopbandDb);
 log_line('NORMALIZE=%d', normalizeFlag);
 log_line('COEFF_SOURCE=%s', coeffSource);
+log_line('FILTER_STRUCTURE_CHOICE=%s', filterStructureChoice);
 log_line('FILTER_STRUCTURE=%s', filterStructure);
 log_line('FILTER_OUTPUT_FULL_PRECISION=%d', filterOutputFullPrecision);
 log_line('SNAPSHOTS_TO_COLLECT=%d', snapshotsToCollect);

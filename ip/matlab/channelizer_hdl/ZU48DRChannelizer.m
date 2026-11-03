@@ -2,13 +2,18 @@ classdef ZU48DRChannelizer < matlab.System
     % HDL-oriented one-channel channelizer wrapper.
     %
     % build_model.m supplies the production-size NumBands, prototype
-    % Coefficients and NormalizeFFT values from config.mk.  The defaults
-    % below identify the V06 candidate configuration, but the short
-    % fallback coefficient vector is only a placeholder for an
-    % unconfigured block and must never be used for generated hardware.
+    % Coefficients, FilterStructure and NormalizeFFT values from
+    % config.mk.  The defaults below identify the proved systolic V06
+    % baseline, but the short fallback coefficient vector is only a
+    % placeholder for an unconfigured block and must never be used for
+    % generated hardware.
     properties (Nontunable)
         NumBands = 1024
         Coefficients = [-0.032 0.121 0.318 0.482 0.546 0.482 0.318 0.121 -0.032]
+        % Gate-2 proved this default for one-channel OOC synthesis.
+        % build_model.m selects 'Direct form transposed' only for the
+        % isolated Gate-2T A/B targets.
+        FilterStructure (1,:) char {mustBeMember(FilterStructure, ["Direct form systolic", "Direct form transposed"])} = 'Direct form systolic'
         % Gate-0 probe v2 proved Normalize=false for the 1024-band,
         % SSR-8 fixed-point configuration.  Normalize=true underflowed
         % to about two output LSBs in attempt 1.
@@ -21,7 +26,7 @@ classdef ZU48DRChannelizer < matlab.System
         function setupImpl(obj,~,~)
             obj.H = dsphdl.Channelizer(NumFrequencyBands=obj.NumBands, ...
                 FilterCoefficients=obj.Coefficients, ...
-                FilterStructure='Direct form systolic', ...
+                FilterStructure=obj.FilterStructure, ...
                 OutputSize='Same as input size', ...
                 Normalize=logical(obj.NormalizeFFT));
         end

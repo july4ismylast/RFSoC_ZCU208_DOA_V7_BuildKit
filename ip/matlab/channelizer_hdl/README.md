@@ -9,29 +9,41 @@
 > script PASS at 4.0 ns (setup WNS +1.630 ns), but four systolic
 > channels alone extrapolate to 83.27% of CLB LUTs. Hierarchy review
 > found 55,952 SRLs inside the 63,439-LUT FilterBank and no BRAM use.
-> The current Gate-2R experiment is:
+> Gate-2R then resynthesized the same RTL with
+> `AreaMapLargeShiftRegToBRAM`; it completed with script PASS but
+> exactly zero resource change, still 0 BRAM, so that route is closed.
+> The current Gate-2T experiment is the isolated transposed A/B:
 >
 > ```bash
-> make -C ip/matlab/channelizer_hdl gate2r-bram
-> cat build/output/v06_gate2r_bram_ooc_synthesis.rpt
+> make -C ip/matlab/channelizer_hdl probe-transposed
+> cat build/output/v06_channelizer_probe_transposed.rpt
+> make -C ip/matlab/channelizer_hdl gate1-transposed
+> cat build/output/v06_gate1_hdl_generation_transposed.rpt
+> make -C ip/matlab/channelizer_hdl gate2t-transposed
+> cat build/output/v06_gate2t_transposed_ooc_synthesis.rpt
 > ```
 >
-> It resynthesizes the same Gate-1 RTL with only
-> `AreaMapLargeShiftRegToBRAM` changed. Do not treat either one-channel
-> PASS as integrated fit/timing proof.
+> Run them in that order and stop on the first failure. Do not treat a
+> one-channel PASS as integrated fit/timing proof or production
+> architecture selection.
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
 `dsp.Channelizer` for synthesizable hardware. `build_model.m` now reads
 the production values exported by `config.mk` (1024 bands, eight complex
-samples/cycle, 12 taps/band, 100 dB stopband target, and
-`CHANNELIZER_NORMALIZE=0`). It supplies an eight-element complex
-`fixdt(1,16,15)` column vector per valid cycle and uses `tf()` to store
-the 12,288 prototype coefficients as a model-workspace constant. The
-legacy 64-band/four-lane configuration remains reproducible only by
-explicit environment overrides. The HDL object uses a
-direct-form-systolic polyphase filter and an output vector the same size
-as the input; with `Normalize=false`, Gate 0 measured the output type as
-signed 26-bit/fraction-24.
+samples/cycle, 12 taps/band, 100 dB stopband target,
+`CHANNELIZER_NORMALIZE=0`, and
+`CHANNELIZER_FILTER_STRUCTURE=systolic` by default). It supplies an
+eight-element complex `fixdt(1,16,15)` column vector per valid cycle
+and uses `tf()` to store the 12,288 prototype coefficients as a
+model-workspace constant. The legacy 64-band/four-lane configuration
+remains reproducible only by explicit environment overrides. The
+wrapper passes the selected `Direct form systolic` or
+`Direct form transposed` value to `dsphdl.Channelizer`; only systolic
+is the proved baseline, while transposed is currently restricted to
+the Gate-2T A/B. The output vector is the same size as the input; with
+`Normalize=false`, systolic Gate 0 measured the output type as signed
+26-bit/fraction-24, and the transposed A/B requires that same
+interface width.
 
 MATLAB R2024a does not support the `PreservePhase` property. This design does
 not use it. Every antenna channel must use an identical channelizer; the
@@ -39,10 +51,10 @@ deterministic per-bin phase rotation is then common to all four receiver
 channels and cancels in cross-channel phase and covariance measurements. Verify
 this again in the four-channel HIL test.
 
-SSR-8 at 250 MHz is the production-rate architecture choice, not a
-timing proof. Gate 2 must still verify one-channel out-of-context
-utilization and achieved clock rate for the ZCU208 part before any x4
-extrapolation.
+SSR-8 at 250 MHz is the production-rate architecture choice. Gate 2
+has verified one systolic channel out-of-context at 4.0 ns on the
+ZCU208 part, but that is still not integrated four-channel fit, routed
+timing, hold, congestion or power proof.
 
 `Channelizer_DUT` is an explicit atomic Simulink Subsystem. Its internal
 `ChannelizerCore` MATLAB System block contains the `dsphdl.Channelizer` object.
@@ -50,17 +62,23 @@ This hierarchy is required because `makehdl` accepts a model, subsystem, or
 model reference as its DUT; it does not accept the leaf MATLAB System block as
 the DUT path.
 
-`make gate1` is the V06 HDL-generation entry point, `make gate2` is
-the proved default-directive one-channel OOC baseline, and
-`make gate2r-bram` is the current same-RTL BRAM shift-register A/B;
-`make hdl` remains the underlying generation file-target form. Packaging is intentionally
-blocked during V06 (`ALLOW_CHANNELIZER_PACKAGE=1` is required to unlock
-the old package targets) because the generated DUT is still a raw
-data/valid subsystem, not the frozen AXI4-Stream production wrapper.
-Do not bypass that guard until the later wrapper stage. The packaging
-Tcl remains available for that future stage and searches recursively
-because R2024a writes files under
-`hdl_prj/hdlsrc/zu48dr_channelizer_ip`.
+`make gate1` is the systolic V06 HDL-generation entry point,
+`make gate2` is the proved default-directive one-channel OOC baseline,
+and `make gate2r-bram` is retained only as the completed zero-change
+BRAM-directive record. The current sequence is
+`make probe-transposed`, `make gate1-transposed`, then
+`make gate2t-transposed`; those targets use separate
+`*_transposed` reports and `hdl_prj/hdlsrc_transposed/` RTL so they do
+not overwrite baseline evidence. `make hdl` remains the underlying
+generation file-target form. Packaging is intentionally blocked during
+V06 (`ALLOW_CHANNELIZER_PACKAGE=1` is required to unlock the old
+package targets) because the generated DUT is still a raw data/valid
+subsystem, not the frozen AXI4-Stream production wrapper. Do not
+bypass that guard until an architecture is selected and the wrapper
+stage is reached. The existing packaging path still refers to the
+baseline `hdl_prj/hdlsrc/zu48dr_channelizer_ip` tree; transposed RTL
+is not a packaging candidate unless Gate 2T and the later reviews
+select it.
 
 The Makefile launches MATLAB through `scripts/run_matlab_clean.sh`. This keeps
 the real user home and MATLAB licence configuration, copies MATLAB's factory
