@@ -369,7 +369,7 @@ sed -n '1,220p' build/output/v06_gate2t_transposed_utilization_hierarchical.rpt
 ```
 
 **Attempt status (user PC, MATLAB R2024a, 2026-11-03): transposed
-probe PASS; Gate-1 attempt 1 failed in the harness and has been
+probe PASS; Gate-1 attempts 1–2 failed in the harness and have been
 corrected.** The probe kept the exact 12,288-coefficient design
 (`COEFFS_TF_MAX_ABS_DIFF=0`), produced an 8×1 signed
 26-bit/fraction-24 output, collected 512 valid beats / 4096 outputs,
@@ -391,9 +391,20 @@ the exact selected option (`Direct form transposed` or
 `Direct form systolic`) directly to `set_param` and removes that
 workspace variable. Gate 2T correctly refused to run because the
 Gate-1 report was FAIL, so its missing synthesis/utilization reports
-in attempt 1 are expected. After pulling the correction, do **not**
-rerun the already-passed probe; resume at `gate1-transposed`, then run
-`gate2t-transposed` only if Gate 1 passes.
+in attempt 1 are expected.
+
+Gate-1 attempt 2 passed that `set_param` point but failed during the
+model update at `build_model.m:133`: Simulink code generation rejected
+the wrapper validator's string array
+`["Direct form systolic", "Direct form transposed"]` and explicitly
+requested a cell array of character vectors. The accompanying
+`validIn` port-width message is a downstream consequence of the core
+not compiling, not a new wiring error. The second correction therefore
+keeps the property as `char` but changes the validator set to
+`{'Direct form systolic', 'Direct form transposed'}`. After pulling
+the latest correction, do **not** rerun the already-passed probe;
+resume at `gate1-transposed`, then run `gate2t-transposed` only if
+Gate 1 passes.
 
 This is an isolated architecture A/B, not a production selection.
 `config.mk` still defaults `CHANNELIZER_FILTER_STRUCTURE` to

@@ -12,8 +12,11 @@ classdef ZU48DRChannelizer < matlab.System
         Coefficients = [-0.032 0.121 0.318 0.482 0.546 0.482 0.318 0.121 -0.032]
         % Gate-2 proved this default for one-channel OOC synthesis.
         % build_model.m selects 'Direct form transposed' only for the
-        % isolated Gate-2T A/B targets.
-        FilterStructure (1,:) char {mustBeMember(FilterStructure, ["Direct form systolic", "Direct form transposed"])} = 'Direct form systolic'
+        % isolated Gate-2T A/B targets.  Keep the allowed values as a
+        % cell array of character vectors: Simulink code generation
+        % rejects string arrays in a MATLAB System block (Gate-1
+        % transposed attempt 2).
+        FilterStructure (1,:) char {mustBeMember(FilterStructure, {'Direct form systolic', 'Direct form transposed'})} = 'Direct form systolic'
         % Gate-0 probe v2 proved Normalize=false for the 1024-band,
         % SSR-8 fixed-point configuration.  Normalize=true underflowed
         % to about two output LSBs in attempt 1.
