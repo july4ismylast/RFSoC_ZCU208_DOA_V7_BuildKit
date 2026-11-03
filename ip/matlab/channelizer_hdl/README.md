@@ -12,32 +12,22 @@
 > Gate-2R then resynthesized the same RTL with
 > `AreaMapLargeShiftRegToBRAM`; it completed with script PASS but
 > exactly zero resource change, still 0 BRAM, so that route is closed.
-> The current Gate-2T experiment is the isolated transposed A/B:
+> Gate-2T's isolated transposed A/B has now completed with
+> `RESOURCE_IMPROVEMENT_MATERIAL=1`: 35,902 LUTs, 1,718 SRL LUTs,
+> 58,626 registers, 176 RAMB36, 312 DSPs, 351-cycle latency, and setup
+> WNS +1.829 ns for one channel. At x4 that is 143,608 LUTs
+> (33.7679%) but 704/1080 BRAM tiles (65.1852%), so transposed is the
+> provisional Plan-A winner while BRAM headroom and Gate-3 numerics
+> remain to be closed. The next read-only evidence step is:
 >
 > ```bash
-> make -C ip/matlab/channelizer_hdl probe-transposed
-> cat build/output/v06_channelizer_probe_transposed.rpt
-> make -C ip/matlab/channelizer_hdl gate1-transposed
-> cat build/output/v06_gate1_hdl_generation_transposed.rpt
-> make -C ip/matlab/channelizer_hdl gate2t-transposed
-> cat build/output/v06_gate2t_transposed_ooc_synthesis.rpt
+> vivado -mode batch -nojournal -nolog \
+>   -source common/vivado/v06_report_mts_base_utilization.tcl
+> cat build/output/v06_mts_base_utilization.rpt
 > ```
 >
-> Run them in that order and stop on the first failure. On the user
-> PC the transposed probe has already passed with 351-cycle latency;
-> Gate-1 attempt 1 then exposed that R2024a will not resolve a
-> model-workspace variable for the finite-option `FilterStructure`
-> mask parameter, and attempt 2 exposed that Simulink code generation
-> rejects a string array in the wrapper validator. Attempt 3 generated
-> the transposed HDL cleanly (0 errors/warnings/messages) but the new
-> Gate-1 port-width regex missed HDL Coder's trailing `// sfix...`
-> comments. `build_model.m` now passes the exact selected option
-> directly, the validator uses a cell array of character vectors, and
-> the port patterns allow those comments; after pulling those
-> corrections resume at `gate1-transposed` rather than rerunning the
-> probe. Do not treat a
-> one-channel PASS as integrated fit/timing proof or production
-> architecture selection.
+> Do not treat a one-channel PASS as integrated fit/timing proof or
+> production architecture selection.
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
 `dsp.Channelizer` for synthesizable hardware. `build_model.m` now reads
@@ -50,9 +40,10 @@ and uses `tf()` to store the 12,288 prototype coefficients as a
 model-workspace constant. The legacy 64-band/four-lane configuration
 remains reproducible only by explicit environment overrides. The
 wrapper passes the selected `Direct form systolic` or
-`Direct form transposed` value to `dsphdl.Channelizer`; only systolic
-has completed Gate-1/Gate-2, while transposed is currently restricted
-to the Gate-2T A/B. The output vector is the same size as the input;
+`Direct form transposed` value to `dsphdl.Channelizer`; systolic is
+the preserved Gate-2 baseline, while transposed has completed the
+isolated Gate-2T A/B and is the provisional resource winner. It is not
+yet the production default. The output vector is the same size as the input;
 with `Normalize=false`, both the systolic Gate 0 and the transposed
 probe measured the output type as signed 26-bit/fraction-24. Their
 latencies differ: 1760 cycles systolic versus 351 cycles transposed.
@@ -64,9 +55,10 @@ channels and cancels in cross-channel phase and covariance measurements. Verify
 this again in the four-channel HIL test.
 
 SSR-8 at 250 MHz is the production-rate architecture choice. Gate 2
-has verified one systolic channel out-of-context at 4.0 ns on the
-ZCU208 part, but that is still not integrated four-channel fit, routed
-timing, hold, congestion or power proof.
+and Gate 2T have each verified one channel out-of-context at 4.0 ns on
+the ZCU208 part (systolic WNS +1.630 ns; transposed +1.829 ns), but
+that is still not integrated four-channel fit, routed timing, hold,
+congestion or power proof.
 
 `Channelizer_DUT` is an explicit atomic Simulink Subsystem. Its internal
 `ChannelizerCore` MATLAB System block contains the `dsphdl.Channelizer` object.
@@ -77,7 +69,7 @@ the DUT path.
 `make gate1` is the systolic V06 HDL-generation entry point,
 `make gate2` is the proved default-directive one-channel OOC baseline,
 and `make gate2r-bram` is retained only as the completed zero-change
-BRAM-directive record. The current sequence is
+BRAM-directive record. The completed transposed sequence was
 `make probe-transposed`, `make gate1-transposed`, then
 `make gate2t-transposed`; those targets use separate
 `*_transposed` reports and `hdl_prj/hdlsrc_transposed/` RTL so they do
@@ -89,8 +81,9 @@ subsystem, not the frozen AXI4-Stream production wrapper. Do not
 bypass that guard until an architecture is selected and the wrapper
 stage is reached. The existing packaging path still refers to the
 baseline `hdl_prj/hdlsrc/zu48dr_channelizer_ip` tree; transposed RTL
-is not a packaging candidate unless Gate 2T and the later reviews
-select it.
+is the provisional resource winner but is not a packaging candidate
+until the MTS-base budget and Gate 3 select it and the production
+generation/packaging path is changed coherently.
 
 The Makefile launches MATLAB through `scripts/run_matlab_clean.sh`. This keeps
 the real user home and MATLAB licence configuration, copies MATLAB's factory

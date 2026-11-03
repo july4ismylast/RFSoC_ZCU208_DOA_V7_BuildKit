@@ -110,10 +110,13 @@ still does not make `step05_channelizer`/`step06_collect_ip` a V06
 completion proof: four systolic channels alone extrapolate to 83.27%
 of CLB LUTs, dominated by FilterBank SRL delay LUTs. Gate-2R's
 same-RTL `AreaMapLargeShiftRegToBRAM` A/B completed with exactly zero
-resource change and is rejected. The current isolated Gate-2T
-`Direct form transposed` probe/Gate-1/OOC sequence, actual MTS-base
-utilization, integrated x4 budget, numerical ordering and
-AXI4-Stream wrapper remain gated. See
+resource change and is rejected. The isolated Gate-2T
+`Direct form transposed` probe/Gate-1/OOC sequence then passed with a
+material improvement (35,902 LUTs and 176 RAMB36 per channel; x4 =
+33.7679% LUTs but 65.1852% BRAM tiles), making transposed the
+provisional Plan-A winner. Actual MTS-base utilization, the
+integrated x4 budget, Gate-3 numerical ordering and the AXI4-Stream
+wrapper remain gated before production selection. See
 `V06_CHANNELIZER_FEASIBILITY.md`. MATLAB packaging is blocked in the
 local Makefile until the wrapper contract is frozen.
 

@@ -15,16 +15,17 @@ FFT uses 25,095 LUTs and the whole channelizer uses no BRAM. **Gate 2R
 has now run and is a dead end:** the same-RTL
 `AreaMapLargeShiftRegToBRAM` synthesis completed with script PASS but
 produced exactly zero resource change and still used no BRAM.
-**Gate 2T is therefore the current experiment:** regenerate the same
-production-size object with `Direct form transposed`, keep its reports
-and RTL isolated from the systolic baseline, and run the same
-one-channel OOC synthesis. Its transposed probe has passed with a
-351-cycle latency and the same signed 26/24 output; the corrected
-Gate-1/Gate-2T rerun is the immediate step. Plan A is not selected yet;
-Gate-2T, the
-actual MTS-base utilization, the integrated x4 budget and Gate-3
-numerical ordering remain before any V07/`step08` integration is
-attempted.
+**Gate 2T has now passed with a material improvement:** the same
+production-size object regenerated with `Direct form transposed`
+uses 35,902 LUTs instead of 88,534 (59.4483% fewer), 1,718 SRL LUTs
+instead of 57,670 (97.0210% fewer), 58,626 registers instead of
+74,573, the same 312 DSPs, and 351 cycles latency instead of 1760;
+the tradeoff is 176 RAMB36 tiles per channel. Four transposed
+channels therefore extrapolate to 143,608 LUTs (33.7679%) but 704
+BRAM tiles (65.1852%). Transposed is the clear provisional Plan-A
+resource winner, not yet the production selection: the actual
+MTS-base utilization, integrated x4 review and Gate-3 numerical
+ordering remain before any V07/`step08` integration is attempted.
 
 ## 1. One-channel target contract
 
@@ -49,7 +50,7 @@ AXI4-Stream wrapper contract is frozen.
 
 | Candidate | Why it is considered | Main risk / adaptation | V06 order |
 |---|---|---|---|
-| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files; Gate-2 one-channel OOC synthesis met setup timing at 4.0 ns (WNS +1.630 ns) | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**, leaving only 71,144 LUTs for the MTS base, V05, serializer, DOA/control logic and routing margin. Hierarchical utilization shows the FilterBank is 63,439 LUTs (55,952 SRLs), versus 25,095 LUTs for the FFT; steady-state scaling/phase and complete bin ordering also remain unproven | **Plan A candidate — Gate-2R BRAM directive rejected (zero change); Gate-2T probe PASS at 351 cycles, corrected Gate-1/Gate-2T rerun current** |
+| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files; Gate-2 one-channel OOC synthesis met setup timing at 4.0 ns (WNS +1.630 ns) | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**, leaving only 71,144 LUTs for the MTS base, V05, serializer, DOA/control logic and routing margin. Hierarchical utilization shows the systolic FilterBank is 63,439 LUTs (55,952 SRLs), versus 25,095 LUTs for the FFT. Transposed removes that LUT bottleneck (10,800 FilterBank LUTs, no FilterBank SRLs) but uses 704/1080 BRAM tiles at x4, so actual MTS BRAM headroom is now the main resource question; steady-state scaling/phase and complete bin ordering also remain unproven | **Plan A provisional winner — transposed Gate-2T PASS/material (35,902 LUTs, 176 RAMB36, WNS +1.829 ns); MTS-base budget + Gate 3 before production selection** |
 | **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`. This is also the user's selected **step05/step06 IP-collection flow** (always pass `CHANNELIZER_FLOW=opfb` on the user PC) | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Plan B if Plan A fails API/scaling/resource/timing; collection alone does not close V06 |
 | **AMD FIR Compiler + AMD FFT, hand-assembled SSR PFB** | FIR Compiler 7.2 is already pinned; AMD IP would be native to Vivado 2023.2 | AMD FFT VLNV/version is not yet checked or pinned (required by the V00 rule); commutator, coefficient banks, scaling and SSR ordering become custom design work | Plan C |
 | **Custom HLS/RTL PFB** | Maximum control over interface and scaling | No exact SSR-8/1024 implementation exists in the audited repos; highest verification and timing-closure risk | Last resort |
@@ -251,8 +252,9 @@ channelizers alone would leave only 71,144 LUTs for the MTS base that
 remains after V04/V07 edits, V05 `rfdc_repack4`, the SSR-8-to-serial
 snapshot logic, AXI/control/DMA logic, all DOA/search blocks, and
 routing margin. Do not treat the script PASS as proof that the complete
-four-channel design fits. Gate 2R below has already rejected the
-BRAM-directive route; Gate 2T is the current controlled test.
+four-channel design fits. Gate 2R below rejected the BRAM-directive
+route, while Gate 2T subsequently solved the one-channel LUT problem
+with the transposed architecture (see its result below).
 The implemented V03 MTS utilization is still needed for the final x4
 budget; the first grep attempt matched only one row because Vivado
 pads utilization labels to different column widths, so it is not MTS
@@ -351,9 +353,9 @@ systolic RTL; it does not prove that a different filter architecture or
 a custom RAM-based PFB cannot work. Gate 2T below is the next
 controlled Plan-A test.
 
-### Gate 2T — Direct-form-transposed A/B (current experiment)
+### Gate 2T — Direct-form-transposed A/B (PASS; material improvement)
 
-Run these in order, stopping on the first failure:
+The completed sequence was run in this order:
 
 ```bash
 make -C ip/matlab/channelizer_hdl probe-transposed
@@ -455,12 +457,64 @@ Gate 3 on an unfittable candidate; close the integrated budget with
 the real MTS utilization and move to the OPFB / AMD-IP feasibility
 path as required.
 
+**Gate-2T result (user PC, Vivado 2023.2, 2026-11-03): PASS and
+material.** Gate 1 supplied 228 transposed Verilog files with the
+351-cycle latency and signed 26/24 output. One-channel OOC synthesis
+completed in 126 s with setup **WNS +1.829 ns / TNS 0** at 4.000 ns
+(better than the systolic +1.630 ns). The post-synthesis hold line
+remained WHS −0.075 ns / THS −19.523 ns, as in the baseline OOC runs;
+that is not routed hold signoff.
+
+| Resource (one channel) | Systolic Gate 2 | Transposed Gate 2T | Delta |
+|---|---:|---:|---:|
+| CLB LUTs | 88,534 | 35,902 | −52,632 (−59.4483%) |
+| LUT as Logic | 27,040 | 30,360 | +3,320 (+12.2781%) |
+| LUT as Memory | 61,494 | 5,542 | −55,952 (−90.9877%) |
+| Shift-register LUTs | 57,670 | 1,718 | −55,952 (−97.0210%) |
+| CLB registers | 74,573 | 58,626 | −15,947 (−21.3844%) |
+| Block RAM Tile / RAMB36 | 0 | 176 | +176 |
+| URAM | 0 | 0 | 0 |
+| DSPs | 312 | 312 | 0 |
+
+The hierarchy explains the result exactly. The FFT is essentially
+unchanged (25,102 vs 25,095 LUTs; 43,571 FFs and 120 DSPs in both).
+The FilterBank falls from 63,439 LUTs / 31,002 FFs / 0 BRAM to
+10,800 LUTs / 15,055 FFs / 176 RAMB36, still with 192 DSPs; each of
+the sixteen real/imaginary subfilters uses about 560 LUTs, about
+819–836 FFs, 11 RAMB36 and 12 DSPs, with no FilterBank SRLs. Thus the
+transposed generated architecture moves the dominant systolic SRL
+delay storage into block RAM rather than merely optimizing logic.
+
+At x4, transposed channelizers alone use 143,608/425,280 LUTs
+(33.7679%, leaving 281,672), 234,504/850,560 registers (27.5705%),
+704/1080 BRAM tiles (65.1852%, leaving 376), no URAM, and
+1248/4272 DSPs (29.2135%). This makes transposed the clear
+provisional Plan-A architecture and removes systolic as the leading
+candidate. It is **not** yet a production selection: BRAM is now the
+tightest crude resource, so the next evidence is the actual routed
+V03 MTS-base utilization, followed by Gate-3 numerical proof on the
+transposed configuration and only then the production default /
+AXI4-Stream wrapper / packaging change. `config.mk` therefore still
+defaults to systolic for baseline reproducibility until that
+selection commit changes the production generation path coherently.
+
+Run the read-only MTS utilization extraction next (no rebuild):
+
+```bash
+vivado -mode batch -nojournal -nolog \
+  -source common/vivado/v06_report_mts_base_utilization.tcl
+cat build/output/v06_mts_base_utilization.rpt
+sed -n '1,180p' build/output/v06_mts_base_utilization_detailed.rpt
+sed -n '1,220p' build/output/v06_mts_base_utilization_hierarchical.rpt
+```
+
 ### Gate 3 — numerical ordering and phase
 
-Compare the HDL-oriented object/RTL against the floating-point
-`dsp.Channelizer` reference after latency alignment. Run beyond the
-12-snapshot prototype-fill interval and discard startup snapshots
-before measuring steady-state gain/phase. Freeze:
+After the MTS-base resource review, compare the **transposed**
+HDL-oriented object/RTL against the floating-point
+`dsp.Channelizer` reference after its 351-cycle latency alignment.
+Run beyond the 12-snapshot prototype-fill interval and discard
+startup snapshots before measuring steady-state gain/phase. Freeze:
 
 - output scalar order over the 128 SSR-8 beats of one snapshot;
 - bin index → baseband/RF frequency mapping;
@@ -468,6 +522,10 @@ before measuring steady-state gain/phase. Freeze:
 - common per-bin phase rotation (acceptable for cross-channel DOA only
   if bit-identical across all four channels).
 
-Only after Gates 0–3 pass is Plan A selected for V07. If Gate 2 or 3
-fails, the same feasibility gates are applied to the MazinLab OPFB
+Only after the MTS-base budget closes and Gate 3 passes for the
+transposed configuration is Plan A selected for V07. If transposed
+fails Gate 3, first determine whether the failure is
+architecture-specific; do not silently fall back to systolic without
+reclosing its 83.27% x4 LUT problem. If neither Plan-A architecture
+is credible, apply the same feasibility gates to the MazinLab OPFB
 Plan B before any production BD work resumes.

@@ -87,7 +87,7 @@ gate2r-bram: v06_gate2_ooc_synth.tcl v06_gate2_ooc.xdc
 	@test -f "$(V06_GATE2R_BRAM_REPORT)" || { echo "ERROR: V06 Gate-2R BRAM report missing: $(V06_GATE2R_BRAM_REPORT)"; exit 1; }
 	@grep -q "V06 GATE2R BRAM OOC SYNTHESIS RESULT=PASS" "$(V06_GATE2R_BRAM_REPORT)" || { echo "ERROR: V06 Gate-2R BRAM did not PASS (see $(V06_GATE2R_BRAM_REPORT))"; exit 1; }
 
-# Stage V06 Gate 2T, step 3 (current resource experiment): synthesize
+# Stage V06 Gate 2T, step 3 (completed 2026-11-03; material PASS): synthesize
 # only the isolated Direct-form-transposed Gate-1 RTL, with the default
 # Vivado directive and the same part/XDC as the systolic Gate 2.  The
 # summary includes deltas versus the 88,534-LUT / 57,670-SRL systolic
