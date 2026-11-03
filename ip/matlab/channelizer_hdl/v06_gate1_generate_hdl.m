@@ -42,6 +42,7 @@ cleanup = onCleanup(@() fclose(fid)); %#ok<NASGU>
 log_line = @(varargin) v06_log(fid, sprintf(varargin{:}));
 
 log_line('# V06 Gate 1: one-channel HDL generation, no packaging');
+log_line('GATE1_SCRIPT_REVISION=2-line-parser');
 log_line('MATLAB_VERSION=%s', version);
 log_line('PART=%s', part);
 log_line('NUM_BANDS=%d', numBands);
@@ -230,13 +231,21 @@ end
 end
 
 function value = report_value(text, key)
-pattern = ['(?m)^' regexptranslate('escape', key) '=(.*)$'];
-tokens = regexp(text, pattern, 'tokens', 'once');
-if isempty(tokens)
-    error('V06:Gate1Gate0KeyMissing', ...
-        'Gate-0 report does not contain %s.', key);
+% Parse strictly line-by-line.  Do not use a regexp capture such as
+% '(?m)^KEY=(.*)$' here: in MATLAB '.' matches newline characters by
+% default, so that expression can capture the remainder of the report
+% instead of the one-line value (Gate-1 attempt 1, 2026-11-03).
+lines = cellstr(splitlines(string(text)));
+prefix = [key '='];
+for lineIndex = 1:numel(lines)
+    line = lines{lineIndex};
+    if strncmp(line, prefix, numel(prefix))
+        value = strtrim(line(numel(prefix) + 1:end));
+        return;
+    end
 end
-value = strtrim(tokens{1});
+error('V06:Gate1Gate0KeyMissing', ...
+    'Gate-0 report does not contain %s.', key);
 end
 
 function value = env_integer(name, defaultValue)

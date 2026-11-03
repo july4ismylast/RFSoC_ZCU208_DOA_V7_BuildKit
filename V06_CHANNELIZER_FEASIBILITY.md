@@ -130,6 +130,17 @@ If probe v2 fails, stop. Do not run `make hdl`, `make package` or
 
 ### Gate 1 — parameterize the Simulink/HDL harness (current gate)
 
+**Attempt 1 (2026-11-03): harness FAIL before HDL generation.** The
+Gate-0 report was valid, but `report_value` used a MATLAB regexp
+capture `(.*)`; because MATLAB `.` matches newlines by default, the
+parser captured the remainder of the Gate-0 report as the
+`PROBE_VERSION` value and raised `V06:Gate1Gate0Mismatch` before
+`HDL_GENERATION_STARTED`. This attempt proves nothing about HDL Coder.
+The parser is now strict line-by-line key/value parsing; preserve the
+attempt-1 report as
+`build/output/v06_gate1_hdl_generation_attempt1_parser_FAIL.rpt` before
+rerunning.
+
 The harness code is now parameterized from `config.mk`:
 `CHANNELIZER_NUM_BANDS=1024`, `WIDEBAND_SAMPLES_PER_CLOCK=8`,
 `CHANNELIZER_TAPS_PER_BAND=12`, `CHANNELIZER_STOPBAND_DB=100`, and
