@@ -32,6 +32,18 @@
 # per-tile and final retries; failures now also log ::errorInfo so the
 # real IP_Flow reason (hidden behind [Common 17-39]) reaches the report.
 #
+# v1.2 (after second user-PC run, 2026-11-03): v1.1 proved the datapath
+# transaction (Decimation_Mode=2 on all slices, Fabric_Freq=250.000
+# persisted, full-BD validate PASS), but ADC0/1_Multi_Tile_Sync silently
+# changed true->false and v1.1 did not assert it.  MTS is mandatory for
+# deterministic inter-tile latency/NCO alignment in this DOA design, so
+# that result is only a partial pass.  v1.2 captures the before-state
+# tile invariants, checkpoints ADC/DAC MTS after every stage, skips the
+# direct Fabric_Freq write when Vivado has already computed 250, tries
+# to re-enable MTS as a late transaction if the RFDC dependency
+# logic cleared it, and hard-asserts MTS plus the captured invariants
+# on the persisted readback.
+#
 # Usage (from the repo root, after step07):
 #   vivado -mode batch -nojournal -nolog -source common/vivado/v04_scratch_apply_rfdc.tcl
 # Env overrides: WORK_XPR, V04_SCRATCH_DIR, V04_SCRATCH_NAME.
@@ -152,11 +164,88 @@ proc v04a_decimation_is_2 {fh rfdc pair_ids label} {
     return $all2
 }
 
+proc v04a_bool_true {value} {
+    return [expr {$value eq "true" || $value eq "TRUE" || $value eq "1"}]
+}
+
+proc v04a_mts_true {rfdc} {
+    return [expr {[v04a_bool_true [v04a_get CONFIG.ADC0_Multi_Tile_Sync $rfdc]] && \
+                  [v04a_bool_true [v04a_get CONFIG.ADC1_Multi_Tile_Sync $rfdc]] && \
+                  [v04a_bool_true [v04a_get CONFIG.DAC0_Multi_Tile_Sync $rfdc]] && \
+                  [v04a_bool_true [v04a_get CONFIG.DAC1_Multi_Tile_Sync $rfdc]]}]
+}
+
+proc v04a_checkpoint {fh rfdc label} {
+    set parts [list "CHECKPOINT $label:"]
+    foreach kind {ADC DAC} {
+        foreach tile {0 1} {
+            lappend parts "${kind}${tile}_MTS={[v04a_get CONFIG.${kind}${tile}_Multi_Tile_Sync $rfdc]}"
+            lappend parts "${kind}${tile}_FABRIC={[v04a_get CONFIG.${kind}${tile}_Fabric_Freq $rfdc]}"
+        }
+    }
+    v04a_log $fh [join $parts " "]
+}
+
+proc v04a_capture_tile_invariants {rfdc} {
+    # Everything needed to prove the ADC rate change did not silently
+    # reprogramme tile clocking/MTS.  ADC Fabric_Freq is intentionally
+    # excluded (500 -> 250 is the change under test); DAC Fabric_Freq
+    # must not move.
+    set captured [dict create]
+    foreach kind {ADC DAC} {
+        foreach tile {0 1} {
+            set suffixes {Enable Sampling_Rate Refclk_Freq Outclk_Freq \
+                PLL_Enable Clock_Source Clock_Dist Multi_Tile_Sync}
+            if {$kind eq "DAC"} { lappend suffixes Fabric_Freq }
+            if {$kind eq "ADC"} { lappend suffixes Band }
+            foreach suffix $suffixes {
+                set prop "CONFIG.${kind}${tile}_${suffix}"
+                dict set captured $prop [v04a_get $prop $rfdc]
+            }
+        }
+    }
+    return $captured
+}
+
+proc v04a_restore_mts {fh rfdc label} {
+    # The RFDC GUI/dependency logic is known to clear MTS while other
+    # settings are being changed; re-checking it after the final datapath
+    # values are in place is therefore tested explicitly, never assumed.
+    # ADC MTS is the DOA requirement; DAC tiles 0/1 are restored too
+    # because the MTS base had them enabled for coherent HIL loopback.
+    set propdict [dict create \
+        CONFIG.ADC0_Multi_Tile_Sync true \
+        CONFIG.ADC1_Multi_Tile_Sync true \
+        CONFIG.DAC0_Multi_Tile_Sync true \
+        CONFIG.DAC1_Multi_Tile_Sync true]
+    set ok [v04a_set_dict $fh $rfdc "MTS restore ($label)" $propdict]
+    if {!$ok || ![v04a_mts_true $rfdc]} {
+        set dummy_failures {}
+        foreach kind {ADC DAC} {
+            foreach tile {0 1} {
+                v04a_set $fh $rfdc "CONFIG.${kind}${tile}_Multi_Tile_Sync" true 0 dummy_failures
+            }
+        }
+    }
+    set now [v04a_mts_true $rfdc]
+    v04a_log $fh "MTS RESTORE RESULT ($label)=[expr {$now ? {PASS} : {FAIL}}] ADC0={[v04a_get CONFIG.ADC0_Multi_Tile_Sync $rfdc]} ADC1={[v04a_get CONFIG.ADC1_Multi_Tile_Sync $rfdc]} DAC0={[v04a_get CONFIG.DAC0_Multi_Tile_Sync $rfdc]} DAC1={[v04a_get CONFIG.DAC1_Multi_Tile_Sync $rfdc]}"
+    v04a_checkpoint $fh $rfdc "after MTS restore ($label)"
+    return $now
+}
+
 proc v04a_report_state {fh rfdc label} {
     v04a_log $fh "## STATE: $label"
     foreach tile {0 1} {
-        foreach suffix {Sampling_Rate Refclk_Freq Fabric_Freq Outclk_Freq Multi_Tile_Sync} {
+        foreach suffix {Enable Sampling_Rate Refclk_Freq Fabric_Freq Outclk_Freq \
+                        PLL_Enable Clock_Source Clock_Dist Multi_Tile_Sync Band} {
             set prop "CONFIG.ADC${tile}_${suffix}"
+            v04a_log $fh "$prop = {[v04a_get $prop $rfdc]}"
+        }
+    }
+    foreach tile {0 1} {
+        foreach suffix {Enable Sampling_Rate Refclk_Freq Fabric_Freq Outclk_Freq \
+                        PLL_Enable Clock_Source Clock_Dist Multi_Tile_Sync} {
+            set prop "CONFIG.DAC${tile}_${suffix}"
             v04a_log $fh "$prop = {[v04a_get $prop $rfdc]}"
         }
     }
@@ -209,7 +298,7 @@ proc v04a_report_state {fh rfdc label} {
 set failures {}
 set warnings {}
 
-v04a_log $fh "# V04 scratch RFDC apply v1.1 atomic-dict (scratch project only) - Vivado [lindex [version] 1]"
+v04a_log $fh "# V04 scratch RFDC apply v1.2 atomic-dict + MTS invariant (scratch project only) - Vivado [lindex [version] 1]"
 v04a_log $fh "# input_xpr=$input_xpr"
 v04a_log $fh "# scratch_xpr=$scratch_xpr"
 v04a_log $fh ""
@@ -257,6 +346,9 @@ if {$rfdc_vlnv ne $::IPVLNV(rfdc)} {
 }
 v04a_log $fh "RFDC cell=$rfdc vlnv=$rfdc_vlnv"
 v04a_report_state $fh $rfdc "BEFORE (scratch copy of MTS work BD)"
+set ::v04a_before_tiles [v04a_capture_tile_invariants $rfdc]
+v04a_log $fh "TILE INVARIANTS CAPTURED ([expr {[dict size $::v04a_before_tiles]}] properties; asserted again after reopen)"
+v04a_checkpoint $fh $rfdc "BEFORE"
 
 # --- Apply candidate CONFIG (pair heads; staged atomic dicts) ---------------
 v04a_log $fh "## APPLY (staged atomic dicts; see header for why)"
@@ -277,6 +369,8 @@ if {![v04a_set_dict $fh $rfdc "mode: I/Q + Real->I/Q + Fine" \
     }
 }
 
+v04a_checkpoint $fh $rfdc "after stage 1 mode dict"
+
 # Stage 2: rate change.  Width+decimation for ALL pairs in one dict: both
 # pairs of a tile share that tile's fabric clock, so no intermediate state
 # may mix 1x/500 MHz with 2x/250 MHz inside a tile.
@@ -292,6 +386,8 @@ if {![v04a_decimation_is_2 $fh $rfdc $pair_ids "after all-pairs rate dict"]} {
     }
     v04a_decimation_is_2 $fh $rfdc $pair_ids "after per-tile rate retries"
 }
+
+v04a_checkpoint $fh $rfdc "after stage 2 rate dict/retries"
 
 # Stage 3: tuning/analog settings (NCO needs Fine from stage 1).
 set tune_groups {{NCO_Freq -3.0} {NCO_Phase 0} {Nyquist 1} {CalOpt_Mode 1}}
@@ -315,17 +411,33 @@ if {![v04a_decimation_is_2 $fh $rfdc $pair_ids "after tune stage"]} {
     v04a_decimation_is_2 $fh $rfdc $pair_ids "after final rate retry"
 }
 
+v04a_checkpoint $fh $rfdc "after stage 3 tune/final rate retry"
 foreach tile {0 1} {
     # Fabric_Freq: PG269 defines it as the required AXI4-Stream clock
     # determined by Fs/decimation/width, so validate may compute it.  The
     # direct write is a request only (first run: silently kept 500 while
     # decimation was still 1x); the asserted gate is the post-validate,
-    # persisted readback == 250.
-    if {![v04a_set $fh $rfdc "CONFIG.ADC${tile}_Fabric_Freq" 250.000 0 failures]} {
+    # persisted readback == 250.  v1.2 skips this write when the rate dict
+    # already computed 250, removing one unnecessary transaction that
+    # could perturb unrelated dependency state such as MTS.
+    set current_fabric [v04a_get "CONFIG.ADC${tile}_Fabric_Freq" $rfdc]
+    if {[v04a_num_eq $current_fabric 250.000]} {
+        v04a_log $fh "ADC${tile}_Fabric_Freq already {$current_fabric}; direct write skipped"
+    } elseif {![v04a_set $fh $rfdc "CONFIG.ADC${tile}_Fabric_Freq" 250.000 0 failures]} {
         lappend warnings "ADC${tile}_Fabric_Freq not directly settable; relying on validate to compute 250"
     }
 }
+v04a_checkpoint $fh $rfdc "after Fabric_Freq stage"
 v04a_report_state $fh $rfdc "AFTER SET (pre-validate)"
+
+# If a datapath stage already cleared MTS, restore it before validate so
+# validate sees (and keeps) the MTS SYSREF ports/nets from the base BD.
+if {![v04a_mts_true $rfdc]} {
+    lappend warnings "MTS was cleared during the datapath apply; restore attempted before validate (see CHECKPOINT lines for the stage)"
+    if {![v04a_restore_mts $fh $rfdc "pre-validate"]} {
+        lappend failures "Multi_Tile_Sync could not be restored before validate"
+    }
+}
 
 # --- Validate (reported separately; V07 rewiring still pending) -------------
 v04a_log $fh "V04 SCRATCH: validate_bd_design (legacy 500 MHz capture still attached; failures here are classified, not hidden) ..."
@@ -343,6 +455,39 @@ if {$validate_rc} {
 }
 v04a_log $fh "(Detailed Vivado ERROR/WARNING text is in the console/log; SET-DICT failures above include ::errorInfo in this report.)"
 v04a_report_state $fh $rfdc "AFTER VALIDATE"
+v04a_checkpoint $fh $rfdc "after validate #1"
+
+# Final MTS gate before saving.  If validate itself clears MTS, restore
+# it and validate once more; if the second validate clears it again,
+# restore after validate and let the persisted assertions decide.  The
+# REVIEW warning distinguishes that fragile case from a clean pass.
+if {![v04a_mts_true $rfdc]} {
+    lappend warnings "MTS is off after validate #1; restore + validate #2 attempted"
+    if {[v04a_restore_mts $fh $rfdc "after validate #1"]} {
+        v04a_log $fh "V04 SCRATCH: validate_bd_design #2 after MTS restore ..."
+        set validate2_rc [catch {validate_bd_design} validate2_msg]
+        if {$validate2_rc} {
+            v04a_log $fh "FULL BD VALIDATE #2 RESULT=FAIL: $validate2_msg"
+            set info2 [v04a_errinfo]
+            if {$info2 ne "" && $info2 ne $validate2_msg} {
+                v04a_log $fh "validate #2 errorInfo: $info2"
+            }
+        } else {
+            v04a_log $fh "FULL BD VALIDATE #2 RESULT=PASS"
+        }
+        set validate_rc $validate2_rc
+        v04a_report_state $fh $rfdc "AFTER MTS RESTORE + VALIDATE #2"
+        v04a_checkpoint $fh $rfdc "after MTS restore + validate #2"
+        if {![v04a_mts_true $rfdc]} {
+            lappend warnings "validate #2 cleared MTS again; final restore is after validate, so V07 must re-check MTS after every validate until the clock/SYSREF condition is identified"
+            if {![v04a_restore_mts $fh $rfdc "final, after validate #2"]} {
+                lappend failures "Multi_Tile_Sync could not be restored after validate #2"
+            }
+        }
+    } else {
+        lappend failures "Multi_Tile_Sync could not be restored after validate #1"
+    }
+}
 
 # --- Persist scratch BD and prove readback on reopen ------------------------
 if {[catch {save_bd_design} save_msg]} {
@@ -388,6 +533,28 @@ foreach tile {0 1} {
         lappend warnings "ADC${tile}_Outclk_Freq is {$got_out}, expected unchanged 250.000"
     }
 }
+foreach tile {0 1} {
+    foreach kind {ADC DAC} {
+        set got_mts [v04a_get "CONFIG.${kind}${tile}_Multi_Tile_Sync" $rfdc]
+        if {![v04a_bool_true $got_mts]} {
+            lappend failures "${kind}${tile}_Multi_Tile_Sync: got {$got_mts}, expected true (MTS is mandatory; v1.1 missed this assertion)"
+            v04a_log $fh "ASSERT FAIL CONFIG.${kind}${tile}_Multi_Tile_Sync = {$got_mts} (expected true)"
+        }
+    }
+}
+if {[info exists ::v04a_before_tiles]} {
+    dict for {prop expected} $::v04a_before_tiles {
+        if {$expected eq "<unavailable>"} { continue }
+        set got_inv [v04a_get $prop $rfdc]
+        if {![string equal -nocase $got_inv $expected] && ![v04a_num_eq $got_inv $expected]} {
+            lappend failures "tile invariant $prop changed: before {$expected}, persisted {$got_inv}"
+            v04a_log $fh "ASSERT FAIL invariant $prop = {$got_inv} (before {$expected})"
+        }
+    }
+} else {
+    lappend warnings "before-state tile invariants were not captured; only explicit MTS/fabric assertions ran"
+}
+v04a_checkpoint $fh $rfdc "PERSISTED ASSERTIONS"
 set stream_names {}
 foreach pin [get_bd_intf_pins -quiet -of_objects $rfdc] {
     lappend stream_names [get_property NAME $pin]

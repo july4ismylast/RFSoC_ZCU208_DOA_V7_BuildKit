@@ -118,6 +118,7 @@ values propagated.
 | `CONFIG.ADC_NyquistXX` | 0 | **1** | XML-proven: `Zone 1=0` → **`Zone 2=1`** |
 | `CONFIG.ADC_CalOpt_ModeXX` | 1 | **1 (no numeric change)** | XML-proven: `Mode1=0, Mode2=1, Autocal=2` — MTS already selects **Mode 2**, which is also the PG269 choice here (Mode 1 is only for inputs within ±10% of `Fs/2`; the 2.25–3.75 GHz band is otherwise). The scratch apply writes `1` explicitly so the intent is recorded, not inherited by luck. |
 | `CONFIG.ADC0_Fabric_Freq`, `ADC1_Fabric_Freq` | 500.000 | **250.000 after validate** | required AXIS clock `2.0 GS/s ÷ 8`; `ADCn_Outclk_Freq` stays 250.000 |
+| `CONFIG.ADC0_Multi_Tile_Sync`, `ADC1_Multi_Tile_Sync` | true | **true (hard invariant)** | MTS is what makes Tile 0/Tile 1 latency and digital-feature alignment deterministic; a persisted `false` is a V04 failure even if every datapath value is correct |
 
 Sampling rate, clock source/distribution, MTS membership, dither and the
 enabled-slice set stay as in the V03-proven MTS base; ADC tiles 2/3 stay
@@ -135,13 +136,30 @@ the odd Q slices**, persisted across save/reopen, the four Q streams
 appeared, and full-BD validate passed (at still-1× the 500 MHz contract
 stays self-consistent). Only the *individual* `Decimation_ModeXX=2`
 writes were rejected (`[Common 17-39]`, underlying IP_Flow text not in
-the v1.0 report), so `Fabric_Freq` correctly remained 500. Leading
-diagnosis: both pairs in a tile share one fabric clock (PG269 System
-Clocking), so a one-by-one change transiently demands 250 + 500 MHz in
-the same tile. Script **v1.1** therefore applies staged atomic
-`set_property -dict` transactions (mode → width+decimation for all
-pairs together → tune), with per-tile/final retries and `::errorInfo`
-capture; rerun is the pending proof.
+the v1.0 report), so `Fabric_Freq` correctly remained 500. Diagnosis:
+both pairs in a tile share one fabric clock (PG269 System Clocking), so
+a one-by-one change transiently demands 250 + 500 MHz in the same tile.
+
+**Second scratch attempt (2026-11-03, script v1.1) — datapath proof,
+MTS regression:** the staged atomic `set_property -dict` transactions
+fixed the rate change exactly as designed. Persisted readback after
+save/reopen showed all eight slices at the table values
+(`Decimation_Mode=2`, Fine Real→I/Q, NCO `-3.0`, Zone 2, CalOpt Mode 2)
+and both tiles at `Fabric_Freq=250.000`; full-BD validate also passed
+in the scratch BD. **But** `ADC0_Multi_Tile_Sync` and
+`ADC1_Multi_Tile_Sync` persisted as `false` although the before-state
+(and v1.0 at 1×) had `true`. v1.1 printed PASS only because its
+assertion set omitted MTS; that is an assertion hole, not V04 closure.
+The RFDC configuration logic is known to clear MTS while settings are
+being changed, so script **v1.2** checkpoints ADC/DAC MTS after every
+stage, skips the direct `Fabric_Freq` write if 250 is already computed,
+tests re-enabling ADC/DAC MTS as a late transaction (before validate and,
+if necessary, after validate + a second validate), and hard-asserts
+MTS plus captured tile clock/source/distribution invariants on the
+persisted readback. A v1.2 pass is *clean* only if MTS never flips or a
+restore survives validate; if every validate clears MTS and only a
+post-validate restore persists, V04 remains open until the underlying
+clock/SYSREF condition is identified.
 
 ## 4. PL stream / clock contract
 
@@ -153,6 +171,7 @@ capture; rerun is the pending proof.
 | Search (`spectrum`/`candidate`) | bins at SSR‑8 average rate; an 8‑lane version of the spectrum/candidate packing is a V06 decision with csynth proof (the current 4‑lane/512‑bit IPs remain the low‑rate DOA-side contract) |
 | DOA capture (`covariance`) | bin selector packs 4 snapshots of the candidate bin into the existing **512‑bit lane‑major beat** in a **125 MHz** domain (`clkRFdiv2` ÷2, async FIFO crossing); 4096 snapshots = **2.097 ms** at the snapshot rate |
 | Control | PS AXI‑Lite domain as in the MTS base; HLS `s_axi_ctrl` via SmartConnect (V07), separate reset per clock domain (upstream pattern) |
+| MTS PL SYSREF | The MTS base generates one `UserSYSREF` in the 500 MHz `clkRF` domain and feeds both RFDC `user_sysref_adc` and `user_sysref_dac`. PG269 places `user_sysref_adc` in the `m0_axis_aclk` domain and `user_sysref_dac` in `s0_axis_aclk`; once ADC AXIS moves to 250 MHz while DAC remains 500 MHz, V07 must split the capture/transfer circuits by domain (or change the DAC fabric plan). The 500 MHz PL clock remains an integer multiple of both 250/500 MHz, and SYSREF must remain an integer submultiple of every PL clock sampling it. |
 | Existing HLS IP clocks | IPs were synthesised against a 7.8125 ns (128 MHz) target; running them at 125 MHz is inside that constraint. New wideband IP (V05/V06) is constrained at 4.0 ns. |
 
 **Feasibility gate (before V07 integration):** a single‑channel
@@ -182,7 +201,7 @@ architecture at our rates). The existing 64‑band scalar harness in
 - [x] Centre/band/decimation/clock numbers locked above and mirrored in `config.mk`.
 - [x] First `v04_dump_rfdc.tcl` run reviewed: RFDC 2.6 property names, current MTS values and stream set proven on the 2023.2 PC.
 - [x] Revised dump run (2026-11-03, dump v2.1): IP-XACT choice labels for all V04 enums (`Zone 2=1`, `Mode2=1`, `Real->I/Q=0`, `Fine=2`, `I/Q=1`, `2x=2`), `MTSclkwiz` outputs (500/250 MHz, both used), RFDC streams 128-bit with no TKEEP/TLAST/TSTRB.
-- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect. First run (2026-11-03) proved everything except decimation (individual writes rejected; Q streams appeared, odd-slice propagation confirmed, validate PASS at 1×). Script v1.1 (atomic dicts) rerun pending: `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched).
+- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect **and ADC MTS remains true**. v1.0 proved everything except decimation; v1.1 proved decimation 2×/`Fabric_Freq=250.000` persisted but exposed `ADC0/1_Multi_Tile_Sync=true→false`. Script v1.2 (stage checkpoints + MTS restore/invariant assertions) rerun pending: `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched).
 - [x] V05 gearbox implemented against §4 and accepted on Vitis HLS 2023.2 (2026-11-03: `step05_hls_repack` PASS — CSim bit-exact, csynth II=1/depth 2, estimated Fmax 500 MHz, VLNV `openai:doa:rfdc_repack4:1.0` verified; details in `V05_RFDC_REPACK4_SPEC.md`). Post-channelizer capture selector is specified with V06's output format.
 - [ ] V06 channelizer feasibility evidence (1‑ch synth) before any step08 integration attempt.
 
