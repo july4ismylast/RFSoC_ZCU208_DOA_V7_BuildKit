@@ -129,6 +129,20 @@ real contract, so V07 disconnects/removes them **in the work BD only**
 (the base stays untouched), moves `m0/m1_axis_aclk` to `clkRFdiv2`
 (250 MHz), and connects the DOA path instead.
 
+**First scratch attempt (2026-11-03, script v1.0) — partial proof:**
+every non-rate value above was accepted, **propagated automatically to
+the odd Q slices**, persisted across save/reopen, the four Q streams
+appeared, and full-BD validate passed (at still-1× the 500 MHz contract
+stays self-consistent). Only the *individual* `Decimation_ModeXX=2`
+writes were rejected (`[Common 17-39]`, underlying IP_Flow text not in
+the v1.0 report), so `Fabric_Freq` correctly remained 500. Leading
+diagnosis: both pairs in a tile share one fabric clock (PG269 System
+Clocking), so a one-by-one change transiently demands 250 + 500 MHz in
+the same tile. Script **v1.1** therefore applies staged atomic
+`set_property -dict` transactions (mode → width+decimation for all
+pairs together → tune), with per-tile/final retries and `::errorInfo`
+capture; rerun is the pending proof.
+
 ## 4. PL stream / clock contract
 
 | Domain | Contract |
@@ -168,7 +182,7 @@ architecture at our rates). The existing 64‑band scalar harness in
 - [x] Centre/band/decimation/clock numbers locked above and mirrored in `config.mk`.
 - [x] First `v04_dump_rfdc.tcl` run reviewed: RFDC 2.6 property names, current MTS values and stream set proven on the 2023.2 PC.
 - [x] Revised dump run (2026-11-03, dump v2.1): IP-XACT choice labels for all V04 enums (`Zone 2=1`, `Mode2=1`, `Real->I/Q=0`, `Fine=2`, `I/Q=1`, `2x=2`), `MTSclkwiz` outputs (500/250 MHz, both used), RFDC streams 128-bit with no TKEEP/TLAST/TSTRB.
-- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect. Script ready: `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched). User-PC run pending.
+- [ ] Scratch-copy apply proof: candidate CONFIG diff accepted, odd Q streams appear, readback of all eight slices identical in effect. First run (2026-11-03) proved everything except decimation (individual writes rejected; Q streams appeared, odd-slice propagation confirmed, validate PASS at 1×). Script v1.1 (atomic dicts) rerun pending: `common/vivado/v04_scratch_apply_rfdc.tcl` (scratch project only; production work BD untouched).
 - [x] V05 gearbox implemented against §4 and accepted on Vitis HLS 2023.2 (2026-11-03: `step05_hls_repack` PASS — CSim bit-exact, csynth II=1/depth 2, estimated Fmax 500 MHz, VLNV `openai:doa:rfdc_repack4:1.0` verified; details in `V05_RFDC_REPACK4_SPEC.md`). Post-channelizer capture selector is specified with V06's output format.
 - [ ] V06 channelizer feasibility evidence (1‑ch synth) before any step08 integration attempt.
 

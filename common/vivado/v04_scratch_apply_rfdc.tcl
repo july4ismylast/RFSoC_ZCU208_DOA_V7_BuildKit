@@ -18,8 +18,19 @@
 #   Data_Type I/Q=1 | Decimation 2x=2 | Mixer_Mode Real->I/Q=0 |
 #   Mixer_Type Fine=2 | Data_Width=8 | NCO_Freq=-3.0 GHz | NCO_Phase=0 |
 #   Nyquist Zone 2=1 | CalOpt Mode2=1 | ADC0/1_Fabric_Freq=250.000 MHz
-# Written to pair indices 00/02/10/12 (upstream SAM pattern), grouped by
-# property in the upstream order; all eight slices are read back.
+# Written to pair indices 00/02/10/12 (upstream SAM pattern); all eight
+# slices are read back (first run proved Vivado propagates pair-head
+# writes to the odd Q legs).
+#
+# v1.1 (after first user-PC run, 2026-11-03): properties are applied in
+# staged atomic set_property -dict transactions, NOT one-by-one.  v1.0's
+# individual Decimation_Mode writes were rejected while every other
+# value succeeded: all converters in a tile share one fabric clock
+# (PG269 System Clocking), so changing one pair to 2x (250 MHz) while
+# its tile partner is still 1x (500 MHz) is transiently illegal.  The
+# rate dict therefore changes every pair in the tile(s) together, with
+# per-tile and final retries; failures now also log ::errorInfo so the
+# real IP_Flow reason (hidden behind [Common 17-39]) reaches the report.
 #
 # Usage (from the repo root, after step07):
 #   vivado -mode batch -nojournal -nolog -source common/vivado/v04_scratch_apply_rfdc.tcl
@@ -84,15 +95,61 @@ proc v04a_num_eq {a b} {
     return [expr {$delta < 1e-9}]
 }
 
+proc v04a_errinfo {} {
+    if {![info exists ::errorInfo]} { return "" }
+    set info [string trim $::errorInfo]
+    if {[string length $info] > 2000} {
+        set info "[string range $info 0 1999] ...<clipped>"
+    }
+    return $info
+}
+
 proc v04a_set {fh rfdc prop value required failures_var} {
     upvar $failures_var failures
     if {[catch {set_property $prop $value $rfdc} err]} {
         v04a_log $fh "SET ERROR $prop <- {$value}: $err"
+        set info [v04a_errinfo]
+        if {$info ne "" && $info ne $err} { v04a_log $fh "  errorInfo: $info" }
         if {$required} { lappend failures "set_property $prop failed: $err" }
         return 0
     }
     v04a_log $fh "SET $prop = {$value} (immediate readback {[v04a_get $prop $rfdc]})"
     return 1
+}
+
+proc v04a_build_dict {groups ids} {
+    set propdict {}
+    foreach group $groups {
+        lassign $group prefix value
+        foreach xx $ids {
+            lappend propdict "CONFIG.ADC_${prefix}${xx}" $value
+        }
+    }
+    return $propdict
+}
+
+proc v04a_set_dict {fh rfdc label propdict} {
+    set n [expr {[llength $propdict] / 2}]
+    if {[catch {set_property -dict $propdict $rfdc} err]} {
+        v04a_log $fh "SET-DICT ERROR $label ($n properties): $err"
+        set info [v04a_errinfo]
+        if {$info ne "" && $info ne $err} { v04a_log $fh "  errorInfo: $info" }
+        return 0
+    }
+    v04a_log $fh "SET-DICT OK $label ($n properties)"
+    return 1
+}
+
+proc v04a_decimation_is_2 {fh rfdc pair_ids label} {
+    set parts {}
+    set all2 1
+    foreach xx $pair_ids {
+        set got [v04a_get "CONFIG.ADC_Decimation_Mode${xx}" $rfdc]
+        lappend parts "${xx}={$got}"
+        if {![v04a_num_eq $got 2]} { set all2 0 }
+    }
+    v04a_log $fh "Decimation readback ($label): [join $parts { }]"
+    return $all2
 }
 
 proc v04a_report_state {fh rfdc label} {
@@ -152,7 +209,7 @@ proc v04a_report_state {fh rfdc label} {
 set failures {}
 set warnings {}
 
-v04a_log $fh "# V04 scratch RFDC apply (scratch project only) - Vivado [lindex [version] 1]"
+v04a_log $fh "# V04 scratch RFDC apply v1.1 atomic-dict (scratch project only) - Vivado [lindex [version] 1]"
 v04a_log $fh "# input_xpr=$input_xpr"
 v04a_log $fh "# scratch_xpr=$scratch_xpr"
 v04a_log $fh ""
@@ -201,24 +258,69 @@ if {$rfdc_vlnv ne $::IPVLNV(rfdc)} {
 v04a_log $fh "RFDC cell=$rfdc vlnv=$rfdc_vlnv"
 v04a_report_state $fh $rfdc "BEFORE (scratch copy of MTS work BD)"
 
-# --- Apply candidate CONFIG (pair heads, upstream grouping/order) -----------
-v04a_log $fh "## APPLY"
+# --- Apply candidate CONFIG (pair heads; staged atomic dicts) ---------------
+v04a_log $fh "## APPLY (staged atomic dicts; see header for why)"
 set pair_ids {00 02 10 12}
-set apply_groups {
-    {Data_Type 1} {Data_Width 8} {Decimation_Mode 2} {Mixer_Mode 0}
-    {Mixer_Type 2} {NCO_Freq -3.0} {NCO_Phase 0} {Nyquist 1}
-    {CalOpt_Mode 1}
-}
-foreach group $apply_groups {
-    lassign $group prefix value
-    foreach xx $pair_ids {
-        v04a_set $fh $rfdc "CONFIG.ADC_${prefix}${xx}" $value 1 failures
+
+# Stage 1: establish a self-consistent mixer mode (I/Q + Real->I/Q + Fine)
+# in one transaction.  Fallback order is the exact one-by-one sequence the
+# first run proved Vivado accepts for these three groups.
+set mode_groups {{Data_Type 1} {Mixer_Mode 0} {Mixer_Type 2}}
+if {![v04a_set_dict $fh $rfdc "mode: I/Q + Real->I/Q + Fine" \
+        [v04a_build_dict $mode_groups $pair_ids]]} {
+    lappend warnings "mode dict failed; used one-by-one fallback (see SET lines)"
+    foreach group $mode_groups {
+        lassign $group prefix value
+        foreach xx $pair_ids {
+            v04a_set $fh $rfdc "CONFIG.ADC_${prefix}${xx}" $value 0 failures
+        }
     }
 }
+
+# Stage 2: rate change.  Width+decimation for ALL pairs in one dict: both
+# pairs of a tile share that tile's fabric clock, so no intermediate state
+# may mix 1x/500 MHz with 2x/250 MHz inside a tile.
+set rate_groups {{Data_Width 8} {Decimation_Mode 2}}
+if {![v04a_set_dict $fh $rfdc "rate: width8 + decimation2 (all pairs)" \
+        [v04a_build_dict $rate_groups $pair_ids]]} {
+    lappend warnings "all-pairs rate dict failed; per-tile retry follows"
+}
+if {![v04a_decimation_is_2 $fh $rfdc $pair_ids "after all-pairs rate dict"]} {
+    foreach tile_pairs {{00 02} {10 12}} {
+        v04a_set_dict $fh $rfdc "rate retry tile pairs $tile_pairs" \
+            [v04a_build_dict $rate_groups $tile_pairs]
+    }
+    v04a_decimation_is_2 $fh $rfdc $pair_ids "after per-tile rate retries"
+}
+
+# Stage 3: tuning/analog settings (NCO needs Fine from stage 1).
+set tune_groups {{NCO_Freq -3.0} {NCO_Phase 0} {Nyquist 1} {CalOpt_Mode 1}}
+if {![v04a_set_dict $fh $rfdc "tune: NCO -3.0/phase0 + Zone2 + CalOpt Mode2" \
+        [v04a_build_dict $tune_groups $pair_ids]]} {
+    lappend warnings "tune dict failed; used one-by-one fallback (see SET lines)"
+    foreach group $tune_groups {
+        lassign $group prefix value
+        foreach xx $pair_ids {
+            v04a_set $fh $rfdc "CONFIG.ADC_${prefix}${xx}" $value 0 failures
+        }
+    }
+}
+
+# Final decimation retry now that every dependent setting is at its final
+# value (covers IP dependency orders we have not anticipated).
+if {![v04a_decimation_is_2 $fh $rfdc $pair_ids "after tune stage"]} {
+    v04a_log $fh "Decimation still not 2x; final all-pairs rate retry ..."
+    v04a_set_dict $fh $rfdc "rate final retry (all pairs)" \
+        [v04a_build_dict $rate_groups $pair_ids]
+    v04a_decimation_is_2 $fh $rfdc $pair_ids "after final rate retry"
+}
+
 foreach tile {0 1} {
-    # Fabric_Freq may be tool-computed on validate; a set error here is
-    # only a failure if the post-validate readback is not 250 (asserted
-    # below), so record it as a warning-level set.
+    # Fabric_Freq: PG269 defines it as the required AXI4-Stream clock
+    # determined by Fs/decimation/width, so validate may compute it.  The
+    # direct write is a request only (first run: silently kept 500 while
+    # decimation was still 1x); the asserted gate is the post-validate,
+    # persisted readback == 250.
     if {![v04a_set $fh $rfdc "CONFIG.ADC${tile}_Fabric_Freq" 250.000 0 failures]} {
         lappend warnings "ADC${tile}_Fabric_Freq not directly settable; relying on validate to compute 250"
     }
@@ -233,10 +335,13 @@ if {$validate_rc} {
 } else {
     v04a_log $fh "FULL BD VALIDATE RESULT=PASS"
 }
-if {![catch {set msgs [get_messages -severity {CRITICAL WARNING ERROR}]}]} {
-    v04a_log $fh "session CRITICAL/WARNING/ERROR messages at validate point: [llength $msgs]"
-    foreach msg $msgs { v04a_log $fh "  MSG $msg" }
+if {$validate_rc} {
+    set info [v04a_errinfo]
+    if {$info ne "" && $info ne $validate_msg} {
+        v04a_log $fh "validate errorInfo: $info"
+    }
 }
+v04a_log $fh "(Detailed Vivado ERROR/WARNING text is in the console/log; SET-DICT failures above include ::errorInfo in this report.)"
 v04a_report_state $fh $rfdc "AFTER VALIDATE"
 
 # --- Persist scratch BD and prove readback on reopen ------------------------
