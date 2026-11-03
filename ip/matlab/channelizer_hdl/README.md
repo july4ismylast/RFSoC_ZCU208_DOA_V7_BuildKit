@@ -23,7 +23,13 @@
 > cat build/output/v06_gate2t_transposed_ooc_synthesis.rpt
 > ```
 >
-> Run them in that order and stop on the first failure. Do not treat a
+> Run them in that order and stop on the first failure. On the user
+> PC the transposed probe has already passed with 351-cycle latency;
+> Gate-1 attempt 1 then exposed that R2024a will not resolve a
+> model-workspace variable for the finite-option `FilterStructure`
+> mask parameter. `build_model.m` now passes the exact selected option
+> directly, so after pulling that correction resume at
+> `gate1-transposed` rather than rerunning the probe. Do not treat a
 > one-channel PASS as integrated fit/timing proof or production
 > architecture selection.
 
@@ -39,11 +45,11 @@ model-workspace constant. The legacy 64-band/four-lane configuration
 remains reproducible only by explicit environment overrides. The
 wrapper passes the selected `Direct form systolic` or
 `Direct form transposed` value to `dsphdl.Channelizer`; only systolic
-is the proved baseline, while transposed is currently restricted to
-the Gate-2T A/B. The output vector is the same size as the input; with
-`Normalize=false`, systolic Gate 0 measured the output type as signed
-26-bit/fraction-24, and the transposed A/B requires that same
-interface width.
+has completed Gate-1/Gate-2, while transposed is currently restricted
+to the Gate-2T A/B. The output vector is the same size as the input;
+with `Normalize=false`, both the systolic Gate 0 and the transposed
+probe measured the output type as signed 26-bit/fraction-24. Their
+latencies differ: 1760 cycles systolic versus 351 cycles transposed.
 
 MATLAB R2024a does not support the `PreservePhase` property. This design does
 not use it. Every antenna channel must use an identical channelizer; the

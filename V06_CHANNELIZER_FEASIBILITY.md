@@ -18,7 +18,10 @@ produced exactly zero resource change and still used no BRAM.
 **Gate 2T is therefore the current experiment:** regenerate the same
 production-size object with `Direct form transposed`, keep its reports
 and RTL isolated from the systolic baseline, and run the same
-one-channel OOC synthesis. Plan A is not selected yet; Gate-2T, the
+one-channel OOC synthesis. Its transposed probe has passed with a
+351-cycle latency and the same signed 26/24 output; the corrected
+Gate-1/Gate-2T rerun is the immediate step. Plan A is not selected yet;
+Gate-2T, the
 actual MTS-base utilization, the integrated x4 budget and Gate-3
 numerical ordering remain before any V07/`step08` integration is
 attempted.
@@ -46,7 +49,7 @@ AXI4-Stream wrapper contract is frozen.
 
 | Candidate | Why it is considered | Main risk / adaptation | V06 order |
 |---|---|---|---|
-| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files; Gate-2 one-channel OOC synthesis met setup timing at 4.0 ns (WNS +1.630 ns) | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**, leaving only 71,144 LUTs for the MTS base, V05, serializer, DOA/control logic and routing margin. Hierarchical utilization shows the FilterBank is 63,439 LUTs (55,952 SRLs), versus 25,095 LUTs for the FFT; steady-state scaling/phase and complete bin ordering also remain unproven | **Plan A candidate — Gate-2R BRAM directive rejected (zero change); Gate-2T transposed A/B current** |
+| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files; Gate-2 one-channel OOC synthesis met setup timing at 4.0 ns (WNS +1.630 ns) | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**, leaving only 71,144 LUTs for the MTS base, V05, serializer, DOA/control logic and routing margin. Hierarchical utilization shows the FilterBank is 63,439 LUTs (55,952 SRLs), versus 25,095 LUTs for the FFT; steady-state scaling/phase and complete bin ordering also remain unproven | **Plan A candidate — Gate-2R BRAM directive rejected (zero change); Gate-2T probe PASS at 351 cycles, corrected Gate-1/Gate-2T rerun current** |
 | **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`. This is also the user's selected **step05/step06 IP-collection flow** (always pass `CHANNELIZER_FLOW=opfb` on the user PC) | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Plan B if Plan A fails API/scaling/resource/timing; collection alone does not close V06 |
 | **AMD FIR Compiler + AMD FFT, hand-assembled SSR PFB** | FIR Compiler 7.2 is already pinned; AMD IP would be native to Vivado 2023.2 | AMD FFT VLNV/version is not yet checked or pinned (required by the V00 rule); commutator, coefficient banks, scaling and SSR ordering become custom design work | Plan C |
 | **Custom HLS/RTL PFB** | Maximum control over interface and scaling | No exact SSR-8/1024 implementation exists in the audited repos; highest verification and timing-closure risk | Last resort |
@@ -364,6 +367,33 @@ cat build/output/v06_gate2t_transposed_ooc_synthesis.rpt
 sed -n '1,180p' build/output/v06_gate2t_transposed_utilization.rpt
 sed -n '1,220p' build/output/v06_gate2t_transposed_utilization_hierarchical.rpt
 ```
+
+**Attempt status (user PC, MATLAB R2024a, 2026-11-03): transposed
+probe PASS; Gate-1 attempt 1 failed in the harness and has been
+corrected.** The probe kept the exact 12,288-coefficient design
+(`COEFFS_TF_MAX_ABS_DIFF=0`), produced an 8×1 signed
+26-bit/fraction-24 output, collected 512 valid beats / 4096 outputs,
+and peaked at serialized index 192 in every snapshot. Both
+`getLatency` and measured first-valid latency were **351 cycles**
+(first valid cycle 352), versus 1760 cycles for systolic. The fourth
+snapshot again reached 111887 output LSBs with
+`TOP1_ENERGY_FRACTION=0.792960089099` and
+`TOP5_ENERGY_FRACTION=0.997469835074`; these four startup snapshots are
+encouraging but do not replace Gate-3 steady-state ordering/gain/phase
+proof.
+
+Gate-1 attempt 1 stopped before HDL generation at `build_model.m`
+with `SimulinkBlock:Foundation:BadSetParamValue` / “Option specified
+is not valid” for `FilterStructure`. The finite-option MATLAB System
+mask does not resolve the former model-workspace variable name
+`doaChannelizerFilterStructure` as an option. The correction passes
+the exact selected option (`Direct form transposed` or
+`Direct form systolic`) directly to `set_param` and removes that
+workspace variable. Gate 2T correctly refused to run because the
+Gate-1 report was FAIL, so its missing synthesis/utilization reports
+in attempt 1 are expected. After pulling the correction, do **not**
+rerun the already-passed probe; resume at `gate1-transposed`, then run
+`gate2t-transposed` only if Gate 1 passes.
 
 This is an isolated architecture A/B, not a production selection.
 `config.mk` still defaults `CHANNELIZER_FILTER_STRUCTURE` to

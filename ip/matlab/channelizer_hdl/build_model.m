@@ -79,7 +79,6 @@ assignin(modelWorkspace,'doaChannelizerSamplesPerCycle',samplesPerCycle);
 assignin(modelWorkspace,'doaChannelizerTapsPerBand',tapsPerBand);
 assignin(modelWorkspace,'doaChannelizerStopbandDb',stopbandDb);
 assignin(modelWorkspace,'doaChannelizerNormalize',logical(normalizeFlag));
-assignin(modelWorkspace,'doaChannelizerFilterStructure',filterStructure);
 assignin(modelWorkspace,'doaChannelizerCoefficients',channelizerCoefficients);
 
 add_block('simulink/Sources/In1',[model '/dataIn'],'Position',[30 60 60 80], ...
@@ -103,10 +102,17 @@ core=[dut '/ChannelizerCore'];
 add_block('simulink/User-Defined Functions/MATLAB System',core, ...
     'Position',[115 25 305 125]);
 set_param(core,'System','ZU48DRChannelizer');
+% FilterStructure is constrained to a finite option list, so the
+% MATLAB System mask expects the selected option value itself.  R2024a
+% does not resolve a model-workspace variable name for this option
+% parameter (Gate-1 transposed attempt 1 failed with "Option specified
+% is not valid").  Pass the exact validated architecture string;
+% build_model is rerun for every Gate-1 generation, so no stale model
+% workspace value can change the selected architecture.
 set_param(core, ...
     'NumBands','doaChannelizerNumBands', ...
     'Coefficients','doaChannelizerCoefficients', ...
-    'FilterStructure','doaChannelizerFilterStructure', ...
+    'FilterStructure',filterStructure, ...
     'NormalizeFFT','doaChannelizerNormalize');
 add_block('simulink/Sinks/Out1',[dut '/dataOut'],'Position',[365 35 395 55], ...
     'Port','1');
