@@ -12,8 +12,11 @@ V06_PROBE_REPORT := $(ROOT)/build/output/v06_channelizer_probe.rpt
 all: package
 # Stage V06 gate 0 only: prove the installed dsphdl.Channelizer accepts the
 # production-size SSR-8/1024-band fixed-point configuration in MATLAB.
-# This intentionally does not generate HDL; the legacy model below is still
-# the 64-band/four-lane harness and is not the V06 production channelizer.
+# Probe v2 defaults to Normalize=false + tf() coefficients after attempt 1
+# (Normalize=true) underflowed to roughly two output LSBs; see
+# V06_CHANNELIZER_FEASIBILITY.md.  This intentionally does not generate HDL;
+# the legacy model below is still the 64-band/four-lane harness and is not
+# the V06 production channelizer.
 probe: v06_probe_ssr8_1024.m
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "v06_probe_ssr8_1024"
 	@test -f "$(V06_PROBE_REPORT)" || { echo "ERROR: V06 probe report missing: $(V06_PROBE_REPORT)"; exit 1; }

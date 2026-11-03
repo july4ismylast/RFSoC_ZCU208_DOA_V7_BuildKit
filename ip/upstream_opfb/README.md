@@ -52,6 +52,14 @@ make rebuild STEP=step05_channelizer CHANNELIZER_FLOW=opfb
 make rebuild STEP=step06_collect_ip CHANNELIZER_FLOW=opfb
 ```
 
+**User-PC flow selection (recorded 2026-11-03):** OPFB is the flow used
+for step05/step06 IP collection. The repository-wide
+`CHANNELIZER_FLOW` default in `config.mk` remains `matlab_hdl` until
+stage V06 selects a production implementation, so always pass
+`CHANNELIZER_FLOW=opfb` explicitly for these two steps on the user PC;
+a bare/default `step06_collect_ip` would instead look for
+`matlab_channelizer`.
+
 The parent Makefile fetches the pinned OPFB repositories once, then passes
 `OPFB_FETCH_DONE=1` to the child adapters.  The many `BD 41-1306` messages in
 the throwaway catalog projects come from the inspection helper exposing both

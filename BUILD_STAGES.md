@@ -115,6 +115,13 @@ V06 completion. The current feasibility gate is
 Validates every required `component.xml` and writes `ip_manifest.tsv`. It does
 not silently accept an incomplete export.
 
+**User-PC selection:** the OPFB IP set is the collection flow in use, so
+run this step as
+`make rebuild STEP=step06_collect_ip CHANNELIZER_FLOW=opfb`, not with
+the repository default (`matlab_hdl`). This validates the pinned
+MazinLab component set; it does not by itself adapt the native
+SSR-16×4096 OPFB to the V06 SSR-8×1024 production contract.
+
 ### `step07_vivado_project`
 
 Opens `BASE_XPR`, verifies the part and board part, creates an isolated copy

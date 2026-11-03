@@ -88,7 +88,10 @@ CHANNELIZER_NUM_BANDS ?= 1024
 CHANNELIZER_BIN_SPACING_HZ ?= 1953125
 DOA_CLOCK_HZ ?= 125000000
 
-# matlab_hdl, model_composer, opfb, or external.
+# matlab_hdl, model_composer, opfb, or external.  Repository default stays
+# matlab_hdl until V06 selects the production implementation; the user PC's
+# step05/step06 IP-collection selection is OPFB, so pass
+# CHANNELIZER_FLOW=opfb explicitly there (see ip/upstream_opfb/README.md).
 CHANNELIZER_FLOW ?= matlab_hdl
 MODEL_COMPOSER_MODEL ?=
 EXTERNAL_CHANNELIZER_IP ?=
