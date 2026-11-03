@@ -208,10 +208,15 @@ try
         log_line('TOP_PORT_LIST_TRUNCATED_AT=%d', maxLoggedPorts);
     end
 
+    % HDL Coder appends fixed-point comments after the semicolons,
+    % e.g. "input signed [15:0] dataIn_re_0;  // sfix16_En15".
+    % Allow that trailing comment; requiring end-of-line immediately
+    % after ';' made Gate-1 attempt 3 report 0 matching ports even
+    % though the generated declarations were correct.
     expectedInputPattern = ...
-        '^input\s+signed\s+\[15:0\]\s+dataIn_(re|im)_[0-7];$';
+        '^input\s+signed\s+\[15:0\]\s+dataIn_(re|im)_[0-7];\s*(//.*)?$';
     expectedOutputPattern = sprintf( ...
-        '^output\\s+signed\\s+\\[%d:0\\]\\s+dataOut_(re|im)_[0-7];$', ...
+        '^output\\s+signed\\s+\\[%d:0\\]\\s+dataOut_(re|im)_[0-7];\\s*(//.*)?$', ...
         outputWordLength - 1);
     inputMatches = regexp(portLines, expectedInputPattern, 'once');
     outputMatches = regexp(portLines, expectedOutputPattern, 'once');

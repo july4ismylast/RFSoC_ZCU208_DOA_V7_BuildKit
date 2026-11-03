@@ -28,10 +28,14 @@
 > Gate-1 attempt 1 then exposed that R2024a will not resolve a
 > model-workspace variable for the finite-option `FilterStructure`
 > mask parameter, and attempt 2 exposed that Simulink code generation
-> rejects a string array in the wrapper validator. `build_model.m`
-> now passes the exact selected option directly and the validator uses
-> a cell array of character vectors, so after pulling those corrections
-> resume at `gate1-transposed` rather than rerunning the probe. Do not treat a
+> rejects a string array in the wrapper validator. Attempt 3 generated
+> the transposed HDL cleanly (0 errors/warnings/messages) but the new
+> Gate-1 port-width regex missed HDL Coder's trailing `// sfix...`
+> comments. `build_model.m` now passes the exact selected option
+> directly, the validator uses a cell array of character vectors, and
+> the port patterns allow those comments; after pulling those
+> corrections resume at `gate1-transposed` rather than rerunning the
+> probe. Do not treat a
 > one-channel PASS as integrated fit/timing proof or production
 > architecture selection.
 

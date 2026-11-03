@@ -369,7 +369,7 @@ sed -n '1,220p' build/output/v06_gate2t_transposed_utilization_hierarchical.rpt
 ```
 
 **Attempt status (user PC, MATLAB R2024a, 2026-11-03): transposed
-probe PASS; Gate-1 attempts 1–2 failed in the harness and have been
+probe PASS; Gate-1 attempts 1–3 failed in the harness and have been
 corrected.** The probe kept the exact 12,288-coefficient design
 (`COEFFS_TF_MAX_ABS_DIFF=0`), produced an 8×1 signed
 26-bit/fraction-24 output, collected 512 valid beats / 4096 outputs,
@@ -401,10 +401,22 @@ requested a cell array of character vectors. The accompanying
 `validIn` port-width message is a downstream consequence of the core
 not compiling, not a new wiring error. The second correction therefore
 keeps the property as `char` but changes the validator set to
-`{'Direct form systolic', 'Direct form transposed'}`. After pulling
-the latest correction, do **not** rerun the already-passed probe;
-resume at `gate1-transposed`, then run `gate2t-transposed` only if
-Gate 1 passes.
+`{'Direct form systolic', 'Direct form transposed'}`.
+
+Gate-1 attempt 3 then completed the actual HDL generation in
+84.878 s: HDL Coder reported 0 errors, 0 warnings and 0 messages, and
+the generated `Channelizer_DUT` listed 38 port declarations including
+exactly the required sixteen signed 16-bit `dataIn` ports and sixteen
+signed 26-bit `dataOut` ports. The Gate-1 wrapper nevertheless marked
+the attempt FAIL because its new width-check regex required
+end-of-line immediately after each declaration semicolon, while HDL
+Coder appends comments such as `// sfix16_En15` and
+`// sfix26_En24`; it therefore counted 0/0 matching ports. The third
+correction allows an optional trailing `//...` comment in both
+patterns. After pulling the latest correction, do **not** rerun the
+already-passed probe; resume at `gate1-transposed` so it can replace
+the FAIL report with a complete PASS record, then run
+`gate2t-transposed` only if Gate 1 passes.
 
 This is an isolated architecture A/B, not a production selection.
 `config.mk` still defaults `CHANNELIZER_FILTER_STRUCTURE` to
