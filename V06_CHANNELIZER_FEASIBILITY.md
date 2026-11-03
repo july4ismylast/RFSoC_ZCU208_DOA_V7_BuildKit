@@ -2,11 +2,13 @@
 
 **Status after V04/V05:** the RFDC configuration transaction is proven in
 scratch (4 GSPS, Fine Real→I/Q DDC, decimation 2, MTS persisted), and
-`rfdc_repack4` is accepted in Vitis HLS. **V06 Gate 0 passed on the user
-PC (MATLAB R2024a, 2026-11-03)** for the one-channel SSR-8/1024
-`dsphdl.Channelizer` object configuration. V06 must still prove HDL
-generation, one-channel OOC timing/resources and numerical ordering
-before any V07/`step08` integration is attempted.
+`rfdc_repack4` is accepted in Vitis HLS. **V06 Gates 0 and 1 passed on
+the user PC (MATLAB R2024a, 2026-11-03)**: the one-channel SSR-8/1024
+`dsphdl.Channelizer` object configuration works in fixed point, and HDL
+Coder generated the corresponding one-channel Verilog with no HDL-check
+errors, warnings or messages. V06 must still prove one-channel OOC
+timing/resources and numerical ordering before any V07/`step08`
+integration is attempted.
 
 ## 1. One-channel target contract
 
@@ -20,9 +22,9 @@ before any V07/`step08` integration is attempted.
 | Coherence gate | all four production channels must be identical instances with identical latency, scaling and bin ordering |
 
 The existing `ip/matlab/channelizer_hdl` harness originated as a legacy
-**64-band, four-sample/cycle** model. Gate 1 parameterizes that code to
-the `config.mk` production values, but until the Gate-1 generation run
-passes on MATLAB R2024a, the parameterized harness is not yet V06 HDL
+**64-band, four-sample/cycle** model. Gate 1 parameterized that code to
+the `config.mk` production values and generated one-channel RTL on
+MATLAB R2024a. That is generation evidence only, not synthesis/timing
 evidence. Its packaged IP must not be used as the production
 channelizer; packaging is blocked in the local Makefile until the
 AXI4-Stream wrapper contract is frozen.
@@ -31,7 +33,7 @@ AXI4-Stream wrapper contract is frozen.
 
 | Candidate | Why it is considered | Main risk / adaptation | V06 order |
 |---|---|---|---|
-| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency | HDL generation, generated 1024-band resource/timing, steady-state scaling/phase and complete bin ordering remain unproven on ZU48DR | **Plan A — Gate-1 HDL generation next** |
+| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files for the exact `Channelizer_DUT` top | One-channel 1024-band OOC resource/timing, steady-state scaling/phase and complete bin ordering remain unproven on ZU48DR | **Plan A — Gate-2 OOC synthesis next** |
 | **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`. This is also the user's selected **step05/step06 IP-collection flow** (always pass `CHANNELIZER_FLOW=opfb` on the user PC) | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Plan B if Plan A fails API/scaling/resource/timing; collection alone does not close V06 |
 | **AMD FIR Compiler + AMD FFT, hand-assembled SSR PFB** | FIR Compiler 7.2 is already pinned; AMD IP would be native to Vivado 2023.2 | AMD FFT VLNV/version is not yet checked or pinned (required by the V00 rule); commutator, coefficient banks, scaling and SSR ordering become custom design work | Plan C |
 | **Custom HLS/RTL PFB** | Maximum control over interface and scaling | No exact SSR-8/1024 implementation exists in the audited repos; highest verification and timing-closure risk | Last resort |
@@ -128,7 +130,7 @@ make rebuild STEP=step06_collect_ip CHANNELIZER_FLOW=opfb
 If probe v2 fails, stop. Do not run `make hdl`, `make package` or
 `step08`; return the full v2 probe report for diagnosis.
 
-### Gate 1 — parameterize the Simulink/HDL harness (current gate)
+### Gate 1 — parameterize the Simulink/HDL harness (PASS, 2026-11-03)
 
 **Attempt 1 (2026-11-03): harness FAIL before HDL generation.** The
 Gate-0 report was valid, but `report_value` used a MATLAB regexp
@@ -141,7 +143,19 @@ attempt-1 report as
 `build/output/v06_gate1_hdl_generation_attempt1_parser_FAIL.rpt` before
 rerunning.
 
-The harness code is now parameterized from `config.mk`:
+**Attempt 2 result: PASS.** HDL generation took **91.491 s** and HDL
+check completed with **0 errors, 0 warnings and 0 messages**. The
+generated top is `Channelizer_DUT` (8976 bytes, 234 lines, 38 port
+declarations), with `clk`, `reset`, `clk_enable`, `validIn`, eight
+signed-16 real inputs and eight signed-16 imaginary inputs
+(`sfix16_En15`), eight signed-26 real outputs and eight signed-26
+imaginary outputs (`sfix26_En24`), `ce_out`, and `validOut`. The
+generated tree contains 258 files / 5,294,271 bytes, including **227
+Verilog files** and 23 report/HTML/text files. Preserve the successful
+report as `build/output/v06_gate1_hdl_generation_PASS.rpt` before any
+future Gate-1 rerun. Gate 1 is closed.
+
+The harness code is parameterized from `config.mk`:
 `CHANNELIZER_NUM_BANDS=1024`, `WIDEBAND_SAMPLES_PER_CLOCK=8`,
 `CHANNELIZER_TAPS_PER_BAND=12`, `CHANNELIZER_STOPBAND_DB=100`, and
 `CHANNELIZER_NORMALIZE=0`. `ZU48DRChannelizer.NormalizeFFT` carries the
@@ -149,7 +163,7 @@ proved scaling choice into the Simulink MATLAB System block, while
 `build_model.m` creates an 8×1 complex `fixdt(1,16,15)` input and the
 12,288-coefficient prototype through `tf()`.
 
-Run exactly:
+Run exactly (regression/reproduction only):
 
 ```bash
 make -C ip/matlab/channelizer_hdl gate1
@@ -178,12 +192,47 @@ are intentionally blocked unless a later wrapper stage explicitly sets
 `ALLOW_CHANNELIZER_PACKAGE=1`. Gate 2 will synthesize the generated
 one-channel RTL out-of-context before any packaging decision.
 
-### Gate 2 — one-channel Vivado OOC synthesis
+### Gate 2 — one-channel Vivado OOC synthesis (current gate)
 
-Synthesize one channel out-of-context for the pinned part at 4.0 ns.
-Acceptance requires the utilization (LUT/FF/DSP/BRAM/URAM) and WNS/TNS
-reports, followed by an explicit x4 extrapolation review including the
-V03 MTS base, V05 gearbox, search/DOA logic and routing margin.
+Run exactly:
+
+```bash
+make -C ip/matlab/channelizer_hdl gate2
+cat build/output/v06_gate2_ooc_synthesis.rpt
+```
+
+`v06_gate2_ooc_synth.tcl` sources `config/ip_versions.tcl`, enforces the
+Vivado 2023.2 lock and pinned part
+(`xczu48dr-fsvg1517-2-e`), and requires the Gate-1 PASS report and its
+exact generated top. It recursively reads the Gate-1 HDL, applies
+`v06_gate2_ooc.xdc`, and runs non-project
+`synth_design -mode out_of_context -flatten_hierarchy rebuilt` for one
+`Channelizer_DUT` only. It does not run implementation, package IP, or
+touch the MTS/DOA block design.
+
+The OOC XDC uses the `config.mk` **4.000 ns** clock, zero input/output
+delays for the continuous 250 MHz data/valid boundary, constant
+`clk_enable=1`, and a false path from the standalone `reset` port. It
+is an internal-module feasibility constraint set, not production BD
+constraints.
+
+The summary at `build/output/v06_gate2_ooc_synthesis.rpt` must record
+the Vivado version, synthesis elapsed time, checkpoint path, CLB
+LUT/register, Block RAM Tile, URAM and DSP used/available values, a
+crude x4 extrapolation against the whole part, and WNS/TNS/failing
+endpoints. Detailed evidence is written to
+`v06_gate2_utilization.rpt`,
+`v06_gate2_utilization_hierarchical.rpt`,
+`v06_gate2_timing_summary.rpt`, `v06_gate2_timing_paths.rpt`,
+`v06_gate2_clocks.rpt`, and `v06_gate2_check_timing.rpt`; the synthesis
+checkpoint is `build/v06_gate2_ooc/Channelizer_DUT_ooc_synth.dcp`.
+
+The script returns PASS only if synthesis completes, setup **WNS ≥ 0**,
+**TNS = 0** with no failing setup endpoints, and no crude x4 resource
+total already exceeds the whole part. A PASS still requires the
+follow-on assistant review of x4 channels plus the V03 MTS base, V05
+gearbox, search/DOA logic and routing margin; it is not production
+timing closure and does not authorize packaging or `step08`.
 
 ### Gate 3 — numerical ordering and phase
 
@@ -198,6 +247,6 @@ before measuring steady-state gain/phase. Freeze:
 - common per-bin phase rotation (acceptable for cross-channel DOA only
   if bit-identical across all four channels).
 
-Only after Gates 0–3 pass is Plan A selected for V07. If Gate 1 or 2
+Only after Gates 0–3 pass is Plan A selected for V07. If Gate 2 or 3
 fails, the same feasibility gates are applied to the MazinLab OPFB
 Plan B before any production BD work resumes.

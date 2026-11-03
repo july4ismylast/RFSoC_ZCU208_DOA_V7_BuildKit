@@ -103,13 +103,12 @@ Select exactly one implementation:
 | MazinLab OPFB | `CHANNELIZER_FLOW=opfb` | Plan-B only: fetches the pinned set once and builds/imports exactly the ten MazinLab IP definitions used by RFSoC_OPFB `bd/opfb_streaming.tcl` (see `ip/upstream_opfb/README.md`); DOA rate/interface adaptation is still stage V06 |
 | External IP | `CHANNELIZER_FLOW=external EXTERNAL_CHANNELIZER_IP=...` | Previously packaged compatible channelizer |
 
-**Stage V06 warning:** Gate 0 passed for the production-size SSR-8 /
-1024-band MATLAB object configuration, and the harness code is now
-parameterized to those values. That still does not make
-`step05_channelizer`/`step06_collect_ip` a V06 completion proof: HDL
-generation, one-channel OOC synthesis, numerical ordering and the
-AXI4-Stream wrapper remain gated. The current feasibility gate is
-`make -C ip/matlab/channelizer_hdl gate1`; see
+**Stage V06 warning:** Gates 0 and 1 passed for the production-size
+SSR-8 / 1024-band MATLAB object and its generated one-channel RTL.
+That still does not make `step05_channelizer`/`step06_collect_ip` a V06
+completion proof: one-channel OOC synthesis, numerical ordering and
+the AXI4-Stream wrapper remain gated. The current feasibility gate is
+`make -C ip/matlab/channelizer_hdl gate2`; see
 `V06_CHANNELIZER_FEASIBILITY.md`. MATLAB packaging is blocked in the
 local Makefile until the wrapper contract is frozen.
 

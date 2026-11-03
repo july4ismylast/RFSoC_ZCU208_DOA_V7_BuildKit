@@ -1,18 +1,20 @@
 # MATLAB/DSP HDL SSR channelizer generation harness
 
-> **Stage V06 status:** Gate 0 passed on MATLAB R2024a for one
+> **Stage V06 status:** Gates 0 and 1 passed on MATLAB R2024a for one
 > 1024-band / SSR-8 fixed-point `dsphdl.Channelizer` with
 > `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24
-> output, and 1760-cycle latency. The current Gate-1 test is only:
+> output, and 1760-cycle latency. HDL Coder generated the
+> `Channelizer_DUT` top and 227 Verilog files with no HDL-check errors,
+> warnings or messages. The current Gate-2 test is only:
 >
 > ```bash
-> make -C ip/matlab/channelizer_hdl gate1
-> cat build/output/v06_gate1_hdl_generation.rpt
+> make -C ip/matlab/channelizer_hdl gate2
+> cat build/output/v06_gate2_ooc_synthesis.rpt
 > ```
 >
-> See `V06_CHANNELIZER_FEASIBILITY.md` at the repository root. Gate 1
-> generates one channel of RTL and catalogs it; it does not package a
-> production IP or prove Vivado timing/resources.
+> See `V06_CHANNELIZER_FEASIBILITY.md` at the repository root. Gate 2 is
+> one-channel Vivado out-of-context synthesis at 4.0 ns; it does not
+> package a production IP or prove integrated timing/resources.
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
 `dsp.Channelizer` for synthesizable hardware. `build_model.m` now reads
@@ -44,8 +46,9 @@ This hierarchy is required because `makehdl` accepts a model, subsystem, or
 model reference as its DUT; it does not accept the leaf MATLAB System block as
 the DUT path.
 
-`make gate1` is the current V06 generation entry point; `make hdl`
-remains the underlying file-target form. Packaging is intentionally
+`make gate1` is the V06 HDL-generation entry point and `make gate2` is
+the current one-channel OOC synthesis entry point; `make hdl` remains
+the underlying generation file-target form. Packaging is intentionally
 blocked during V06 (`ALLOW_CHANNELIZER_PACKAGE=1` is required to unlock
 the old package targets) because the generated DUT is still a raw
 data/valid subsystem, not the frozen AXI4-Stream production wrapper.
