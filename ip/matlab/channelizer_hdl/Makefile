@@ -14,9 +14,10 @@ V06_GATE1_TRANSPOSED_REPORT := $(ROOT)/build/output/v06_gate1_hdl_generation_tra
 V06_GATE2_REPORT := $(ROOT)/build/output/v06_gate2_ooc_synthesis.rpt
 V06_GATE2R_BRAM_REPORT := $(ROOT)/build/output/v06_gate2r_bram_ooc_synthesis.rpt
 V06_GATE2T_TRANSPOSED_REPORT := $(ROOT)/build/output/v06_gate2t_transposed_ooc_synthesis.rpt
+V06_GATE3_TRANSPOSED_REPORT := $(ROOT)/build/output/v06_gate3_transposed_numerics.rpt
 ALLOW_CHANNELIZER_PACKAGE ?= 0
 
-.PHONY: all model hdl package package-only require-package-allowed probe probe-transposed gate1 gate1-transposed gate2 gate2r-bram gate2t-transposed clean
+.PHONY: all model hdl package package-only require-package-allowed probe probe-transposed gate1 gate1-transposed gate2 gate2r-bram gate2t-transposed gate3-transposed clean
 all: package
 # Stage V06 Gate 0 (passed on the user PC, 2026-11-03): the installed
 # dsphdl.Channelizer accepts the production-size SSR-8/1024-band
@@ -99,6 +100,25 @@ gate2t-transposed: v06_gate2_ooc_synth.tcl v06_gate2_ooc.xdc
 	V06_GATE2_VARIANT=transposed $(VIVADO) -mode batch -nojournal -nolog -source v06_gate2_ooc_synth.tcl
 	@test -f "$(V06_GATE2T_TRANSPOSED_REPORT)" || { echo "ERROR: V06 Gate-2T transposed report missing: $(V06_GATE2T_TRANSPOSED_REPORT)"; exit 1; }
 	@grep -q "V06 GATE2T TRANSPOSED OOC SYNTHESIS RESULT=PASS" "$(V06_GATE2T_TRANSPOSED_REPORT)" || { echo "ERROR: V06 Gate-2T transposed did not PASS (see $(V06_GATE2T_TRANSPOSED_REPORT))"; exit 1; }
+
+# Stage V06 Gate 3: compare the exact transposed ZU48DRChannelizer
+# wrapper against a floating-point dsp.Channelizer using the same
+# quantized 16-tone input.  Forty snapshots are collected, startup
+# snapshots are discarded, and the report freezes serialized bin
+# order, snapshot/column alignment, per-bin phase correction, global
+# and per-tone gain/phase, and the signed 26/24 output contract.
+# MATLAB only: no HDL generation, packaging, Vivado run, or BD change.
+gate3-transposed: v06_gate3_transposed_compare.m ZU48DRChannelizer.m
+	@test -f "$(V06_GATE1_TRANSPOSED_REPORT)" || { echo "ERROR: transposed Gate-1 report missing; run make -C ip/matlab/channelizer_hdl gate1-transposed first"; exit 1; }
+	@grep -q "V06 GATE1 HDL GENERATION RESULT=PASS" "$(V06_GATE1_TRANSPOSED_REPORT)" || { echo "ERROR: transposed Gate-1 has not PASSed; see $(V06_GATE1_TRANSPOSED_REPORT)"; exit 1; }
+	@test -f "$(V06_GATE2T_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-2T report missing; run make -C ip/matlab/channelizer_hdl gate2t-transposed first"; exit 1; }
+	@grep -q "V06 GATE2T TRANSPOSED OOC SYNTHESIS RESULT=PASS" "$(V06_GATE2T_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-2T has not PASSed; see $(V06_GATE2T_TRANSPOSED_REPORT)"; exit 1; }
+	@grep -q "^RESOURCE_IMPROVEMENT_MATERIAL=1$$" "$(V06_GATE2T_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-2T was not a material resource improvement; see $(V06_GATE2T_TRANSPOSED_REPORT)"; exit 1; }
+	@test -f "$(HDL_TOP_FILE_TRANSPOSED)" || { echo "ERROR: transposed generated HDL top missing: $(HDL_TOP_FILE_TRANSPOSED)"; exit 1; }
+	V06_FILTER_STRUCTURE=transposed $(MATLAB_RUNNER) "$(MATLAB)" -batch "v06_gate3_transposed_compare"
+	@test -f "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: V06 Gate-3 report missing: $(V06_GATE3_TRANSPOSED_REPORT)"; exit 1; }
+	@grep -q "^FILTER_STRUCTURE=Direct form transposed$$" "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-3 did not select Direct form transposed (see $(V06_GATE3_TRANSPOSED_REPORT))"; exit 1; }
+	@grep -q "V06 GATE3 TRANSPOSED NUMERICS RESULT=PASS" "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: V06 Gate-3 did not PASS (see $(V06_GATE3_TRANSPOSED_REPORT))"; exit 1; }
 
 model:
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "build_model"

@@ -22,10 +22,19 @@ instead of 57,670 (97.0210% fewer), 58,626 registers instead of
 74,573, the same 312 DSPs, and 351 cycles latency instead of 1760;
 the tradeoff is 176 RAMB36 tiles per channel. Four transposed
 channels therefore extrapolate to 143,608 LUTs (33.7679%) but 704
-BRAM tiles (65.1852%). Transposed is the clear provisional Plan-A
-resource winner, not yet the production selection: the actual
-MTS-base utilization, integrated x4 review and Gate-3 numerical
-ordering remain before any V07/`step08` integration is attempted.
+BRAM tiles (65.1852%). **The actual routed MTS-base utilization has
+now also been extracted:** the whole V03 MTS design uses 42,263
+LUTs, 47,760 registers, 50.5 Block RAM Tiles, 20 URAM and 3 DSPs.
+Adding four Gate-2T channelizers arithmetically gives 185,871/425,280
+LUTs (43.7056%), 282,264/850,560 registers (33.1857%), 754.5/1080
+BRAM Tiles (69.8611%), 20/80 URAM (25%) and 1,251/4272 DSPs
+(29.2837%). That crude screen closes while retaining the entire MTS
+base, whereas MTS plus four systolic channelizers would already use
+396,399 LUTs (93.2089%). Transposed is therefore the clear
+provisional Plan-A resource winner, not yet the production
+selection: Gate-3 numerical ordering/gain/phase remains before the
+production default, AXI4-Stream wrapper, packaging, or any
+V07/`step08` integration is attempted.
 
 ## 1. One-channel target contract
 
@@ -50,7 +59,7 @@ AXI4-Stream wrapper contract is frozen.
 
 | Candidate | Why it is considered | Main risk / adaptation | V06 order |
 |---|---|---|---|
-| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle latency; Gate-1 generated 227 Verilog files; Gate-2 one-channel OOC synthesis met setup timing at 4.0 ns (WNS +1.630 ns) | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**, leaving only 71,144 LUTs for the MTS base, V05, serializer, DOA/control logic and routing margin. Hierarchical utilization shows the systolic FilterBank is 63,439 LUTs (55,952 SRLs), versus 25,095 LUTs for the FFT. Transposed removes that LUT bottleneck (10,800 FilterBank LUTs, no FilterBank SRLs) but uses 704/1080 BRAM tiles at x4, so actual MTS BRAM headroom is now the main resource question; steady-state scaling/phase and complete bin ordering also remain unproven | **Plan A provisional winner — transposed Gate-2T PASS/material (35,902 LUTs, 176 RAMB36, WNS +1.829 ns); MTS-base budget + Gate 3 before production selection** |
+| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle systolic latency; systolic Gate-1 generated 227 Verilog files and Gate-2 met one-channel OOC setup timing at 4.0 ns (WNS +1.630 ns). The transposed A/B then generated 228 files and Gate-2T met setup at WNS +1.829 ns with 351-cycle latency | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**; with the actual 42,263-LUT routed MTS base they would reach 93.2089%, so systolic is no longer a credible integrated fallback. Transposed removes that LUT bottleneck (10,800 FilterBank LUTs, no FilterBank SRLs) but uses 176 BRAM Tiles/channel. The actual MTS base plus four transposed channelizers is nevertheless only 43.7056% LUTs and 69.8611% BRAM Tiles by crude addition, leaving 239,409 LUTs and 325.5 BRAM Tiles before V05/serializer/DOA logic. Four-channel placement/routing, hold, congestion and power remain unproven, as do steady-state scaling/phase and complete bin ordering until Gate 3 runs | **Plan A provisional winner — transposed Gate-2T PASS/material and crude MTS+x4 budget closes; Gate 3 is the next production-selection gate** |
 | **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`. This is also the user's selected **step05/step06 IP-collection flow** (always pass `CHANNELIZER_FLOW=opfb` on the user PC) | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Plan B if Plan A fails API/scaling/resource/timing; collection alone does not close V06 |
 | **AMD FIR Compiler + AMD FFT, hand-assembled SSR PFB** | FIR Compiler 7.2 is already pinned; AMD IP would be native to Vivado 2023.2 | AMD FFT VLNV/version is not yet checked or pinned (required by the V00 rule); commutator, coefficient banks, scaling and SSR ordering become custom design work | Plan C |
 | **Custom HLS/RTL PFB** | Maximum control over interface and scaling | No exact SSR-8/1024 implementation exists in the audited repos; highest verification and timing-closure risk | Last resort |
@@ -255,10 +264,11 @@ routing margin. Do not treat the script PASS as proof that the complete
 four-channel design fits. Gate 2R below rejected the BRAM-directive
 route, while Gate 2T subsequently solved the one-channel LUT problem
 with the transposed architecture (see its result below).
-The implemented V03 MTS utilization is still needed for the final x4
-budget; the first grep attempt matched only one row because Vivado
-pads utilization labels to different column widths, so it is not MTS
-evidence yet.
+The implemented V03 MTS utilization has since been extracted from
+the routed checkpoint and is included in the Gate-2T budget below:
+with the actual 42,263-LUT MTS base, four systolic channelizers
+would reach 396,399/425,280 LUTs (93.2089%), confirming that the
+systolic script PASS is not a credible integrated fallback.
 
 The Gate-2 detailed evidence already collected is:
 
@@ -490,15 +500,17 @@ At x4, transposed channelizers alone use 143,608/425,280 LUTs
 704/1080 BRAM tiles (65.1852%, leaving 376), no URAM, and
 1248/4272 DSPs (29.2135%). This makes transposed the clear
 provisional Plan-A architecture and removes systolic as the leading
-candidate. It is **not** yet a production selection: BRAM is now the
-tightest crude resource, so the next evidence is the actual routed
-V03 MTS-base utilization, followed by Gate-3 numerical proof on the
-transposed configuration and only then the production default /
-AXI4-Stream wrapper / packaging change. `config.mk` therefore still
-defaults to systolic for baseline reproducibility until that
-selection commit changes the production generation path coherently.
+candidate. It is **not** yet a production selection: Gate-3 numerical
+proof on the transposed configuration must pass before the
+production default / AXI4-Stream wrapper / packaging change.
+`config.mk` therefore still defaults to systolic for baseline
+reproducibility until that selection commit changes the production
+generation path coherently.
 
-Run the read-only MTS utilization extraction next (no rebuild):
+#### Actual routed MTS-base budget (crude screen closes, 2026-11-03)
+
+The read-only extractor was run on the user PC against the routed
+V03 MTS checkpoint (no rebuild):
 
 ```bash
 vivado -mode batch -nojournal -nolog \
@@ -508,24 +520,109 @@ sed -n '1,180p' build/output/v06_mts_base_utilization_detailed.rpt
 sed -n '1,220p' build/output/v06_mts_base_utilization_hierarchical.rpt
 ```
 
-### Gate 3 — numerical ordering and phase
+The routed `mts_wrapper` design on `xczu48dr-fsvg1517-2-e` uses:
 
-After the MTS-base resource review, compare the **transposed**
-HDL-oriented object/RTL against the floating-point
-`dsp.Channelizer` reference after its 351-cycle latency alignment.
-Run beyond the 12-snapshot prototype-fill interval and discard
-startup snapshots before measuring steady-state gain/phase. Freeze:
+| Resource | Actual routed MTS base | Share of part |
+|---|---:|---:|
+| CLB LUTs | 42,263 = 31,466 logic + 9,810 distributed RAM + 987 SRL | 9.9377% |
+| CLB registers | 47,760 | 5.6151% |
+| Block RAM Tiles | 50.5 = 48 RAMB36 + 5 RAMB18 | 4.6759% |
+| URAM | 20 | 25.0000% |
+| DSPs | 3 | 0.0702% |
 
-- output scalar order over the 128 SSR-8 beats of one snapshot;
-- bin index → baseband/RF frequency mapping;
-- scaling, saturation/rounding and output word length;
-- common per-bin phase rotation (acceptable for cross-channel DOA only
-  if bit-identical across all four channels).
+Adding the proved one-channel Gate-2T result four times gives the
+following intentionally crude coexistence screen:
 
-Only after the MTS-base budget closes and Gate 3 passes for the
-transposed configuration is Plan A selected for V07. If transposed
-fails Gate 3, first determine whether the failure is
-architecture-specific; do not silently fall back to systolic without
-reclosing its 83.27% x4 LUT problem. If neither Plan-A architecture
-is credible, apply the same feasibility gates to the MazinLab OPFB
-Plan B before any production BD work resumes.
+| Resource | MTS + 4× transposed | Available | Used | Remaining |
+|---|---:|---:|---:|---:|
+| CLB LUTs | 185,871 | 425,280 | 43.7056% | 239,409 |
+| CLB registers | 282,264 | 850,560 | 33.1857% | 568,296 |
+| Block RAM Tiles | 754.5 = 752 RAMB36 + 5 RAMB18 | 1080 | 69.8611% | 325.5 |
+| URAM | 20 | 80 | 25.0000% | 60 |
+| DSPs | 1,251 | 4272 | 29.2837% | 3,021 |
+
+The combined LUT split is 152,906 logic + 25,106 distributed RAM +
+7,859 SRL. This screen is conservative in one important sense: it
+retains the entire MTS base, including DDR4, deep-capture and five
+ADC/DAC capture/play hierarchies (the latter account for all 20
+URAM), even though V07 may remove or replace parts of that test
+infrastructure. It is still only arithmetic coexistence evidence. It
+does not prove four-channel BRAM locality, placement, routing,
+setup/hold closure, congestion, clock interaction or power.
+
+For contrast, the same MTS base plus four systolic Gate-2
+channelizers would use 396,399/425,280 LUTs (93.2089%), leaving only
+28,881 LUTs before V05, snapshot serialization, AXI/control/DMA,
+DOA/search logic and routing margin. Systolic is therefore not a
+credible fallback if the transposed design later encounters a
+numerical problem; the next fallback investigation would have to be
+a different architecture/Plan B, not a silent default reversion.
+
+### Gate 3 — numerical ordering and phase (implemented; run next)
+
+Run exactly:
+
+```bash
+make -C ip/matlab/channelizer_hdl gate3-transposed
+cat build/output/v06_gate3_transposed_numerics.rpt
+```
+
+`v06_gate3_transposed_compare.m` first requires the transposed
+Gate-0, Gate-1 and Gate-2T PASS evidence, the generated transposed
+top, 351-cycle latency and `RESOURCE_IMPROVEMENT_MATERIAL=1`. It
+then steps the actual `ZU48DRChannelizer` wrapper—the same
+HDL-oriented System object used to generate the Gate-1 RTL—with
+`Direct form transposed`, `Normalize=false`, signed 16/15 input and
+the 12,288 `tf()` prototype coefficients. It does not generate HDL,
+package IP, invoke Vivado or modify a block design, and it is not a
+cycle-accurate RTL co-simulation.
+
+The deterministic stimulus contains 16 exact-bin complex tones at
+raw bins `1, 18, 35, 68, 133, 198, 255, 320, 447, 511, 514, 645,
+770, 900, 1000, 1023`, covering positive/negative frequencies, the
+DC/Nyquist edges and all eight SSR lanes. The waveform is quantized
+once to signed 16/15; the DUT receives those `fi` values and the
+floating-point `dsp.Channelizer` reference (M=D=1024, same
+12-tap/100 dB prototype) receives `double(fi)`, so input quantization
+is not mistaken for a channelizer mismatch. Forty snapshots are
+collected and the first 16 are discarded before steady-state
+measurements, beyond the 12-snapshot prototype-fill interval.
+
+R2024a does not provide the newer `PreservePhase` property. Gate 3
+therefore uses MathWorks' documented alignment construction in its
+primary DUT run: prepend 1023 zero samples to the sample stream,
+then search only snapshot offsets −2..+2, reference-column maps
+identity/512-shift, and external corrections
+`exp(±j·2πk/1024)` (plus no correction) over transient snapshots.
+A separate no-pad DUT run is logged as a diagnostic. Raw DUT bin
+ordering is also proved independently from the known tone
+frequencies, rather than relying on the potentially shifted order
+returned by `centerFrequencies`.
+
+A Gate-3 PASS must freeze and record:
+
+- first-valid latency of exactly 351 cycles and 5120 valid SSR beats
+  for 40 snapshots in both DUT runs;
+- signed 26-bit/fraction-24 output and its LSB;
+- output scalar order over the 128 SSR-8 beats of one snapshot
+  (beat `floor(k/8)`, lane `mod(k,8)`);
+- exact top-16 tone-bin order and immediate-neighbour isolation;
+- bin index → signed baseband/RF frequency map at 1.953125 MHz
+  spacing around the locked 3.0 GHz centre;
+- selected snapshot offset and reference-column map;
+- the sign/formula of the common per-bin phase correction and the
+  equivalent raw DUT phase relation;
+- global steady-state complex gain within 0.98..1.02 Magnitude and
+  ±2° phase after correction, normalized RMS error ≤0.02 and
+  correlation ≥0.9995;
+- per-tone residual gain ≤3% and residual phase ≤3° relative to the
+  global gain, with stable steady-state Magnitude/phase.
+
+Only after Gate 3 passes for the transposed configuration is Plan A
+selected for the production-default/AXI4-Stream-wrapper/packaging
+step and then V07. If transposed fails Gate 3, first determine
+whether the failure is architecture-specific. Do not silently fall
+back to systolic: the actual MTS budget above shows that it is not
+integrated-fit credible. If neither Plan-A architecture is credible,
+apply the same feasibility gates to the MazinLab OPFB Plan B before
+any production BD work resumes.

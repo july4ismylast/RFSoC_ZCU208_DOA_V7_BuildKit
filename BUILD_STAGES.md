@@ -113,10 +113,16 @@ same-RTL `AreaMapLargeShiftRegToBRAM` A/B completed with exactly zero
 resource change and is rejected. The isolated Gate-2T
 `Direct form transposed` probe/Gate-1/OOC sequence then passed with a
 material improvement (35,902 LUTs and 176 RAMB36 per channel; x4 =
-33.7679% LUTs but 65.1852% BRAM tiles), making transposed the
-provisional Plan-A winner. Actual MTS-base utilization, the
-integrated x4 budget, Gate-3 numerical ordering and the AXI4-Stream
-wrapper remain gated before production selection. See
+33.7679% LUTs but 65.1852% BRAM tiles). The actual routed MTS base
+has since been extracted at 42,263 LUTs / 50.5 BRAM Tiles, so the
+crude MTS + 4× transposed screen closes at 43.7056% LUTs and
+69.8611% BRAM Tiles; the systolic version of that screen would be
+93.2089% LUTs and is not a credible fallback. Transposed is
+therefore the provisional Plan-A winner, but Gate-3 numerical
+ordering/gain/phase (`make -C ip/matlab/channelizer_hdl
+gate3-transposed`) and the AXI4-Stream wrapper remain gated before
+production selection or `step08`. The crude total is not integrated
+placement/routing, hold, congestion or power proof. See
 `V06_CHANNELIZER_FEASIBILITY.md`. MATLAB packaging is blocked in the
 local Makefile until the wrapper contract is frozen.
 
