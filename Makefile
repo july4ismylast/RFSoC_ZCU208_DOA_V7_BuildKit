@@ -185,3 +185,8 @@ $(STAMP_DIR)/step14_hil_vectors.done: hil/matlab/generate_zcu208_hil_vectors.m s
 
 $(STAMP_DIR)/step15_package.done: scripts/package_release.sh config.mk scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step15_package --stamp "$@" --log "$(LOG_DIR)/step15_package.log" -- ./scripts/package_release.sh
+
+# Deliberate user action only: never part of pipeline/all.
+.PHONY: publish-evidence
+publish-evidence:
+	@CHANNELIZER_FLOW="$(CHANNELIZER_FLOW)" BUILD="$(BUILD)" IP_REPO="$(IP_REPO)" bash scripts/publish_build_evidence.sh
