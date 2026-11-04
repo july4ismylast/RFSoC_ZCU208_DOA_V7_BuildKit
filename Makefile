@@ -194,3 +194,9 @@ publish-evidence:
 .PHONY: repair-mts-module-refs
 repair-mts-module-refs:
 	@$(VIVADO) -mode batch -nojournal -nolog -source common/vivado/07_repair_mts_module_refs.tcl
+
+# Standalone native OPFB resource screen, never modifies the MTS project.
+.PHONY: opfb-resource-check
+opfb-resource-check:
+	@mkdir -p "$(LOG_DIR)"
+	@set -o pipefail; $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/v06_opfb_ooc.tcl 2>&1 | tee "$(LOG_DIR)/v06_opfb_ooc.log"
