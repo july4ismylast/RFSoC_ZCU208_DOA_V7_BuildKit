@@ -1,0 +1,20 @@
+stage=step06_collect_ip
+started_utc=2026-11-04T09:36:18Z
+command=./scripts/collect_ip.sh 
+PASS openai:doa:doa_covariance_4ch_v4:7.1
+PASS openai:doa:spectrum_power4:2.0
+PASS openai:doa:candidate_peak4:1.0
+PASS openai:doa:beam_weight_4ch:2.1
+PASS openai:doa:rfdc_repack4:1.0
+PASS mazinlab:mkidgen3:adc_to_opfb:1.32
+PASS mazinlab:mkidgen3:opfb_fir_cfg:1.31
+PASS mazinlab:mkidgen3:fir_to_fft:1.31
+PASS MazinLab:mkidgen3:ssrfft_16x4096_axis:1.0
+PASS mazinlab:mkidgen3:pkg_fft_output:1.31
+PASS mazinlab:mkidgen3:capture_upsizer:0.5
+PASS mazinlab:mkidgen3:filter_iq:0.3
+PASS mazinlab:mkidgen3:filter_phase:0.5
+PASS mazinlab:mkidgen3:pair_iq:0.4
+PASS mazinlab:mkidgen3:bin_to_res:1.33
+Validated IP repository (versions pinned): /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/ip_manifest.tsv
+result=PASS
