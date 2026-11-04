@@ -43,12 +43,33 @@ create_bd_design opfb_eval
 eval $definitions
 create_hier_cell_opfb / opfb
 foreach pin [get_bd_intf_pins /opfb/*] { make_bd_intf_pins_external $pin }
-foreach pin [get_bd_pins /opfb/*] { make_bd_pins_external $pin }
+# Only the two standalone scalar pins may be externalized separately.
+# get_bd_pins /opfb/* also returns AXI member pins; externalizing those
+# overrides interface connections and can collapse propagated buses to 1 bit.
+foreach name {ap_clk ap_rst_n} {
+    make_bd_pins_external [get_bd_pins /opfb/$name]
+}
 set clk [get_bd_ports -filter {TYPE == clk}]
 if {[llength $clk] != 1} { error "Expected one OPFB evaluation clock: $clk" }
 set_property CONFIG.FREQ_HZ 250000000 $clk
 assign_bd_address
 validate_bd_design
+# Fail before synthesis if a streaming data interface has collapsed to scalar.
+set width_report [open [file join $output v06_opfb_interface_widths.rpt] w]
+foreach interface {istream_V_0 qstream_V_0 output_r_0} {
+    set port [get_bd_intf_ports -quiet $interface]
+    if {[llength $port] != 1} {
+        close $width_report
+        error "Expected one external stream interface $interface; found: $port"
+    }
+    set bytes [get_property CONFIG.TDATA_NUM_BYTES $port]
+    puts $width_report "$interface TDATA_NUM_BYTES=$bytes"
+    if {![string is integer -strict $bytes] || $bytes <= 1} {
+        close $width_report
+        error "Invalid stream width on $interface: TDATA_NUM_BYTES=$bytes"
+    }
+}
+close $width_report
 save_bd_design
 set bd [get_files */opfb_eval.bd]
 generate_target all $bd

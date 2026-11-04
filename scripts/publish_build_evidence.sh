@@ -28,6 +28,7 @@ files=(
     "$build/output/v06_opfb_routed_timing.rpt"
     "$build/output/v06_opfb_route_status.rpt"
     "$build/output/v06_opfb_routed_drc.rpt"
+    "$build/output/v06_opfb_interface_widths.rpt"
     "$build/output/v06_opfb_ooc_utilization.rpt"
     "$build/output/v06_opfb_ooc_utilization_hierarchical.rpt"
     "$build/output/v06_opfb_ooc_timing.rpt"
