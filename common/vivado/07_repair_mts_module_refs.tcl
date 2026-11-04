@@ -23,9 +23,16 @@ foreach name {ADCRAMcapture DACRAMstreamer} {
 }
 update_compile_order -fileset sources_1
 set count 0
-foreach cell [get_bd_cells -quiet -hier -filter {TYPE == module}] {
-    set ref [get_property REF_NAME $cell]
-    if {$ref in {ADCRAMcapture DACRAMstreamer}} {
+# Unresolved module references need not expose TYPE=module or REF_NAME.
+# Match their exact module_ref VLNV instead of filtering them out by TYPE.
+foreach cell [get_bd_cells -quiet -hierarchical] {
+    set vlnv [get_property VLNV $cell]
+    set fields [split $vlnv :]
+    if {[llength $fields] == 4 &&
+        [lindex $fields 0] eq "xilinx.com" &&
+        [lindex $fields 1] eq "module_ref" &&
+        [lindex $fields 2] in {ADCRAMcapture DACRAMstreamer}} {
+        puts "Refreshing MTS module reference: $cell ($vlnv)"
         update_module_reference $cell
         incr count
     }
