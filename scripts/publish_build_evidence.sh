@@ -21,6 +21,11 @@ files=(
     "$build/logs/step05_channelizer.log"
     "$build/logs/step06_collect_ip.log"
     "$build/logs/step07_vivado_project.log"
+    "$build/logs/v06_opfb_ooc.log"
+    "$build/output/v06_opfb_ooc_utilization.rpt"
+    "$build/output/v06_opfb_ooc_utilization_hierarchical.rpt"
+    "$build/output/v06_opfb_ooc_timing.rpt"
+    "$build/output/opfb_work_project_ip_status_after_repair.rpt"
     "$ip_repo/ip_manifest.tsv"
     "$build/output/v06_mts_base_utilization.rpt"
     "$build/output/v06_mts_base_utilization_detailed.rpt"
@@ -57,6 +62,11 @@ if ! git diff --cached --quiet; then
     git commit -m "Add $flow build evidence ($(date +%F))" --only -- "$out"
 else
     echo 'No evidence changes to commit; retrying push if needed.'
+fi
+if [[ "${EVIDENCE_PUSH:-1}" == 0 ]]; then
+    echo 'Evidence committed locally. Click Push origin in GitHub Desktop.'
+    git rev-parse HEAD
+    exit 0
 fi
 # Never force-push or push to master. A rejected push remains a visible failure.
 git push origin "${branch}"
