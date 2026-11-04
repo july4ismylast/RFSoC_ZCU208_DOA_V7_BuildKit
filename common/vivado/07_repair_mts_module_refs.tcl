@@ -33,7 +33,7 @@ foreach cell [get_bd_cells -quiet -hierarchical] {
         [lindex $fields 1] eq "module_ref" &&
         [lindex $fields 2] in {ADCRAMcapture DACRAMstreamer}} {
         puts "Refreshing MTS module reference: $cell ($vlnv)"
-        update_module_reference $cell
+        update_module_reference -cell $cell
         incr count
     }
 }
