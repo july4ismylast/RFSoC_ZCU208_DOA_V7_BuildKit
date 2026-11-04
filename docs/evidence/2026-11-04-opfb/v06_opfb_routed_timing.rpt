@@ -1,0 +1,607 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2023.2 (lin64) Build 4029153 Fri Oct 13 20:13:54 MDT 2023
+| Date              : Wed Nov  4 14:39:41 2026
+| Host              : joshua-System-Product-Name running 64-bit Ubuntu 22.04.5 LTS
+| Command           : report_timing_summary -report_unconstrained -file /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_opfb_routed_timing.rpt
+| Design            : opfb_eval_wrapper
+| Device            : xczu48dr-fsvg1517
+| Speed File        : -2  PRODUCTION 1.32 01-31-2021
+| Design State      : Routed
+| Temperature Grade : E
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (13)
+6. checking no_output_delay (23)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (13)
+-------------------------------
+ There are 13 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (23)
+--------------------------------
+ There are 23 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      0.177        0.000                      0               215901        0.009        0.000                      0               215901        1.458        0.000                       0                 95366  
+
+
+All user specified timing constraints are met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock          Waveform(ns)         Period(ns)      Frequency(MHz)
+-----          ------------         ----------      --------------
+opfb_eval_clk  {0.000 2.000}        4.000           250.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock              WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----              -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+opfb_eval_clk        0.177        0.000                      0               215901        0.009        0.000                      0               215901        1.458        0.000                       0                 95366  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| User Ignored Path Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+
+
+------------------------------------------------------------------------------------------------
+| Unconstrained Path Table
+| ------------------------
+------------------------------------------------------------------------------------------------
+
+Path Group     From Clock     To Clock     
+----------     ----------     --------     
+(none)         opfb_eval_clk                 
+(none)                        opfb_eval_clk  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  opfb_eval_clk
+  To Clock:  opfb_eval_clk
+
+Setup :            0  Failing Endpoints,  Worst Slack        0.177ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.009ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        1.458ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.177ns  (required time - arrival time)
+  Source:                 opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[5].A_reg[6][1]/C
+                            (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Destination:            opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[6].DO_reg[6][30]/D
+                            (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Path Group:             opfb_eval_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            4.000ns  (opfb_eval_clk rise@4.000ns - opfb_eval_clk rise@0.000ns)
+  Data Path Delay:        3.805ns  (logic 0.260ns (6.834%)  route 3.545ns (93.166%))
+  Logic Levels:           3  (LUT6=1 MUXF7=1 MUXF8=1)
+  Clock Path Skew:        -0.008ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.609ns = ( 6.609 - 4.000 ) 
+    Source Clock Delay      (SCD):    3.064ns
+    Clock Pessimism Removal (CPR):    0.447ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+  Clock Net Delay (Source):      2.220ns (routing 0.878ns, distribution 1.342ns)
+  Clock Net Delay (Destination): 2.056ns (routing 0.798ns, distribution 1.258ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock opfb_eval_clk rise edge)
+                                                      0.000     0.000 r  
+    AK17                                              0.000     0.000 r  ap_clk_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_clk_0_IBUF_inst/I
+    AK17                 INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.493     0.493 r  ap_clk_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.493    ap_clk_0_IBUF_inst/OUT
+    AK17                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.493 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.323     0.816    ap_clk_0_IBUF
+    BUFGCE_X0Y15         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.028     0.844 r  ap_clk_0_IBUF_BUFG_inst/O
+    X3Y2 (CLOCK_ROOT)    net (fo=96581, routed)       2.220     3.064    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/CLK
+    SLICE_X50Y202        FDRE                                         r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[5].A_reg[6][1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X50Y202        FDRE (Prop_GFF2_SLICEL_C_Q)
+                                                      0.081     3.145 r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[5].A_reg[6][1]/Q
+                         net (fo=129, routed)         3.485     6.630    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[7].i1/di/l257.hd/l257.hd/l257.hd/f0.i1.lk[6].DO_reg[6][31]_i_2[1]
+    SLICE_X37Y225        LUT6 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.088     6.718 r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[7].i1/di/l257.hd/l257.hd/l257.hd/f0.i1.lk[6].DO[6][30]_i_5/O
+                         net (fo=1, routed)           0.021     6.739    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[3].i1/di/l257.hd/f0.i1.lk[6].DO_reg[6][30]_0
+    SLICE_X37Y225        MUXF7 (Prop_F7MUX_CD_SLICEM_I1_O)
+                                                      0.061     6.800 r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[3].i1/di/l257.hd/f0.i1.lk[6].DO_reg[6][30]_i_2/O
+                         net (fo=1, routed)           0.000     6.800    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[3].i1/di/l257.hd/f0.i1.lk[6].DO_reg[6][30]_i_2_n_17
+    SLICE_X37Y225        MUXF8 (Prop_F8MUX_BOT_SLICEM_I0_O)
+                                                      0.030     6.830 r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[3].i1/di/l257.hd/f0.i1.lk[6].DO_reg[6][30]_i_1/O
+                         net (fo=1, routed)           0.039     6.869    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[3].i1_n_242
+    SLICE_X37Y225        FDRE                                         r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[6].DO_reg[6][30]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock opfb_eval_clk rise edge)
+                                                      4.000     4.000 r  
+    AK17                                              0.000     4.000 r  ap_clk_0 (IN)
+                         net (fo=0)                   0.000     4.000    ap_clk_0_IBUF_inst/I
+    AK17                 INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.243     4.243 r  ap_clk_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     4.243    ap_clk_0_IBUF_inst/OUT
+    AK17                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     4.243 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.286     4.529    ap_clk_0_IBUF
+    BUFGCE_X0Y15         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.024     4.553 r  ap_clk_0_IBUF_BUFG_inst/O
+    X3Y2 (CLOCK_ROOT)    net (fo=96581, routed)       2.056     6.609    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/CLK
+    SLICE_X37Y225        FDRE                                         r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[6].DO_reg[6][30]/C
+                         clock pessimism              0.447     7.056    
+                         clock uncertainty           -0.035     7.021    
+    SLICE_X37Y225        FDRE (Setup_CFF_SLICEM_C_D)
+                                                      0.025     7.046    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[6].DO_reg[6][30]
+  -------------------------------------------------------------------
+                         required time                          7.046    
+                         arrival time                          -6.869    
+  -------------------------------------------------------------------
+                         slack                                  0.177    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.009ns  (arrival time - required time)
+  Source:                 opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.A_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Destination:            opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.lk[0].rs/SP/ADR1
+                            (rising edge-triggered cell RAMS32 clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Path Group:             opfb_eval_clk
+  Path Type:              Hold (Min at Slow Process Corner)
+  Requirement:            0.000ns  (opfb_eval_clk rise@0.000ns - opfb_eval_clk rise@0.000ns)
+  Data Path Delay:        0.233ns  (logic 0.058ns (24.865%)  route 0.175ns (75.135%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.137ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    3.072ns
+    Source Clock Delay      (SCD):    2.490ns
+    Clock Pessimism Removal (CPR):    0.445ns
+  Clock Net Delay (Source):      1.937ns (routing 0.798ns, distribution 1.139ns)
+  Clock Net Delay (Destination): 2.228ns (routing 0.878ns, distribution 1.350ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock opfb_eval_clk rise edge)
+                                                      0.000     0.000 r  
+    AK17                                              0.000     0.000 r  ap_clk_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_clk_0_IBUF_inst/I
+    AK17                 INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.243     0.243 r  ap_clk_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.243    ap_clk_0_IBUF_inst/OUT
+    AK17                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.243 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.286     0.529    ap_clk_0_IBUF
+    BUFGCE_X0Y15         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.024     0.553 r  ap_clk_0_IBUF_BUFG_inst/O
+    X3Y2 (CLOCK_ROOT)    net (fo=96581, routed)       1.937     2.490    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/CLK
+    SLICE_X56Y209        FDRE                                         r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.A_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X56Y209        FDRE (Prop_HFF_SLICEM_C_Q)
+                                                      0.058     2.548 r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.A_reg[1]/Q
+                         net (fo=21, routed)          0.175     2.723    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.lk[0].rs/A1
+    SLICE_X53Y209        RAMS32                                       r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.lk[0].rs/SP/ADR1
+  -------------------------------------------------------------------    -------------------
+
+                         (clock opfb_eval_clk rise edge)
+                                                      0.000     0.000 r  
+    AK17                                              0.000     0.000 r  ap_clk_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_clk_0_IBUF_inst/I
+    AK17                 INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.493     0.493 r  ap_clk_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.493    ap_clk_0_IBUF_inst/OUT
+    AK17                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.493 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.323     0.816    ap_clk_0_IBUF
+    BUFGCE_X0Y15         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.028     0.844 r  ap_clk_0_IBUF_BUFG_inst/O
+    X3Y2 (CLOCK_ROOT)    net (fo=96581, routed)       2.228     3.072    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.lk[0].rs/WCLK
+    SLICE_X53Y209        RAMS32                                       r  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.lk[0].rs/SP/CLK
+                         clock pessimism             -0.445     2.627    
+    SLICE_X53Y209        RAMS32 (Hold_H6LUT_SLICEM_CLK_ADR1)
+                                                      0.088     2.715    opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].bc/f0.i1.lk[1].o1/dr/l257.ld/l33.lk[0].rs/SP
+  -------------------------------------------------------------------
+                         required time                         -2.715    
+                         arrival time                           2.723    
+  -------------------------------------------------------------------
+                         slack                                  0.009    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         opfb_eval_clk
+Waveform(ns):       { 0.000 2.000 }
+Period(ns):         4.000
+Sources:            { ap_clk_0 }
+
+Check Type        Corner  Lib Pin             Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location      Pin
+Min Period        n/a     RAMB36E2/CLKARDCLK  n/a            1.569         4.000       2.431      RAMB36_X5Y28  opfb_eval_i/opfb/fir_to_fft_1/inst/fir_to_fft_stream_stream_axis_0_buffer_1_U/ram_reg_0/CLKARDCLK
+Low Pulse Width   Slow    RAMB18E2/CLKARDCLK  n/a            0.542         2.000       1.458      RAMB18_X2Y92  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[10].ut/i0.DC_reg/CLKARDCLK
+High Pulse Width  Slow    RAMB18E2/CLKARDCLK  n/a            0.542         2.000       1.458      RAMB18_X2Y92  opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[10].ut/i0.DC_reg/CLKARDCLK
+
+
+
+--------------------------------------------------------------------------------------
+Path Group:  (none)
+From Clock:  opfb_eval_clk
+  To Clock:  
+
+Max Delay            23 Endpoints
+Min Delay            23 Endpoints
+--------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 opfb_eval_i/opfb/fft/axis_register_slice_1/inst/axisc_register_slice_0/NO_READY.storage_data1_reg[517]/C
+                            (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Destination:            output_r_0_tuser[4]
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Max at Slow Process Corner
+  Data Path Delay:        4.858ns  (logic 2.482ns (51.086%)  route 2.376ns (48.914%))
+  Logic Levels:           1  (OBUF=1)
+  Clock Uncertainty:      0.025ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+  Clock Net Delay (Source):      2.125ns (routing 0.878ns, distribution 1.247ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock opfb_eval_clk rise edge)
+                                                      0.000     0.000 r  
+    AK17                                              0.000     0.000 r  ap_clk_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_clk_0_IBUF_inst/I
+    AK17                 INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.493     0.493 r  ap_clk_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.493    ap_clk_0_IBUF_inst/OUT
+    AK17                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.493 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.323     0.816    ap_clk_0_IBUF
+    BUFGCE_X0Y15         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.028     0.844 r  ap_clk_0_IBUF_BUFG_inst/O
+    X3Y2 (CLOCK_ROOT)    net (fo=96581, routed)       2.125     2.969    opfb_eval_i/opfb/fft/axis_register_slice_1/inst/axisc_register_slice_0/aclk
+    SLICE_X70Y287        FDRE                                         r  opfb_eval_i/opfb/fft/axis_register_slice_1/inst/axisc_register_slice_0/NO_READY.storage_data1_reg[517]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X70Y287        FDRE (Prop_AFF_SLICEM_C_Q)
+                                                      0.077     3.046 r  opfb_eval_i/opfb/fft/axis_register_slice_1/inst/axisc_register_slice_0/NO_READY.storage_data1_reg[517]/Q
+                         net (fo=1, routed)           2.376     5.422    output_r_0_tuser_OBUF[4]
+    B5                   OBUF (Prop_OUTBUF_HDIOB_M_I_O)
+                                                      2.405     7.827 r  output_r_0_tuser_OBUF[4]_inst/O
+                         net (fo=0)                   0.000     7.827    output_r_0_tuser[4]
+    B5                                                                r  output_r_0_tuser[4] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/s_axi_bvalid_i_reg/C
+                            (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Destination:            S_AXI_bvalid_0
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        1.527ns  (logic 1.177ns (77.038%)  route 0.351ns (22.962%))
+  Logic Levels:           1  (OBUF=1)
+  Clock Uncertainty:      0.025ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+  Clock Net Delay (Source):      1.253ns (routing 0.484ns, distribution 0.769ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock opfb_eval_clk rise edge)
+                                                      0.000     0.000 r  
+    AK17                                              0.000     0.000 r  ap_clk_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_clk_0_IBUF_inst/I
+    AK17                 INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.128     0.128 r  ap_clk_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.128    ap_clk_0_IBUF_inst/OUT
+    AK17                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.128 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.144     0.272    ap_clk_0_IBUF
+    BUFGCE_X0Y15         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.017     0.289 r  ap_clk_0_IBUF_BUFG_inst/O
+    X3Y2 (CLOCK_ROOT)    net (fo=96581, routed)       1.253     1.542    opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/s_axi_aclk
+    SLICE_X94Y180        FDRE                                         r  opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/s_axi_bvalid_i_reg/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X94Y180        FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.041     1.583 r  opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/s_axi_bvalid_i_reg/Q
+                         net (fo=4, routed)           0.351     1.934    S_AXI_bvalid_0_OBUF
+    D6                   OBUF (Prop_OUTBUF_HDIOB_S_I_O)
+                                                      1.136     3.069 r  S_AXI_bvalid_0_OBUF_inst/O
+                         net (fo=0)                   0.000     3.069    S_AXI_bvalid_0
+    D6                                                                r  S_AXI_bvalid_0 (OUT)
+  -------------------------------------------------------------------    -------------------
+
+
+
+
+
+--------------------------------------------------------------------------------------
+Path Group:  (none)
+From Clock:  
+  To Clock:  opfb_eval_clk
+
+Max Delay           351 Endpoints
+Min Delay           351 Endpoints
+--------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 ap_rst_n_0
+                            (input port)
+  Destination:            opfb_eval_i/opfb/fft/pkg_fft_output_1/inst/regslice_forward_output_V_user_V_U/regslice_obuf_inst/odata_reg[10]/R
+                            (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        5.475ns  (logic 0.493ns (9.002%)  route 4.982ns (90.998%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        2.449ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.449ns
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.025ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+  Clock Net Delay (Destination): 1.896ns (routing 0.798ns, distribution 1.098ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    AK16                                              0.000     0.000 f  ap_rst_n_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_rst_n_0_IBUF_inst/I
+    AK16                 INBUF (Prop_INBUF_HPIOB_S_PAD_O)
+                                                      0.493     0.493 f  ap_rst_n_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.493    ap_rst_n_0_IBUF_inst/OUT
+    AK16                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_S_I_O)
+                                                      0.000     0.493 f  ap_rst_n_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=106, routed)         4.982     5.475    opfb_eval_i/opfb/fft/pkg_fft_output_1/inst/regslice_forward_output_V_user_V_U/regslice_obuf_inst/ap_rst_n_inv
+    SLICE_X66Y289        FDRE                                         r  opfb_eval_i/opfb/fft/pkg_fft_output_1/inst/regslice_forward_output_V_user_V_U/regslice_obuf_inst/odata_reg[10]/R  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock opfb_eval_clk rise edge)
+                                                      0.000     0.000 r  
+    AK17                                              0.000     0.000 r  ap_clk_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_clk_0_IBUF_inst/I
+    AK17                 INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.243     0.243 r  ap_clk_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.243    ap_clk_0_IBUF_inst/OUT
+    AK17                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.243 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.286     0.529    ap_clk_0_IBUF
+    BUFGCE_X0Y15         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.024     0.553 r  ap_clk_0_IBUF_BUFG_inst/O
+    X3Y2 (CLOCK_ROOT)    net (fo=96581, routed)       1.896     2.449    opfb_eval_i/opfb/fft/pkg_fft_output_1/inst/regslice_forward_output_V_user_V_U/regslice_obuf_inst/ap_clk
+    SLICE_X66Y289        FDRE                                         r  opfb_eval_i/opfb/fft/pkg_fft_output_1/inst/regslice_forward_output_V_user_V_U/regslice_obuf_inst/odata_reg[10]/C
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 ap_rst_n_0
+                            (input port)
+  Destination:            opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/B_V_data_1_sel_wr_reg/R
+                            (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Path Group:             (none)
+  Path Type:              Hold (Min at Fast Process Corner)
+  Data Path Delay:        0.784ns  (logic 0.128ns (16.348%)  route 0.656ns (83.652%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.874ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.874ns
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+  Clock Net Delay (Destination): 1.361ns (routing 0.537ns, distribution 0.824ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    AK16                                              0.000     0.000 f  ap_rst_n_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_rst_n_0_IBUF_inst/I
+    AK16                 INBUF (Prop_INBUF_HPIOB_S_PAD_O)
+                                                      0.128     0.128 f  ap_rst_n_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.128    ap_rst_n_0_IBUF_inst/OUT
+    AK16                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_S_I_O)
+                                                      0.000     0.128 f  ap_rst_n_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=106, routed)         0.656     0.784    opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/ap_rst_n_inv
+    SLICE_X85Y84         FDRE                                         r  opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/B_V_data_1_sel_wr_reg/R  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock opfb_eval_clk rise edge)
+                                                      0.000     0.000 r  
+    AK17                                              0.000     0.000 r  ap_clk_0 (IN)
+                         net (fo=0)                   0.000     0.000    ap_clk_0_IBUF_inst/I
+    AK17                 INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.313     0.313 r  ap_clk_0_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.313    ap_clk_0_IBUF_inst/OUT
+    AK17                 IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.313 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.181     0.494    ap_clk_0_IBUF
+    BUFGCE_X0Y15         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.019     0.513 r  ap_clk_0_IBUF_BUFG_inst/O
+    X3Y2 (CLOCK_ROOT)    net (fo=96581, routed)       1.361     1.874    opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/ap_clk
+    SLICE_X85Y84         FDRE                                         r  opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/B_V_data_1_sel_wr_reg/C
+
+
+
+
+
