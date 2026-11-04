@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2023.2 (lin64) Build 4029153 Fri Oct 13 20:13:54 MDT 2023
-| Date         : Wed Nov  4 14:39:47 2026
+| Date         : Wed Nov  4 17:56:26 2026
 | Host         : joshua-System-Product-Name running 64-bit Ubuntu 22.04.5 LTS
 | Command      : report_drc -file /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_opfb_routed_drc.rpt
 | Design       : opfb_eval_wrapper
@@ -19,278 +19,27 @@ Table of Contents
 
 1. REPORT SUMMARY
 -----------------
-            Netlist: netlist
-          Floorplan: checkpoint_opfb_eval_synth
+            Netlist: opfb_eval_wrapper
+          Floorplan: design_1
       Design limits: <entire design considered>
            Ruledeck: default
              Max violations: <unlimited>
-             Violations found: 50
-+-----------+------------------+--------------------------------------------+------------+
-| Rule      | Severity         | Description                                | Violations |
-+-----------+------------------+--------------------------------------------+------------+
-| NSTD-1    | Critical Warning | Unspecified I/O Standard                   | 1          |
-| UCIO-1    | Critical Warning | Unconstrained Logical Port                 | 1          |
-| REQP-1729 | Warning          | DSP_Dbus_preadd_bmult_sign_bit_restriction | 48         |
-+-----------+------------------+--------------------------------------------+------------+
+             Violations found: 1
++-----------+----------+-------------------+------------+
+| Rule      | Severity | Description       | Violations |
++-----------+----------+-------------------+------------+
+| RTSTAT-10 | Warning  | No routable loads | 1          |
++-----------+----------+-------------------+------------+
 
 2. REPORT DETAILS
 -----------------
-NSTD-1#1 Critical Warning
-Unspecified I/O Standard  
-43 out of 43 logical ports use I/O standard (IOSTANDARD) value 'DEFAULT', instead of a user assigned specific value. This may cause I/O contention or incompatibility with the board power or connectivity affecting performance, signal integrity or in extreme cases cause damage to the device or the components to which it is connected. To correct this violation, specify all I/O standards. This design will fail to generate a bitstream unless all logical ports have a user specified I/O standard value defined. To allow bitstream creation with unspecified I/O standard values (not recommended), use this command: set_property SEVERITY {Warning} [get_drc_checks NSTD-1].  NOTE: When using the Vivado Runs infrastructure (e.g. launch_runs Tcl command), add this command to a .tcl file and add that file as a pre-hook for write_bitstream step for the implementation run. Problem ports: S_AXI_araddr_0, S_AXI_arready_0, S_AXI_arvalid_0, S_AXI_awaddr_0,
-S_AXI_awready_0, S_AXI_awvalid_0, S_AXI_bready_0, S_AXI_bresp_0,
-S_AXI_bvalid_0, ap_clk_0, ap_rst_n_0, output_r_0_tlast,
-output_r_0_tuser[15:0], output_r_tdata_0, output_r_tvalid_0
- (the first 15 of 28 listed).
-Related violations: <none>
-
-UCIO-1#1 Critical Warning
-Unconstrained Logical Port  
-43 out of 43 logical ports have no user assigned specific location constraint (LOC). This may cause I/O contention or incompatibility with the board power or connectivity affecting performance, signal integrity or in extreme cases cause damage to the device or the components to which it is connected. To correct this violation, specify all pin locations. This design will fail to generate a bitstream unless all logical ports have a user specified site LOC constraint defined.  To allow bitstream creation with unspecified pin locations (not recommended), use this command: set_property SEVERITY {Warning} [get_drc_checks UCIO-1].  NOTE: When using the Vivado Runs infrastructure (e.g. launch_runs Tcl command), add this command to a .tcl file and add that file as a pre-hook for write_bitstream step for the implementation run.  Problem ports: S_AXI_araddr_0, S_AXI_arready_0, S_AXI_arvalid_0, S_AXI_awaddr_0,
-S_AXI_awready_0, S_AXI_awvalid_0, S_AXI_bready_0, S_AXI_bresp_0,
-S_AXI_bvalid_0, ap_clk_0, ap_rst_n_0, output_r_0_tlast,
-output_r_0_tuser[15:0], output_r_tdata_0, output_r_tvalid_0
- (the first 15 of 28 listed).
-Related violations: <none>
-
-REQP-1729#1 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[10].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#2 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[11].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#3 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[12].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#4 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[13].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#5 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[14].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#6 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[15].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#7 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[1].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#8 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[2].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#9 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[3].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#10 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[4].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#11 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[5].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#12 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[6].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#13 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[7].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#14 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[8].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#15 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].cm/lk[9].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#16 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].pf/f0.ln.ll[0].me/lk[1].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#17 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].pf/f0.ln.ll[0].me/lk[2].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#18 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].pf/f0.ln.ll[0].me/lk[3].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#19 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].pf/f0.ln.ll[1].me/lk[1].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#20 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].pf/f0.ln.ll[1].me/lk[2].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#21 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[0].pf/f0.ln.ll[1].me/lk[3].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#22 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[10].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#23 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[11].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#24 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[12].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#25 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[13].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#26 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[14].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#27 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[15].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#28 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[1].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#29 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[2].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#30 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[3].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#31 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[4].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#32 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[5].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#33 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[6].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#34 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[7].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#35 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[8].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#36 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].cm/lk[9].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#37 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].pf/f0.ln.ll[0].me/lk[1].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#38 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].pf/f0.ln.ll[0].me/lk[2].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#39 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].pf/f0.ln.ll[0].me/lk[3].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#40 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].pf/f0.ln.ll[1].me/lk[1].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#41 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].pf/f0.ln.ll[1].me/lk[2].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#42 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/lk[1].pf/f0.ln.ll[1].me/lk[3].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#43 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/pf/f0.ln.ll[0].me/lk[1].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#44 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/pf/f0.ln.ll[0].me/lk[2].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#45 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/pf/f0.ln.ll[0].me/lk[3].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#46 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/pf/f0.ln.ll[1].me/lk[1].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#47 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/pf/f0.ln.ll[1].me/lk[2].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
-Related violations: <none>
-
-REQP-1729#48 Warning
-DSP_Dbus_preadd_bmult_sign_bit_restriction  
-opfb_eval_i/opfb/fft/ssrfft_16x4096_axis_0/inst/ssrfft_16x4096_axis_struct/vector_fft/test_systolicfft_vhdl_black_box/pf/u1/pf/f0.ln.ll[1].me/lk[3].u1/dsp2/i2.i2.ds: When using the PreAdder and BMULTSEL is set to 'AD', the D operand should be restricted to 17 bit two's complement (and sign extended) to avoid over/underflow in the pre-add stage.
+RTSTAT-10#1 Warning
+No routable loads  
+539 net(s) have no routable loads. The problem bus(es) and/or net(s) are opfb_eval_i/opfb/fft/axis_register_slice_1/inst/axisc_register_slice_0/m_axis_tdata[511:0],
+opfb_eval_i/opfb/fft/axis_register_slice_1/inst/axisc_register_slice_0/m_axis_tlast,
+opfb_eval_i/opfb/fft/axis_register_slice_1/inst/axisc_register_slice_0/m_axis_tuser[11:0],
+opfb_eval_i/opfb/fft/axis_register_slice_1/inst/axisc_register_slice_0/m_axis_tvalid
+opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/s_axi_rdata[12:0].
 Related violations: <none>
 
 
