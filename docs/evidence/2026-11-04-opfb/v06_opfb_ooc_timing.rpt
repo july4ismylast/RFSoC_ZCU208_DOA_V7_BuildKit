@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version      : Vivado v.2023.2 (lin64) Build 4029153 Fri Oct 13 20:13:54 MDT 2023
-| Date              : Wed Nov  4 14:27:22 2026
+| Date              : Wed Nov  4 16:25:08 2026
 | Host              : joshua-System-Product-Name running 64-bit Ubuntu 22.04.5 LTS
 | Command           : report_timing_summary -report_unconstrained -file /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_opfb_ooc_timing.rpt
 | Design            : opfb_eval_wrapper
@@ -54,8 +54,8 @@ Table of Contents
 2. checking constant_clock (0)
 3. checking pulse_width_clock (0)
 4. checking unconstrained_internal_endpoints (0)
-5. checking no_input_delay (13)
-6. checking no_output_delay (27)
+5. checking no_input_delay (294)
+6. checking no_output_delay (569)
 7. checking multiple_clock (0)
 8. checking generated_clocks (0)
 9. checking loops (0)
@@ -85,16 +85,16 @@ Table of Contents
  There are 0 pins that are not constrained for maximum delay due to constant clock.
 
 
-5. checking no_input_delay (13)
--------------------------------
- There are 13 input ports with no input delay specified. (HIGH)
+5. checking no_input_delay (294)
+--------------------------------
+ There are 294 input ports with no input delay specified. (HIGH)
 
  There are 0 input ports with no input delay but user has a false path constraint.
 
 
-6. checking no_output_delay (27)
---------------------------------
- There are 27 ports with no output delay specified. (HIGH)
+6. checking no_output_delay (569)
+---------------------------------
+ There are 569 ports with no output delay specified. (HIGH)
 
  There are 0 ports with no output delay but user has a false path constraint
 
@@ -370,8 +370,8 @@ Path Group:  (none)
 From Clock:  opfb_eval_clk
   To Clock:  
 
-Max Delay            27 Endpoints
-Min Delay            27 Endpoints
+Max Delay           569 Endpoints
+Min Delay           569 Endpoints
 --------------------------------------------------------------------------------------
 
 
@@ -380,7 +380,7 @@ Max Delay Paths
 Slack:                    inf
   Source:                 opfb_eval_i/opfb/fft/fftscale/U0/ip2bus_wrack_i_D1_reg/C
                             (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
-  Destination:            S_AXI_awready_0
+  Destination:            S_AXI_0_awready
                             (output port)
   Path Group:             (none)
   Path Type:              Max at Slow Process Corner
@@ -408,10 +408,10 @@ Slack:                    inf
                          FDRE (Prop_FDRE_C_Q)         0.077     1.428 r  opfb_eval_i/opfb/fft/fftscale/U0/ip2bus_wrack_i_D1_reg/Q
                          net (fo=1, unplaced)         0.154     1.582    opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/ip2bus_wrack_i_D1
                          LUT6 (Prop_LUT6_I0_O)        0.150     1.732 r  opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/s_axi_wready_INST_0/O
-                         net (fo=8, unplaced)         0.637     2.369    S_AXI_awready_0_OBUF
-                         OBUF (Prop_OBUF_I_O)         0.964     3.333 r  S_AXI_awready_0_OBUF_inst/O
-                         net (fo=0)                   0.000     3.333    S_AXI_awready_0
-                                                                      r  S_AXI_awready_0 (OUT)
+                         net (fo=8, unplaced)         0.637     2.369    S_AXI_0_awready_OBUF
+                         OBUF (Prop_OBUF_I_O)         0.964     3.333 r  S_AXI_0_awready_OBUF_inst/O
+                         net (fo=0)                   0.000     3.333    S_AXI_0_awready
+                                                                      r  S_AXI_0_awready (OUT)
   -------------------------------------------------------------------    -------------------
 
 
@@ -423,7 +423,7 @@ Min Delay Paths
 Slack:                    inf
   Source:                 opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/s_axi_rdata_i_reg[0]/C
                             (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
-  Destination:            S_AXI_rdata_0
+  Destination:            S_AXI_0_rdata[0]
                             (output port)
   Path Group:             (none)
   Path Type:              Min at Fast Process Corner
@@ -449,10 +449,10 @@ Slack:                    inf
                          FDRE                                         r  opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/s_axi_rdata_i_reg[0]/C
   -------------------------------------------------------------------    -------------------
                          FDRE (Prop_FDRE_C_Q)         0.038     0.623 r  opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/s_axi_rdata_i_reg[0]/Q
-                         net (fo=1, unplaced)         0.292     0.915    S_AXI_rdata_0_OBUF
-                         OBUF (Prop_OBUF_I_O)         0.455     1.371 r  S_AXI_rdata_0_OBUF_inst/O
-                         net (fo=0)                   0.000     1.371    S_AXI_rdata_0
-                                                                      r  S_AXI_rdata_0 (OUT)
+                         net (fo=1, unplaced)         0.292     0.915    S_AXI_0_rdata_OBUF[0]
+                         OBUF (Prop_OBUF_I_O)         0.455     1.371 r  S_AXI_0_rdata_OBUF[0]_inst/O
+                         net (fo=0)                   0.000     1.371    S_AXI_0_rdata[0]
+                                                                      r  S_AXI_0_rdata[0] (OUT)
   -------------------------------------------------------------------    -------------------
 
 
@@ -526,14 +526,14 @@ Slack:                    inf
 Min Delay Paths
 --------------------------------------------------------------------------------------
 Slack:                    inf
-  Source:                 istream_V_tvalid_0
+  Source:                 S_AXI_0_wdata[31]
                             (input port)
-  Destination:            opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/B_V_data_1_sel_wr_reg/D
-                            (rising edge-triggered cell FDRE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Destination:            opfb_eval_i/opfb/fft/fftscale/U0/gpio_core_1/Not_Dual.gpio_Data_Out_reg[0]/D
+                            (rising edge-triggered cell FDSE clocked by opfb_eval_clk  {rise@0.000ns fall@2.000ns period=4.000ns})
   Path Group:             (none)
   Path Type:              Hold (Min at Fast Process Corner)
-  Data Path Delay:        0.468ns  (logic 0.244ns (52.167%)  route 0.224ns (47.833%))
-  Logic Levels:           3  (IBUFCTRL=1 INBUF=1 LUT3=1)
+  Data Path Delay:        0.458ns  (logic 0.235ns (51.342%)  route 0.223ns (48.658%))
+  Logic Levels:           3  (IBUFCTRL=1 INBUF=1 LUT4=1)
   Clock Path Skew:        0.886ns (DCD - SCD - CPR)
     Destination Clock Delay (DCD):    0.886ns
     Source Clock Delay      (SCD):    0.000ns
@@ -541,16 +541,16 @@ Slack:                    inf
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
-                                                      0.000     0.000 r  istream_V_tvalid_0 (IN)
-                         net (fo=0)                   0.000     0.000    istream_V_tvalid_0_IBUF_inst/I
-                         INBUF (Prop_INBUF_PAD_O)     0.221     0.221 r  istream_V_tvalid_0_IBUF_inst/INBUF_INST/O
-                         net (fo=1, unplaced)         0.000     0.221    istream_V_tvalid_0_IBUF_inst/OUT
+                                                      0.000     0.000 r  S_AXI_0_wdata[31] (IN)
+                         net (fo=0)                   0.000     0.000    S_AXI_0_wdata_IBUF[31]_inst/I
+                         INBUF (Prop_INBUF_PAD_O)     0.221     0.221 r  S_AXI_0_wdata_IBUF[31]_inst/INBUF_INST/O
+                         net (fo=1, unplaced)         0.000     0.221    S_AXI_0_wdata_IBUF[31]_inst/OUT
                          IBUFCTRL (Prop_IBUFCTRL_I_O)
-                                                      0.000     0.221 r  istream_V_tvalid_0_IBUF_inst/IBUFCTRL_INST/O
-                         net (fo=3, unplaced)         0.208     0.429    opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/istream_TVALID
-                         LUT3 (Prop_LUT3_I1_O)        0.023     0.452 r  opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/B_V_data_1_sel_wr_i_1/O
-                         net (fo=1, unplaced)         0.016     0.468    opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/B_V_data_1_sel_wr_i_1_n_0
-                         FDRE                                         r  opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/B_V_data_1_sel_wr_reg/D
+                                                      0.000     0.221 r  S_AXI_0_wdata_IBUF[31]_inst/IBUFCTRL_INST/O
+                         net (fo=1, unplaced)         0.207     0.428    opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/s_axi_wdata[23]
+                         LUT4 (Prop_LUT4_I3_O)        0.014     0.442 r  opfb_eval_i/opfb/fft/fftscale/U0/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/Not_Dual.gpio_Data_Out[0]_i_2/O
+                         net (fo=1, unplaced)         0.016     0.458    opfb_eval_i/opfb/fft/fftscale/U0/gpio_core_1/D[11]
+                         FDSE                                         r  opfb_eval_i/opfb/fft/fftscale/U0/gpio_core_1/Not_Dual.gpio_Data_Out_reg[0]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock opfb_eval_clk rise edge)
@@ -561,8 +561,8 @@ Slack:                    inf
                          net (fo=1, unplaced)         0.000     0.407    ap_clk_0_IBUF_inst/OUT
                          IBUFCTRL (Prop_IBUFCTRL_I_O)
                                                       0.000     0.407 r  ap_clk_0_IBUF_inst/IBUFCTRL_INST/O
-                         net (fo=109648, unplaced)    0.479     0.886    opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/ap_clk
-                         FDRE                                         r  opfb_eval_i/opfb/adc_to_opfb_0/inst/adc2iq_U0/regslice_both_istream_U/B_V_data_1_sel_wr_reg/C
+                         net (fo=109648, unplaced)    0.479     0.886    opfb_eval_i/opfb/fft/fftscale/U0/gpio_core_1/s_axi_aclk
+                         FDSE                                         r  opfb_eval_i/opfb/fft/fftscale/U0/gpio_core_1/Not_Dual.gpio_Data_Out_reg[0]/C
 
 
 

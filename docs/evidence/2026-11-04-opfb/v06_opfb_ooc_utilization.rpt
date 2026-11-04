@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2023.2 (lin64) Build 4029153 Fri Oct 13 20:13:54 MDT 2023
-| Date         : Wed Nov  4 14:27:01 2026
+| Date         : Wed Nov  4 16:24:48 2026
 | Host         : joshua-System-Product-Name running 64-bit Ubuntu 22.04.5 LTS
 | Command      : report_utilization -file /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_opfb_ooc_utilization.rpt
 | Design       : opfb_eval_wrapper
@@ -98,13 +98,13 @@ Warning! LUT value is adjusted to account for LUT combining.
 4. I/O
 ------
 
-+------------+------+-------+------------+-----------+-------+
-|  Site Type | Used | Fixed | Prohibited | Available | Util% |
-+------------+------+-------+------------+-----------+-------+
-| Bonded IOB |   44 |     0 |          0 |       347 | 12.68 |
-| RF_ADC     |    0 |     0 |          4 |         4 |  0.00 |
-| RF_DAC     |    0 |     0 |          4 |         4 |  0.00 |
-+------------+------+-------+------------+-----------+-------+
++------------+------+-------+------------+-----------+--------+
+|  Site Type | Used | Fixed | Prohibited | Available |  Util% |
++------------+------+-------+------------+-----------+--------+
+| Bonded IOB |  892 |     0 |          0 |       347 | 257.06 |
+| RF_ADC     |    0 |     0 |          4 |         4 |   0.00 |
+| RF_DAC     |    0 |     0 |          4 |         4 |   0.00 |
++------------+------+-------+------------+-----------+--------+
 
 
 5. CLOCK
@@ -182,13 +182,13 @@ Warning! LUT value is adjusted to account for LUT combining.
 | LUT2     |  2215 |                 CLB |
 | CARRY8   |  1898 |                 CLB |
 | LUT4     |  1608 |                 CLB |
+| OBUF     |   573 |                 I/O |
 | RAMD32   |   518 |                 CLB |
+| INBUF    |   319 |                 I/O |
+| IBUFCTRL |   319 |              Others |
 | DSP48E2  |   272 |          Arithmetic |
 | RAMB18E2 |    81 |            BLOCKRAM |
 | FDSE     |    70 |            Register |
-| OBUF     |    29 |                 I/O |
-| INBUF    |    15 |                 I/O |
-| IBUFCTRL |    15 |              Others |
 | RAMB36E2 |    14 |            BLOCKRAM |
 +----------+-------+---------------------+
 
