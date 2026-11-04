@@ -200,3 +200,8 @@ repair-mts-module-refs:
 opfb-resource-check:
 	@mkdir -p "$(LOG_DIR)"
 	@set -o pipefail; $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/v06_opfb_ooc.tcl 2>&1 | tee "$(LOG_DIR)/v06_opfb_ooc.log"
+
+.PHONY: opfb-route-check
+opfb-route-check:
+	@mkdir -p "$(LOG_DIR)"
+	@set -o pipefail; $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/v06_opfb_route.tcl 2>&1 | tee "$(LOG_DIR)/v06_opfb_route.log"
