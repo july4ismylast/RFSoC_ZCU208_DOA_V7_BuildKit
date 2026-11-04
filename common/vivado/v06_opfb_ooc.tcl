@@ -20,10 +20,21 @@ for {set lane 0} {$lane < 16} {incr lane} {
     if {[string first $old $definitions] < 0} { error "Missing coefficient reference for lane $lane" }
     set definitions [string map [list $old $coe] $definitions]
 }
-set eval_dir [file join $build opfb_ooc]
-if {[file exists [file join $eval_dir opfb_eval.xpr]]} {
-    error "Evaluation project already exists at $eval_dir. Preserve its reports and choose another BUILD directory to rerun."
+# The 2023.2 HLS exports name the ADC interfaces istream/qstream;
+# the old board Tcl expects istream_V/qstream_V. These two names are
+# confirmed by the uploaded step05 catalog log, not substring discovery.
+foreach {old new} {
+    adc_to_opfb_0/istream_V adc_to_opfb_0/istream
+    adc_to_opfb_0/qstream_V adc_to_opfb_0/qstream
+} {
+    if {[string first "\[get_bd_intf_pins $old\]" $definitions] < 0} {
+        error "Expected legacy ADC interface reference missing: $old"
+    }
+    set definitions [string map [list "\[get_bd_intf_pins $old\]" "\[get_bd_intf_pins $new\]"] $definitions]
 }
+# Keep every evaluation attempt rather than deleting or overwriting a failed
+# project. No change to BUILD, the packaged IP repository, or the MTS copy.
+set eval_dir [file join $build opfb_ooc run_[clock microseconds]]
 create_project opfb_eval $eval_dir -part [require_env PART]
 set_property target_language Verilog [current_project]
 doa_append_ip_repo_paths [list [file normalize [require_env IP_REPO]]]
