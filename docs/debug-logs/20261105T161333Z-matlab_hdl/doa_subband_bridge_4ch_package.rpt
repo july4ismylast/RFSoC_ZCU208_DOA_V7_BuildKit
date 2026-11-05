@@ -1,0 +1,7 @@
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+ERROR=child process exited abnormally
+ERROR_INFO=-code 1 -level 0 -errorcode {CHILDSTATUS 610265 1} -errorinfo {child process exited abnormally
+    while executing
+"exec xvlog -sv -work work $tb_file >@stdout 2>@1"} -errorline 19
+DOA SUBBAND BRIDGE PACKAGE RESULT=FAIL

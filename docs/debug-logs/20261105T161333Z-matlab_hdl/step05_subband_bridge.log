@@ -1,0 +1,520 @@
+stage=step05_subband_bridge
+started_utc=2026-11-05T16:13:29Z
+command=make --no-print-directory -C ip/custom/doa_subband_bridge_4ch all 
+python3 verify_golden_model.py
+PASS doa_subband_bridge_4ch golden verification
+vivado -mode batch -nojournal -nolog -source package_ip.tcl
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source package_ip.tcl
+# set script_dir [file dirname [file normalize [info script]]]
+# set root_dir   [file normalize [file join $script_dir .. .. ..]]
+# source [file join $root_dir common vivado common.tcl]
+## set ::doa_common_dir [file dirname [file normalize [info script]]]
+## set ::doa_root_dir [file normalize [file join $::doa_common_dir .. ..]]
+## source [file join $::doa_root_dir config ip_versions.tcl]
+### namespace eval ::doa_versions {}
+### proc ::doa_versions::env_or {name default_value} {
+###     if {[info exists ::env($name)] && [string trim $::env($name)] ne ""} {
+###         return [string trim $::env($name)]
+###     }
+###     return $default_value
+### }
+### set ::VIVADO_LOCK_CERTIFIED "2023.2"
+### set ::VIVADO_LOCK_VERSION [::doa_versions::env_or EXPECTED_VIVADO_VERSION $::VIVADO_LOCK_CERTIFIED]
+### set ::PART_PINNED         [::doa_versions::env_or PART "xczu48dr-fsvg1517-2-e"]
+### set ::BOARD_PART_PINNED   [::doa_versions::env_or BOARD_PART "xilinx.com:zcu208:part0:2.0"]
+### set ::BASE_KIND_PINNED    [::doa_versions::env_or BASE_KIND "mts"]
+### set ::CUSTOM_IP_VENDOR  [::doa_versions::env_or CUSTOM_IP_VENDOR  "openai"]
+### set ::CUSTOM_IP_LIBRARY [::doa_versions::env_or CUSTOM_IP_LIBRARY "doa"]
+### set ::IPVER_COVARIANCE  [::doa_versions::env_or IPVER_COVARIANCE  "7.1"]
+### set ::IPVER_SPECTRUM    [::doa_versions::env_or IPVER_SPECTRUM    "2.0"]
+### set ::IPVER_CANDIDATE   [::doa_versions::env_or IPVER_CANDIDATE   "1.0"]
+### set ::IPVER_BEAM        [::doa_versions::env_or IPVER_BEAM        "2.1"]
+### set ::IPVER_RFDC_REPACK4   [::doa_versions::env_or IPVER_RFDC_REPACK4   "1.0"]
+### set ::IPVER_CHANNELIZER    [::doa_versions::env_or IPVER_CHANNELIZER    "7.0"]
+### set ::IPVER_SUBBAND_BRIDGE [::doa_versions::env_or IPVER_SUBBAND_BRIDGE "1.0"]
+### set ::IPVLNV(rfdc)                 "xilinx.com:ip:usp_rf_data_converter:2.6"
+### set ::IPVLNV(ps)                   "xilinx.com:ip:zynq_ultra_ps_e:3.5"
+### set ::IPVLNV(axis_data_fifo)       "xilinx.com:ip:axis_data_fifo:2.0"
+### set ::IPVLNV(axi_data_fifo)        "xilinx.com:ip:axi_data_fifo:2.1"
+### set ::IPVLNV(axi_fifo_mm_s)        "xilinx.com:ip:axi_fifo_mm_s:4.3"
+### set ::IPVLNV(axi_bram_ctrl)        "xilinx.com:ip:axi_bram_ctrl:4.1"
+### set ::IPVLNV(blk_mem_gen)          "xilinx.com:ip:blk_mem_gen:8.4"
+### set ::IPVLNV(axi_dma)              "xilinx.com:ip:axi_dma:7.1"
+### set ::IPVLNV(axi_datamover)        "xilinx.com:ip:axi_datamover:5.1"
+### set ::IPVLNV(axi_interconnect)     "xilinx.com:ip:axi_interconnect:2.1"
+### set ::IPVLNV(smartconnect)         "xilinx.com:ip:smartconnect:1.0"
+### set ::IPVLNV(axi_clock_converter)  "xilinx.com:ip:axi_clock_converter:2.1"
+### set ::IPVLNV(axi_dwidth_converter) "xilinx.com:ip:axi_dwidth_converter:2.1"
+### set ::IPVLNV(axi_register_slice)   "xilinx.com:ip:axi_register_slice:2.1"
+### set ::IPVLNV(axi_gpio)             "xilinx.com:ip:axi_gpio:2.0"
+### set ::IPVLNV(axi_intc)             "xilinx.com:ip:axi_intc:4.1"
+### set ::IPVLNV(proc_sys_reset)       "xilinx.com:ip:proc_sys_reset:5.0"
+### set ::IPVLNV(clk_wiz)              "xilinx.com:ip:clk_wiz:6.0"
+### set ::IPVLNV(ddr4)                 "xilinx.com:ip:ddr4:2.2"
+### set ::IPVLNV(axis_clock_converter)   "xilinx.com:ip:axis_clock_converter:1.1"
+### set ::IPVLNV(axis_dwidth_converter)  "xilinx.com:ip:axis_dwidth_converter:1.1"
+### set ::IPVLNV(axis_register_slice)    "xilinx.com:ip:axis_register_slice:1.1"
+### set ::IPVLNV(axis_broadcaster)       "xilinx.com:ip:axis_broadcaster:1.1"
+### set ::IPVLNV(axis_combiner)          "xilinx.com:ip:axis_combiner:1.1"
+### set ::IPVLNV(axis_switch)            "xilinx.com:ip:axis_switch:1.1"
+### set ::IPVLNV(fir_compiler)           "xilinx.com:ip:fir_compiler:7.2"
+### set ::IPVLNV(util_ds_buf)            "xilinx.com:ip:util_ds_buf:2.2"
+### set ::IPVLNV(xpm_cdc_gen)            "xilinx.com:ip:xpm_cdc_gen:1.0"
+### set ::IPVLNV(xlconcat)               "xilinx.com:ip:xlconcat:2.1"
+### set ::IPVLNV(xlconstant)             "xilinx.com:ip:xlconstant:1.1"
+### set ::IPVLNV(xlslice)                "xilinx.com:ip:xlslice:1.0"
+### set ::IPVLNV(util_reduced_logic)     "xilinx.com:ip:util_reduced_logic:2.0"
+### set ::IPVLNV(util_vector_logic)      "xilinx.com:ip:util_vector_logic:2.0"
+### set ::IPVLNV(ila)                    "xilinx.com:ip:ila:6.2"
+### set ::IPVLNV(vio)                    "xilinx.com:ip:vio:3.0"
+### set ::IPVLNV(covariance) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_covariance_4ch_v4:$::IPVER_COVARIANCE"
+### set ::IPVLNV(spectrum)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:spectrum_power4:$::IPVER_SPECTRUM"
+### set ::IPVLNV(candidate)  "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:candidate_peak4:$::IPVER_CANDIDATE"
+### set ::IPVLNV(beam)       "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:beam_weight_4ch:$::IPVER_BEAM"
+### set ::IPVLNV(rfdc_repack4)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:rfdc_repack4:$::IPVER_RFDC_REPACK4"
+### set ::IPVLNV(channelizer)    "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:matlab_channelizer:$::IPVER_CHANNELIZER"
+### set ::IPVLNV(subband_bridge) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_subband_bridge_4ch:$::IPVER_SUBBAND_BRIDGE"
+### set ::IP_CATALOG_KEYS {
+###     rfdc ps axis_data_fifo axi_data_fifo axi_fifo_mm_s axi_bram_ctrl
+###     blk_mem_gen axi_dma axi_datamover axi_interconnect smartconnect
+###     axi_clock_converter axi_dwidth_converter axi_register_slice axi_gpio
+###     axi_intc proc_sys_reset clk_wiz ddr4 axis_clock_converter
+###     axis_dwidth_converter axis_register_slice axis_broadcaster axis_combiner
+###     axis_switch fir_compiler util_ds_buf xpm_cdc_gen xlconcat xlconstant
+###     xlslice util_reduced_logic util_vector_logic ila vio
+### }
+### set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam rfdc_repack4 channelizer subband_bridge}
+### proc doa_require_vivado_lock {} {
+###     if {$::VIVADO_LOCK_VERSION ne $::VIVADO_LOCK_CERTIFIED} {
+###         error "Vivado lock: config/ip_versions.tcl is certified only for \
+### $::VIVADO_LOCK_CERTIFIED, but EXPECTED_VIVADO_VERSION=$::VIVADO_LOCK_VERSION. \
+### Re-verify every VLNV in this file for that release before changing the lock."
+###     }
+###     set running [version -short]
+###     if {[string first $::VIVADO_LOCK_VERSION $running] == -1} {
+###         error "Vivado lock: need Vivado $::VIVADO_LOCK_VERSION, running $running. \
+### Do not let another Vivado release open/upgrade this project.  If an upgrade \
+### is intended, follow the BD-Tcl guard procedure: run the design in \
+### $::VIVADO_LOCK_VERSION, open it in the new release, use Report IP Status to \
+### upgrade, then write_bd_tcl and re-certify config/ip_versions.tcl."
+###     }
+###     puts "DOA version lock OK: Vivado $running, part $::PART_PINNED, board $::BOARD_PART_PINNED"
+### }
+### proc doa_vlnv {key} {
+###     if {![info exists ::IPVLNV($key)]} {
+###         error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+###     }
+###     return $::IPVLNV($key)
+### }
+### proc doa_pinned_ip {key} {
+###     if {![info exists ::IPVLNV($key)]} {
+###         error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+###     }
+###     set vlnv $::IPVLNV($key)
+###     set defs [get_ipdefs -all -filter "VLNV == $vlnv"]
+###     if {[llength $defs] != 1} {
+###         set ip_name [lindex [split $vlnv :] 2]
+###         set available [get_ipdefs -all -filter "NAME == $ip_name"]
+###         error "Pinned IP for key '$key' not found exactly once: $vlnv \
+### (found [llength $defs]).  Available definitions for NAME=$ip_name: $available. \
+### Fix config/ip_versions.tcl (one line) or rebuild the custom IP -- do not \
+### fall back to a wildcard."
+###     }
+###     return $vlnv
+### }
+### proc doa_create_pinned_ip {key instance} {
+###     return [create_bd_cell -type ip -vlnv [doa_pinned_ip $key] $instance]
+### }
+## proc require_env {name} {
+##     if {![info exists ::env($name)] || [string trim $::env($name)] eq ""} {
+##         error "Required environment variable $name is empty"
+##     }
+##     return $::env($name)
+## }
+## proc doa_append_ip_repo_paths {new_paths} {
+##     set merged {}
+##     foreach path [concat $new_paths [get_property ip_repo_paths [current_project]]] {
+##         set norm [file normalize $path]
+##         if {[lsearch -exact $merged $norm] < 0} { lappend merged $norm }
+##     }
+##     set_property ip_repo_paths $merged [current_project]
+##     update_ip_catalog
+##     return $merged
+## }
+## proc open_work_project {} {
+##     doa_require_vivado_lock
+##     set project [file normalize [require_env WORK_XPR]]
+##     if {![file exists $project]} {
+##         error "Working project not found: $project. Run step07_vivado_project first."
+##     }
+##     open_project $project
+##     set expected_part [require_env PART]
+##     if {[get_property PART [current_project]] ne $expected_part} {
+##         error "Project part [get_property PART [current_project]] does not match $expected_part"
+##     }
+##     set board [get_property BOARD_PART [current_project]]
+##     if {$board ne "" && $board ne $::BOARD_PART_PINNED} {
+##         error "Project board part '$board' does not match pinned '$::BOARD_PART_PINNED' (config/ip_versions.tcl)"
+##     }
+## }
+## proc select_base_bd {} {
+##     set requested ""
+##     if {[info exists ::env(BASE_BD)]} { set requested [string trim $::env(BASE_BD)] }
+##     if {$requested ne ""} {
+##         set candidates [get_files -quiet -all */${requested}.bd]
+##     } else {
+##         set candidates [get_files -quiet -all *.bd]
+##     }
+##     if {[llength $candidates] != 1} {
+##         error "Expected exactly one base BD (or set BASE_BD); found: $candidates"
+##     }
+##     open_bd_design [lindex $candidates 0]
+##     return [current_bd_design]
+## }
+## proc ensure_output_directory {} {
+##     set build [file normalize [require_env BUILD]]
+##     set output [file join $build output]
+##     file mkdir $output
+##     return $output
+## }
+## proc require_successful_run {run_name} {
+##     set run [get_runs -quiet $run_name]
+##     if {[llength $run] != 1} { error "Vivado run $run_name does not exist" }
+##     set status [get_property STATUS $run]
+##     if {![string match "*Complete*" $status]} {
+##         error "Vivado run $run_name is not complete: $status"
+##     }
+## }
+# set build_root [expr {[info exists ::env(BUILD)] ? [file normalize $::env(BUILD)] : [file join $root_dir build]}]
+# set ip_repo    [expr {[info exists ::env(IP_REPO)] ? [file normalize $::env(IP_REPO)] : [file join $build_root ip_repo]}]
+# set ip_root    [file join $ip_repo doa_subband_bridge_4ch]
+# set work_root  [file join $build_root subband_bridge_work]
+# set report_file [file join $build_root output doa_subband_bridge_4ch_package.rpt]
+# set rtl_file [file join $script_dir rtl doa_subband_bridge_4ch.v]
+# set xdc_file [file join $script_dir rtl ooc_constraints.xdc]
+# set tb_file  [file join $script_dir tb tb_doa_subband_bridge_4ch.sv]
+# file mkdir [file dirname $report_file]
+# file delete -force $work_root
+# file mkdir $work_root
+# set report_fh [open $report_file w]
+# proc sb_log {fh msg} {
+#     puts $msg
+#     puts $fh $msg
+#     flush $fh
+# }
+# proc sb_read {path} {
+#     set fh [open $path r]
+#     set txt [read $fh]
+#     close $fh
+#     return $txt
+# }
+# set status FAIL
+# set err_msg ""
+# set err_info ""
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/rtl/doa_subband_bridge_4ch.v" into library work
+INFO: [VRFC 10-311] analyzing module doa_subband_bridge_4ch
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/tb/tb_doa_subband_bridge_4ch.sv" into library work
+INFO: [VRFC 10-311] analyzing module tb_doa_subband_bridge_4ch
+ERROR: [VRFC 10-9037] illegal declaration without an explicit type name; assuming type 'logic' [/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/tb/tb_doa_subband_bridge_4ch.sv:258]
+ERROR: [VRFC 10-8530] module 'tb_doa_subband_bridge_4ch' is ignored due to previous errors [/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/tb/tb_doa_subband_bridge_4ch.sv:3]
+# set catch_rc [catch {
+#     sb_log $report_fh "VIVADO_VERSION=[version -short]"
+#     sb_log $report_fh "PART=$::PART_PINNED"
+# 
+#     foreach req [list $rtl_file $xdc_file $tb_file] {
+#         if {![file isfile $req]} {
+#             error "Missing required source file: $req"
+#         }
+#     }
+# 
+#     # -------------------------------------------------------------------------
+#     # 1. XSim RTL self-checking verification
+#     # -------------------------------------------------------------------------
+#     set sim_dir [file join $work_root xsim]
+#     file mkdir $sim_dir
+#     set saved_pwd [pwd]
+#     cd $sim_dir
+#     exec xvlog -work work $rtl_file >@stdout 2>@1
+#     exec xvlog -sv -work work $tb_file >@stdout 2>@1
+#     exec xelab -debug typical -timescale 1ns/1ps \
+#         -s tb_doa_subband_bridge_4ch_snap work.tb_doa_subband_bridge_4ch >@stdout 2>@1
+#     set sim_log [file join $sim_dir xsim.log]
+#     exec xsim tb_doa_subband_bridge_4ch_snap -runall -log $sim_log >@stdout 2>@1
+#     cd $saved_pwd
+# 
+#     if {![file isfile $sim_log]} {
+#         error "XSim log was not created: $sim_log"
+#     }
+#     set sim_txt [sb_read $sim_log]
+#     if {[string first "ALL TESTS PASSED: tb_doa_subband_bridge_4ch" $sim_txt] < 0} {
+#         error "XSim did not report ALL TESTS PASSED; inspect $sim_log"
+#     }
+#     sb_log $report_fh "XSIM_RESULT=PASS"
+# 
+#     # -------------------------------------------------------------------------
+#     # 2. 250 MHz (4.000 ns) out-of-context synthesis timing gate
+#     # -------------------------------------------------------------------------
+#     set ooc_dir [file join $work_root ooc_synth]
+#     file mkdir $ooc_dir
+#     create_project -in_memory -part $::PART_PINNED
+#     read_verilog $rtl_file
+#     read_xdc -mode out_of_context $xdc_file
+#     synth_design -top doa_subband_bridge_4ch -part $::PART_PINNED \
+#         -mode out_of_context -flatten_hierarchy rebuilt
+#     report_utilization -file [file join $ooc_dir utilization.rpt]
+#     report_timing_summary -delay_type min_max -max_paths 10 \
+#         -file [file join $ooc_dir timing_summary.rpt]
+#     set max_paths [get_timing_paths -max_paths 1 -setup]
+#     if {[llength $max_paths] == 0} {
+#         error "No setup timing paths found in 250 MHz OOC synthesis of doa_subband_bridge_4ch"
+#     }
+#     set ooc_wns [get_property SLACK [lindex $max_paths 0]]
+#     sb_log $report_fh "OOC_CLOCK_PERIOD_NS=4.000"
+#     sb_log $report_fh "OOC_WNS_NS=$ooc_wns"
+#     if {$ooc_wns eq "" || $ooc_wns < 0.0} {
+#         error "doa_subband_bridge_4ch failed 250 MHz OOC timing gate: WNS=$ooc_wns ns"
+#     }
+#     close_design
+#     close_project
+# 
+#     # -------------------------------------------------------------------------
+#     # 3. Package as openai:doa:doa_subband_bridge_4ch:1.0
+#     # -------------------------------------------------------------------------
+#     file delete -force $ip_root
+#     file mkdir $ip_root
+#     set pkg_proj_dir [file join $work_root pkg_proj]
+#     create_project -force doa_subband_bridge_4ch_pkg $pkg_proj_dir -part $::PART_PINNED
+#     add_files -norecurse $rtl_file
+#     set_property top doa_subband_bridge_4ch [current_fileset]
+#     update_compile_order -fileset sources_1
+# 
+#     set ip_vendor "openai"
+#     if {[info exists ::env(CUSTOM_IP_VENDOR)] && [string trim $::env(CUSTOM_IP_VENDOR)] ne ""} {
+#         set ip_vendor [string trim $::env(CUSTOM_IP_VENDOR)]
+#     }
+#     set ip_library "doa"
+#     if {[info exists ::env(CUSTOM_IP_LIBRARY)] && [string trim $::env(CUSTOM_IP_LIBRARY)] ne ""} {
+#         set ip_library [string trim $::env(CUSTOM_IP_LIBRARY)]
+#     }
+#     # Keep version strictly as a Tcl string literal (never numeric expr).
+#     set ip_version "1.0"
+#     if {[info exists ::env(IPVER_SUBBAND_BRIDGE)] && [string trim $::env(IPVER_SUBBAND_BRIDGE)] ne ""} {
+#         set ip_version [string trim $::env(IPVER_SUBBAND_BRIDGE)]
+#     }
+#     if {![regexp {^[0-9]+\.[0-9]+$} $ip_version]} {
+#         error "IPVER_SUBBAND_BRIDGE must be major.minor, got '$ip_version'"
+#     }
+# 
+#     ipx::package_project -root_dir $ip_root -vendor $ip_vendor -library $ip_library \
+#         -taxonomy /UserIP -import_files -set_current true
+#     set core [ipx::current_core]
+#     set_property name doa_subband_bridge_4ch $core
+#     set_property display_name "DOA Four-Channel Subband Stream Bridge" $core
+#     set_property description "250 MHz 4x SSR-8 channelizer to 512-bit /doa_v7 search/capture/beam bridge with closed-loop candidate bin tracking" $core
+#     set_property version $ip_version $core
+#     set_property supported_families {zynquplusrfsoc Production zynquplus Production} $core
+#     sb_log $report_fh "SUPPORTED_FAMILIES=[get_property supported_families $core]"
+# 
+#     set expected_busifs {
+#         s_axis_ch0 s_axis_ch1 s_axis_ch2 s_axis_ch3
+#         s_axis_candidate
+#         m_axis_search m_axis_capture m_axis_beam
+#         m_axis_mon_ch0 m_axis_mon_ch1 m_axis_mon_ch2 m_axis_mon_ch3
+#         s_axi_ctrl
+#     }
+#     foreach bif_name $expected_busifs {
+#         set bif [ipx::get_bus_interfaces $bif_name -of_objects $core]
+#         if {[llength $bif] == 0} {
+#             error "IP Packager failed to infer expected bus interface '$bif_name'"
+#         }
+#         ipx::associate_bus_interfaces -busif $bif_name -clock aclk $core
+#     }
+# 
+#     set rst_bif [ipx::get_bus_interfaces aresetn -of_objects $core]
+#     if {[llength $rst_bif] == 0} {
+#         error "IP Packager failed to infer reset interface 'aresetn'"
+#     }
+#     set rst_pol [ipx::get_bus_parameters POLARITY -of_objects $rst_bif]
+#     if {[llength $rst_pol] == 0} {
+#         set rst_pol [ipx::add_bus_parameter POLARITY $rst_bif]
+#     }
+#     set_property value ACTIVE_LOW $rst_pol
+# 
+#     set clk_bif [ipx::get_bus_interfaces aclk -of_objects $core]
+#     if {[llength $clk_bif] == 0} {
+#         error "IP Packager failed to infer clock interface 'aclk'"
+#     }
+#     set clk_busif [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects $clk_bif]
+#     if {[llength $clk_busif] == 0} {
+#         set clk_busif [ipx::add_bus_parameter ASSOCIATED_BUSIF $clk_bif]
+#     }
+#     set_property value [join $expected_busifs ":"] $clk_busif
+#     set clk_rst [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects $clk_bif]
+#     if {[llength $clk_rst] == 0} {
+#         set clk_rst [ipx::add_bus_parameter ASSOCIATED_RESET $clk_bif]
+#     }
+#     set_property value aresetn $clk_rst
+#     sb_log $report_fh "ACLK_ASSOCIATED_BUSIF=[get_property value $clk_busif]"
+#     sb_log $report_fh "ACLK_ASSOCIATED_RESET=[get_property value $clk_rst]"
+# 
+#     # Ensure s_axi_ctrl memory map advertises >= 4 KB so SmartConnect / AXI Interconnect
+#     # assign_bd_address cleanly allocates a standard 4 KB / 64 KB slave window.
+#     set mm [ipx::get_memory_maps s_axi_ctrl -of_objects $core]
+#     if {[llength $mm] == 0} {
+#         error "IP Packager failed to infer memory map for s_axi_ctrl"
+#     }
+#     set ab [ipx::get_address_blocks -of_objects $mm]
+#     if {[llength $ab] == 0} {
+#         error "IP Packager failed to infer address block for s_axi_ctrl"
+#     }
+#     set_property range 4096 [lindex $ab 0]
+# 
+#     ipx::create_xgui_files $core
+#     ipx::update_checksums $core
+#     ipx::check_integrity $core
+#     ipx::save_core $core
+#     close_project
+# 
+#     set comp_xml [file join $ip_root component.xml]
+#     set expected_vlnv [doa_vlnv subband_bridge]
+#     exec bash [file join $root_dir common scripts check_component_vlnv.sh] $comp_xml $expected_vlnv >@stdout 2>@1
+#     sb_log $report_fh "PACKAGED_VLNV=$expected_vlnv"
+#     sb_log $report_fh "COMPONENT_XML=$comp_xml"
+# 
+#     # -------------------------------------------------------------------------
+#     # 4. VHDL Block Design smoke test (validates IPI instantiation + helper IPs)
+#     # -------------------------------------------------------------------------
+#     set bd_proj_dir [file join $work_root vhdl_bd_smoke]
+#     create_project -force subband_bridge_bd_smoke $bd_proj_dir -part $::PART_PINNED
+#     set_property target_language VHDL [current_project]
+#     set_property ip_repo_paths [list $ip_repo] [current_project]
+#     update_ip_catalog -rebuild
+# 
+#     create_bd_design smoke_bd
+#     set clk250 [create_bd_port -dir I -type clk -freq_hz 250000000 clk_250m]
+#     set clk500 [create_bd_port -dir I -type clk -freq_hz 500000000 clk_500m]
+#     set rst250 [create_bd_port -dir I -type rst rst_250m_n]
+#     set_property CONFIG.POLARITY ACTIVE_LOW $rst250
+#     set sysref_in [create_bd_port -dir I sysref_500m]
+#     set sysref_out [create_bd_port -dir O sysref_250m]
+# 
+#     set s_axi_ext [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_EXT]
+#     set_property -dict [list \
+#         CONFIG.PROTOCOL {AXI4LITE} \
+#         CONFIG.ADDR_WIDTH {32} \
+#         CONFIG.DATA_WIDTH {32} \
+#     ] $s_axi_ext
+#     set_property CONFIG.ASSOCIATED_BUSIF {S_AXI_EXT} $clk250
+#     set_property CONFIG.ASSOCIATED_RESET {rst_250m_n} $clk250
+# 
+#     set clk_doa [doa_create_pinned_ip clk_wiz clk_doa]
+#     set_property -dict [list \
+#         CONFIG.PRIM_SOURCE {No_buffer} \
+#         CONFIG.PRIM_IN_FREQ {250.000} \
+#         CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {125.000} \
+#         CONFIG.USE_RESET {false} \
+#         CONFIG.USE_LOCKED {true} \
+#     ] $clk_doa
+# 
+#     set rst_doa [doa_create_pinned_ip proc_sys_reset rst_doa]
+# 
+#     set sysref_cdc [doa_create_pinned_ip xpm_cdc_gen sysref_cdc]
+#     set_property -dict [list \
+#         CONFIG.CDC_TYPE {xpm_cdc_single} \
+#         CONFIG.SRC_INPUT_REG {1} \
+#         CONFIG.DEST_SYNC_FF {2} \
+#         CONFIG.WIDTH {1} \
+#     ] $sysref_cdc
+# 
+#     set bridge_0 [doa_create_pinned_ip subband_bridge bridge_0]
+# 
+#     set cdc_beam [doa_create_pinned_ip axis_clock_converter cdc_beam]
+#     set_property CONFIG.IS_ACLK_ASYNC {1} $cdc_beam
+# 
+#     set dw_beam [doa_create_pinned_ip axis_dwidth_converter dw_beam]
+#     set_property CONFIG.M_TDATA_NUM_BYTES {4} $dw_beam
+# 
+#     set fifo_beam [doa_create_pinned_ip axi_fifo_mm_s fifo_beam]
+#     set_property -dict [list \
+#         CONFIG.C_DATA_INTERFACE_TYPE {0} \
+#         CONFIG.C_USE_TX_DATA {0} \
+#         CONFIG.C_USE_TX_CTRL {0} \
+#         CONFIG.C_USE_RX_DATA {1} \
+#         CONFIG.C_RX_FIFO_DEPTH {2048} \
+#     ] $fifo_beam
+# 
+#     set ctrl_sc [doa_create_pinned_ip smartconnect ctrl_sc]
+#     set_property -dict [list \
+#         CONFIG.NUM_SI {1} \
+#         CONFIG.NUM_MI {2} \
+#         CONFIG.NUM_CLKS {2} \
+#     ] $ctrl_sc
+# 
+#     # Clocks & resets
+#     connect_bd_net $clk250 [get_bd_pins $clk_doa/clk_in1]
+#     set clk125 [get_bd_pins $clk_doa/clk_out1]
+#     connect_bd_net $clk125 [get_bd_pins $rst_doa/slowest_sync_clk]
+#     connect_bd_net $rst250 [get_bd_pins $rst_doa/ext_reset_in]
+#     connect_bd_net [get_bd_pins $clk_doa/locked] [get_bd_pins $rst_doa/dcm_locked]
+#     set rst125 [get_bd_pins $rst_doa/peripheral_aresetn]
+# 
+#     connect_bd_net $clk500 [get_bd_pins $sysref_cdc/src_clk]
+#     connect_bd_net $clk250 [get_bd_pins $sysref_cdc/dest_clk]
+#     connect_bd_net $sysref_in [get_bd_pins $sysref_cdc/src_in]
+#     connect_bd_net [get_bd_pins $sysref_cdc/dest_out] $sysref_out
+# 
+#     connect_bd_net $clk250 [get_bd_pins $bridge_0/aclk] [get_bd_pins $cdc_beam/s_axis_aclk] [get_bd_pins $ctrl_sc/aclk]
+#     connect_bd_net $rst250 [get_bd_pins $bridge_0/aresetn] [get_bd_pins $cdc_beam/s_axis_aresetn] [get_bd_pins $ctrl_sc/aresetn]
+#     connect_bd_net $clk125 [get_bd_pins $cdc_beam/m_axis_aclk] [get_bd_pins $dw_beam/aclk] [get_bd_pins $fifo_beam/s_axi_aclk] [get_bd_pins $ctrl_sc/aclk1]
+#     connect_bd_net $rst125 [get_bd_pins $cdc_beam/m_axis_aresetn] [get_bd_pins $dw_beam/aresetn] [get_bd_pins $fifo_beam/s_axi_aresetn]
+# 
+#     # AXI-Stream chain: 512b@250MHz -> 512b@125MHz -> 32b@125MHz -> axi_fifo_mm_s
+#     connect_bd_intf_net [get_bd_intf_pins $bridge_0/m_axis_beam] [get_bd_intf_pins $cdc_beam/S_AXIS]
+#     connect_bd_intf_net [get_bd_intf_pins $cdc_beam/M_AXIS] [get_bd_intf_pins $dw_beam/S_AXIS]
+#     set fifo_rx_pin [get_bd_intf_pins -of_objects $fifo_beam -filter {VLNV == "xilinx.com:interface:axis_rtl:1.0" && MODE == "Slave"}]
+#     if {[llength $fifo_rx_pin] != 1} {
+#         error "Expected exactly 1 slave AXIS pin on axi_fifo_mm_s, found: $fifo_rx_pin"
+#     }
+#     connect_bd_intf_net [get_bd_intf_pins $dw_beam/M_AXIS] [lindex $fifo_rx_pin 0]
+# 
+#     # AXI4-Lite control
+#     connect_bd_intf_net $s_axi_ext [get_bd_intf_pins $ctrl_sc/S00_AXI]
+#     connect_bd_intf_net [get_bd_intf_pins $ctrl_sc/M00_AXI] [get_bd_intf_pins $bridge_0/s_axi_ctrl]
+#     connect_bd_intf_net [get_bd_intf_pins $ctrl_sc/M01_AXI] [get_bd_intf_pins $fifo_beam/S_AXI]
+# 
+#     assign_bd_address
+#     validate_bd_design
+#     save_bd_design
+#     set bd_file [get_files *smoke_bd.bd]
+#     generate_target synthesis $bd_file
+#     close_project
+#     sb_log $report_fh "VHDL_BD_SMOKE_RESULT=PASS"
+# 
+#     set status PASS
+# } err_msg err_info]
+# if {$catch_rc != 0} {
+#     sb_log $report_fh "ERROR=$err_msg"
+#     sb_log $report_fh "ERROR_INFO=$err_info"
+# }
+ERROR=child process exited abnormally
+ERROR_INFO=-code 1 -level 0 -errorcode {CHILDSTATUS 610265 1} -errorinfo {child process exited abnormally
+    while executing
+"exec xvlog -sv -work work $tb_file >@stdout 2>@1"} -errorline 19
+# sb_log $report_fh "DOA SUBBAND BRIDGE PACKAGE RESULT=$status"
+DOA SUBBAND BRIDGE PACKAGE RESULT=FAIL
+# close $report_fh
+# if {$catch_rc != 0} { exit 1 }
+INFO: [Common 17-206] Exiting Vivado at Thu Nov  5 19:43:33 2026...
+make[3]: *** [Makefile:12: ip] Error 1
+finished_utc=2026-11-05T16:13:33Z
+result=FAIL exit_code=2

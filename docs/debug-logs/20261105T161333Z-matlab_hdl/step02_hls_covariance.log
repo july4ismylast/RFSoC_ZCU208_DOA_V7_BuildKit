@@ -1,0 +1,322 @@
+stage=step02_hls_covariance
+started_utc=2026-11-05T08:33:47Z
+command=make --no-print-directory -C ip/custom/doa_covariance_4ch_v4 all 
+vitis_hls -f build_hls.tcl
+
+****** Vitis HLS - High-Level Synthesis from C, C++ and OpenCL v2023.2 (64-bit)
+  **** SW Build 4023990 on Oct 11 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /media/joshua/Linux/Programs/X20232/Vitis_HLS/2023.2/scripts/vitis_hls/hls.tcl -notrace
+INFO: [HLS 200-10] Running '/media/joshua/Linux/Programs/X20232/Vitis_HLS/2023.2/bin/unwrapped/lnx64.o/vitis_hls'
+INFO: [HLS 200-10] For user 'joshua' on host 'joshua-System-Product-Name' (Linux_x86_64 version 6.8.0-138-generic) on Thu Nov 05 12:03:48 +0330 2026
+INFO: [HLS 200-10] On os Ubuntu 22.04.5 LTS
+INFO: [HLS 200-10] In directory '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4'
+INFO: [HLS 200-2053] The vitis_hls executable is being deprecated. Consider using vitis-run --mode hls --tcl
+Sourcing Tcl script 'build_hls.tcl'
+INFO: [HLS 200-1510] Running: open_project -reset doa_covariance_4ch_v4_prj 
+INFO: [HLS 200-10] Creating and opening project '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj'.
+INFO: [HLS 200-1510] Running: set_top doa_covariance_4ch_v4 
+INFO: [HLS 200-1510] Running: add_files src/doa_covariance_4ch_v4.cpp -cflags -Isrc 
+INFO: [HLS 200-10] Adding design file 'src/doa_covariance_4ch_v4.cpp' to the project
+INFO: [HLS 200-1510] Running: add_files -tb tb/doa_covariance_4ch_v4_tb.cpp -cflags -Isrc 
+INFO: [HLS 200-10] Adding test bench file 'tb/doa_covariance_4ch_v4_tb.cpp' to the project
+INFO: [HLS 200-1510] Running: open_solution -reset solution1 
+INFO: [HLS 200-10] Creating and opening solution '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1'.
+INFO: [HLS 200-10] Cleaning up the solution database.
+INFO: [HLS 200-1505] Using default flow_target 'vivado'
+Resolution: For help on HLS 200-1505 see docs.xilinx.com/access/sources/dita/topic?Doc_Version=2023.2%20English&url=ug1448-hls-guidance&resourceid=200-1505.html
+INFO: [HLS 200-1510] Running: set_part xczu48dr-fsvg1517-2-e 
+INFO: [HLS 200-1611] Setting target device to 'xczu48dr-fsvg1517-2-e'
+INFO: [HLS 200-1510] Running: create_clock -period 7.8125 -name default 
+INFO: [SYN 201-201] Setting up clock 'default' with a period of 7.812ns.
+INFO: [HLS 200-1510] Running: config_export -format ip_catalog -rtl verilog -vendor openai -library doa -version 7.1 -display_name DOA V7 Four-Lane Covariance 
+INFO: [HLS 200-1510] Running: csim_design 
+INFO: [SIM 211-2] *************** CSIM start ***************
+INFO: [SIM 211-4] CSIM will launch GCC as the compiler.
+INFO: [HLS 200-2036] Building debug C Simulation binaries
+   Compiling ../../../../tb/doa_covariance_4ch_v4_tb.cpp in debug mode
+   Compiling ../../../../src/doa_covariance_4ch_v4.cpp in debug mode
+   Generating csim.exe
+PASS: 4-sample/clock covariance core, all 16 outputs.
+INFO [HLS SIM]: The maximum depth reached by any hls::stream() instance in the design is 1024
+INFO: [SIM 211-1] CSim done with 0 errors.
+INFO: [SIM 211-3] *************** CSIM finish ***************
+INFO: [HLS 200-111] Finished Command csim_design CPU user time: 2.01 seconds. CPU system time: 0.29 seconds. Elapsed time: 2.4 seconds; current allocated memory: 0.156 MB.
+INFO: [HLS 200-1510] Running: csynth_design 
+INFO: [HLS 200-111] Finished File checks and directory preparation: CPU user time: 0.02 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.03 seconds; current allocated memory: 299.590 MB.
+INFO: [HLS 200-10] Analyzing design file 'src/doa_covariance_4ch_v4.cpp' ... 
+INFO: [HLS 200-111] Finished Source Code Analysis and Preprocessing: CPU user time: 1.33 seconds. CPU system time: 0.25 seconds. Elapsed time: 1.59 seconds; current allocated memory: 302.125 MB.
+INFO: [HLS 200-777] Using interface defaults for 'Vivado' flow target.
+INFO: [HLS 200-1995] There were 3,876 instructions in the design after the 'Compile/Link' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 3,126 instructions in the design after the 'Unroll/Inline (step 1)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,909 instructions in the design after the 'Unroll/Inline (step 2)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,795 instructions in the design after the 'Unroll/Inline (step 3)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,795 instructions in the design after the 'Unroll/Inline (step 4)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,767 instructions in the design after the 'Array/Struct (step 1)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,713 instructions in the design after the 'Array/Struct (step 2)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,713 instructions in the design after the 'Array/Struct (step 3)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,713 instructions in the design after the 'Array/Struct (step 4)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,758 instructions in the design after the 'Array/Struct (step 5)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,546 instructions in the design after the 'Performance (step 1)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,217 instructions in the design after the 'Performance (step 2)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,187 instructions in the design after the 'Performance (step 3)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,187 instructions in the design after the 'Performance (step 4)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,182 instructions in the design after the 'HW Transforms (step 1)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 1,167 instructions in the design after the 'HW Transforms (step 2)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 214-131] Inlining function 'calibrate(ap_int<16>, ap_int<16>, ap_uint<32>, ap_int<20>&, ap_int<20>&)' into 'doa_covariance_4ch_v4' (src/doa_covariance_4ch_v4.cpp:70:21)
+INFO: [HLS 214-291] Loop 'lane_loop' is marked as complete unroll implied by the pipeline pragma (src/doa_covariance_4ch_v4.cpp:59:9)
+INFO: [HLS 214-291] Loop 'channel_loop' is marked as complete unroll implied by the pipeline pragma (src/doa_covariance_4ch_v4.cpp:66:17)
+INFO: [HLS 214-291] Loop 'pair_loop' is marked as complete unroll implied by the pipeline pragma (src/doa_covariance_4ch_v4.cpp:76:17)
+INFO: [HLS 214-186] Unrolling loop 'lane_loop' (src/doa_covariance_4ch_v4.cpp:59:9) in function 'doa_covariance_4ch_v4' completely with a factor of 4 (src/doa_covariance_4ch_v4.cpp:25:0)
+INFO: [HLS 214-186] Unrolling loop 'pair_loop' (src/doa_covariance_4ch_v4.cpp:76:17) in function 'doa_covariance_4ch_v4' completely with a factor of 6 (src/doa_covariance_4ch_v4.cpp:25:0)
+INFO: [HLS 214-186] Unrolling loop 'channel_loop' (src/doa_covariance_4ch_v4.cpp:66:17) in function 'doa_covariance_4ch_v4' completely with a factor of 4 (src/doa_covariance_4ch_v4.cpp:25:0)
+INFO: [HLS 214-248] Applying array_partition to 'power': Complete partitioning on dimension 1. (src/doa_covariance_4ch_v4.cpp:45:13)
+INFO: [HLS 214-248] Applying array_partition to 'crossReal': Complete partitioning on dimension 1. (src/doa_covariance_4ch_v4.cpp:46:16)
+INFO: [HLS 214-248] Applying array_partition to 'crossImag': Complete partitioning on dimension 1. (src/doa_covariance_4ch_v4.cpp:47:16)
+INFO: [HLS 214-364] Automatically inlining function 'low16(ap_uint<32>)' to improve effectiveness of pipeline pragma in function 'doa_covariance_4ch_v4' (src/doa_covariance_4ch_v4.cpp:70:31)
+INFO: [HLS 214-364] Automatically inlining function 'high16(ap_uint<32>)' to improve effectiveness of pipeline pragma in function 'doa_covariance_4ch_v4' (src/doa_covariance_4ch_v4.cpp:70:45)
+INFO: [HLS 214-364] Automatically inlining function 'low16(ap_uint<32>)' to improve effectiveness of pipeline pragma in function 'doa_covariance_4ch_v4' (src/doa_covariance_4ch_v4.cpp:12:16)
+INFO: [HLS 214-364] Automatically inlining function 'high16(ap_uint<32>)' to improve effectiveness of pipeline pragma in function 'doa_covariance_4ch_v4' (src/doa_covariance_4ch_v4.cpp:12:34)
+INFO: [HLS 200-111] Finished Compiling Optimization and Transform: CPU user time: 1.57 seconds. CPU system time: 0.27 seconds. Elapsed time: 6.34 seconds; current allocated memory: 304.621 MB.
+INFO: [HLS 200-111] Finished Checking Pragmas: CPU user time: 0 seconds. CPU system time: 0 seconds. Elapsed time: 0 seconds; current allocated memory: 304.621 MB.
+INFO: [HLS 200-10] Starting code transformations ...
+INFO: [HLS 200-111] Finished Standard Transforms: CPU user time: 0.02 seconds. CPU system time: 0 seconds. Elapsed time: 0.02 seconds; current allocated memory: 306.770 MB.
+INFO: [HLS 200-10] Checking synthesizability ...
+INFO: [HLS 200-111] Finished Checking Synthesizability: CPU user time: 0.02 seconds. CPU system time: 0 seconds. Elapsed time: 0.02 seconds; current allocated memory: 307.004 MB.
+INFO: [XFORM 203-401] Performing if-conversion on hyperblock from (src/doa_covariance_4ch_v4.cpp:55:9) to (src/doa_covariance_4ch_v4.cpp:54:5) in function 'doa_covariance_4ch_v4'... converting 9 basic blocks.
+INFO: [XFORM 203-401] Performing if-conversion on hyperblock from (src/doa_covariance_4ch_v4.cpp:90:9) to (src/doa_covariance_4ch_v4.cpp:89:5) in function 'doa_covariance_4ch_v4'... converting 6 basic blocks.
+INFO: [HLS 200-111] Finished Loop, function and other optimizations: CPU user time: 0.07 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.08 seconds; current allocated memory: 333.668 MB.
+INFO: [HLS 200-111] Finished Architecture Synthesis: CPU user time: 0.06 seconds. CPU system time: 0 seconds. Elapsed time: 0.05 seconds; current allocated memory: 346.930 MB.
+INFO: [HLS 200-10] Starting hardware synthesis ...
+INFO: [HLS 200-10] Synthesizing 'doa_covariance_4ch_v4' ...
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-42] -- Implementing module 'doa_covariance_4ch_v4_Pipeline_beat_loop' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [SCHED 204-11] Starting scheduling ...
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_23) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_46) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_22) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_44) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_21) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_42) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_20) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_40) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_19) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_38) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_18) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_36) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_30) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_15) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_15) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_28) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_14) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_14) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_26) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_13) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_13) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_24) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_12) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_12) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_17) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_34) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_16) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_32) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_15) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_30) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_14) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_28) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_13) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_26) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_12) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_24) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_22) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_11) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_11) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_20) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_10) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_10) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_18) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_9) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_9) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_16) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_8) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_8) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_11) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_22) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_10) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_20) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_9) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_18) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_8) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_16) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_7) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_14) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_6) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_12) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_14) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_7) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_7) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_12) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_6) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_6) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_10) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_5) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_5) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_8) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_4) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_4) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_5) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_10) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_4) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_8) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_3) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_6) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_2) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_4) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81_1) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79_2) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=sub_ln81) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln79) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_6) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_3) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_3) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_4) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_2) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_2) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72_2) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct_1) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct_1) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=add_ln72) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=imagProduct) to 3 in order to utilize available DSP registers.
+INFO: [HLS 200-486] Changing DSP latency (root=realProduct) to 3 in order to utilize available DSP registers.
+INFO: [SCHED 204-61] Pipelining loop 'beat_loop'.
+INFO: [HLS 200-1470] Pipelining result : Target II = 1, Final II = 1, Depth = 8, loop 'beat_loop'
+WARNING: [HLS 200-871] Estimated clock period (6.463 ns) exceeds the target (target clock period: 7.812 ns, clock uncertainty: 2.109 ns, effective delay budget: 5.703 ns).
+Resolution: For help on HLS 200-871 see docs.xilinx.com/access/sources/dita/topic?Doc_Version=2023.2%20English&url=ug1448-hls-guidance&resourceid=200-871.html
+WARNING: [HLS 200-1016] The critical path in module 'doa_covariance_4ch_v4_Pipeline_beat_loop' consists of the following:
+	'load' operation 64 bit ('crossImag_load', src/doa_covariance_4ch_v4.cpp:81) on local variable 'crossImag', src/doa_covariance_4ch_v4.cpp:47 [91]  (0.000 ns)
+	'add' operation 64 bit ('add_ln81_5', src/doa_covariance_4ch_v4.cpp:81) [277]  (1.085 ns)
+	'select' operation 64 bit ('select_ln61', src/doa_covariance_4ch_v4.cpp:61) [278]  (0.424 ns)
+	'add' operation 64 bit ('add_ln81_11', src/doa_covariance_4ch_v4.cpp:81) [457]  (1.085 ns)
+	'select' operation 64 bit ('select_ln61_16', src/doa_covariance_4ch_v4.cpp:61) [458]  (0.424 ns)
+	'add' operation 64 bit ('add_ln81_17', src/doa_covariance_4ch_v4.cpp:81) [637]  (1.085 ns)
+	'select' operation 64 bit ('select_ln61_32', src/doa_covariance_4ch_v4.cpp:61) [638]  (0.424 ns)
+	'add' operation 64 bit ('add_ln81_23', src/doa_covariance_4ch_v4.cpp:81) [817]  (1.085 ns)
+	'select' operation 64 bit ('select_ln61_48', src/doa_covariance_4ch_v4.cpp:61) [818]  (0.424 ns)
+	'store' operation 0 bit ('crossImag_write_ln47', src/doa_covariance_4ch_v4.cpp:47) of variable 'select_ln61_48', src/doa_covariance_4ch_v4.cpp:61 on local variable 'crossImag', src/doa_covariance_4ch_v4.cpp:47 [834]  (0.427 ns)
+
+Resolution: For help on HLS 200-1016 see docs.xilinx.com/access/sources/dita/topic?Doc_Version=2023.2%20English&url=ug1448-hls-guidance&resourceid=200-1016.html
+INFO: [SCHED 204-11] Finished scheduling.
+INFO: [HLS 200-111] Finished Scheduling: CPU user time: 0.4 seconds. CPU system time: 0.02 seconds. Elapsed time: 0.42 seconds; current allocated memory: 356.656 MB.
+INFO: [BIND 205-100] Starting micro-architecture generation ...
+INFO: [BIND 205-101] Performing variable lifetime analysis.
+INFO: [BIND 205-101] Exploring resource sharing.
+INFO: [BIND 205-101] Binding ...
+INFO: [BIND 205-100] Finished micro-architecture generation.
+INFO: [HLS 200-111] Finished Binding: CPU user time: 0.06 seconds. CPU system time: 0 seconds. Elapsed time: 0.06 seconds; current allocated memory: 356.656 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-42] -- Implementing module 'doa_covariance_4ch_v4_Pipeline_output_loop' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [SCHED 204-11] Starting scheduling ...
+INFO: [SCHED 204-61] Pipelining loop 'output_loop'.
+INFO: [HLS 200-1470] Pipelining result : Target II = 1, Final II = 1, Depth = 2, loop 'output_loop'
+INFO: [SCHED 204-11] Finished scheduling.
+INFO: [HLS 200-111] Finished Scheduling: CPU user time: 0.05 seconds. CPU system time: 0 seconds. Elapsed time: 0.06 seconds; current allocated memory: 356.656 MB.
+INFO: [BIND 205-100] Starting micro-architecture generation ...
+INFO: [BIND 205-101] Performing variable lifetime analysis.
+INFO: [BIND 205-101] Exploring resource sharing.
+INFO: [BIND 205-101] Binding ...
+INFO: [BIND 205-100] Finished micro-architecture generation.
+INFO: [HLS 200-111] Finished Binding: CPU user time: 0.01 seconds. CPU system time: 0 seconds. Elapsed time: 0.01 seconds; current allocated memory: 356.656 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-42] -- Implementing module 'doa_covariance_4ch_v4' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [SCHED 204-11] Starting scheduling ...
+INFO: [SCHED 204-11] Finished scheduling.
+INFO: [HLS 200-111] Finished Scheduling: CPU user time: 0.02 seconds. CPU system time: 0 seconds. Elapsed time: 0.02 seconds; current allocated memory: 356.656 MB.
+INFO: [BIND 205-100] Starting micro-architecture generation ...
+INFO: [BIND 205-101] Performing variable lifetime analysis.
+INFO: [BIND 205-101] Exploring resource sharing.
+INFO: [BIND 205-101] Binding ...
+INFO: [BIND 205-100] Finished micro-architecture generation.
+INFO: [HLS 200-111] Finished Binding: CPU user time: 0.02 seconds. CPU system time: 0 seconds. Elapsed time: 0.01 seconds; current allocated memory: 356.656 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-10] -- Generating RTL for module 'doa_covariance_4ch_v4_Pipeline_beat_loop' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-1030] Apply Unified Pipeline Control on module 'doa_covariance_4ch_v4_Pipeline_beat_loop' pipeline 'beat_loop' pipeline type 'loop pipeline'
+INFO: [HLS 200-1553] Disabling free running pipeline (frp) architecture on pipeline 'beat_loop' in module 'doa_covariance_4ch_v4_Pipeline_beat_loop', because the estimated Stream Port Number is 53, which is bigger than the frp_stream_port_number threshold of 20.
+Resolution: For help on HLS 200-1553 see docs.xilinx.com/access/sources/dita/topic?Doc_Version=2023.2%20English&url=ug1448-hls-guidance&resourceid=200-1553.html
+INFO: [RTGEN 206-100] Generating core module 'mac_muladd_16s_16s_32s_33_4_1': 16 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'mac_muladd_18s_18s_38s_38_4_1': 40 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'mac_mulsub_16s_16s_32s_32_4_1': 16 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'mac_mulsub_18s_19s_37s_37_4_1': 24 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'mul_16s_16s_32_1_1': 32 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'mul_19s_18s_37_1_1': 24 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'mul_19s_19s_38_1_1': 40 instance(s).
+INFO: [RTGEN 206-100] Finished creating RTL model for 'doa_covariance_4ch_v4_Pipeline_beat_loop'.
+INFO: [HLS 200-111] Finished Creating RTL model: CPU user time: 0.07 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.08 seconds; current allocated memory: 363.723 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-10] -- Generating RTL for module 'doa_covariance_4ch_v4_Pipeline_output_loop' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-1030] Apply Unified Pipeline Control on module 'doa_covariance_4ch_v4_Pipeline_output_loop' pipeline 'output_loop' pipeline type 'loop pipeline'
+INFO: [RTGEN 206-100] Generating core module 'sparsemux_13_3_64_1_1': 2 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'sparsemux_9_2_64_1_1': 1 instance(s).
+INFO: [RTGEN 206-100] Finished creating RTL model for 'doa_covariance_4ch_v4_Pipeline_output_loop'.
+INFO: [HLS 200-111] Finished Creating RTL model: CPU user time: 0.17 seconds. CPU system time: 0.02 seconds. Elapsed time: 0.19 seconds; current allocated memory: 380.801 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-10] -- Generating RTL for module 'doa_covariance_4ch_v4' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+WARNING: [RTGEN 206-101] Design contains AXI ports. Reset is fixed to synchronous and active low.
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/s_axis_V_data_V' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/s_axis_V_keep_V' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/s_axis_V_strb_V' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/s_axis_V_last_V' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/m_axis_V_data_V' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/m_axis_V_keep_V' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/m_axis_V_strb_V' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/m_axis_V_last_V' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/cal0' to 's_axilite & ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/cal1' to 's_axilite & ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/cal2' to 's_axilite & ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/cal3' to 's_axilite & ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'doa_covariance_4ch_v4/frameSamples' to 's_axilite & ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on function 'doa_covariance_4ch_v4' to 's_axilite & ap_ctrl_hs'.
+INFO: [RTGEN 206-100] Bundling port 'cal0', 'cal1', 'cal2', 'cal3', 'frameSamples' and 'return' to AXI-Lite port ctrl.
+INFO: [RTGEN 206-100] Finished creating RTL model for 'doa_covariance_4ch_v4'.
+INFO: [HLS 200-111] Finished Creating RTL model: CPU user time: 0.04 seconds. CPU system time: 0 seconds. Elapsed time: 0.04 seconds; current allocated memory: 380.852 MB.
+INFO: [HLS 200-111] Finished Generating all RTL models: CPU user time: 0.2 seconds. CPU system time: 0 seconds. Elapsed time: 0.2 seconds; current allocated memory: 382.887 MB.
+INFO: [HLS 200-111] Finished Updating report files: CPU user time: 0.22 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.23 seconds; current allocated memory: 394.562 MB.
+INFO: [VHDL 208-304] Generating VHDL RTL for doa_covariance_4ch_v4.
+INFO: [VLOG 209-307] Generating Verilog RTL for doa_covariance_4ch_v4.
+INFO: [HLS 200-790] **** Loop Constraint Status: All loop constraints were satisfied.
+INFO: [HLS 200-789] **** Estimated Fmax: 154.73 MHz
+INFO: [HLS 200-111] Finished Command csynth_design CPU user time: 4.35 seconds. CPU system time: 0.61 seconds. Elapsed time: 9.48 seconds; current allocated memory: 95.453 MB.
+INFO: [HLS 200-1510] Running: export_design 
+INFO: [IMPL 213-8] Exporting RTL as a Vivado IP.
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source run_ippack.tcl -notrace
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/media/joshua/Linux/Programs/X20232/Vivado/2023.2/data/ip'.
+INFO: [Common 17-206] Exiting Vivado at Thu Nov  5 12:04:06 2026...
+INFO: [HLS 200-802] Generated output file doa_covariance_4ch_v4_prj/solution1/impl/export.zip
+INFO: [HLS 200-111] Finished Command export_design CPU user time: 6.2 seconds. CPU system time: 0.3 seconds. Elapsed time: 8.95 seconds; current allocated memory: 4.223 MB.
+INFO: [HLS 200-112] Total CPU user time: 13.48 seconds. Total CPU system time: 1.33 seconds. Total elapsed time: 21.79 seconds; peak allocated memory: 398.891 MB.
+INFO: [Common 17-206] Exiting vitis_hls at Thu Nov  5 12:04:09 2026...
+PASS packaged VLNV openai:doa:doa_covariance_4ch_v4:7.1
+rm -rf "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/doa_covariance_4ch_v4"
+mkdir -p "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/doa_covariance_4ch_v4"
+cp -a "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj/solution1/impl/ip/." "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/doa_covariance_4ch_v4/"
+Installed covariance IP at /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/doa_covariance_4ch_v4
+result=PASS

@@ -1,0 +1,9 @@
+stage=step01_fetch_references
+started_utc=2026-11-05T08:32:34Z
+command=./scripts/fetch_upstream.sh RFSoC-MTS 
+From https://github.com/Xilinx/RFSoC-MTS
+ * branch            f8e93e7f89d0e80f0e4edf5a2ea4b45f0fcd6d3d -> FETCH_HEAD
+HEAD is now at f8e93e7 Update README.md (#2)
+RFSoC-MTS	f8e93e7f89d0e80f0e4edf5a2ea4b45f0fcd6d3d	https://github.com/Xilinx/RFSoC-MTS.git
+Selected references are available under /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/upstream
+result=PASS
