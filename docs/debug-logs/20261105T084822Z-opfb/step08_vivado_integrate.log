@@ -1,0 +1,398 @@
+stage=step08_vivado_integrate
+started_utc=2026-11-05T08:41:09Z
+command=vivado -mode batch -nojournal -nolog -source common/vivado/08_integrate_doa_v7.tcl 
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source common/vivado/08_integrate_doa_v7.tcl
+# set script_dir [file dirname [file normalize [info script]]]
+# source [file join $script_dir common.tcl]
+## set ::doa_common_dir [file dirname [file normalize [info script]]]
+## set ::doa_root_dir [file normalize [file join $::doa_common_dir .. ..]]
+## source [file join $::doa_root_dir config ip_versions.tcl]
+### namespace eval ::doa_versions {}
+### proc ::doa_versions::env_or {name default_value} {
+###     if {[info exists ::env($name)] && [string trim $::env($name)] ne ""} {
+###         return [string trim $::env($name)]
+###     }
+###     return $default_value
+### }
+### set ::VIVADO_LOCK_CERTIFIED "2023.2"
+### set ::VIVADO_LOCK_VERSION [::doa_versions::env_or EXPECTED_VIVADO_VERSION $::VIVADO_LOCK_CERTIFIED]
+### set ::PART_PINNED         [::doa_versions::env_or PART "xczu48dr-fsvg1517-2-e"]
+### set ::BOARD_PART_PINNED   [::doa_versions::env_or BOARD_PART "xilinx.com:zcu208:part0:2.0"]
+### set ::BASE_KIND_PINNED    [::doa_versions::env_or BASE_KIND "mts"]
+### set ::CUSTOM_IP_VENDOR  [::doa_versions::env_or CUSTOM_IP_VENDOR  "openai"]
+### set ::CUSTOM_IP_LIBRARY [::doa_versions::env_or CUSTOM_IP_LIBRARY "doa"]
+### set ::IPVER_COVARIANCE  [::doa_versions::env_or IPVER_COVARIANCE  "7.1"]
+### set ::IPVER_SPECTRUM    [::doa_versions::env_or IPVER_SPECTRUM    "2.0"]
+### set ::IPVER_CANDIDATE   [::doa_versions::env_or IPVER_CANDIDATE   "1.0"]
+### set ::IPVER_BEAM        [::doa_versions::env_or IPVER_BEAM        "2.1"]
+### set ::IPVER_RFDC_REPACK4 [::doa_versions::env_or IPVER_RFDC_REPACK4 "1.0"]
+### set ::IPVER_CHANNELIZER [::doa_versions::env_or IPVER_CHANNELIZER "7.0"]
+### set ::IPVLNV(rfdc)                 "xilinx.com:ip:usp_rf_data_converter:2.6"
+### set ::IPVLNV(ps)                   "xilinx.com:ip:zynq_ultra_ps_e:3.5"
+### set ::IPVLNV(axis_data_fifo)       "xilinx.com:ip:axis_data_fifo:2.0"
+### set ::IPVLNV(axi_data_fifo)        "xilinx.com:ip:axi_data_fifo:2.1"
+### set ::IPVLNV(axi_fifo_mm_s)        "xilinx.com:ip:axi_fifo_mm_s:4.3"
+### set ::IPVLNV(axi_bram_ctrl)        "xilinx.com:ip:axi_bram_ctrl:4.1"
+### set ::IPVLNV(blk_mem_gen)          "xilinx.com:ip:blk_mem_gen:8.4"
+### set ::IPVLNV(axi_dma)              "xilinx.com:ip:axi_dma:7.1"
+### set ::IPVLNV(axi_datamover)        "xilinx.com:ip:axi_datamover:5.1"
+### set ::IPVLNV(axi_interconnect)     "xilinx.com:ip:axi_interconnect:2.1"
+### set ::IPVLNV(smartconnect)         "xilinx.com:ip:smartconnect:1.0"
+### set ::IPVLNV(axi_clock_converter)  "xilinx.com:ip:axi_clock_converter:2.1"
+### set ::IPVLNV(axi_dwidth_converter) "xilinx.com:ip:axi_dwidth_converter:2.1"
+### set ::IPVLNV(axi_register_slice)   "xilinx.com:ip:axi_register_slice:2.1"
+### set ::IPVLNV(axi_gpio)             "xilinx.com:ip:axi_gpio:2.0"
+### set ::IPVLNV(axi_intc)             "xilinx.com:ip:axi_intc:4.1"
+### set ::IPVLNV(proc_sys_reset)       "xilinx.com:ip:proc_sys_reset:5.0"
+### set ::IPVLNV(clk_wiz)              "xilinx.com:ip:clk_wiz:6.0"
+### set ::IPVLNV(ddr4)                 "xilinx.com:ip:ddr4:2.2"
+### set ::IPVLNV(axis_clock_converter)   "xilinx.com:ip:axis_clock_converter:1.1"
+### set ::IPVLNV(axis_dwidth_converter)  "xilinx.com:ip:axis_dwidth_converter:1.1"
+### set ::IPVLNV(axis_register_slice)    "xilinx.com:ip:axis_register_slice:1.1"
+### set ::IPVLNV(axis_broadcaster)       "xilinx.com:ip:axis_broadcaster:1.1"
+### set ::IPVLNV(axis_combiner)          "xilinx.com:ip:axis_combiner:1.1"
+### set ::IPVLNV(axis_switch)            "xilinx.com:ip:axis_switch:1.1"
+### set ::IPVLNV(fir_compiler)           "xilinx.com:ip:fir_compiler:7.2"
+### set ::IPVLNV(util_ds_buf)            "xilinx.com:ip:util_ds_buf:2.2"
+### set ::IPVLNV(xpm_cdc_gen)            "xilinx.com:ip:xpm_cdc_gen:1.0"
+### set ::IPVLNV(xlconcat)               "xilinx.com:ip:xlconcat:2.1"
+### set ::IPVLNV(xlconstant)             "xilinx.com:ip:xlconstant:1.1"
+### set ::IPVLNV(xlslice)                "xilinx.com:ip:xlslice:1.0"
+### set ::IPVLNV(util_reduced_logic)     "xilinx.com:ip:util_reduced_logic:2.0"
+### set ::IPVLNV(util_vector_logic)      "xilinx.com:ip:util_vector_logic:2.0"
+### set ::IPVLNV(ila)                    "xilinx.com:ip:ila:6.2"
+### set ::IPVLNV(vio)                    "xilinx.com:ip:vio:3.0"
+### set ::IPVLNV(covariance) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_covariance_4ch_v4:$::IPVER_COVARIANCE"
+### set ::IPVLNV(spectrum)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:spectrum_power4:$::IPVER_SPECTRUM"
+### set ::IPVLNV(candidate)  "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:candidate_peak4:$::IPVER_CANDIDATE"
+### set ::IPVLNV(beam)       "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:beam_weight_4ch:$::IPVER_BEAM"
+### set ::IPVLNV(rfdc_repack4) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:rfdc_repack4:$::IPVER_RFDC_REPACK4"
+### set ::IPVLNV(channelizer) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:matlab_channelizer:$::IPVER_CHANNELIZER"
+### set ::IP_CATALOG_KEYS {
+###     rfdc ps axis_data_fifo axi_data_fifo axi_fifo_mm_s axi_bram_ctrl
+###     blk_mem_gen axi_dma axi_datamover axi_interconnect smartconnect
+###     axi_clock_converter axi_dwidth_converter axi_register_slice axi_gpio
+###     axi_intc proc_sys_reset clk_wiz ddr4 axis_clock_converter
+###     axis_dwidth_converter axis_register_slice axis_broadcaster axis_combiner
+###     axis_switch fir_compiler util_ds_buf xpm_cdc_gen xlconcat xlconstant
+###     xlslice util_reduced_logic util_vector_logic ila vio
+### }
+### set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam rfdc_repack4 channelizer}
+### proc doa_require_vivado_lock {} {
+###     if {$::VIVADO_LOCK_VERSION ne $::VIVADO_LOCK_CERTIFIED} {
+###         error "Vivado lock: config/ip_versions.tcl is certified only for \
+### $::VIVADO_LOCK_CERTIFIED, but EXPECTED_VIVADO_VERSION=$::VIVADO_LOCK_VERSION. \
+### Re-verify every VLNV in this file for that release before changing the lock."
+###     }
+###     set running [version -short]
+###     if {[string first $::VIVADO_LOCK_VERSION $running] == -1} {
+###         error "Vivado lock: need Vivado $::VIVADO_LOCK_VERSION, running $running. \
+### Do not let another Vivado release open/upgrade this project.  If an upgrade \
+### is intended, follow the BD-Tcl guard procedure: run the design in \
+### $::VIVADO_LOCK_VERSION, open it in the new release, use Report IP Status to \
+### upgrade, then write_bd_tcl and re-certify config/ip_versions.tcl."
+###     }
+###     puts "DOA version lock OK: Vivado $running, part $::PART_PINNED, board $::BOARD_PART_PINNED"
+### }
+### proc doa_pinned_ip {key} {
+###     if {![info exists ::IPVLNV($key)]} {
+###         error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+###     }
+###     set vlnv $::IPVLNV($key)
+###     set defs [get_ipdefs -all -filter "VLNV == $vlnv"]
+###     if {[llength $defs] != 1} {
+###         set ip_name [lindex [split $vlnv :] 2]
+###         set available [get_ipdefs -all -filter "NAME == $ip_name"]
+###         error "Pinned IP for key '$key' not found exactly once: $vlnv \
+### (found [llength $defs]).  Available definitions for NAME=$ip_name: $available. \
+### Fix config/ip_versions.tcl (one line) or rebuild the custom IP -- do not \
+### fall back to a wildcard."
+###     }
+###     return $vlnv
+### }
+### proc doa_create_pinned_ip {key instance} {
+###     return [create_bd_cell -type ip -vlnv [doa_pinned_ip $key] $instance]
+### }
+## proc require_env {name} {
+##     if {![info exists ::env($name)] || [string trim $::env($name)] eq ""} {
+##         error "Required environment variable $name is empty"
+##     }
+##     return $::env($name)
+## }
+## proc doa_append_ip_repo_paths {new_paths} {
+##     set merged {}
+##     foreach path [concat $new_paths [get_property ip_repo_paths [current_project]]] {
+##         set norm [file normalize $path]
+##         if {[lsearch -exact $merged $norm] < 0} { lappend merged $norm }
+##     }
+##     set_property ip_repo_paths $merged [current_project]
+##     update_ip_catalog
+##     return $merged
+## }
+## proc open_work_project {} {
+##     doa_require_vivado_lock
+##     set project [file normalize [require_env WORK_XPR]]
+##     if {![file exists $project]} {
+##         error "Working project not found: $project. Run step07_vivado_project first."
+##     }
+##     open_project $project
+##     set expected_part [require_env PART]
+##     if {[get_property PART [current_project]] ne $expected_part} {
+##         error "Project part [get_property PART [current_project]] does not match $expected_part"
+##     }
+##     set board [get_property BOARD_PART [current_project]]
+##     if {$board ne "" && $board ne $::BOARD_PART_PINNED} {
+##         error "Project board part '$board' does not match pinned '$::BOARD_PART_PINNED' (config/ip_versions.tcl)"
+##     }
+## }
+## proc select_base_bd {} {
+##     set requested ""
+##     if {[info exists ::env(BASE_BD)]} { set requested [string trim $::env(BASE_BD)] }
+##     if {$requested ne ""} {
+##         set candidates [get_files -quiet -all */${requested}.bd]
+##     } else {
+##         set candidates [get_files -quiet -all *.bd]
+##     }
+##     if {[llength $candidates] != 1} {
+##         error "Expected exactly one base BD (or set BASE_BD); found: $candidates"
+##     }
+##     open_bd_design [lindex $candidates 0]
+##     return [current_bd_design]
+## }
+## proc ensure_output_directory {} {
+##     set build [file normalize [require_env BUILD]]
+##     set output [file join $build output]
+##     file mkdir $output
+##     return $output
+## }
+## proc require_successful_run {run_name} {
+##     set run [get_runs -quiet $run_name]
+##     if {[llength $run] != 1} { error "Vivado run $run_name does not exist" }
+##     set status [get_property STATUS $run]
+##     if {![string match "*Complete*" $status]} {
+##         error "Vivado run $run_name is not complete: $status"
+##     }
+## }
+# open_work_project
+DOA version lock OK: Vivado 2023.2, part xczu48dr-fsvg1517-2-e, board xilinx.com:zcu208:part0:2.0
+Scanning sources...
+Finished scanning sources
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1700] Loaded user IP repository '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo'.
+INFO: [IP_Flow 19-1700] Loaded user IP repository '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/mts_base_src_2023p2/boards/ip'.
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/media/joshua/Linux/Programs/X20232/Vivado/2023.2/data/ip'.
+WARNING: [filemgmt 56-443] The ECC Algorithm string is empty. Setting the Memory Map to default ECC value to ECC_NONE.
+WARNING: [filemgmt 56-443] The ECC Algorithm string is empty. Setting the Memory Map to default ECC value to ECC_NONE.
+# set ip_repo [file normalize [require_env IP_REPO]]
+# doa_append_ip_repo_paths [list $ip_repo]
+INFO: [IP_Flow 19-1839] IP Catalog is up to date.
+# select_base_bd
+Reading block design file </media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/vivado/doa_v7_zcu208/doa_v7_zcu208.srcs/sources_1/bd/mts/mts.bd>...
+Adding component instance block -- xilinx.com:ip:axis_broadcaster:1.1 - axis_broadcaster_0
+Adding component instance block -- xilinx.com:ip:util_ds_buf:2.2 - BUFG_PL_CLK
+Adding component instance block -- xilinx.com:ip:util_ds_buf:2.2 - IBUFDS_PL_CLK
+Adding component instance block -- xilinx.com:ip:util_ds_buf:2.2 - IBUFDS_SYSREF
+Adding component instance block -- xilinx.com:ip:clk_wiz:6.0 - MTSclkwiz
+Adding component instance block -- xilinx.com:ip:proc_sys_reset:5.0 - PSreset_control
+Adding component instance block -- xilinx.com:ip:proc_sys_reset:5.0 - RFegressReset
+Adding component instance block -- xilinx.com:ip:proc_sys_reset:5.0 - RFingressReset
+Adding component instance block -- xilinx.com:ip:xpm_cdc_gen:1.0 - synchronizeSYSREF
+Adding component instance block -- xilinx.com:ip:axi_interconnect:2.1 - control_interconnect
+Adding component instance block -- xilinx.com:ip:axi_crossbar:2.1 - xbar
+Adding component instance block -- xilinx.com:ip:axi_protocol_converter:2.1 - auto_pc
+Adding component instance block -- xilinx.com:ip:ddr4:2.2 - ddr4_0
+Adding component instance block -- xilinx.com:ip:axi_dma:7.1 - axi_dma_adc
+Adding component instance block -- xilinx.com:ip:axis_data_fifo:2.0 - axis_data_fifo_adc
+Adding component instance block -- xilinx.com:ip:axis_dwidth_converter:1.1 - axis_dwidth_converter_0
+Adding component instance block -- xilinx.com:ip:proc_sys_reset:5.0 - rst_ddr4_0_333M
+Adding component instance block -- xilinx.com:ip:xlconstant:1.1 - xlconstant_0
+Adding component instance block -- xilinx.com:ip:xlconstant:1.1 - xlconstant_1
+Adding component instance block -- xilinx.com:ip:axi_gpio:2.0 - axi_gpio_bram_adc
+Adding component instance block -- xilinx.com:ip:axi_gpio:2.0 - axi_gpio_dac
+Adding component instance block -- xilinx.com:ip:axi_gpio:2.0 - axi_gpio_fifoflush
+Adding component instance block -- xilinx.com:ip:axi_gpio:2.0 - axi_gpio_spi_mux
+Adding component instance block -- xilinx.com:ip:xpm_cdc_gen:1.0 - xpm_cdc_gen_0
+Adding component instance block -- xilinx.com:module_ref:ADCRAMcapture:1.0 - ADCRAMcapture_0
+INFO: [IP_Flow 19-1976] HDL Parser: Replacing 'TRIGCAP_HI' by 15 for port or parameter 'trig_cap_p'
+INFO: [IP_Flow 19-5107] Inferred bus interface 'BRAM_A' of definition 'xilinx.com:interface:bram:1.0' (from X_INTERFACE_INFO parameter from HDL file).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'BRAM_A' of definition 'xilinx.com:interface:bram:1.0' (from 'X_INTERFACE_INFO' attribute).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis_clk' of definition 'xilinx.com:signal:clock:1.0' (from X_INTERFACE_INFO parameter from HDL file).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis_clk' of definition 'xilinx.com:signal:clock:1.0' (from 'X_INTERFACE_INFO' attribute).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis_aresetn' of definition 'xilinx.com:signal:reset:1.0' (from X_INTERFACE_INFO parameter from HDL file).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis_aresetn' of definition 'xilinx.com:signal:reset:1.0' (from 'X_INTERFACE_INFO' attribute).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'CAP_AXIS' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-4728] Bus Interface 'axis_clk': Added interface parameter 'ASSOCIATED_RESET' with value 'axis_aresetn'.
+INFO: [IP_Flow 19-4728] Bus Interface 'BRAM_A': Added interface parameter 'MASTER_TYPE' with value 'BRAM_CTRL'.
+INFO: [IP_Flow 19-4728] Bus Interface 'BRAM_A': Added interface parameter 'READ_WRITE_MODE' with value 'READ'.
+INFO: [IP_Flow 19-4728] Bus Interface 'BRAM_A': Added interface parameter 'MEM_SIZE' with value '32768'.
+INFO: [IP_Flow 19-4728] Bus Interface 'BRAM_A': Added interface parameter 'MEM_WIDTH' with value '256'.
+INFO: [IP_Flow 19-4728] Bus Interface 'axis_clk': Added interface parameter 'ASSOCIATED_BUSIF' with value 'CAP_AXIS'.
+WARNING: [IP_Flow 19-11770] Clock interface 'axis_clk' has no FREQ_HZ parameter.
+INFO: [IP_Flow 19-5107] Inferred bus interface 'BRAM_A' of definition 'xilinx.com:interface:bram:1.0' (from X_INTERFACE_INFO parameter from HDL file).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'BRAM_A' of definition 'xilinx.com:interface:bram:1.0' (from 'X_INTERFACE_INFO' attribute).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis_clk' of definition 'xilinx.com:signal:clock:1.0' (from X_INTERFACE_INFO parameter from HDL file).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis_clk' of definition 'xilinx.com:signal:clock:1.0' (from 'X_INTERFACE_INFO' attribute).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis_aresetn' of definition 'xilinx.com:signal:reset:1.0' (from X_INTERFACE_INFO parameter from HDL file).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis_aresetn' of definition 'xilinx.com:signal:reset:1.0' (from 'X_INTERFACE_INFO' attribute).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'axis' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-4728] Bus Interface 'axis_clk': Added interface parameter 'ASSOCIATED_BUSIF' with value 'axis'.
+INFO: [IP_Flow 19-4728] Bus Interface 'axis_clk': Added interface parameter 'ASSOCIATED_RESET' with value 'axis_aresetn'.
+INFO: [IP_Flow 19-4728] Bus Interface 'BRAM_A': Added interface parameter 'MASTER_TYPE' with value 'BRAM_CTRL'.
+INFO: [IP_Flow 19-4728] Bus Interface 'BRAM_A': Added interface parameter 'READ_WRITE_MODE' with value 'READ'.
+INFO: [IP_Flow 19-4728] Bus Interface 'BRAM_A': Added interface parameter 'MEM_SIZE' with value '131072'.
+INFO: [IP_Flow 19-4728] Bus Interface 'BRAM_A': Added interface parameter 'MEM_WIDTH' with value '256'.
+WARNING: [IP_Flow 19-11770] Clock interface 'axis_clk' has no FREQ_HZ parameter.
+WARNING: [IP_Flow 19-3158] Bus Interface 'axis': FREQ_HZ bus parameter missing from AXI interface when interface is not associated to a clock.
+Adding component instance block -- xilinx.com:ip:axi_bram_ctrl:4.1 - axi_bram_ctrl_0
+Adding component instance block -- xilinx.com:ip:axis_clock_converter:1.1 - axis_clock_converter_0
+Adding component instance block -- xilinx.com:ip:axis_dwidth_converter:1.1 - axis_dwidth_converter_0
+Adding component instance block -- xilinx.com:ip:blk_mem_gen:8.4 - blk_mem_gen_0
+Adding component instance block -- xilinx.com:module_ref:ADCRAMcapture:1.0 - ADCRAMcapture_0
+Adding component instance block -- xilinx.com:ip:axi_bram_ctrl:4.1 - axi_bram_ctrl_0
+Adding component instance block -- xilinx.com:ip:axis_clock_converter:1.1 - axis_clock_converter_0
+Adding component instance block -- xilinx.com:ip:axis_dwidth_converter:1.1 - axis_dwidth_converter_0
+Adding component instance block -- xilinx.com:ip:blk_mem_gen:8.4 - blk_mem_gen_0
+Adding component instance block -- xilinx.com:module_ref:ADCRAMcapture:1.0 - ADCRAMcapture_0
+Adding component instance block -- xilinx.com:ip:axi_bram_ctrl:4.1 - axi_bram_ctrl_0
+Adding component instance block -- xilinx.com:ip:axis_clock_converter:1.1 - axis_clock_converter_0
+Adding component instance block -- xilinx.com:ip:axis_dwidth_converter:1.1 - axis_dwidth_converter_0
+Adding component instance block -- xilinx.com:ip:blk_mem_gen:8.4 - blk_mem_gen_0
+Adding component instance block -- xilinx.com:module_ref:ADCRAMcapture:1.0 - ADCRAMcapture_0
+Adding component instance block -- xilinx.com:ip:axi_bram_ctrl:4.1 - axi_bram_ctrl_0
+Adding component instance block -- xilinx.com:ip:axis_clock_converter:1.1 - axis_clock_converter_0
+Adding component instance block -- xilinx.com:ip:axis_dwidth_converter:1.1 - axis_dwidth_converter_0
+Adding component instance block -- xilinx.com:ip:blk_mem_gen:8.4 - blk_mem_gen_0
+Adding component instance block -- xilinx.com:module_ref:DACRAMstreamer:1.0 - DACRAMstreamer_0
+Adding component instance block -- xilinx.com:ip:axi_bram_ctrl:4.1 - axi_bram_ctrl_0
+Adding component instance block -- xilinx.com:ip:axis_clock_converter:1.1 - axis_clock_converter_0
+Adding component instance block -- xilinx.com:ip:axis_dwidth_converter:1.1 - axis_dwidth_converter_0
+Adding component instance block -- xilinx.com:ip:axis_register_slice:1.1 - axis_register_slice_0
+Adding component instance block -- xilinx.com:ip:blk_mem_gen:8.4 - blk_mem_gen_0
+Adding component instance block -- xilinx.com:ip:xlconstant:1.1 - xlconstant_0
+Adding component instance block -- xilinx.com:ip:axi_interconnect:2.1 - internalRAM_interconnect
+Adding component instance block -- xilinx.com:ip:axi_crossbar:2.1 - xbar
+Adding component instance block -- xilinx.com:ip:axi_dwidth_converter:2.1 - auto_us
+Adding component instance block -- xilinx.com:ip:axi_register_slice:2.1 - auto_rs
+Adding component instance block -- xilinx.com:ip:axi_register_slice:2.1 - auto_rs_w
+Adding component instance block -- xilinx.com:ip:smartconnect:1.0 - smartconnect_0
+Adding component instance block -- xilinx.com:ip:usp_rf_data_converter:2.6 - usp_rf_data_converter_1
+INFO: Ultrascale+ RF Data Converter instance: Clock port 'adc0_clk' frequency is set to 250000000
+INFO: Ultrascale+ RF Data Converter instance: Clock port 'adc1_clk' frequency is set to 250000000
+INFO: Ultrascale+ RF Data Converter instance: Clock port 'dac0_clk' frequency is set to 500000000
+INFO: Ultrascale+ RF Data Converter instance: Clock port 'dac1_clk' frequency is set to 500000000
+INFO: Ultrascale+ RF Data Converter instance: Clock port 'dac2_clk' frequency is set to 500000000
+Adding component instance block -- xilinx.com:ip:xlconcat:2.1 - xlconcat_0
+Adding component instance block -- xilinx.com:ip:zynq_ultra_ps_e:3.5 - zynq_ultra_ps_e_0
+Successfully read diagram <mts> from block design file </media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/vivado/doa_v7_zcu208/doa_v7_zcu208.srcs/sources_1/bd/mts/mts.bd>
+# source [file join $script_dir create_doa_v7_hier.tcl]
+## proc create_doa_v7_hier {parent name} {
+##     set old [current_bd_instance .]
+##     current_bd_instance $parent
+##     if {[llength [get_bd_cells -quiet $name]]} { error "BD cell $name already exists" }
+##     create_bd_cell -type hier $name
+##     current_bd_instance $name
+## 
+##     create_bd_pin -dir I -type clk aclk
+##     create_bd_pin -dir I -type rst aresetn
+##     set_property CONFIG.POLARITY ACTIVE_LOW [get_bd_pins aresetn]
+##     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 S_AXIS_SEARCH
+##     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 S_AXIS_DOA_CAPTURE
+##     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 S_AXIS_BEAM_MONITOR
+##     create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 M_AXIS_CANDIDATE
+##     create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 M_AXIS_COVARIANCE
+##     create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 M_AXIS_BEAM
+##     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_COV_CTRL
+##     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_CANDIDATE_CTRL
+##     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_BEAM_CTRL
+## 
+##     set covariance [doa_create_pinned_ip covariance covariance]
+##     set power [doa_create_pinned_ip spectrum spectrum_power]
+##     set candidate [doa_create_pinned_ip candidate candidate_peak]
+##     set beam [doa_create_pinned_ip beam beam_monitor]
+##     set candidate_fifo [doa_create_pinned_ip axis_data_fifo candidate_fifo]
+##     set covariance_fifo [doa_create_pinned_ip axis_data_fifo covariance_fifo]
+##     set_property -dict [list CONFIG.FIFO_DEPTH {32}] $candidate_fifo
+##     set_property -dict [list CONFIG.FIFO_DEPTH {32}] $covariance_fifo
+## 
+##     connect_bd_net [get_bd_pins aclk] [get_bd_pins covariance/ap_clk] [get_bd_pins spectrum_power/ap_clk] [get_bd_pins candidate_peak/ap_clk] [get_bd_pins beam_monitor/ap_clk] [get_bd_pins candidate_fifo/s_axis_aclk] [get_bd_pins covariance_fifo/s_axis_aclk]
+##     connect_bd_net [get_bd_pins aresetn] [get_bd_pins covariance/ap_rst_n] [get_bd_pins spectrum_power/ap_rst_n] [get_bd_pins candidate_peak/ap_rst_n] [get_bd_pins beam_monitor/ap_rst_n] [get_bd_pins candidate_fifo/s_axis_aresetn] [get_bd_pins covariance_fifo/s_axis_aresetn]
+##     connect_bd_intf_net [get_bd_intf_pins S_AXIS_DOA_CAPTURE] [get_bd_intf_pins covariance/s_axis]
+##     connect_bd_intf_net [get_bd_intf_pins covariance/m_axis] [get_bd_intf_pins covariance_fifo/S_AXIS]
+##     connect_bd_intf_net [get_bd_intf_pins covariance_fifo/M_AXIS] [get_bd_intf_pins M_AXIS_COVARIANCE]
+##     connect_bd_intf_net [get_bd_intf_pins S_AXIS_SEARCH] [get_bd_intf_pins spectrum_power/s_axis]
+##     connect_bd_intf_net [get_bd_intf_pins spectrum_power/m_axis] [get_bd_intf_pins candidate_peak/s_axis]
+##     connect_bd_intf_net [get_bd_intf_pins candidate_peak/m_axis] [get_bd_intf_pins candidate_fifo/S_AXIS]
+##     connect_bd_intf_net [get_bd_intf_pins candidate_fifo/M_AXIS] [get_bd_intf_pins M_AXIS_CANDIDATE]
+##     connect_bd_intf_net [get_bd_intf_pins S_AXIS_BEAM_MONITOR] [get_bd_intf_pins beam_monitor/s_axis]
+##     connect_bd_intf_net [get_bd_intf_pins beam_monitor/m_axis] [get_bd_intf_pins M_AXIS_BEAM]
+##     connect_bd_intf_net [get_bd_intf_pins S_AXI_COV_CTRL] [get_bd_intf_pins covariance/s_axi_ctrl]
+##     connect_bd_intf_net [get_bd_intf_pins S_AXI_CANDIDATE_CTRL] [get_bd_intf_pins candidate_peak/s_axi_ctrl]
+##     connect_bd_intf_net [get_bd_intf_pins S_AXI_BEAM_CTRL] [get_bd_intf_pins beam_monitor/s_axi_ctrl]
+## 
+##     set_property CONFIG.ASSOCIATED_BUSIF {S_AXIS_SEARCH:S_AXIS_DOA_CAPTURE:S_AXIS_BEAM_MONITOR:M_AXIS_CANDIDATE:M_AXIS_COVARIANCE:M_AXIS_BEAM:S_AXI_COV_CTRL:S_AXI_CANDIDATE_CTRL:S_AXI_BEAM_CTRL} [get_bd_pins aclk]
+##     set_property CONFIG.ASSOCIATED_RESET {aresetn} [get_bd_pins aclk]
+## 
+##     current_bd_instance $old
+##     return [get_bd_cells $parent/$name]
+## }
+# if {[llength [get_bd_cells -quiet /doa_v7]]} {
+#     puts "Replacing existing generated hierarchy /doa_v7"
+#     delete_bd_objs [get_bd_cells /doa_v7]
+# }
+CRITICAL WARNING: [BD 41-737] Cannot set the parameter POLARITY on /doa_v7/aresetn. It is read-only.
+CRITICAL WARNING: [BD 41-737] Cannot set the parameter ASSOCIATED_BUSIF on /doa_v7/aclk. It is read-only.
+CRITICAL WARNING: [BD 41-737] Cannot set the parameter ASSOCIATED_RESET on /doa_v7/aclk. It is read-only.
+# set hierarchy [create_doa_v7_hier / doa_v7]
+# set map [file normalize [require_env ZCU208_BD_MAP]]
+# if {![file exists $map]} { error "ZCU208_BD_MAP not found: $map" }
+# source $map
+## proc connect_doa_v7_to_base {hier integration_mode} {
+##     if {$integration_mode eq "external_ports"} {
+##         foreach pin {S_AXIS_SEARCH S_AXIS_DOA_CAPTURE S_AXIS_BEAM_MONITOR M_AXIS_CANDIDATE M_AXIS_COVARIANCE M_AXIS_BEAM S_AXI_COV_CTRL S_AXI_CANDIDATE_CTRL S_AXI_BEAM_CTRL} {
+##             make_bd_intf_pins_external [get_bd_intf_pins ${hier}/${pin}]
+##         }
+##         make_bd_pins_external [get_bd_pins ${hier}/aclk]
+##         make_bd_pins_external [get_bd_pins ${hier}/aresetn]
+##         puts "WARNING: DOA ports were externalized for structural validation only. This is not a deployable RFDC connection."
+##         return
+##     }
+##     error {Production map not filled in. Edit config/zcu208_bd_map.tcl to connect:
+##   S_AXIS_SEARCH       <- continuous RFDC/DDC/channelizer stream
+##   S_AXIS_DOA_CAPTURE  <- candidate-triggered 4096-sample capture FIFO
+##   S_AXIS_BEAM_MONITOR <- optional independently buffered diagnostic stream
+##   M_AXIS_CANDIDATE    -> candidate FIFO/interrupt (bin, valid, peak, average)
+##   M_AXIS_COVARIANCE   -> AXI DMA/FIFO to R5/A53 (16 signed int64 words)
+##   S_AXI_*_CTRL        <- PS AXI master through SmartConnect
+##   aclk/aresetn        <- the verified stream clock/reset domain
+## Then call assign_bd_address for both control slaves. For a wiring-only test use INTEGRATION_MODE=external_ports.}
+## }
+# set mode [expr {[info exists ::env(INTEGRATION_MODE)] ? $::env(INTEGRATION_MODE) : "mapped"}]
+# connect_doa_v7_to_base doa_v7 $mode
+Production map not filled in. Edit config/zcu208_bd_map.tcl to connect:
+  S_AXIS_SEARCH       <- continuous RFDC/DDC/channelizer stream
+  S_AXIS_DOA_CAPTURE  <- candidate-triggered 4096-sample capture FIFO
+  S_AXIS_BEAM_MONITOR <- optional independently buffered diagnostic stream
+  M_AXIS_CANDIDATE    -> candidate FIFO/interrupt (bin, valid, peak, average)
+  M_AXIS_COVARIANCE   -> AXI DMA/FIFO to R5/A53 (16 signed int64 words)
+  S_AXI_*_CTRL        <- PS AXI master through SmartConnect
+  aclk/aresetn        <- the verified stream clock/reset domain
+Then call assign_bd_address for both control slaves. For a wiring-only test use INTEGRATION_MODE=external_ports.
+    while executing
+"error {Production map not filled in. Edit config/zcu208_bd_map.tcl to connect:
+  S_AXIS_SEARCH       <- continuous RFDC/DDC/channelizer stream
+  S_AXI..."
+    (procedure "connect_doa_v7_to_base" line 11)
+    invoked from within
+"connect_doa_v7_to_base doa_v7 $mode"
+    (file "common/vivado/08_integrate_doa_v7.tcl" line 18)
+INFO: [Common 17-206] Exiting Vivado at Thu Nov  5 12:11:18 2026...
+finished_utc=2026-11-05T08:41:22Z
+result=FAIL exit_code=1

@@ -1,0 +1,149 @@
+stage=step05_hls_repack
+started_utc=2026-11-05T08:35:11Z
+command=make --no-print-directory -C ip/custom/rfdc_repack4 all 
+vitis_hls -f build_hls.tcl
+
+****** Vitis HLS - High-Level Synthesis from C, C++ and OpenCL v2023.2 (64-bit)
+  **** SW Build 4023990 on Oct 11 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /media/joshua/Linux/Programs/X20232/Vitis_HLS/2023.2/scripts/vitis_hls/hls.tcl -notrace
+INFO: [HLS 200-10] Running '/media/joshua/Linux/Programs/X20232/Vitis_HLS/2023.2/bin/unwrapped/lnx64.o/vitis_hls'
+INFO: [HLS 200-10] For user 'joshua' on host 'joshua-System-Product-Name' (Linux_x86_64 version 6.8.0-138-generic) on Thu Nov 05 12:05:12 +0330 2026
+INFO: [HLS 200-10] On os Ubuntu 22.04.5 LTS
+INFO: [HLS 200-10] In directory '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4'
+INFO: [HLS 200-2053] The vitis_hls executable is being deprecated. Consider using vitis-run --mode hls --tcl
+Sourcing Tcl script 'build_hls.tcl'
+INFO: [HLS 200-1510] Running: open_project -reset rfdc_repack4_hls 
+INFO: [HLS 200-10] Creating and opening project '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls'.
+INFO: [HLS 200-1510] Running: add_files src/rfdc_repack4.cpp -cflags -Isrc 
+INFO: [HLS 200-10] Adding design file 'src/rfdc_repack4.cpp' to the project
+INFO: [HLS 200-1510] Running: add_files -tb tb/rfdc_repack4_tb.cpp -cflags -Isrc 
+INFO: [HLS 200-10] Adding test bench file 'tb/rfdc_repack4_tb.cpp' to the project
+INFO: [HLS 200-1510] Running: set_top rfdc_repack4 
+INFO: [HLS 200-1510] Running: open_solution -reset solution1 
+INFO: [HLS 200-10] Creating and opening solution '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1'.
+INFO: [HLS 200-10] Cleaning up the solution database.
+INFO: [HLS 200-1505] Using default flow_target 'vivado'
+Resolution: For help on HLS 200-1505 see docs.xilinx.com/access/sources/dita/topic?Doc_Version=2023.2%20English&url=ug1448-hls-guidance&resourceid=200-1505.html
+INFO: [HLS 200-1510] Running: set_part xczu48dr-fsvg1517-2-e 
+INFO: [HLS 200-1611] Setting target device to 'xczu48dr-fsvg1517-2-e'
+INFO: [HLS 200-1510] Running: create_clock -period 4.0 -name default 
+INFO: [SYN 201-201] Setting up clock 'default' with a period of 4ns.
+INFO: [HLS 200-1510] Running: config_export -format ip_catalog -rtl verilog -vendor openai -library doa -version 1.0 -display_name RFDC Four-Channel SSR-8 I/Q Repack 
+INFO: [HLS 200-1510] Running: csim_design 
+INFO: [SIM 211-2] *************** CSIM start ***************
+INFO: [SIM 211-4] CSIM will launch GCC as the compiler.
+INFO: [HLS 200-2036] Building debug C Simulation binaries
+   Compiling ../../../../tb/rfdc_repack4_tb.cpp in debug mode
+   Compiling ../../../../src/rfdc_repack4.cpp in debug mode
+   Generating csim.exe
+PASS: rfdc_repack4 SSR-8 I/Q packing, 5 beats x 4 channels x 8 lanes
+INFO [HLS SIM]: The maximum depth reached by any hls::stream() instance in the design is 1
+INFO: [SIM 211-1] CSim done with 0 errors.
+INFO: [SIM 211-3] *************** CSIM finish ***************
+INFO: [HLS 200-111] Finished Command csim_design CPU user time: 1.5 seconds. CPU system time: 0.26 seconds. Elapsed time: 1.77 seconds; current allocated memory: 0.141 MB.
+INFO: [HLS 200-1510] Running: csynth_design 
+INFO: [HLS 200-111] Finished File checks and directory preparation: CPU user time: 0.03 seconds. CPU system time: 0 seconds. Elapsed time: 0.03 seconds; current allocated memory: 299.543 MB.
+INFO: [HLS 200-10] Analyzing design file 'src/rfdc_repack4.cpp' ... 
+INFO: [HLS 200-111] Finished Source Code Analysis and Preprocessing: CPU user time: 1.13 seconds. CPU system time: 0.25 seconds. Elapsed time: 1.38 seconds; current allocated memory: 301.992 MB.
+INFO: [HLS 200-777] Using interface defaults for 'Vivado' flow target.
+INFO: [HLS 200-1995] There were 1,210 instructions in the design after the 'Compile/Link' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 350 instructions in the design after the 'Unroll/Inline (step 1)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 346 instructions in the design after the 'Unroll/Inline (step 2)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 346 instructions in the design after the 'Unroll/Inline (step 3)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Unroll/Inline (step 4)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Array/Struct (step 1)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Array/Struct (step 2)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Array/Struct (step 3)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Array/Struct (step 4)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Array/Struct (step 5)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Performance (step 1)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Performance (step 2)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Performance (step 3)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 286 instructions in the design after the 'Performance (step 4)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 298 instructions in the design after the 'HW Transforms (step 1)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 200-1995] There were 324 instructions in the design after the 'HW Transforms (step 2)' phase of compilation. See the Design Size Report for more details: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/syn/report/csynth_design_size.rpt
+INFO: [HLS 214-131] Inlining function 'pack_iq_ssr8(ap_uint<128>, ap_uint<128>)' into 'rfdc_repack4' (src/rfdc_repack4.cpp:57:22)
+INFO: [HLS 214-131] Inlining function 'pack_iq_ssr8(ap_uint<128>, ap_uint<128>)' into 'rfdc_repack4' (src/rfdc_repack4.cpp:56:22)
+INFO: [HLS 214-131] Inlining function 'pack_iq_ssr8(ap_uint<128>, ap_uint<128>)' into 'rfdc_repack4' (src/rfdc_repack4.cpp:55:22)
+INFO: [HLS 214-131] Inlining function 'pack_iq_ssr8(ap_uint<128>, ap_uint<128>)' into 'rfdc_repack4' (src/rfdc_repack4.cpp:54:22)
+INFO: [HLS 214-291] Loop 'pack_lane' is marked as complete unroll implied by the pipeline pragma (src/rfdc_repack4.cpp:9:5)
+INFO: [HLS 214-186] Unrolling loop 'pack_lane' (src/rfdc_repack4.cpp:9:5) in function 'rfdc_repack4' completely with a factor of 8 (src/rfdc_repack4.cpp:25:0)
+INFO: [HLS 200-111] Finished Compiling Optimization and Transform: CPU user time: 1.07 seconds. CPU system time: 0.21 seconds. Elapsed time: 6.13 seconds; current allocated memory: 303.539 MB.
+INFO: [HLS 200-111] Finished Checking Pragmas: CPU user time: 0 seconds. CPU system time: 0 seconds. Elapsed time: 0 seconds; current allocated memory: 303.539 MB.
+INFO: [HLS 200-10] Starting code transformations ...
+INFO: [HLS 200-111] Finished Standard Transforms: CPU user time: 0 seconds. CPU system time: 0 seconds. Elapsed time: 0 seconds; current allocated memory: 303.902 MB.
+INFO: [HLS 200-10] Checking synthesizability ...
+INFO: [HLS 200-111] Finished Checking Synthesizability: CPU user time: 0.01 seconds. CPU system time: 0 seconds. Elapsed time: 0.01 seconds; current allocated memory: 303.984 MB.
+INFO: [HLS 200-111] Finished Loop, function and other optimizations: CPU user time: 0.02 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.02 seconds; current allocated memory: 325.227 MB.
+INFO: [HLS 200-111] Finished Architecture Synthesis: CPU user time: 0.01 seconds. CPU system time: 0 seconds. Elapsed time: 0.02 seconds; current allocated memory: 325.227 MB.
+INFO: [HLS 200-10] Starting hardware synthesis ...
+INFO: [HLS 200-10] Synthesizing 'rfdc_repack4' ...
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-42] -- Implementing module 'rfdc_repack4' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [SCHED 204-11] Starting scheduling ...
+INFO: [SCHED 204-61] Pipelining function 'rfdc_repack4'.
+INFO: [HLS 200-1470] Pipelining result : Target II = 1, Final II = 1, Depth = 2, function 'rfdc_repack4'
+INFO: [SCHED 204-11] Finished scheduling.
+INFO: [HLS 200-111] Finished Scheduling: CPU user time: 0.03 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.04 seconds; current allocated memory: 325.227 MB.
+INFO: [BIND 205-100] Starting micro-architecture generation ...
+INFO: [BIND 205-101] Performing variable lifetime analysis.
+INFO: [BIND 205-101] Exploring resource sharing.
+INFO: [BIND 205-101] Binding ...
+INFO: [BIND 205-100] Finished micro-architecture generation.
+INFO: [HLS 200-111] Finished Binding: CPU user time: 0.01 seconds. CPU system time: 0 seconds. Elapsed time: 0.01 seconds; current allocated memory: 325.227 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-10] -- Generating RTL for module 'rfdc_repack4' 
+INFO: [HLS 200-10] ----------------------------------------------------------------
+WARNING: [RTGEN 206-101] Design contains AXI ports. Reset is fixed to synchronous and active low.
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/s_axis_ch0_i' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/s_axis_ch0_q' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/s_axis_ch1_i' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/s_axis_ch1_q' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/s_axis_ch2_i' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/s_axis_ch2_q' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/s_axis_ch3_i' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/s_axis_ch3_q' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/m_axis_ch0' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/m_axis_ch1' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/m_axis_ch2' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on port 'rfdc_repack4/m_axis_ch3' to 'axis' (register, both mode).
+INFO: [RTGEN 206-500] Setting interface mode on function 'rfdc_repack4' to 'ap_ctrl_none'.
+INFO: [HLS 200-1030] Apply Unified Pipeline Control on module 'rfdc_repack4' pipeline 'rfdc_repack4' pipeline type 'function pipeline'
+INFO: [RTGEN 206-100] Finished creating RTL model for 'rfdc_repack4'.
+INFO: [HLS 200-111] Finished Creating RTL model: CPU user time: 0.02 seconds. CPU system time: 0 seconds. Elapsed time: 0.02 seconds; current allocated memory: 325.227 MB.
+INFO: [HLS 200-111] Finished Generating all RTL models: CPU user time: 0.09 seconds. CPU system time: 0.01 seconds. Elapsed time: 0.1 seconds; current allocated memory: 325.227 MB.
+INFO: [HLS 200-111] Finished Updating report files: CPU user time: 0.14 seconds. CPU system time: 0 seconds. Elapsed time: 0.14 seconds; current allocated memory: 325.957 MB.
+INFO: [VHDL 208-304] Generating VHDL RTL for rfdc_repack4.
+INFO: [VLOG 209-307] Generating Verilog RTL for rfdc_repack4.
+INFO: [HLS 200-789] **** Estimated Fmax: 500.00 MHz
+INFO: [HLS 200-111] Finished Command csynth_design CPU user time: 2.56 seconds. CPU system time: 0.49 seconds. Elapsed time: 7.91 seconds; current allocated memory: 26.875 MB.
+INFO: [HLS 200-1510] Running: export_design 
+INFO: [IMPL 213-8] Exporting RTL as a Vivado IP.
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source run_ippack.tcl -notrace
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/media/joshua/Linux/Programs/X20232/Vivado/2023.2/data/ip'.
+INFO: [Common 17-206] Exiting Vivado at Thu Nov  5 12:05:28 2026...
+INFO: [HLS 200-802] Generated output file rfdc_repack4_hls/solution1/impl/export.zip
+INFO: [HLS 200-111] Finished Command export_design CPU user time: 5.91 seconds. CPU system time: 0.31 seconds. Elapsed time: 8.71 seconds; current allocated memory: 6.270 MB.
+INFO: [HLS 200-112] Total CPU user time: 10.9 seconds. Total CPU system time: 1.19 seconds. Total elapsed time: 19.36 seconds; peak allocated memory: 332.309 MB.
+INFO: [Common 17-206] Exiting vitis_hls at Thu Nov  5 12:05:31 2026...
+PASS packaged VLNV openai:doa:rfdc_repack4:1.0
+rm -rf "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/rfdc_repack4"
+mkdir -p "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/rfdc_repack4"
+cp -a "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/rfdc_repack4/rfdc_repack4_hls/solution1/impl/ip/." "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/rfdc_repack4/"
+result=PASS
