@@ -85,7 +85,21 @@ assign_bd_address
 validate_bd_design
 if {$mode eq "mapped"} {
     doa_post_validate_assertions
-    set addressed_segs [lsort [get_bd_addr_segs -addressed -quiet]]
+    set addr_spaces [lsort -unique [concat \
+        [get_bd_addr_spaces -quiet] \
+        [get_bd_addr_spaces -hier -quiet]]]
+    set addressed_segs {}
+    foreach sp $addr_spaces {
+        set sp_segs [get_bd_addr_segs -quiet -addressed -of_objects $sp]
+        if {[llength $sp_segs] > 0} {
+            set addressed_segs [concat $addressed_segs $sp_segs]
+        }
+    }
+    set hier_segs [get_bd_addr_segs -hier -quiet -addressed]
+    if {[llength $hier_segs] > 0} {
+        set addressed_segs [concat $addressed_segs $hier_segs]
+    }
+    set addressed_segs [lsort -unique $addressed_segs]
     set addr_fh [open [file join $output doa_address_map.txt] w]
     puts $addr_fh "=== ASSIGNED BD ADDRESS SEGMENTS ==="
     foreach seg $addressed_segs {
