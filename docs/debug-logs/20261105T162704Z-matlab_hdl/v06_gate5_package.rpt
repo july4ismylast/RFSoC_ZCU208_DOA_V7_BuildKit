@@ -1,0 +1,16 @@
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+RTL_DIR=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed
+PACKAGE_TOP=channelizer_axis_wrapper
+PACKAGED_HDL_FILE_COUNT=229
+TOP_SOURCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/channelizer_axis_wrapper.v
+DUT_SOURCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT.v
+SUPPORTED_FAMILIES=zynquplusrfsoc Production zynquplus Production
+ACLK_ASSOCIATED_BUSIF=s_axis:m_axis
+ACLK_ASSOCIATED_RESET=aresetn
+PACKAGED_VLNV=openai:doa:matlab_channelizer:7.0
+COMPONENT_XML=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/matlab_channelizer/component.xml
+BD_S_AXIS_BYTES=32
+BD_M_AXIS_BYTES=52
+VHDL_BD_SMOKE_RESULT=PASS
+V06 GATE5 PACKAGE RESULT=PASS
