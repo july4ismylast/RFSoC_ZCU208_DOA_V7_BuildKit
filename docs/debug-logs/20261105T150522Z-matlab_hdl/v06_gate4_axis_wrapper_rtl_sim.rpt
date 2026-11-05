@@ -1,0 +1,13 @@
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+GATE1_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate1_hdl_generation_transposed.rpt
+GATE3_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate3_transposed_numerics.rpt
+GATE4_OOC_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate4_axis_wrapper_ooc.rpt
+GATE4B_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate4_axis_wrapper_sim.rpt
+GOLDEN_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate4_rtl_golden.rpt
+GENERATED_HDL_FILE_COUNT=228
+TESTBENCH=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/tb_channelizer_axis_wrapper_rtl_compare.sv
+COMPARISON=416-bit packed AXIS output exact match against MATLAB fixed-point model
+XSIM_LOG=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate4_axis_wrapper_rtl_sim/xsim.log
+SIMULATION_COMPLETED=1
+V06 GATE4 RTL PAYLOAD SIM RESULT=PASS
