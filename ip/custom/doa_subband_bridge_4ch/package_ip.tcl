@@ -136,7 +136,8 @@ set catch_rc [catch {
     set_property display_name "DOA Four-Channel Subband Stream Bridge" $core
     set_property description "250 MHz 4x SSR-8 channelizer to 512-bit /doa_v7 search/capture/beam bridge with closed-loop candidate bin tracking" $core
     set_property version $ip_version $core
-    set_property supported_families {zynquplusRFSOC Production zynquplus Production} $core
+    set_property supported_families {zynquplusrfsoc Production zynquplus Production} $core
+    sb_log $report_fh "SUPPORTED_FAMILIES=[get_property supported_families $core]"
 
     set expected_busifs {
         s_axis_ch0 s_axis_ch1 s_axis_ch2 s_axis_ch3
@@ -167,11 +168,18 @@ set catch_rc [catch {
     if {[llength $clk_bif] == 0} {
         error "IP Packager failed to infer clock interface 'aclk'"
     }
+    set clk_busif [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects $clk_bif]
+    if {[llength $clk_busif] == 0} {
+        set clk_busif [ipx::add_bus_parameter ASSOCIATED_BUSIF $clk_bif]
+    }
+    set_property value [join $expected_busifs ":"] $clk_busif
     set clk_rst [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects $clk_bif]
     if {[llength $clk_rst] == 0} {
         set clk_rst [ipx::add_bus_parameter ASSOCIATED_RESET $clk_bif]
     }
     set_property value aresetn $clk_rst
+    sb_log $report_fh "ACLK_ASSOCIATED_BUSIF=[get_property value $clk_busif]"
+    sb_log $report_fh "ACLK_ASSOCIATED_RESET=[get_property value $clk_rst]"
 
     # Ensure s_axi_ctrl memory map advertises >= 4 KB so SmartConnect / AXI Interconnect
     # assign_bd_address cleanly allocates a standard 4 KB / 64 KB slave window.

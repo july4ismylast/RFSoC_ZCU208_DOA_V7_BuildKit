@@ -145,6 +145,15 @@ upgrade, then write_bd_tcl and re-certify config/ip_versions.tcl."
     puts "DOA version lock OK: Vivado $running, part $::PART_PINNED, board $::BOARD_PART_PINNED"
 }
 
+# Return the pinned VLNV string for a key directly from config/ip_versions.tcl
+# without requiring an open Vivado project (used by IP packaging and XML checks).
+proc doa_vlnv {key} {
+    if {![info exists ::IPVLNV($key)]} {
+        error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+    }
+    return $::IPVLNV($key)
+}
+
 # Return the exact VLNV for a key, proving that exactly one such IP definition
 # is visible.  Replaces the old find_unique_ipdef (which took the last sorted
 # NAME match, ignoring version) and every "xilinx.com:ip:<name>:*" wildcard.

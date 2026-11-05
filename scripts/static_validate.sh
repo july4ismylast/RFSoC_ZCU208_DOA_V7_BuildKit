@@ -107,7 +107,25 @@ for path in files:
     if stack:
         tok, ln = stack[-1]
         sys.exit(f"Unclosed '{tok}' opened at {path}:{ln}")
-print(f"PASS: Tcl/XDC delimiter check across {len(files)} files")
+
+# Check custom doa_* helper proc definitions vs calls and Vivado family casing
+import re
+defined_procs = set()
+for path in files:
+    txt = path.read_text(encoding="utf-8")
+    if "zynquplusRFSOC" in txt:
+        sys.exit(f"Invalid family casing 'zynquplusRFSOC' (use lowercase 'zynquplusrfsoc') in {path}")
+    for m in re.finditer(r"\bproc\s+([A-Za-z0-9_:]+)", txt):
+        defined_procs.add(m.group(1).lstrip(":"))
+
+for path in files:
+    txt = path.read_text(encoding="utf-8")
+    for m in re.finditer(r"(?:\[|\n\s*)(doa_[A-Za-z0-9_]+)\s", txt):
+        fn = m.group(1)
+        if fn not in defined_procs and not fn.startswith("doa_cdc_"):
+            sys.exit(f"Undefined custom Tcl proc '{fn}' called in {path}")
+
+print(f"PASS: Tcl/XDC delimiter & custom proc check across {len(files)} files")
 PYEOF
 
 if command -v tclsh >/dev/null 2>&1; then

@@ -58,7 +58,12 @@ set catch_rc [catch {
         if {![file isfile $wrapper_file]} {
             error "AXI4-Stream wrapper file is missing: $wrapper_file"
         }
-        lappend files $wrapper_file
+        # channelizer_axis_wrapper.sv is pure IEEE 1364-2001 Verilog; stage a .v
+        # copy for IP packaging so Vivado IPX avoids [IP_Flow 19-5101] (.sv top)
+        # and downstream VHDL target-language Block Designs see a native .v top.
+        set staged_wrapper_v [file join $work_root channelizer_axis_wrapper.v]
+        file copy -force $wrapper_file $staged_wrapper_v
+        lappend files [file normalize $staged_wrapper_v]
         set files [lsort -unique $files]
     }
 
@@ -115,7 +120,8 @@ set catch_rc [catch {
     set_property display_name "MATLAB DSP HDL SSR-8 1024-Band Transposed Channelizer" $core
     set_property description "Single-channel 2.0 GSPS complex SSR-8 1024-band transposed polyphase FFT channelizer with AXI4-Stream wrapper (256-bit in -> 416-bit out)" $core
     set_property version $ip_version $core
-    set_property supported_families {zynquplusRFSOC Production zynquplus Production} $core
+    set_property supported_families {zynquplusrfsoc Production zynquplus Production} $core
+    g5_log $report_fh "SUPPORTED_FAMILIES=[get_property supported_families $core]"
 
     if {$top eq "channelizer_axis_wrapper"} {
         foreach bif_name {s_axis m_axis} {
@@ -139,11 +145,18 @@ set catch_rc [catch {
         if {[llength $clk_bif] == 0} {
             error "IP Packager failed to infer clock interface 'aclk' on $top"
         }
+        set clk_busif [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects $clk_bif]
+        if {[llength $clk_busif] == 0} {
+            set clk_busif [ipx::add_bus_parameter ASSOCIATED_BUSIF $clk_bif]
+        }
+        set_property value "s_axis:m_axis" $clk_busif
         set clk_rst [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects $clk_bif]
         if {[llength $clk_rst] == 0} {
             set clk_rst [ipx::add_bus_parameter ASSOCIATED_RESET $clk_bif]
         }
         set_property value aresetn $clk_rst
+        g5_log $report_fh "ACLK_ASSOCIATED_BUSIF=[get_property value $clk_busif]"
+        g5_log $report_fh "ACLK_ASSOCIATED_RESET=[get_property value $clk_rst]"
     }
 
     ipx::create_xgui_files $core
