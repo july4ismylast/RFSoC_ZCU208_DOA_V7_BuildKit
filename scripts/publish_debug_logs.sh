@@ -12,6 +12,7 @@ fi
 flow="${CHANNELIZER_FLOW:-opfb}"
 case "$flow" in opfb|matlab_hdl|model_composer|external) ;; *) echo 'Invalid CHANNELIZER_FLOW' >&2; exit 2 ;; esac
 build="${BUILD:-$root/build}"
+build="$(realpath -m -- "$build")"
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
 out="docs/debug-logs/${run_id}-${flow}"
 mkdir -p "$(dirname "$out")"
@@ -39,8 +40,41 @@ for stage in "${stages[@]}"; do
         found=$((found + 1))
     fi
 done
+
+# Optional V06 gate artifacts are supplied only by the dedicated wrapper.
+# Keep the resolved paths inside BUILD and copy just the transcript/report,
+# never the generated HDL tree.
+copy_gate_artifact() {
+    local source_path="$1"
+    local source_real size
+    source_real="$(realpath -m -- "$source_path")"
+    case "$source_real" in
+        "$build"/*) ;;
+        *) echo "ERROR: refusing channelizer artifact outside BUILD: $source_path" >&2; exit 2 ;;
+    esac
+    if [[ -s "$source_real" ]]; then
+        size=$(wc -c < "$source_real")
+        if (( size > 15000000 )); then
+            echo "ERROR: refusing oversized channelizer artifact (>15 MB): $source_real" >&2
+            exit 2
+        fi
+        cp -- "$source_real" "$out/$(basename "$source_real")"
+        found=$((found + 1))
+        echo "Included channelizer gate artifact: $(basename "$source_real")"
+    else
+        printf 'Expected channelizer gate artifact was not generated: %s\n' "$source_real" > "$out/channelizer_gate_report_missing.txt"
+        found=$((found + 1))
+    fi
+}
+if [[ -n "${CHANNELIZER_GATE_LOG:-}" ]]; then
+    copy_gate_artifact "$CHANNELIZER_GATE_LOG"
+fi
+if [[ -n "${CHANNELIZER_GATE_REPORT:-}" ]]; then
+    copy_gate_artifact "$CHANNELIZER_GATE_REPORT"
+fi
+
 if (( found == 0 )); then
-    echo "ERROR: no stage logs found under $build/logs" >&2
+    echo "ERROR: no stage logs or channelizer gate artifacts found under $build" >&2
     exit 2
 fi
 inventory="$build/output/step08_base_bd_inventory.txt"
@@ -58,6 +92,9 @@ fi
     printf 'Source commit: %s\n' "$(git rev-parse HEAD)"
     printf 'Branch: %s\n' "$branch"
     printf 'Requested channelizer flow: %s\n' "$flow"
+    if [[ -n "${CHANNELIZER_GATE:-}" ]]; then
+        printf 'Requested V06 channelizer gate: %s\n' "$CHANNELIZER_GATE"
+    fi
     printf 'BUILD: %s\n\n' "$build"
     printf '%-28s %-12s %s\n' STAGE STATUS FINISHED_UTC
     for stage in "${stages[@]}"; do

@@ -47,6 +47,7 @@ help:
 	@echo "Inspect progress:    make status"
 	@echo "Static validation:   make lint"
 	@echo "Dry-run a stage:     make -n step10_synth"
+	@echo "Run/capture V06 gate: make debug-channelizer-gate GATE=gate3-transposed"
 	@echo
 	@echo "Stages (each can be invoked independently):"
 	@echo "  step00_preflight         Check tools, part, versions, and configuration"
@@ -202,6 +203,13 @@ publish-debug-logs:
 debug-stage:
 	@test -n "$(STEP)" || { echo "ERROR: use make debug-stage STEP=stepNN_name"; exit 2; }
 	@bash scripts/run_stage_and_publish_debug.sh "$(STEP)"
+
+# Run one V06 MATLAB-HDL feasibility gate and snapshot its console transcript
+# plus its report, even when the gate fails.
+.PHONY: debug-channelizer-gate
+debug-channelizer-gate:
+	@test -n "$(GATE)" || { echo "ERROR: use make debug-channelizer-gate GATE=gate3-transposed"; exit 2; }
+	@BUILD="$(BUILD)" bash scripts/run_channelizer_gate_and_publish_debug.sh "$(GATE)"
 
 .PHONY: repair-mts-module-refs
 repair-mts-module-refs:
