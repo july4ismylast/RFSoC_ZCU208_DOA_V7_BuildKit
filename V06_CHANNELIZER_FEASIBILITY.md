@@ -30,11 +30,13 @@ LUTs (43.7056%), 282,264/850,560 registers (33.1857%), 754.5/1080
 BRAM Tiles (69.8611%), 20/80 URAM (25%) and 1,251/4272 DSPs
 (29.2837%). That crude screen closes while retaining the entire MTS
 base, whereas MTS plus four systolic channelizers would already use
-396,399 LUTs (93.2089%). Transposed is therefore the clear
-provisional Plan-A resource winner, not yet the production
-selection: Gate-3 numerical ordering/gain/phase remains before the
-production default, AXI4-Stream wrapper, packaging, or any
-V07/`step08` integration is attempted.
+396,399 LUTs (93.2089%). Gate 3 has now passed the transposed
+numerical ordering/gain/phase checks (2026-11-05, MATLAB R2022b), so
+**transposed is selected as the Plan-A channelizer architecture and
+production filter-structure default**. This selects the core
+architecture only; the AXI4-Stream wrapper, packaging, and V07/`step08`
+integration remain unfinished and guarded. The OOC and arithmetic
+budgets are not integrated placement/routing proof.
 
 ## 1. One-channel target contract
 
@@ -59,8 +61,8 @@ AXI4-Stream wrapper contract is frozen.
 
 | Candidate | Why it is considered | Main risk / adaptation | V06 order |
 |---|---|---|---|
-| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle systolic latency; systolic Gate-1 generated 227 Verilog files and Gate-2 met one-channel OOC setup timing at 4.0 ns (WNS +1.630 ns). The transposed A/B then generated 228 files and Gate-2T met setup at WNS +1.829 ns with 351-cycle latency | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**; with the actual 42,263-LUT routed MTS base they would reach 93.2089%, so systolic is no longer a credible integrated fallback. Transposed removes that LUT bottleneck (10,800 FilterBank LUTs, no FilterBank SRLs) but uses 176 BRAM Tiles/channel. The actual MTS base plus four transposed channelizers is nevertheless only 43.7056% LUTs and 69.8611% BRAM Tiles by crude addition, leaving 239,409 LUTs and 325.5 BRAM Tiles before V05/serializer/DOA logic. Four-channel placement/routing, hold, congestion and power remain unproven, as do steady-state scaling/phase and complete bin ordering until Gate 3 runs | **Plan A provisional winner — transposed Gate-2T PASS/material and crude MTS+x4 budget closes; Gate 3 is the next production-selection gate** |
-| **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`. This is also the user's selected **step05/step06 IP-collection flow** (always pass `CHANNELIZER_FLOW=opfb` on the user PC) | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Plan B if Plan A fails API/scaling/resource/timing; collection alone does not close V06 |
+| **MathWorks `dsphdl.Channelizer`** | Already used by the repo harness and shares the `dsp.Channelizer` prototype used by the MATLAB reference. MathWorks documents power-of-two vector inputs in the 2–64 range and FFT lengths up to 2^16 for HDL, so SSR-8/1024 is inside the documented envelope: <https://www.mathworks.com/help/dsphdl/ref/dsphdl.channelizer-system-object.html>. Gate-0 probe v2 passed in R2024a with `Normalize=false`, exact peak bin 192, signed 26-bit/fraction-24 output and 1760-cycle systolic latency; systolic Gate-1 generated 227 Verilog files and Gate-2 met one-channel OOC setup timing at 4.0 ns (WNS +1.630 ns). The transposed A/B then generated 228 files and Gate-2T met setup at WNS +1.829 ns with 351-cycle latency | Four systolic channels alone extrapolate to **83.27% of CLB LUTs**; with the actual 42,263-LUT routed MTS base they would reach 93.2089%, so systolic is no longer a credible integrated fallback. Transposed removes that LUT bottleneck (10,800 FilterBank LUTs, no FilterBank SRLs) but uses 176 BRAM Tiles/channel. The actual MTS base plus four transposed channelizers is nevertheless only 43.7056% LUTs and 69.8611% BRAM Tiles by crude addition, leaving 239,409 LUTs and 325.5 BRAM Tiles before V05/serializer/DOA logic. Four-channel placement/routing, hold, congestion and power remain unproven; Gate 3 now passes the one-channel bin-ordering, steady-state scaling and phase checks | **Plan A selected — transposed Gate-2T resource/timing and Gate-3 numerics pass; next is the AXI4-Stream production wrapper, not BD integration** |
+| **MazinLab RFSoC_OPFB** | Real RFSoC SSR polyphase filter-bank ecosystem; pinned adapters already exist under `ip/upstream_opfb/`; retained as explicit Plan B | Upstream FFT is fixed **16-way × 4096-point** (`ssrfft_16x4096_axis`) and the surrounding HLS/IP interfaces do not match our SSR-8/1024 contract without redesign or a contract change | Fallback only if the selected transposed Plan A later fails integration/timing; collection alone does not close V06 |
 | **AMD FIR Compiler + AMD FFT, hand-assembled SSR PFB** | FIR Compiler 7.2 is already pinned; AMD IP would be native to Vivado 2023.2 | AMD FFT VLNV/version is not yet checked or pinned (required by the V00 rule); commutator, coefficient banks, scaling and SSR ordering become custom design work | Plan C |
 | **Custom HLS/RTL PFB** | Maximum control over interface and scaling | No exact SSR-8/1024 implementation exists in the audited repos; highest verification and timing-closure risk | Last resort |
 
@@ -499,13 +501,13 @@ At x4, transposed channelizers alone use 143,608/425,280 LUTs
 (33.7679%, leaving 281,672), 234,504/850,560 registers (27.5705%),
 704/1080 BRAM tiles (65.1852%, leaving 376), no URAM, and
 1248/4272 DSPs (29.2135%). This makes transposed the clear
-provisional Plan-A architecture and removes systolic as the leading
-candidate. It is **not** yet a production selection: Gate-3 numerical
-proof on the transposed configuration must pass before the
-production default / AXI4-Stream wrapper / packaging change.
-`config.mk` therefore still defaults to systolic for baseline
-reproducibility until that selection commit changes the production
-generation path coherently.
+Plan-A architecture and removes systolic as the leading candidate.
+Gate 3 subsequently passed on MATLAB R2022b, so the transposed
+structure is selected as the Plan-A production core and
+`config.mk` defaults to transposed. This is an architecture selection,
+not a deployable channelizer: the raw Gate-1 top is still a parallel
+data/valid interface, and the AXI4-Stream wrapper, package path, four-channel
+integration, and routed implementation remain open.
 
 #### Actual routed MTS-base budget (crude screen closes, 2026-11-03)
 
@@ -558,71 +560,56 @@ credible fallback if the transposed design later encounters a
 numerical problem; the next fallback investigation would have to be
 a different architecture/Plan B, not a silent default reversion.
 
-### Gate 3 — numerical ordering and phase (implemented; run next)
+### Gate 3 — numerical ordering and phase (PASS, 2026-11-05)
 
-Run exactly:
+Gate 3 passed on the user PC with MATLAB R2022b Update 10. The committed
+console transcript and report are:
+
+- `docs/debug-logs/20261105T134543Z-matlab_hdl/v06_gate3-transposed.log`
+- `docs/debug-logs/20261105T134543Z-matlab_hdl/v06_gate3_transposed_numerics.rpt`
+
+The test exercised the actual `ZU48DRChannelizer` wrapper with the
+Gate-1T/Gate-2T transposed configuration against the floating-point
+`dsp.Channelizer` reference. It performed no HDL generation, IP
+packaging, Vivado run, or block-design modification. The measured
+results were:
+
+- 40 snapshots; first 16 discarded; both padded and no-pad DUT runs
+  measured 351-cycle latency and 5120 valid SSR beats.
+- Signed 26-bit/fraction-24 output. The 16 injected tones were all found
+  at their exact natural-order bins; serialized order is bins 0–7 on
+  the first SSR beat, then bins 8–15, and so on.
+- Selected alignment: 1023-sample prefix, snapshot offset 0, identity
+  reference-column map, phase-correction sign −1. The raw DUT/reference
+  relation and its common per-bin phase term are recorded in the report.
+- Alignment NRMSE `0.000218179`, correlation `0.999999976`.
+  Steady-state NRMSE `0.000182998`, correlation `0.999999983`.
+- Global gain magnitude `1.00000205`, phase `−0.0002925°`;
+  maximum per-tone gain residual `0.000113823` and phase residual
+  `0.0076882°`. The 16 tone bins exactly matched and the minimum
+  neighbor ratio was `1601.70`.
+
+These satisfy the Gate-3 thresholds and select transposed as the Plan-A
+channelizer architecture. The phase relation is common and deterministic;
+this gate does not choose where production hardware applies any phase
+correction. Reproduce and capture the gate with:
 
 ```bash
-make -C ip/matlab/channelizer_hdl gate3-transposed
-cat build/output/v06_gate3_transposed_numerics.rpt
+make debug-channelizer-gate GATE=gate3-transposed
 ```
 
-`v06_gate3_transposed_compare.m` first requires the transposed
-Gate-0, Gate-1 and Gate-2T PASS evidence, the generated transposed
-top, 351-cycle latency and `RESOURCE_IMPROVEMENT_MATERIAL=1`. It
-then steps the actual `ZU48DRChannelizer` wrapper—the same
-HDL-oriented System object used to generate the Gate-1 RTL—with
-`Direct form transposed`, `Normalize=false`, signed 16/15 input and
-the 12,288 `tf()` prototype coefficients. It does not generate HDL,
-package IP, invoke Vivado or modify a block design, and it is not a
-cycle-accurate RTL co-simulation.
+#### Next work: production stream wrapper (not yet a build target)
 
-The deterministic stimulus contains 16 exact-bin complex tones at
-raw bins `1, 18, 35, 68, 133, 198, 255, 320, 447, 511, 514, 645,
-770, 900, 1000, 1023`, covering positive/negative frequencies, the
-DC/Nyquist edges and all eight SSR lanes. The waveform is quantized
-once to signed 16/15; the DUT receives those `fi` values and the
-floating-point `dsp.Channelizer` reference (M=D=1024, same
-12-tap/100 dB prototype) receives `double(fi)`, so input quantization
-is not mistaken for a channelizer mismatch. Forty snapshots are
-collected and the first 16 are discarded before steady-state
-measurements, beyond the 12-snapshot prototype-fill interval.
-
-R2024a does not provide the newer `PreservePhase` property. Gate 3
-therefore uses MathWorks' documented alignment construction in its
-primary DUT run: prepend 1023 zero samples to the sample stream,
-then search only snapshot offsets −2..+2, reference-column maps
-identity/512-shift, and external corrections
-`exp(±j·2πk/1024)` (plus no correction) over transient snapshots.
-A separate no-pad DUT run is logged as a diagnostic. Raw DUT bin
-ordering is also proved independently from the known tone
-frequencies, rather than relying on the potentially shifted order
-returned by `centerFrequencies`.
-
-A Gate-3 PASS must freeze and record:
-
-- first-valid latency of exactly 351 cycles and 5120 valid SSR beats
-  for 40 snapshots in both DUT runs;
-- signed 26-bit/fraction-24 output and its LSB;
-- output scalar order over the 128 SSR-8 beats of one snapshot
-  (beat `floor(k/8)`, lane `mod(k,8)`);
-- exact top-16 tone-bin order and immediate-neighbour isolation;
-- bin index → signed baseband/RF frequency map at 1.953125 MHz
-  spacing around the locked 3.0 GHz centre;
-- selected snapshot offset and reference-column map;
-- the sign/formula of the common per-bin phase correction and the
-  equivalent raw DUT phase relation;
-- global steady-state complex gain within 0.98..1.02 Magnitude and
-  ±2° phase after correction, normalized RMS error ≤0.02 and
-  correlation ≥0.9995;
-- per-tone residual gain ≤3% and residual phase ≤3° relative to the
-  global gain, with stable steady-state Magnitude/phase.
-
-Only after Gate 3 passes for the transposed configuration is Plan A
-selected for the production-default/AXI4-Stream-wrapper/packaging
-step and then V07. If transposed fails Gate 3, first determine
-whether the failure is architecture-specific. Do not silently fall
-back to systolic: the actual MTS budget above shows that it is not
-integrated-fit credible. If neither Plan-A architecture is credible,
-apply the same feasibility gates to the MazinLab OPFB Plan B before
-any production BD work resumes.
+Gate 3 closes one-channel algorithmic feasibility; it does **not** close
+the production interface. Before packaging or `step08`, freeze and
+implement the wrapper contract around the raw Gate-1 transposed core.
+The known data contract is SSR-8 complex signed-16 input at 250 MHz
+(256 data bits/beat), SSR-8 complex signed-26 output (416 data bits/beat),
+1024 natural-order bins per snapshot (128 output beats), and 351 cycles
+of channelizer latency. The generated core exposes raw data/valid and
+clock-enable pins, not AXI4-Stream `TREADY`, `TLAST`, or a backpressure
+contract. The wrapper work must resolve those handshake/frame semantics,
+reset/enable behavior, per-channel latency alignment, and preserve the
+recorded bin/phase convention. Do not bypass the package guard or
+externalize these signals as board pins. The four-channel mapped BD and
+routed implementation remain later gates; Gate 3 is not bitstream proof.

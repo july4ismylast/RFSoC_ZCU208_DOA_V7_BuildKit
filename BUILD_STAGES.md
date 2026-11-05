@@ -103,40 +103,31 @@ Select exactly one implementation:
 | MazinLab OPFB | `CHANNELIZER_FLOW=opfb` | Plan-B only: fetches the pinned set once and builds/imports exactly the ten MazinLab IP definitions used by RFSoC_OPFB `bd/opfb_streaming.tcl` (see `ip/upstream_opfb/README.md`); DOA rate/interface adaptation is still stage V06 |
 | External IP | `CHANNELIZER_FLOW=external EXTERNAL_CHANNELIZER_IP=...` | Previously packaged compatible channelizer |
 
-**Stage V06 warning:** Gates 0 and 1 passed for the production-size
-SSR-8 / 1024-band MATLAB object and its generated one-channel RTL, and
-Gate-2 one-channel OOC synthesis returned script PASS at 4.0 ns. That
-still does not make `step05_channelizer`/`step06_collect_ip` a V06
-completion proof: four systolic channels alone extrapolate to 83.27%
-of CLB LUTs, dominated by FilterBank SRL delay LUTs. Gate-2R's
-same-RTL `AreaMapLargeShiftRegToBRAM` A/B completed with exactly zero
-resource change and is rejected. The isolated Gate-2T
-`Direct form transposed` probe/Gate-1/OOC sequence then passed with a
-material improvement (35,902 LUTs and 176 RAMB36 per channel; x4 =
-33.7679% LUTs but 65.1852% BRAM tiles). The actual routed MTS base
-has since been extracted at 42,263 LUTs / 50.5 BRAM Tiles, so the
-crude MTS + 4× transposed screen closes at 43.7056% LUTs and
-69.8611% BRAM Tiles; the systolic version of that screen would be
-93.2089% LUTs and is not a credible fallback. Transposed is
-therefore the provisional Plan-A winner, but Gate-3 numerical
-ordering/gain/phase (`make -C ip/matlab/channelizer_hdl
-gate3-transposed`) and the AXI4-Stream wrapper remain gated before
-production selection or `step08`. The crude total is not integrated
-placement/routing, hold, congestion or power proof. See
-`V06_CHANNELIZER_FEASIBILITY.md`. MATLAB packaging is blocked in the
-local Makefile until the wrapper contract is frozen.
+**Stage V06 status:** Transposed Gates 0T/1T/2T/3T have passed;
+Gate 3 froze natural bin order, alignment and numerical scaling/phase
+against `dsp.Channelizer`. `config.mk` now selects transposed as the
+Plan-A core/default. Gate 2T measured 35,902 LUTs and 176 RAMB36 per
+channel; the crude MTS + 4× screen is 43.7056% LUTs and 69.8611% BRAM
+Tiles. This is not integrated placement/routing, hold, congestion or
+power proof. The generated top is still a raw vector/data-valid core,
+not the frozen AXI4-Stream wrapper, so MATLAB packaging remains guarded
+and `step08` is not a valid next step. Also, the earlier `step06` PASS
+in debug snapshots came from the OPFB build; it does not prove MATLAB
+IP collection. See `V06_CHANNELIZER_FEASIBILITY.md` for Gate-3 results
+and the remaining wrapper contract.
 
 ### `step06_collect_ip`
 
 Validates every required `component.xml` and writes `ip_manifest.tsv`. It does
 not silently accept an incomplete export.
 
-**User-PC selection:** the OPFB IP set is the collection flow in use, so
-run this step as
-`make rebuild STEP=step06_collect_ip CHANNELIZER_FLOW=opfb`, not with
-the repository default (`matlab_hdl`). This validates the pinned
-MazinLab component set; it does not by itself adapt the native
-SSR-16×4096 OPFB to the V06 SSR-8×1024 production contract.
+**Current MATLAB-HDL selection:** the user has switched the build flow to
+`CHANNELIZER_FLOW=matlab_hdl`. Gate-3 feasibility passes, but the production
+channelizer package is deliberately blocked until its AXI4-Stream wrapper
+contract and package path are complete. Do not treat prior `step06` PASS
+logs as MATLAB collection evidence; those were generated under the earlier
+OPFB flow. The OPFB collection command remains available only for explicit
+Plan-B evaluation.
 
 ### `step07_vivado_project`
 

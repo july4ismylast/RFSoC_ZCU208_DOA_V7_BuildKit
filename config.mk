@@ -91,17 +91,17 @@ CHANNELIZER_STOPBAND_DB ?= 100
 # (0) preserves the tone far above the fixed-point LSB; Normalize=true (1)
 # underflowed at 1024 bands in attempt 1.  OPFB does not use this variable.
 CHANNELIZER_NORMALIZE ?= 0
-# MATLAB dsphdl candidate only: proved baseline is systolic.  The V06
-# Gate-2T A/B may override this to transposed through the dedicated
-# Makefile targets; that does not select transposed for production.
-CHANNELIZER_FILTER_STRUCTURE ?= systolic
+# MATLAB dsphdl candidate only: the transposed structure passed V06
+# Gates 0T/1T/2T/3T and is selected as the Plan-A production architecture.
+# This selects the filter structure only; the AXI4-Stream wrapper and
+# production packaging/integration remain incomplete and guarded.
+CHANNELIZER_FILTER_STRUCTURE ?= transposed
 CHANNELIZER_BIN_SPACING_HZ ?= 1953125
 DOA_CLOCK_HZ ?= 125000000
 
-# matlab_hdl, model_composer, opfb, or external.  Repository default stays
-# matlab_hdl until V06 selects the production implementation; the user PC's
-# step05/step06 IP-collection selection is OPFB, so pass
-# CHANNELIZER_FLOW=opfb explicitly there (see ip/upstream_opfb/README.md).
+# matlab_hdl, model_composer, opfb, or external. MATLAB HDL transposed is
+# the selected Plan-A core, but step05 packaging remains guarded until its
+# AXI4-Stream wrapper is complete. OPFB is retained as explicit Plan B.
 CHANNELIZER_FLOW ?= matlab_hdl
 MODEL_COMPOSER_MODEL ?=
 EXTERNAL_CHANNELIZER_IP ?=

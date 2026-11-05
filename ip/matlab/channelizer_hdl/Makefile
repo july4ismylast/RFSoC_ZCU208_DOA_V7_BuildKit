@@ -4,6 +4,13 @@ TOP ?= Channelizer_DUT
 MATLAB_RUNNER ?= $(ROOT)/scripts/run_matlab_clean.sh
 HDL_TOP_FILE := hdl_prj/hdlsrc/zu48dr_channelizer_ip/$(TOP).v
 HDL_TOP_FILE_TRANSPOSED := hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/$(TOP).v
+ifeq ($(CHANNELIZER_FILTER_STRUCTURE),transposed)
+HDL_SELECTED_TOP_FILE := $(HDL_TOP_FILE_TRANSPOSED)
+HDL_SELECTED_SOURCE_DIR := hdl_prj/hdlsrc_transposed
+else
+HDL_SELECTED_TOP_FILE := $(HDL_TOP_FILE)
+HDL_SELECTED_SOURCE_DIR := hdl_prj/hdlsrc
+endif
 PACKAGED_COMPONENT := $(IP_REPO)/matlab_channelizer/component.xml
 IP_VLNV := $(CUSTOM_IP_VENDOR):$(CUSTOM_IP_LIBRARY):matlab_channelizer:$(IPVER_CHANNELIZER)
 MATLAB_SOURCES := build_model.m generate_hdl.m ZU48DRChannelizer.m
@@ -122,20 +129,20 @@ gate3-transposed: v06_gate3_transposed_compare.m ZU48DRChannelizer.m
 
 model:
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "build_model"
-hdl: $(HDL_TOP_FILE)
-$(HDL_TOP_FILE): $(MATLAB_SOURCES)
+hdl: $(HDL_SELECTED_TOP_FILE)
+$(HDL_SELECTED_TOP_FILE): $(MATLAB_SOURCES)
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "generate_hdl"
 	@test -f "$@" || { echo "ERROR: expected generated HDL top is missing: $@"; exit 1; }
 require-package-allowed:
-	@test "$(ALLOW_CHANNELIZER_PACKAGE)" = "1" || { echo "ERROR: MATLAB channelizer packaging is blocked during V06. Run the Gate-1/Gate-2 feasibility targets only; packaging requires the frozen AXI4-Stream wrapper contract and ALLOW_CHANNELIZER_PACKAGE=1."; exit 2; }
+	@test "$(ALLOW_CHANNELIZER_PACKAGE)" = "1" || { echo "ERROR: MATLAB channelizer packaging is blocked until the AXI4-Stream wrapper contract is implemented. Run the V06 Gate-0/Gate-1/Gate-2/Gate-3 feasibility targets only; do not bypass this guard for a production build."; exit 2; }
 package: require-package-allowed $(PACKAGED_COMPONENT)
-$(PACKAGED_COMPONENT): $(HDL_TOP_FILE) package_generated_rtl.tcl
-	$(VIVADO) -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs hdl_prj/hdlsrc $(TOP) $(PART)
+$(PACKAGED_COMPONENT): $(HDL_SELECTED_TOP_FILE) package_generated_rtl.tcl
+	$(VIVADO) -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs $(HDL_SELECTED_SOURCE_DIR) $(TOP) $(PART)
 	@test -f "$@" || { echo "ERROR: Vivado did not create packaged IP: $@"; exit 1; }
 	@$(ROOT)/common/scripts/check_component_vlnv.sh "$@" "$(IP_VLNV)"
 package-only: require-package-allowed
-	@test -f "$(HDL_TOP_FILE)" || { echo "ERROR: generated HDL is missing; run make gate1 or make hdl"; exit 1; }
-	$(VIVADO) -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs hdl_prj/hdlsrc $(TOP) $(PART)
+	@test -f "$(HDL_SELECTED_TOP_FILE)" || { echo "ERROR: generated HDL is missing; run make gate1 or make hdl"; exit 1; }
+	$(VIVADO) -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs $(HDL_SELECTED_SOURCE_DIR) $(TOP) $(PART)
 	@test -f "$(PACKAGED_COMPONENT)" || { echo "ERROR: Vivado did not create packaged IP"; exit 1; }
 	@$(ROOT)/common/scripts/check_component_vlnv.sh "$(PACKAGED_COMPONENT)" "$(IP_VLNV)"
 clean:

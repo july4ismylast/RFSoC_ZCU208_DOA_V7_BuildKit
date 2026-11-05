@@ -7,8 +7,8 @@ function build_model()
 %   CHANNELIZER_TAPS_PER_BAND   (default 12; V06_TAPS_PER_BAND override)
 %   CHANNELIZER_STOPBAND_DB     (default 100; V06_STOPBAND_DB override)
 %   CHANNELIZER_NORMALIZE       (default 0; V06_NORMALIZE override)
-%   CHANNELIZER_FILTER_STRUCTURE (default systolic; V06_FILTER_STRUCTURE
-%                                may select transposed for Gate-2T only)
+%   CHANNELIZER_FILTER_STRUCTURE (default transposed; systolic remains the
+%                                preserved Gate-2 baseline)
 %
 % The legacy 64-band/four-lane configuration can still be reproduced by
 % overriding those environment values, but it is no longer the default
@@ -23,7 +23,7 @@ stopbandDb = env_integer('V06_STOPBAND_DB', ...
 normalizeFlag = env_integer('V06_NORMALIZE', ...
     env_integer('CHANNELIZER_NORMALIZE', 0));
 filterStructureChoice = env_choice('V06_FILTER_STRUCTURE', ...
-    env_choice('CHANNELIZER_FILTER_STRUCTURE', 'systolic', ...
+    env_choice('CHANNELIZER_FILTER_STRUCTURE', 'transposed', ...
         {'systolic', 'transposed'}), {'systolic', 'transposed'});
 switch filterStructureChoice
     case 'systolic'

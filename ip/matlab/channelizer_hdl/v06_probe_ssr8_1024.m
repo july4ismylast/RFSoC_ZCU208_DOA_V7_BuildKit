@@ -28,7 +28,7 @@ function v06_probe_ssr8_1024()
 %   V06_NORMALIZE               (default 0; set 1 to reproduce attempt 1)
 %   V06_COEFF_SOURCE            (default tf; alternative: coeffs)
 %   V06_FILTER_STRUCTURE        (default CHANNELIZER_FILTER_STRUCTURE,
-%                                normally systolic; alternative: transposed)
+%                                now transposed; probe target forces systolic baseline)
 %   V06_FILTER_OUTPUT_FULL_PRECISION (default 0; diagnostic only)
 %   V06_SNAPSHOTS_TO_COLLECT    (default 4; assertion uses the last one)
 %
@@ -47,7 +47,7 @@ filterOutputFullPrecision = ...
 snapshotsToCollect = env_integer('V06_SNAPSHOTS_TO_COLLECT', 4);
 coeffSource = env_choice('V06_COEFF_SOURCE', 'tf', {'tf', 'coeffs'});
 filterStructureChoice = env_choice('V06_FILTER_STRUCTURE', ...
-    env_choice('CHANNELIZER_FILTER_STRUCTURE', 'systolic', ...
+    env_choice('CHANNELIZER_FILTER_STRUCTURE', 'transposed', ...
         {'systolic', 'transposed'}), {'systolic', 'transposed'});
 switch filterStructureChoice
     case 'systolic'
