@@ -6,10 +6,13 @@
 > 0.000183, correlation 0.999999983, global gain magnitude 1.00000205
 > and phase −0.0002925°. Transposed is selected as the Plan-A core and
 > `config.mk` default (one channel: 35,902 LUTs, 176 RAMB36, 351-cycle
-> latency in Gate 2T). This is **not** an AXI4-Stream packaged IP or
-> bitstream: the generated core has raw vector/data-valid ports, and the
-> wrapper handshake, packaging path, four-channel mapping, and routed
-> implementation remain unfinished. Gate-3 evidence is committed at
+> latency in Gate 2T). This is **not** packaged IP or a bitstream: the
+> generated core has raw vector/data-valid ports. An isolated AXI4-Stream
+> wrapper candidate and `gate4-axis-wrapper` OOC synthesis/logging target
+> are now implemented; its 128-beat TLAST cadence and direct-ready stall
+> behavior are assumptions pending user-side Gate-4 synthesis and behavioral
+> verification. Packaging, four-channel mapping, and routed implementation
+> remain unfinished. Gate-3 evidence is committed at
 > `docs/debug-logs/20261105T134543Z-matlab_hdl/`.
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
@@ -25,8 +28,9 @@ remains reproducible only by explicit environment overrides. The
 wrapper passes the selected `Direct form systolic` or
 `Direct form transposed` value to `dsphdl.Channelizer`; systolic is
 the preserved Gate-2 baseline, while transposed passed Gate 2T and Gate 3
-and is selected as the Plan-A core/default. Production packaging remains
-blocked until the AXI4-Stream wrapper is implemented. The output vector is the same size as the input;
+and is selected as the Plan-A core/default. An isolated wrapper candidate is
+implemented; packaging remains blocked until its handshake/frame behavior is
+verified and the package path is validated. The output vector is the same size as the input;
 with `Normalize=false`, both the systolic Gate 0 and the transposed
 probe measured the output type as signed 26-bit/fraction-24. Their
 latencies differ: 1760 cycles systolic versus 351 cycles transposed.
@@ -61,16 +65,17 @@ BRAM-directive record. The completed transposed resource sequence was
 not overwrite baseline evidence. Gate 3 (`make gate3-transposed`) has passed: it compared the exact
 `ZU48DRChannelizer` wrapper against floating-point `dsp.Channelizer`,
 collected 40 snapshots, discarded startup snapshots, and froze the tested
-bin order/alignment/scaling/phase relation. The next work is the production
-AXI4-Stream wrapper contract and implementation; there is no production
-package/BD target until that interface is complete. `make hdl`
-remains the underlying generation file-target form. Packaging is
-intentionally blocked during V06 because the generated DUT is still a raw
-data/valid subsystem, not the AXI4-Stream production wrapper. Do not set
-`ALLOW_CHANNELIZER_PACKAGE=1` to bypass the guard: it does not add the missing
-handshake/frame logic. The package target follows the selected structure's
-HDL directory (transposed by default), but those raw ports are not yet a
-production IP candidate.
+bin order/alignment/scaling/phase relation. The next runnable step is the
+isolated wrapper synthesis candidate: `make debug-channelizer-gate
+GATE=gate4-axis-wrapper`. It captures the console transcript and Gate-4 report
+in the standard debug snapshot and locally commits it for GitHub Desktop Push
+origin. Gate 4 is synthesis-only: behavioral backpressure/TLAST verification,
+package validation, four-channel BD integration, and routed timing remain
+later work. `make hdl` remains the underlying generation file-target form.
+Packaging remains intentionally blocked; do not set
+`ALLOW_CHANNELIZER_PACKAGE=1` to bypass the guard. The package target follows
+the selected structure's HDL directory (transposed by default), but that raw
+core is not itself a production IP candidate.
 
 The Makefile launches MATLAB through `scripts/run_matlab_clean.sh`. This keeps
 the real user home and MATLAB licence configuration, copies MATLAB's factory

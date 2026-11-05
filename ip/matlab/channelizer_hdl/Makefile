@@ -22,9 +22,10 @@ V06_GATE2_REPORT := $(ROOT)/build/output/v06_gate2_ooc_synthesis.rpt
 V06_GATE2R_BRAM_REPORT := $(ROOT)/build/output/v06_gate2r_bram_ooc_synthesis.rpt
 V06_GATE2T_TRANSPOSED_REPORT := $(ROOT)/build/output/v06_gate2t_transposed_ooc_synthesis.rpt
 V06_GATE3_TRANSPOSED_REPORT := $(ROOT)/build/output/v06_gate3_transposed_numerics.rpt
+V06_GATE4_AXIS_WRAPPER_REPORT := $(ROOT)/build/output/v06_gate4_axis_wrapper_ooc.rpt
 ALLOW_CHANNELIZER_PACKAGE ?= 0
 
-.PHONY: all model hdl package package-only require-package-allowed probe probe-transposed gate1 gate1-transposed gate2 gate2r-bram gate2t-transposed gate3-transposed clean
+.PHONY: all model hdl package package-only require-package-allowed probe probe-transposed gate1 gate1-transposed gate2 gate2r-bram gate2t-transposed gate3-transposed gate4-axis-wrapper clean
 all: package
 # Stage V06 Gate 0 (passed on the user PC, 2026-11-03): the installed
 # dsphdl.Channelizer accepts the production-size SSR-8/1024-band
@@ -126,6 +127,22 @@ gate3-transposed: v06_gate3_transposed_compare.m ZU48DRChannelizer.m
 	@test -f "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: V06 Gate-3 report missing: $(V06_GATE3_TRANSPOSED_REPORT)"; exit 1; }
 	@grep -q "^FILTER_STRUCTURE=Direct form transposed$$" "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-3 did not select Direct form transposed (see $(V06_GATE3_TRANSPOSED_REPORT))"; exit 1; }
 	@grep -q "V06 GATE3 TRANSPOSED NUMERICS RESULT=PASS" "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: V06 Gate-3 did not PASS (see $(V06_GATE3_TRANSPOSED_REPORT))"; exit 1; }
+
+# Stage V06 Gate 4: synthesize the isolated AXI4-Stream wrapper candidate
+# around the selected transposed core. The wrapper follows V05's packed
+# {Q,I} SSR-8 ordering and direct-ready propagation. Its 128-beat TLAST
+# cadence and stall behavior remain candidate assumptions pending behavioral
+# verification; this gate does not package IP or modify the block design.
+gate4-axis-wrapper: channelizer_axis_wrapper.sv v06_gate4_axis_wrapper_ooc.tcl v06_gate4_axis_wrapper_ooc.xdc
+	@test -f "$(V06_GATE1_TRANSPOSED_REPORT)" || { echo "ERROR: transposed Gate-1 report missing; run make debug-channelizer-gate GATE=gate1-transposed first"; exit 1; }
+	@grep -q "V06 GATE1 HDL GENERATION RESULT=PASS" "$(V06_GATE1_TRANSPOSED_REPORT)" || { echo "ERROR: transposed Gate-1 has not PASSed; see $(V06_GATE1_TRANSPOSED_REPORT)"; exit 1; }
+	@grep -q "^FILTER_STRUCTURE=Direct form transposed$$" "$(V06_GATE1_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-1 RTL is not transposed"; exit 1; }
+	@test -f "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-3 report missing; run make debug-channelizer-gate GATE=gate3-transposed first"; exit 1; }
+	@grep -q "V06 GATE3 TRANSPOSED NUMERICS RESULT=PASS" "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-3 has not PASSed; see $(V06_GATE3_TRANSPOSED_REPORT)"; exit 1; }
+	@test -f "$(HDL_TOP_FILE_TRANSPOSED)" || { echo "ERROR: transposed Gate-1 RTL top missing: $(HDL_TOP_FILE_TRANSPOSED)"; exit 1; }
+	$(VIVADO) -mode batch -nojournal -nolog -source v06_gate4_axis_wrapper_ooc.tcl
+	@test -f "$(V06_GATE4_AXIS_WRAPPER_REPORT)" || { echo "ERROR: Gate-4 report missing: $(V06_GATE4_AXIS_WRAPPER_REPORT)"; exit 1; }
+	@grep -q "V06 GATE4 AXI WRAPPER OOC SYNTHESIS RESULT=PASS" "$(V06_GATE4_AXIS_WRAPPER_REPORT)" || { echo "ERROR: Gate-4 wrapper OOC synthesis did not PASS (see $(V06_GATE4_AXIS_WRAPPER_REPORT))"; exit 1; }
 
 model:
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "build_model"

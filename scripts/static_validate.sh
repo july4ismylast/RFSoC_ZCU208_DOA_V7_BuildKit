@@ -16,13 +16,12 @@ for required in \
 done
 if command -v tclsh >/dev/null 2>&1; then
     while IFS= read -r file; do
-        tclsh <<EOF
-set stream [open {$file} r]
-set text [read \$stream]
-close \$stream
-if {![info complete \$text]} {error {Incomplete Tcl syntax in $file}}
+        FILE="$file" tclsh <<'EOF'
+set stream [open $::env(FILE) r]
+set text [read $stream]
+close $stream
+if {![info complete $text]} {error "Incomplete Tcl syntax in $::env(FILE)"}
 EOF
-    done < <(find common/vivado config -name '*.tcl' -type f | sort)
+    done < <(find common/vivado config ip/matlab/channelizer_hdl -type f \( -name '*.tcl' -o -name '*.xdc' \) | sort)
 fi
 echo "PASS: shell syntax, Make dry-runs, required artifacts, and Tcl completeness"
-

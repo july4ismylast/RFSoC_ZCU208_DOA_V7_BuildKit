@@ -33,10 +33,11 @@ base, whereas MTS plus four systolic channelizers would already use
 396,399 LUTs (93.2089%). Gate 3 has now passed the transposed
 numerical ordering/gain/phase checks (2026-11-05, MATLAB R2022b), so
 **transposed is selected as the Plan-A channelizer architecture and
-production filter-structure default**. This selects the core
-architecture only; the AXI4-Stream wrapper, packaging, and V07/`step08`
-integration remain unfinished and guarded. The OOC and arithmetic
-budgets are not integrated placement/routing proof.
+production filter-structure default**. An isolated AXI4-Stream wrapper
+candidate now exists with a logged Gate-4 OOC synthesis target; its behavior
+is not yet verified. Packaging and V07/`step08` integration remain unfinished
+and guarded. The OOC and arithmetic budgets are not integrated
+placement/routing proof.
 
 ## 1. One-channel target contract
 
@@ -598,18 +599,32 @@ correction. Reproduce and capture the gate with:
 make debug-channelizer-gate GATE=gate3-transposed
 ```
 
-#### Next work: production stream wrapper (not yet a build target)
+#### Gate 4 — isolated AXI4-Stream wrapper candidate OOC synthesis (next command)
 
-Gate 3 closes one-channel algorithmic feasibility; it does **not** close
-the production interface. Before packaging or `step08`, freeze and
-implement the wrapper contract around the raw Gate-1 transposed core.
-The known data contract is SSR-8 complex signed-16 input at 250 MHz
-(256 data bits/beat), SSR-8 complex signed-26 output (416 data bits/beat),
-1024 natural-order bins per snapshot (128 output beats), and 351 cycles
-of channelizer latency. The generated core exposes raw data/valid and
-clock-enable pins, not AXI4-Stream `TREADY`, `TLAST`, or a backpressure
-contract. The wrapper work must resolve those handshake/frame semantics,
-reset/enable behavior, per-channel latency alignment, and preserve the
-recorded bin/phase convention. Do not bypass the package guard or
-externalize these signals as board pins. The four-channel mapped BD and
-routed implementation remain later gates; Gate 3 is not bitstream proof.
+A standalone wrapper candidate now exists in
+`ip/matlab/channelizer_hdl/channelizer_axis_wrapper.sv`. It maps V05's
+SSR-8 `{Q,I}` input words to the raw Gate-1T split-I/Q ports, packs the
+signed 26-bit output lanes, propagates downstream `TREADY` directly to
+upstream `TREADY` and the core clock-enable, and asserts `TLAST` on each
+128th accepted output beat. These are explicit candidate semantics, not yet
+validated production behavior: V05 expects continuous always-ready search
+traffic and treats a stall/FIFO overflow as a system error, while Gate 3
+establishes 128 output beats per 1024-bin snapshot. No BD wiring or package
+guard bypass is involved.
+
+The exact next command on the user's R2022b/Vivado machine is:
+
+```bash
+EVIDENCE_PUSH=0 make debug-channelizer-gate GATE=gate4-axis-wrapper
+```
+
+This Gate-4 target checks the passed transposed Gate-1/Gate-3 evidence,
+runs isolated Vivado OOC synthesis at 4.0 ns, and captures both transcript
+and report through the existing debug-log flow. It does **not** prove
+cycle-accurate stall/hold behavior or TLAST framing. After the run, inspect
+the saved snapshot and use GitHub Desktop **Push origin**; the runner keeps
+`EVIDENCE_PUSH=0` and commits the snapshot locally. Behavioral wrapper
+verification and contract confirmation must pass before packaging; four-
+channel mapping, BD integration, and routed implementation remain later
+gates. Do not bypass the package guard or externalize these signals as board
+pins.
