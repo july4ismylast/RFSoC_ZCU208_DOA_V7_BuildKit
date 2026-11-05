@@ -1,0 +1,2 @@
+Full Vivado validation diagnostics are in build/logs/step09_vivado_validate.log.
+This note is used instead of the unavailable get_messages command in Vivado 2023.2.
