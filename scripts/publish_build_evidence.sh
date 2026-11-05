@@ -2,9 +2,9 @@
 # Publish small, explicitly selected build reports; never stage build trees.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-branch='arena/752990a5-rfsoc-zcu208-doa-v7-buildkit'
-if [[ "$(git branch --show-current)" != "$branch" ]]; then
-    echo "ERROR: run this on $branch, not $(git branch --show-current)." >&2
+branch="$(git branch --show-current)"
+if [[ "$branch" != arena/* ]]; then
+    echo "ERROR: evidence publication is allowed only from an Arena working branch, not $branch." >&2
     exit 2
 fi
 flow="${CHANNELIZER_FLOW:-opfb}"
@@ -12,6 +12,46 @@ case "$flow" in opfb|matlab_hdl|model_composer|external) ;; *) echo 'Invalid CHA
 out="docs/evidence/$(date +%F)-$flow"
 build="${BUILD:-$PWD/build}"
 ip_repo="${IP_REPO:-$build/ip_repo}"
+
+# The OPFB route check is an OOC physical screen, not the production build or
+# bitstream flow. Do not publish partial/stale-looking results when Vivado
+# stopped before routing, DRC, report generation, or checkpoint save completed.
+if [[ "$flow" == opfb ]]; then
+    route_log="$build/logs/v06_opfb_route.log"
+    drc_report="$build/output/v06_opfb_routed_drc.rpt"
+    status_report="$build/output/v06_opfb_route_status.rpt"
+    widths_report="$build/output/v06_opfb_interface_widths.rpt"
+    for required in "$route_log" "$drc_report" "$status_report" "$widths_report"; do
+        if [[ ! -s "$required" ]]; then
+            echo "ERROR: required OPFB completion evidence is missing or empty: $required" >&2
+            exit 2
+        fi
+    done
+    for marker in \
+        'route_design completed successfully' \
+        'report_timing_summary:' \
+        'report_drc completed successfully' \
+        'Physical screen reports written.' \
+        'Exiting Vivado at'; do
+        if ! grep -Fq "$marker" "$route_log"; then
+            echo "ERROR: OPFB route log lacks completion marker: $marker" >&2
+            echo 'Refusing to publish incomplete OPFB evidence.' >&2
+            exit 2
+        fi
+    done
+    grep -Fq 'Design State : Fully Routed' "$drc_report" || {
+        echo 'ERROR: OPFB DRC report does not identify a fully routed design.' >&2; exit 2;
+    }
+    grep -Eq '# of nets with routing errors[. ]*:[[:space:]]*0([[:space:]]|$)' "$status_report" || {
+        echo 'ERROR: OPFB route-status report is missing or reports routing errors.' >&2; exit 2;
+    }
+    grep -Fq 'istream_V_0 TDATA_NUM_BYTES=16' "$widths_report" &&
+        grep -Fq 'qstream_V_0 TDATA_NUM_BYTES=16' "$widths_report" &&
+        grep -Fq 'output_r_0 TDATA_NUM_BYTES=64' "$widths_report" || {
+        echo 'ERROR: OPFB interface-width report is missing expected 16/16/64-byte widths.' >&2; exit 2;
+    }
+    echo 'OPFB evidence passed completion checks (OOC physical route only; no bitstream implied).'
+fi
 # Refuse to accidentally commit already-staged source or generated files.
 while IFS= read -r -d '' file; do
     case "$file" in "$out"/*) ;; *) echo "ERROR: unrelated staged file: $file. Unstage it first." >&2; exit 2 ;; esac
