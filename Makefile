@@ -207,13 +207,16 @@ publish-debug-logs:
 # is committed locally; use GitHub Desktop's Push origin on machines without
 # command-line GitHub authentication.
 .PHONY: debug-stage debug-stages
+DEBUG_STEP  = $(if $(strip $(STEP)),$(STEP),$(STAGE))
+DEBUG_STEPS = $(if $(strip $(STEPS)),$(STEPS),$(STAGES))
+
 debug-stage:
-	@test -n "$(STEP)" || { echo "ERROR: use make debug-stage STEP=stepNN_name"; exit 2; }
-	@bash scripts/run_stage_and_publish_debug.sh "$(STEP)"
+	@test -n "$(DEBUG_STEP)" || { echo "ERROR: use make debug-stage STEP=stepNN_name"; exit 2; }
+	@bash scripts/run_stage_and_publish_debug.sh "$(DEBUG_STEP)"
 
 debug-stages:
-	@test -n "$(STEPS)" || { echo "ERROR: use make debug-stages STEPS=\"step05_channelizer ...\""; exit 2; }
-	@bash scripts/run_stages_and_publish_debug.sh $(STEPS)
+	@test -n "$(DEBUG_STEPS)" || { echo "ERROR: use make debug-stages STEPS=\"step05_channelizer ...\""; exit 2; }
+	@bash scripts/run_stages_and_publish_debug.sh $(DEBUG_STEPS)
 
 # Run one V06 MATLAB-HDL feasibility gate and snapshot its console transcript
 # plus its report, even when the gate fails.
