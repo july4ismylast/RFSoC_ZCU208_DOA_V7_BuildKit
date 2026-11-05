@@ -53,3 +53,15 @@ puts "Created + verified isolated ZCU208 project: $work"
 puts "Work project ip_repo_paths: $_work_repos"
 close_project
 
+invalidate_downstream_stamps {
+    step08_vivado_integrate.done
+    step09_vivado_validate.done
+    step10_synth.done
+    step11_impl.done
+    step12_bitstream.done
+    step13_export_xsa.done
+    step15_package.done
+}
+
+
+

@@ -159,11 +159,11 @@ module tb_doa_subband_bridge_4ch;
     );
 
     // Golden reference helper functions
-    function automatic [15:0] ref_quantize(input signed [25:0] v, input int shift);
+    function automatic logic [15:0] ref_quantize(input logic signed [25:0] v, input int shift);
         longint signed ext_v, bias, sh;
         begin
             ext_v = v;
-            bias  = (shift == 0) ? 0 : (64'sd1 <<< (shift - 1));
+            bias  = (shift == 0) ? 64'sd0 : (64'sd1 <<< (shift - 1));
             sh    = (ext_v + bias) >>> shift;
             if (sh > 32767)       ref_quantize = 16'h7FFF;
             else if (sh < -32768) ref_quantize = 16'h8000;
@@ -171,7 +171,7 @@ module tb_doa_subband_bridge_4ch;
         end
     endfunction
 
-    function automatic signed [25:0] stim_re_s26(input int snap, input int k, input int ch);
+    function automatic logic signed [25:0] stim_re_s26(input int snap, input int k, input int ch);
         int base_s16;
         begin
             if (snap == 0 && k == 0 && ch == 0) begin
@@ -187,7 +187,7 @@ module tb_doa_subband_bridge_4ch;
         end
     endfunction
 
-    function automatic signed [25:0] stim_im_s26(input int snap, input int k, input int ch);
+    function automatic logic signed [25:0] stim_im_s26(input int snap, input int k, input int ch);
         int base_s16;
         begin
             if (snap == 0 && k == 2 && ch == 0) begin
@@ -199,8 +199,8 @@ module tb_doa_subband_bridge_4ch;
         end
     endfunction
 
-    function automatic [31:0] exp_iq32(input int snap, input int k, input int ch, input int shift);
-        reg [15:0] i16, q16;
+    function automatic logic [31:0] exp_iq32(input int snap, input int k, input int ch, input int shift);
+        logic [15:0] i16, q16;
         begin
             i16 = ref_quantize(stim_re_s26(snap, k, ch), shift);
             q16 = ref_quantize(stim_im_s26(snap, k, ch), shift);
@@ -209,7 +209,7 @@ module tb_doa_subband_bridge_4ch;
     endfunction
 
     // AXI4-Lite tasks (including staggered AW before W)
-    task automatic axi_write(input [7:0] addr, input [31:0] data, input bit stagger_w);
+    task automatic axi_write(input logic [7:0] addr, input logic [31:0] data, input bit stagger_w);
         begin
             @(posedge aclk);
             s_axi_ctrl_awaddr  <= addr;
@@ -218,44 +218,46 @@ module tb_doa_subband_bridge_4ch;
                 s_axi_ctrl_wdata  <= data;
                 s_axi_ctrl_wstrb  <= 4'hF;
                 s_axi_ctrl_wvalid <= 1'b1;
-            end
-            while (!s_axi_ctrl_awready) @(posedge aclk);
-            @(posedge aclk);
-            s_axi_ctrl_awvalid <= 1'b0;
-            if (stagger_w) begin
+                fork
+                    begin
+                        do @(posedge aclk); while (!(s_axi_ctrl_awvalid && s_axi_ctrl_awready));
+                        s_axi_ctrl_awvalid <= 1'b0;
+                    end
+                    begin
+                        do @(posedge aclk); while (!(s_axi_ctrl_wvalid && s_axi_ctrl_wready));
+                        s_axi_ctrl_wvalid <= 1'b0;
+                    end
+                join
+            end else begin
+                do @(posedge aclk); while (!(s_axi_ctrl_awvalid && s_axi_ctrl_awready));
+                s_axi_ctrl_awvalid <= 1'b0;
                 @(posedge aclk);
                 s_axi_ctrl_wdata  <= data;
                 s_axi_ctrl_wstrb  <= 4'hF;
                 s_axi_ctrl_wvalid <= 1'b1;
-                while (!s_axi_ctrl_wready) @(posedge aclk);
-                @(posedge aclk);
-                s_axi_ctrl_wvalid <= 1'b0;
-            end else begin
+                do @(posedge aclk); while (!(s_axi_ctrl_wvalid && s_axi_ctrl_wready));
                 s_axi_ctrl_wvalid <= 1'b0;
             end
-            while (!s_axi_ctrl_bvalid) @(posedge aclk);
-            @(posedge aclk);
+            do @(posedge aclk); while (!(s_axi_ctrl_bvalid && s_axi_ctrl_bready));
         end
     endtask
 
-    task automatic axi_read(input [7:0] addr, output [31:0] data);
+    task automatic axi_read(input logic [7:0] addr, output logic [31:0] data);
         begin
             @(posedge aclk);
             s_axi_ctrl_araddr  <= addr;
             s_axi_ctrl_arvalid <= 1'b1;
-            while (!s_axi_ctrl_arready) @(posedge aclk);
-            @(posedge aclk);
+            do @(posedge aclk); while (!(s_axi_ctrl_arvalid && s_axi_ctrl_arready));
             s_axi_ctrl_arvalid <= 1'b0;
-            while (!s_axi_ctrl_rvalid) @(posedge aclk);
+            do @(posedge aclk); while (!(s_axi_ctrl_rvalid && s_axi_ctrl_rready));
             data = s_axi_ctrl_rdata;
-            @(posedge aclk);
         end
     endtask
 
     task automatic drive_snapshot(input int snap_idx);
         int b, ln, ch, k;
-        reg [415:0] ch_word [0:3];
-        signed [25:0] re_v, im_v;
+        logic [415:0] ch_word [0:3];
+        logic signed [25:0] re_v, im_v;
         begin
             for (b = 0; b < 128; b = b + 1) begin
                 for (ch = 0; ch < 4; ch = ch + 1) begin
@@ -368,6 +370,11 @@ module tb_doa_subband_bridge_4ch;
     reg [31:0] rval;
     int s_idx, lane_i, ch_i, bin_k, word_i;
     reg [31:0] got_w, exp_w;
+
+    initial begin
+        #2000000;
+        $fatal(1, "TIMEOUT: tb_doa_subband_bridge_4ch exceeded 2 ms simulation budget");
+    end
 
     initial begin
         repeat (8) @(posedge aclk);

@@ -125,7 +125,13 @@ for path in files:
         if fn not in defined_procs and not fn.startswith("doa_cdc_"):
             sys.exit(f"Undefined custom Tcl proc '{fn}' called in {path}")
 
-print(f"PASS: Tcl/XDC delimiter & custom proc check across {len(files)} files")
+for sv_path in sorted(pathlib.Path("ip").rglob("*.sv")):
+    sv_txt = sv_path.read_text(encoding="utf-8")
+    for idx, line in enumerate(sv_txt.splitlines(), 1):
+        if re.match(r"^\s*signed\s*\[", line):
+            sys.exit(f"Bare 'signed [...]' declaration without explicit logic/reg/wire in {sv_path}:{idx}")
+
+print(f"PASS: Tcl/XDC/SV static check across {len(files)} Tcl/XDC files")
 PYEOF
 
 if command -v tclsh >/dev/null 2>&1; then

@@ -36,3 +36,9 @@ if {$worst_slack < 0.0} { error "Timing gate failed: WNS=$worst_slack ns (WHS=$w
 if {$worst_hold < 0.0}  { error "Hold timing gate failed: WHS=$worst_hold ns (WNS=$worst_slack ns)" }
 puts "Implementation passed timing with WNS=$worst_slack ns, WHS=$worst_hold ns"
 close_project
+invalidate_downstream_stamps {
+    step12_bitstream.done
+    step13_export_xsa.done
+    step15_package.done
+}
+

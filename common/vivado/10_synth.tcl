@@ -22,4 +22,11 @@ report_utilization -file [file join $output post_synth_utilization.rpt]
 report_timing_summary -file [file join $output post_synth_timing.rpt]
 puts "Synthesis passed"
 close_project
+invalidate_downstream_stamps {
+    step11_impl.done
+    step12_bitstream.done
+    step13_export_xsa.done
+    step15_package.done
+}
+
 

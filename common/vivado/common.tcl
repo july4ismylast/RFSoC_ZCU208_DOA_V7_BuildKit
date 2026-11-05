@@ -76,3 +76,18 @@ proc require_successful_run {run_name} {
         error "Vivado run $run_name is not complete: $status"
     }
 }
+
+proc invalidate_downstream_stamps {stamp_names} {
+    set stamp_dir ""
+    if {[info exists ::env(STAMP_DIR)] && [string trim $::env(STAMP_DIR)] ne ""} {
+        set stamp_dir [file normalize $::env(STAMP_DIR)]
+    } elseif {[info exists ::env(BUILD)] && [string trim $::env(BUILD)] ne ""} {
+        set stamp_dir [file join [file normalize $::env(BUILD)] .stamps]
+    }
+    if {$stamp_dir ne "" && [file isdirectory $stamp_dir]} {
+        foreach sname $stamp_names {
+            file delete -force [file join $stamp_dir $sname]
+        }
+    }
+}
+

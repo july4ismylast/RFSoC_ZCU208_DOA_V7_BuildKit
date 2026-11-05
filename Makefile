@@ -97,8 +97,16 @@ pipeline:
 
 stage:
 	@test -n "$(STEP)" || { echo "ERROR: use make stage STEP=stepNN_name"; exit 2; }
-	@case " $(STAGES) " in *" $(STEP) "*) ;; *) echo "ERROR: unknown STEP=$(STEP)"; exit 2;; esac
-	@$(MAKE) --no-print-directory "$(STEP)"
+	@canon="$(STEP)"; \
+	case "$$canon" in \
+	  step07_create_project) canon=step07_vivado_project ;; \
+	  step08_integrate)      canon=step08_vivado_integrate ;; \
+	  step09_validate)       canon=step09_vivado_validate ;; \
+	  step14_hil)            canon=step14_hil_vectors ;; \
+	  step15_release)        canon=step15_package ;; \
+	esac; \
+	case " $(STAGES) " in *" $$canon "*) ;; *) echo "ERROR: unknown STEP=$(STEP)"; exit 2;; esac; \
+	$(MAKE) --no-print-directory "$$canon"
 
 rebuild:
 	@test -n "$(STEP)" || { echo "ERROR: use make rebuild STEP=stepNN_name"; exit 2; }
@@ -127,15 +135,15 @@ step05_hls_repack: $(STAMP_DIR)/step05_hls_repack.done
 step05_channelizer: $(STAMP_DIR)/step05_channelizer.done
 step05_subband_bridge: $(STAMP_DIR)/step05_subband_bridge.done
 step06_collect_ip: $(STAMP_DIR)/step06_collect_ip.done
-step07_vivado_project: $(STAMP_DIR)/step07_vivado_project.done
-step08_vivado_integrate: $(STAMP_DIR)/step08_vivado_integrate.done
-step09_vivado_validate: $(STAMP_DIR)/step09_vivado_validate.done
+step07_vivado_project step07_create_project: $(STAMP_DIR)/step07_vivado_project.done
+step08_vivado_integrate step08_integrate: $(STAMP_DIR)/step08_vivado_integrate.done
+step09_vivado_validate step09_validate: $(STAMP_DIR)/step09_vivado_validate.done
 step10_synth: $(STAMP_DIR)/step10_synth.done
 step11_impl: $(STAMP_DIR)/step11_impl.done
 step12_bitstream: $(STAMP_DIR)/step12_bitstream.done
 step13_export_xsa: $(STAMP_DIR)/step13_export_xsa.done
-step14_hil_vectors: $(STAMP_DIR)/step14_hil_vectors.done
-step15_package: $(STAMP_DIR)/step15_package.done
+step14_hil_vectors step14_hil: $(STAMP_DIR)/step14_hil_vectors.done
+step15_package step15_release: $(STAMP_DIR)/step15_package.done
 
 $(STAMP_DIR)/step00_preflight.done: Makefile config.mk config/ip_versions.tcl common/vivado/common.tcl common/vivado/00_check_ip_catalog.tcl scripts/preflight.sh scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step00_preflight --stamp "$@" --log "$(LOG_DIR)/step00_preflight.log" -- ./scripts/preflight.sh
@@ -173,7 +181,7 @@ $(STAMP_DIR)/step07_vivado_project.done: common/vivado/07_create_project_from_ba
 $(STAMP_DIR)/step08_vivado_integrate.done: common/vivado/08_integrate_doa_v7.tcl common/vivado/create_doa_v7_hier.tcl config/zcu208_bd_map.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step08_vivado_integrate --stamp "$@" --log "$(LOG_DIR)/step08_vivado_integrate.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/08_integrate_doa_v7.tcl
 
-$(STAMP_DIR)/step09_vivado_validate.done: common/vivado/09_validate.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
+$(STAMP_DIR)/step09_vivado_validate.done: common/vivado/09_validate.tcl config/zcu208_bd_map.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step09_vivado_validate --stamp "$@" --log "$(LOG_DIR)/step09_vivado_validate.log" -- $(VIVADO) -mode batch -nojournal -nolog -source common/vivado/09_validate.tcl
 
 $(STAMP_DIR)/step10_synth.done: common/vivado/10_synth.tcl config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)

@@ -106,3 +106,12 @@ if {$mode eq "mapped"} {
 save_bd_design
 puts "Integrated DOA V7 hierarchy into [current_bd_design] using mode=$mode"
 close_project
+invalidate_downstream_stamps {
+    step09_vivado_validate.done
+    step10_synth.done
+    step11_impl.done
+    step12_bitstream.done
+    step13_export_xsa.done
+    step15_package.done
+}
+
