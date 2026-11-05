@@ -92,7 +92,11 @@ set catch_rc [catch {
     exec xvlog -sv -work work $wrapper_file $testbench_file >@stdout 2>@1
     gate4sim_log $report_fh "XVLOG_COMPLETED=1"
 
-    exec xelab -debug typical -L unisims_ver -L unimacro_ver -L secureip \
+    # The testbench declares 1 ns / 1 ps while generated Gate-1 modules do
+    # not carry a `timescale directive. Supply a default at elaboration so
+    # mixed source files are legal and all delays are deterministic.
+    exec xelab -debug typical -timescale 1ns/1ps \
+        -L unisims_ver -L unimacro_ver -L secureip \
         -s v06_gate4_axis_wrapper_sim_snapshot work.tb_channelizer_axis_wrapper \
         >@stdout 2>@1
     gate4sim_log $report_fh "XELAB_COMPLETED=1"

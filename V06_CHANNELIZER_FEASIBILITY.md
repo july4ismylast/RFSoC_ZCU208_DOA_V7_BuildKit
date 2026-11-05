@@ -631,10 +631,13 @@ ready propagation, 128 accepted output transfers, and TLAST only on transfer
 EVIDENCE_PUSH=0 make debug-channelizer-gate GATE=gate4-axis-wrapper-sim
 ```
 
-The runner verifies Gate-1T, Gate-3, and Gate-4 PASS evidence, then captures
-the XSim transcript/report in the existing debug flow. Afterward use GitHub
-Desktop **Push origin**; the evidence publisher keeps `EVIDENCE_PUSH=0` and
-commits the snapshot locally. A Gate-4B pass still does not authorize
-packaging: four-channel mapping, BD integration, and routed implementation
-remain later gates. Do not bypass the package guard or externalize these
+The first Gate-4B attempt compiled with `xvlog` but failed at `xelab` because
+the testbench had a timescale while the wrapper/generated RTL did not. The
+simulation script now supplies `-timescale 1ns/1ps` to `xelab`; the same
+command below is the correction rerun. The runner verifies Gate-1T, Gate-3,
+and Gate-4 PASS evidence, then captures the XSim transcript/report in the
+existing debug flow. Afterward use GitHub Desktop **Push origin**; the evidence
+publisher keeps `EVIDENCE_PUSH=0` and commits the snapshot locally. A Gate-4B
+pass still does not authorize packaging: four-channel mapping, BD integration,
+and routed implementation remain later gates. Do not bypass the package guard or externalize these
 signals as board pins.
