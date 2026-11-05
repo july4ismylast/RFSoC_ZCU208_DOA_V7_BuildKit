@@ -644,25 +644,40 @@ All 128 accepted 416-bit AXI4-Stream output beats from the 228-file transposed
 MATLAB `ZU48DRChannelizer` golden vectors bit-for-bit (`exact_data=1`,
 `tlast_index=127`).
 
-#### Gate 5 — AXI4-Stream IP packaging (`step05_channelizer` / `gate5-package`)
+#### Gate 5 — AXI4-Stream IP packaging (`step05_channelizer` / `gate5-package`) — PASS
 
 With Gates 0T, 1T, 2T, 3, 4, 4B, and 4C complete, `package_generated_rtl.tcl`
-packages `channelizer_axis_wrapper.sv` together with the 228 transposed RTL
-files into `build/ip_repo/matlab_channelizer` under pinned VLNV
-`openai:doa:matlab_channelizer:7.0`, associates `s_axis` (32 bytes = 256 bits)
-and `m_axis` (52 bytes = 416 bits) with `aclk`/`aresetn`, runs
-`ipx::check_integrity` + `check_component_vlnv.sh`, and smoke-tests BD
+packages `channelizer_axis_wrapper.sv` (staged as `.v` IEEE 1364-2001 top)
+together with the 228 transposed RTL files into `build/ip_repo/matlab_channelizer`
+under pinned VLNV `openai:doa:matlab_channelizer:7.0`, associates `s_axis`
+(32 bytes = 256 bits) and `m_axis` (52 bytes = 416 bits) with `aclk`/`aresetn`,
+runs `ipx::check_integrity` + `check_component_vlnv.sh`, and smoke-tests BD
 instantiation and VHDL target generation (`mts.xpr` uses `TARGET_LANGUAGE = VHDL`).
+Evidence: `docs/debug-logs/20261105T173823Z-matlab_hdl/v06_gate5_package.rpt`
+(`VHDL_BD_SMOKE_RESULT=PASS`, `V06 GATE5 PACKAGE RESULT=PASS`).
 
-#### Four-channel subband bridge (`step05_subband_bridge`) & V07 BD integration
+#### Four-channel subband bridge (`step05_subband_bridge`) & V07 full ZCU208 build sign-off — PASS
 
 `ip/custom/doa_subband_bridge_4ch` (`openai:doa:doa_subband_bridge_4ch:1.0`)
-ingests four lockstep `matlab_channelizer:7.0` 416-bit SSR-8 streams at
-250 MHz (`clkRFdiv2`), quantizes `sfix26_En24 -> sfix16_En15` with half-up
-rounding and symmetric saturation (`SCALE_SHIFT = 9` unity default), emits
-256-beat natural-order `m_axis_search` frames and coherent 4-snapshot
-selected-bin `m_axis_capture` / `m_axis_beam` frames, terminates
-`M_AXIS_CANDIDATE` (192-bit) for closed-loop or manual bin selection, and ties
-off legacy MTS capture hierarchies cleanly. `config/zcu208_bd_map.tcl`
-implements `INTEGRATION_MODE=mapped` on `mts.bd` with zero external fabric
-stream ports.
+passed self-checking XSim verification, 250 MHz OOC synthesis (`WNS = +1.526 ns`),
+IP packaging, and VHDL BD smoke testing
+(`docs/debug-logs/20261105T173823Z-matlab_hdl/doa_subband_bridge_4ch_package.rpt`).
+
+Full ZCU208 MTS mapped integration (`step08`–`step15`) passed end-to-end in
+Vivado 2023.2 (`docs/debug-logs/20261105T173823Z-matlab_hdl/`):
+
+- **Post-route timing (`post_route_timing.rpt` / `timing_gate.txt`)**:
+  global `WNS = +0.045 ns`, `TNS = 0.000 ns` (`0 / 1,037,437` failing setup endpoints);
+  `WHS = +0.009 ns`, `THS = 0.000 ns` (`0 / 1,036,365` failing hold endpoints);
+  `WPWS = +0.000 ns`, `TPWS = 0.000 ns`; 250 MHz wideband domain `WNS = +0.134 ns`
+  (849,142 endpoints); 125 MHz `/doa_v7` domain `WNS = +1.082 ns` (82,495 endpoints).
+- **Post-route utilization (`post_route_utilization.rpt`)**:
+  `206,325 / 425,280` CLB LUTs (`48.52%`), `313,204 / 850,560` FFs (`36.82%`, 0 latches),
+  `773.5 / 1,080` Block RAM tiles (`71.62%`: `770 RAMB36E2`, `7 RAMB18E2`),
+  `20 / 80` URAM (`25.00%`), `1,543 / 4,272` DSP48E2 (`36.12%`), and
+  `82 / 347` bonded IOBs (`23.63%`, `82/82` fixed).
+- **Routing, bitstream, XSA, HIL, and release (`step12`–`step15`)**:
+  `542,275 / 542,275` routable nets fully routed (`0` routing errors),
+  `write_bitstream` (`0` critical warnings, `0` errors) -> `doa_v7_zcu208.bit` + `mts.hwh`,
+  `doa_v7_zcu208.xsa`, MATLAB HIL vectors, and `doa_v7_zcu208_artifacts.tar.gz`.
+

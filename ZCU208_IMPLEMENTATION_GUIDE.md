@@ -326,23 +326,54 @@ Acceptance should be layered:
 7. repeated RF loopback proves MTS and channel stability;
 8. calibrated chamber/field campaign measures 3-D RMSE and P95.
 
-## 14. ZCU208 fit and remaining proof
+## 14. ZCU208 fit and hardware build sign-off
 
-The three arithmetic HLS cores are structurally small compared with an XCZU48DR;
-the channelizer, RFDC interface width, FIFOs, and DMA dominate PL cost. It is
-plausible that the partition fits, but fit is not proven until the selected
-channelizer and actual base project produce `post_route_utilization.rpt` and
-meet timing.
+All 19 build pipeline stages (`step00_preflight` through `step15_package`) have
+been completed and verified on `xczu48dr-fsvg1517-2-e` (`xilinx.com:zcu208:part0:2.0`)
+in Vivado 2023.2 + Vitis HLS 2023.2 + MATLAB R2022b
+(archived in `docs/debug-logs/20261105T173823Z-matlab_hdl/`):
 
-Before calling the design production-ready, complete these board-specific items:
+### Routed XCZU48DR utilization (`post_route_utilization.rpt`)
 
-- fill `config/zcu208_bd_map.tcl` for the chosen base project;
-- add/verify capture FIFO, DMA, interrupt, and AXI address map;
-- port/profile the V7 covariance-to-angle estimator on R5 and retain the MATLAB
-  cross-check;
-- implement full CFAR/persistence/cluster policy if the simple peak gate is
-  insufficient;
-- write the ZCU208 runtime clock/MTS/calibration service;
-- run synthesis, implementation, bitstream, XSA, HIL, RF loopback, thermal, and
-  chamber tests.
+| Resource | Used | Available | Util % |
+|---|---:|---:|---:|
+| CLB LUTs | 206,325 | 425,280 | 48.52% |
+| CLB Flip-Flops | 313,204 | 850,560 | 36.82% |
+| Block RAM Tiles (`770 RAMB36E2`, `7 RAMB18E2`) | 773.5 | 1,080 | 71.62% |
+| UltraRAM (URAM) | 20 | 80 | 25.00% |
+| DSP48E2 | 1,543 | 4,272 | 36.12% |
+| Bonded IOB (`82/82` Fixed) | 82 | 347 | 23.63% |
+
+### Post-route timing summary (`post_route_timing.rpt`)
+
+| Clock / Metric | Period (Freq) | WNS (ns) | WHS (ns) | Endpoints |
+|---|---:|---:|---:|---:|
+| **Global Design Timing** | Multi-clock | **+0.045** | **+0.009** | 1,037,437 (`0` failing) |
+| `PL_CLK_clk` / `clk_out1_mts_MTSclkwiz_0` | 2.000 ns (500 MHz) | +0.095 / +0.213 | +0.218 / +0.010 | 6,297 |
+| `clk_out2_mts_MTSclkwiz_0` (RFDC ADC + 4× channelizer + subband bridge) | 4.000 ns (250 MHz) | **+0.134** | **+0.009** | 849,142 |
+| `clk_out1_mts_doa_clk_wiz_125m_0` (`/doa_v7` + covariance/beam FIFOs) | 8.000 ns (125 MHz) | **+1.082** | **+0.010** | 82,495 |
+| `clk_pl_0` (PS AXI4-Lite control) | 10.000 ns (100 MHz) | +1.328 | +0.010 | 20,142 |
+| `mmcm_clkout0` (DDR4 MIG UI) | 3.001 ns (333.27 MHz) | +0.045 | +0.010 | 70,571 |
+
+### Assigned ZynqMP LPD AXI4-Lite memory map (`/zynq_ultra_ps_e_0/Data`)
+
+| Base Address | Range | Block Design Target | Purpose |
+|---|---:|---|---|
+| `0x800A_0000` | 4 KB | `/doa_beam_fifo/S_AXI/Mem0` | AXI4-Stream FIFO readout for 256-bit `M_AXIS_BEAM` (downsizer -> 32-bit words) |
+| `0x800A_1000` | 4 KB | `/doa_cov_fifo/S_AXI/Mem0` | AXI4-Stream FIFO readout for 64-bit `M_AXIS_COVARIANCE` (16× `int64` = 32× 32-bit words/frame) |
+| `0x800A_2000` | 4 KB | `/doa_subband_bridge_0/s_axi_ctrl/reg0` | Subband bridge control, manual/auto bin select, `SCALE_SHIFT`, and frame/drop telemetry |
+| `0x800B_0000` | 64 KB | `/doa_v7/beam_monitor/s_axi_ctrl/Reg` | `beam_weight_4ch` steering weights & `ap_ctrl` |
+| `0x800C_0000` | 64 KB | `/doa_v7/candidate_peak/s_axi_ctrl/Reg` | `candidate_peak4` threshold/gate configuration |
+| `0x800D_0000` | 64 KB | `/doa_v7/covariance/s_axi_ctrl/Reg` | `doa_covariance_4ch_v4` Q2.14 calibration registers & frame length |
+
+### Remaining on-board / chamber bring-up items
+
+- Load `build/output/doa_v7_zcu208.bit` + `mts.hwh` (or `doa_v7_zcu208.xsa` from
+  `build/release/doa_v7_zcu208_artifacts.tar.gz`) onto ZCU208 + CLK104;
+- Run the runtime CLK104/MTS alignment loop and verify deterministic inter-tile
+  sample alignment across resets;
+- Replay/compare PS covariance readout (`0x800A_1000`) against
+  `build/hil_vectors/golden_covariance_i64.csv` and port/profile the V7
+  covariance-to-angle estimator + chamber calibration campaign.
+
 
