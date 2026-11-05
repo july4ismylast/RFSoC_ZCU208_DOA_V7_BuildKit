@@ -1,0 +1,13 @@
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+GATE1_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate1_hdl_generation_transposed.rpt
+GATE3_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate3_transposed_numerics.rpt
+GATE4_OOC_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate4_axis_wrapper_ooc.rpt
+GENERATED_HDL_FILE_COUNT=228
+TESTBENCH=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/tb_channelizer_axis_wrapper.sv
+TEST_PLAN=128 input SSR beats; force 8-cycle downstream stall; check stable output, upstream ready, and TLAST at accepted output beat 128
+XVLOG_COMPLETED=1
+XELAB_COMPLETED=1
+XSIM_LOG=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate4_axis_wrapper_sim/xsim.log
+SIMULATION_COMPLETED=1
+V06 GATE4 AXI WRAPPER SIM RESULT=PASS
