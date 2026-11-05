@@ -1,0 +1,717 @@
+vivado -mode batch -nojournal -nolog -source v06_gate4_axis_wrapper_sim.tcl
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source v06_gate4_axis_wrapper_sim.tcl
+# set script_dir [file dirname [file normalize [info script]]]
+# set root_dir [file normalize [file join $script_dir .. .. ..]]
+# source [file join $root_dir config ip_versions.tcl]
+## namespace eval ::doa_versions {}
+## proc ::doa_versions::env_or {name default_value} {
+##     if {[info exists ::env($name)] && [string trim $::env($name)] ne ""} {
+##         return [string trim $::env($name)]
+##     }
+##     return $default_value
+## }
+## set ::VIVADO_LOCK_CERTIFIED "2023.2"
+## set ::VIVADO_LOCK_VERSION [::doa_versions::env_or EXPECTED_VIVADO_VERSION $::VIVADO_LOCK_CERTIFIED]
+## set ::PART_PINNED         [::doa_versions::env_or PART "xczu48dr-fsvg1517-2-e"]
+## set ::BOARD_PART_PINNED   [::doa_versions::env_or BOARD_PART "xilinx.com:zcu208:part0:2.0"]
+## set ::BASE_KIND_PINNED    [::doa_versions::env_or BASE_KIND "mts"]
+## set ::CUSTOM_IP_VENDOR  [::doa_versions::env_or CUSTOM_IP_VENDOR  "openai"]
+## set ::CUSTOM_IP_LIBRARY [::doa_versions::env_or CUSTOM_IP_LIBRARY "doa"]
+## set ::IPVER_COVARIANCE  [::doa_versions::env_or IPVER_COVARIANCE  "7.1"]
+## set ::IPVER_SPECTRUM    [::doa_versions::env_or IPVER_SPECTRUM    "2.0"]
+## set ::IPVER_CANDIDATE   [::doa_versions::env_or IPVER_CANDIDATE   "1.0"]
+## set ::IPVER_BEAM        [::doa_versions::env_or IPVER_BEAM        "2.1"]
+## set ::IPVER_RFDC_REPACK4 [::doa_versions::env_or IPVER_RFDC_REPACK4 "1.0"]
+## set ::IPVER_CHANNELIZER [::doa_versions::env_or IPVER_CHANNELIZER "7.0"]
+## set ::IPVLNV(rfdc)                 "xilinx.com:ip:usp_rf_data_converter:2.6"
+## set ::IPVLNV(ps)                   "xilinx.com:ip:zynq_ultra_ps_e:3.5"
+## set ::IPVLNV(axis_data_fifo)       "xilinx.com:ip:axis_data_fifo:2.0"
+## set ::IPVLNV(axi_data_fifo)        "xilinx.com:ip:axi_data_fifo:2.1"
+## set ::IPVLNV(axi_fifo_mm_s)        "xilinx.com:ip:axi_fifo_mm_s:4.3"
+## set ::IPVLNV(axi_bram_ctrl)        "xilinx.com:ip:axi_bram_ctrl:4.1"
+## set ::IPVLNV(blk_mem_gen)          "xilinx.com:ip:blk_mem_gen:8.4"
+## set ::IPVLNV(axi_dma)              "xilinx.com:ip:axi_dma:7.1"
+## set ::IPVLNV(axi_datamover)        "xilinx.com:ip:axi_datamover:5.1"
+## set ::IPVLNV(axi_interconnect)     "xilinx.com:ip:axi_interconnect:2.1"
+## set ::IPVLNV(smartconnect)         "xilinx.com:ip:smartconnect:1.0"
+## set ::IPVLNV(axi_clock_converter)  "xilinx.com:ip:axi_clock_converter:2.1"
+## set ::IPVLNV(axi_dwidth_converter) "xilinx.com:ip:axi_dwidth_converter:2.1"
+## set ::IPVLNV(axi_register_slice)   "xilinx.com:ip:axi_register_slice:2.1"
+## set ::IPVLNV(axi_gpio)             "xilinx.com:ip:axi_gpio:2.0"
+## set ::IPVLNV(axi_intc)             "xilinx.com:ip:axi_intc:4.1"
+## set ::IPVLNV(proc_sys_reset)       "xilinx.com:ip:proc_sys_reset:5.0"
+## set ::IPVLNV(clk_wiz)              "xilinx.com:ip:clk_wiz:6.0"
+## set ::IPVLNV(ddr4)                 "xilinx.com:ip:ddr4:2.2"
+## set ::IPVLNV(axis_clock_converter)   "xilinx.com:ip:axis_clock_converter:1.1"
+## set ::IPVLNV(axis_dwidth_converter)  "xilinx.com:ip:axis_dwidth_converter:1.1"
+## set ::IPVLNV(axis_register_slice)    "xilinx.com:ip:axis_register_slice:1.1"
+## set ::IPVLNV(axis_broadcaster)       "xilinx.com:ip:axis_broadcaster:1.1"
+## set ::IPVLNV(axis_combiner)          "xilinx.com:ip:axis_combiner:1.1"
+## set ::IPVLNV(axis_switch)            "xilinx.com:ip:axis_switch:1.1"
+## set ::IPVLNV(fir_compiler)           "xilinx.com:ip:fir_compiler:7.2"
+## set ::IPVLNV(util_ds_buf)            "xilinx.com:ip:util_ds_buf:2.2"
+## set ::IPVLNV(xpm_cdc_gen)            "xilinx.com:ip:xpm_cdc_gen:1.0"
+## set ::IPVLNV(xlconcat)               "xilinx.com:ip:xlconcat:2.1"
+## set ::IPVLNV(xlconstant)             "xilinx.com:ip:xlconstant:1.1"
+## set ::IPVLNV(xlslice)                "xilinx.com:ip:xlslice:1.0"
+## set ::IPVLNV(util_reduced_logic)     "xilinx.com:ip:util_reduced_logic:2.0"
+## set ::IPVLNV(util_vector_logic)      "xilinx.com:ip:util_vector_logic:2.0"
+## set ::IPVLNV(ila)                    "xilinx.com:ip:ila:6.2"
+## set ::IPVLNV(vio)                    "xilinx.com:ip:vio:3.0"
+## set ::IPVLNV(covariance) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_covariance_4ch_v4:$::IPVER_COVARIANCE"
+## set ::IPVLNV(spectrum)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:spectrum_power4:$::IPVER_SPECTRUM"
+## set ::IPVLNV(candidate)  "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:candidate_peak4:$::IPVER_CANDIDATE"
+## set ::IPVLNV(beam)       "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:beam_weight_4ch:$::IPVER_BEAM"
+## set ::IPVLNV(rfdc_repack4) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:rfdc_repack4:$::IPVER_RFDC_REPACK4"
+## set ::IPVLNV(channelizer) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:matlab_channelizer:$::IPVER_CHANNELIZER"
+## set ::IP_CATALOG_KEYS {
+##     rfdc ps axis_data_fifo axi_data_fifo axi_fifo_mm_s axi_bram_ctrl
+##     blk_mem_gen axi_dma axi_datamover axi_interconnect smartconnect
+##     axi_clock_converter axi_dwidth_converter axi_register_slice axi_gpio
+##     axi_intc proc_sys_reset clk_wiz ddr4 axis_clock_converter
+##     axis_dwidth_converter axis_register_slice axis_broadcaster axis_combiner
+##     axis_switch fir_compiler util_ds_buf xpm_cdc_gen xlconcat xlconstant
+##     xlslice util_reduced_logic util_vector_logic ila vio
+## }
+## set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam rfdc_repack4 channelizer}
+## proc doa_require_vivado_lock {} {
+##     if {$::VIVADO_LOCK_VERSION ne $::VIVADO_LOCK_CERTIFIED} {
+##         error "Vivado lock: config/ip_versions.tcl is certified only for \
+## $::VIVADO_LOCK_CERTIFIED, but EXPECTED_VIVADO_VERSION=$::VIVADO_LOCK_VERSION. \
+## Re-verify every VLNV in this file for that release before changing the lock."
+##     }
+##     set running [version -short]
+##     if {[string first $::VIVADO_LOCK_VERSION $running] == -1} {
+##         error "Vivado lock: need Vivado $::VIVADO_LOCK_VERSION, running $running. \
+## Do not let another Vivado release open/upgrade this project.  If an upgrade \
+## is intended, follow the BD-Tcl guard procedure: run the design in \
+## $::VIVADO_LOCK_VERSION, open it in the new release, use Report IP Status to \
+## upgrade, then write_bd_tcl and re-certify config/ip_versions.tcl."
+##     }
+##     puts "DOA version lock OK: Vivado $running, part $::PART_PINNED, board $::BOARD_PART_PINNED"
+## }
+## proc doa_pinned_ip {key} {
+##     if {![info exists ::IPVLNV($key)]} {
+##         error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+##     }
+##     set vlnv $::IPVLNV($key)
+##     set defs [get_ipdefs -all -filter "VLNV == $vlnv"]
+##     if {[llength $defs] != 1} {
+##         set ip_name [lindex [split $vlnv :] 2]
+##         set available [get_ipdefs -all -filter "NAME == $ip_name"]
+##         error "Pinned IP for key '$key' not found exactly once: $vlnv \
+## (found [llength $defs]).  Available definitions for NAME=$ip_name: $available. \
+## Fix config/ip_versions.tcl (one line) or rebuild the custom IP -- do not \
+## fall back to a wildcard."
+##     }
+##     return $vlnv
+## }
+## proc doa_create_pinned_ip {key instance} {
+##     return [create_bd_cell -type ip -vlnv [doa_pinned_ip $key] $instance]
+## }
+# set report_file [file join $::env(BUILD) output v06_gate4_axis_wrapper_sim.rpt]
+# set work_dir [file join $::env(BUILD) v06_gate4_axis_wrapper_sim]
+# set gate1_report [file join $::env(BUILD) output v06_gate1_hdl_generation_transposed.rpt]
+# set gate3_report [file join $::env(BUILD) output v06_gate3_transposed_numerics.rpt]
+# set gate4_report [file join $::env(BUILD) output v06_gate4_axis_wrapper_ooc.rpt]
+# set rtl_root [file join $script_dir hdl_prj hdlsrc_transposed zu48dr_channelizer_ip]
+# set wrapper_file [file join $script_dir channelizer_axis_wrapper.sv]
+# set testbench_file [file join $script_dir tb_channelizer_axis_wrapper.sv]
+# file mkdir [file dirname $report_file]
+# file mkdir $work_dir
+# set report_fh [open $report_file w]
+# proc gate4sim_log {fh message} {
+#     puts $message
+#     puts $fh $message
+#     flush $fh
+# }
+# proc gate4sim_read {path} {
+#     set fh [open $path r]
+#     set text [read $fh]
+#     close $fh
+#     return $text
+# }
+# proc gate4sim_collect_hdl {dir} {
+#     set result {}
+#     foreach entry [glob -nocomplain -directory $dir *] {
+#         if {[file isdirectory $entry]} {
+#             set result [concat $result [gate4sim_collect_hdl $entry]]
+#         } elseif {[regexp -nocase {\.(v|sv|vhd|vhdl)$} [file extension $entry]]} {
+#             lappend result [file normalize $entry]
+#         }
+#     }
+#     return [lsort -unique $result]
+# }
+# set gate_status FAIL
+# set gate_error ""
+# set gate_error_info ""
+DOA version lock OK: Vivado 2023.2, part xczu48dr-fsvg1517-2-e, board xilinx.com:zcu208:part0:2.0
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+GATE1_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate1_hdl_generation_transposed.rpt
+GATE3_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate3_transposed_numerics.rpt
+GATE4_OOC_EVIDENCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/output/v06_gate4_axis_wrapper_ooc.rpt
+GENERATED_HDL_FILE_COUNT=228
+TESTBENCH=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/tb_channelizer_axis_wrapper.sv
+TEST_PLAN=128 input SSR beats; force 8-cycle downstream stall; check stable output, upstream ready, and TLAST at accepted output beat 128
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/ChannelizerCore.v" into library work
+INFO: [VRFC 10-311] analyzing module ChannelizerCore
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT.v" into library work
+INFO: [VRFC 10-311] analyzing module Channelizer_DUT
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block10.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block10
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block11.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block11
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block12.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block12
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block13.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block13
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block14.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block14
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block15.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block15
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block16.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block16
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block17.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block17
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block18.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block18
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block19.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block19
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block20.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block20
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block21.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block21
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block22.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block22
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block23.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block23
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block24.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block24
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block25.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block25
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block26.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block26
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block27.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block27
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block28.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block28
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block7.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block8.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block8
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block9.v" into library work
+INFO: [VRFC 10-311] analyzing module Complex4Multiply_block9
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FFT.v" into library work
+INFO: [VRFC 10-311] analyzing module FFT
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterBank.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterBank
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterCoef
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterCoef_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterCoef_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterCoef_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterCoef_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterCoef_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterCoef_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterCoef_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterTap.v" into library work
+INFO: [VRFC 10-311] analyzing module FilterTap
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_CTRL1_1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_CTRL1_2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_CTRL1_3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_CTRL1_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_CTRL1_5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_CTRL1_6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_7.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_CTRL1_7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_1_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_1_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_1_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_1_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_1_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_1_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_1_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_3_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_3_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_3_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_3_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_3_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_3_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_3_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_5_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_5_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_5_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_5_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_5_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_5_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_5_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_7_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_7_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_7_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_7_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_7_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_7_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF1_7_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_2_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_2_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_2_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_2_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_2_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_2_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_2_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_4_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_4_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_4_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_4_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_4_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_4_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_4_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_6_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_6_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_6_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_6_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_6_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_6_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDF2_6_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF1_9.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF1_9
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF1_9_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF1_9_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF1_9_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF1_9_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF1_9_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF1_9_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_10.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF2_10
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_10_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF2_10_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_10_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF2_10_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_10_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF2_10_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_8.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF2_8
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_8_block.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF2_8_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_8_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF2_8_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_8_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_SDNF2_8_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNaturalMux_1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNaturalMux_2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNaturalMux_3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNaturalMux_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNaturalMux_5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNaturalMux_6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_7.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNaturalMux_7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_8.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNaturalMux_8
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_1.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNatural_1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_2.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNatural_2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_3.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNatural_3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_4.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNatural_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_5.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNatural_5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_6.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNatural_6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_7.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNatural_7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_8.v" into library work
+INFO: [VRFC 10-311] analyzing module RADIX22FFT_bitNatural_8
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator1_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator1_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator1_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator1_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator1_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator1_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator1_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator2_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator2_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator2_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator2_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator2_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator2_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator2_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator3_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator3_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator3_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator3_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator3_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator3_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator3_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator4_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator4_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator4_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator4_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator4_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator4_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator4_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator5_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator5_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator5_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator5_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator5_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator5_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator5_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator6_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator6_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator6_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator6_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator6_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator6_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator6_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator7_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator7_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator7_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block3.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator7_block3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block4.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator7_block4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block5.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator7_block5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block6.v" into library work
+INFO: [VRFC 10-311] analyzing module SDFCommutator7_block6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SimpleDualPortRAM_generic.v" into library work
+INFO: [VRFC 10-311] analyzing module SimpleDualPortRAM_generic
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLMULT_SDNF1_9.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLMULT_SDNF1_9
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLMULT_SDNF1_9_block.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLMULT_SDNF1_9_block
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLMULT_SDNF1_9_block1.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLMULT_SDNF1_9_block1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLMULT_SDNF1_9_block2.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLMULT_SDNF1_9_block2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_1.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_3_1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_2.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_3_2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_3.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_3_3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_4.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_3_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_5.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_3_5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_6.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_3_6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_7.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_3_7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_8.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_3_8
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_1.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_5_1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_2.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_5_2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_3.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_5_3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_4.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_5_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_5.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_5_5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_6.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_5_6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_7.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_5_7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_8.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_5_8
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_1.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_7_1
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_2.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_7_2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_3.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_7_3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_4.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_7_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_5.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_7_5
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_6.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_7_6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_7.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_7_7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_8.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_7_8
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_2.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_9_2
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_3.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_9_3
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_4.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_9_4
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_6.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_9_6
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_7.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_9_7
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_8.v" into library work
+INFO: [VRFC 10-311] analyzing module TWDLROM_9_8
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/delayLine.v" into library work
+INFO: [VRFC 10-311] analyzing module delayLine
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/dsphdl_Channelizer.v" into library work
+INFO: [VRFC 10-311] analyzing module dsphdl_Channelizer
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/subFilter.v" into library work
+INFO: [VRFC 10-311] analyzing module subFilter
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/channelizer_axis_wrapper.sv" into library work
+INFO: [VRFC 10-311] analyzing module channelizer_axis_wrapper
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/tb_channelizer_axis_wrapper.sv" into library work
+INFO: [VRFC 10-311] analyzing module tb_channelizer_axis_wrapper
+XVLOG_COMPLETED=1
+Vivado Simulator v2023.2
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+Running: /media/joshua/Linux/Programs/X20232/Vivado/2023.2/bin/unwrapped/lnx64.o/xelab -debug typical -L unisims_ver -L unimacro_ver -L secureip -s v06_gate4_axis_wrapper_sim_snapshot work.tb_channelizer_axis_wrapper 
+Multi-threading is on. Using 22 slave threads.
+Starting static elaboration
+Pass Through NonSizing Optimizer
+Completed static elaboration
+Starting simulation data flow analysis
+ERROR: [XSIM 43-4099] "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/channelizer_axis_wrapper.sv" Line 15. Module channelizer_axis_wrapper doesn't have a timescale but at least one module in design has a timescale.
+# set catch_rc [catch {
+#     doa_require_vivado_lock
+#     gate4sim_log $report_fh "VIVADO_VERSION=[version -short]"
+#     gate4sim_log $report_fh "PART=$::PART_PINNED"
+#     foreach required [list $gate1_report $gate3_report $gate4_report $wrapper_file $testbench_file] {
+#         if {![file isfile $required]} { error "Required Gate-4B input is missing: $required" }
+#     }
+#     foreach {path expected label} [list \
+#         $gate1_report "V06 GATE1 HDL GENERATION RESULT=PASS" GATE1 \
+#         $gate3_report "V06 GATE3 TRANSPOSED NUMERICS RESULT=PASS" GATE3 \
+#         $gate4_report "V06 GATE4 AXI WRAPPER OOC SYNTHESIS RESULT=PASS" GATE4_OOC] {
+#         set evidence [gate4sim_read $path]
+#         if {[string first $expected $evidence] < 0} {
+#             error "$label evidence does not contain the required PASS marker: $path"
+#         }
+#         gate4sim_log $report_fh "${label}_EVIDENCE=$path"
+#     }
+#     set top_file [file join $rtl_root Channelizer_DUT.v]
+#     if {![file isfile $top_file]} { error "Transposed Gate-1 top is missing: $top_file" }
+#     set hdl_files [gate4sim_collect_hdl $rtl_root]
+#     set verilog_files {}
+#     set systemverilog_files {}
+#     set vhdl_files {}
+#     foreach hdl_file $hdl_files {
+#         switch -- [string tolower [file extension $hdl_file]] {
+#             ".v" { lappend verilog_files $hdl_file }
+#             ".sv" { lappend systemverilog_files $hdl_file }
+#             ".vhd" { lappend vhdl_files $hdl_file }
+#             ".vhdl" { lappend vhdl_files $hdl_file }
+#         }
+#     }
+#     if {[llength $verilog_files] + [llength $systemverilog_files] + [llength $vhdl_files] == 0} {
+#         error "No Gate-1 HDL sources found under $rtl_root"
+#     }
+#     gate4sim_log $report_fh "GENERATED_HDL_FILE_COUNT=[llength $hdl_files]"
+#     gate4sim_log $report_fh "TESTBENCH=$testbench_file"
+#     gate4sim_log $report_fh "TEST_PLAN=128 input SSR beats; force 8-cycle downstream stall; check stable output, upstream ready, and TLAST at accepted output beat 128"
+# 
+#     cd $work_dir
+#     if {[llength $verilog_files] > 0} {
+#         exec xvlog -work work {*}$verilog_files >@stdout 2>@1
+#     }
+#     if {[llength $systemverilog_files] > 0} {
+#         exec xvlog -sv -work work {*}$systemverilog_files >@stdout 2>@1
+#     }
+#     if {[llength $vhdl_files] > 0} {
+#         exec xvhdl -work work {*}$vhdl_files >@stdout 2>@1
+#     }
+#     exec xvlog -sv -work work $wrapper_file $testbench_file >@stdout 2>@1
+#     gate4sim_log $report_fh "XVLOG_COMPLETED=1"
+# 
+#     exec xelab -debug typical -L unisims_ver -L unimacro_ver -L secureip \
+#         -s v06_gate4_axis_wrapper_sim_snapshot work.tb_channelizer_axis_wrapper \
+#         >@stdout 2>@1
+#     gate4sim_log $report_fh "XELAB_COMPLETED=1"
+# 
+#     set sim_log [file join $work_dir xsim.log]
+#     exec xsim v06_gate4_axis_wrapper_sim_snapshot -runall -log $sim_log \
+#         >@stdout 2>@1
+#     if {![file isfile $sim_log]} { error "XSim log was not created: $sim_log" }
+#     set sim_text [gate4sim_read $sim_log]
+#     if {[string first "GATE4 AXI WRAPPER SIM RESULT=PASS" $sim_text] < 0} {
+#         error "XSim completed without the testbench PASS marker; see $sim_log"
+#     }
+#     gate4sim_log $report_fh "XSIM_LOG=$sim_log"
+#     gate4sim_log $report_fh "SIMULATION_COMPLETED=1"
+#     set gate_status PASS
+# } gate_error gate_error_info]
+# if {$catch_rc != 0} {
+#     gate4sim_log $report_fh "ERROR=$gate_error"
+#     gate4sim_log $report_fh "ERROR_INFO=$gate_error_info"
+# }
+ERROR=child process exited abnormally
+ERROR_INFO=-code 1 -level 0 -errorcode {CHILDSTATUS 585150 1} -errorinfo {child process exited abnormally
+    while executing
+"exec xelab -debug typical -L unisims_ver -L unimacro_ver -L secureip  -s v06_gate4_axis_wrapper_sim_snapshot work.tb_channelizer_axis_wrapper  >@stdou..."} -errorline 49
+# gate4sim_log $report_fh "V06 GATE4 AXI WRAPPER SIM RESULT=$gate_status"
+V06 GATE4 AXI WRAPPER SIM RESULT=FAIL
+# close $report_fh
+# if {$catch_rc != 0} { exit 1 }
+INFO: [Common 17-206] Exiting Vivado at Thu Nov  5 17:55:21 2026...
+make[1]: *** [Makefile:160: gate4-axis-wrapper-sim] Error 1

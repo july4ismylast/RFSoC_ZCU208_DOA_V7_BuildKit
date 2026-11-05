@@ -1,0 +1,7 @@
+stage=step05_channelizer
+started_utc=2026-11-05T11:33:08Z
+command=./scripts/build_channelizer.sh matlab_hdl 
+ERROR: MATLAB channelizer packaging is blocked during V06. Run the Gate-1/Gate-2 feasibility targets only; packaging requires the frozen AXI4-Stream wrapper contract and ALLOW_CHANNELIZER_PACKAGE=1.
+make[3]: *** [Makefile:130: require-package-allowed] Error 2
+finished_utc=2026-11-05T11:33:08Z
+result=FAIL exit_code=2
