@@ -191,6 +191,10 @@ $(STAMP_DIR)/step15_package.done: scripts/package_release.sh config.mk scripts/r
 publish-evidence:
 	@CHANNELIZER_FLOW="$(CHANNELIZER_FLOW)" BUILD="$(BUILD)" IP_REPO="$(IP_REPO)" bash scripts/publish_build_evidence.sh
 
+.PHONY: publish-debug-logs
+publish-debug-logs:
+	@CHANNELIZER_FLOW="$(CHANNELIZER_FLOW)" BUILD="$(BUILD)" bash scripts/publish_debug_logs.sh
+
 .PHONY: repair-mts-module-refs
 repair-mts-module-refs:
 	@$(VIVADO) -mode batch -nojournal -nolog -source common/vivado/07_repair_mts_module_refs.tcl
