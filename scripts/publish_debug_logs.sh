@@ -23,9 +23,10 @@ stages=(
     step00_preflight step01_fetch_references
     step02_hls_covariance step03_hls_spectrum step04_hls_candidate
     step04_hls_beam step05_hls_repack step05_channelizer
-    step06_collect_ip step07_vivado_project step08_vivado_integrate
-    step09_vivado_validate step10_synth step11_impl step12_bitstream
-    step13_export_xsa step14_hil_vectors step15_package
+    step05_subband_bridge step06_collect_ip step07_vivado_project
+    step08_vivado_integrate step09_vivado_validate step10_synth
+    step11_impl step12_bitstream step13_export_xsa
+    step14_hil_vectors step15_package
 )
 found=0
 for stage in "${stages[@]}"; do
@@ -77,16 +78,31 @@ if (( found == 0 )); then
     echo "ERROR: no stage logs or channelizer gate artifacts found under $build" >&2
     exit 2
 fi
-inventory="$build/output/step08_base_bd_inventory.txt"
-if [[ -s "$inventory" ]]; then
-    size=$(wc -c < "$inventory")
-    if (( size > 15000000 )); then
-        echo "ERROR: refusing oversized BD inventory (>15 MB): $inventory" >&2
-        exit 2
+for extra_report in \
+    step08_base_bd_inventory.txt \
+    v06_gate5_package.rpt \
+    doa_subband_bridge_4ch_package.rpt \
+    v07_bd_integration.rpt \
+    doa_address_map.txt \
+    ip_status.txt \
+    validation_messages.txt \
+    post_synth_utilization.rpt \
+    post_synth_timing.rpt \
+    post_route_utilization.rpt \
+    post_route_utilization_hierarchical.rpt \
+    post_route_timing.rpt \
+    post_route_drc.rpt \
+    route_status.rpt \
+    timing_gate.txt; do
+    extra_path="$build/output/$extra_report"
+    if [[ -s "$extra_path" && ! -f "$out/$extra_report" ]]; then
+        size=$(wc -c < "$extra_path")
+        if (( size <= 15000000 )); then
+            cp -- "$extra_path" "$out/"
+            echo "Included build output report: $extra_report"
+        fi
     fi
-    cp -- "$inventory" "$out/"
-    echo 'Included Vivado base-BD inventory.'
-fi
+done
 {
     printf 'Captured UTC: %s\n' "$(date -u +%FT%TZ)"
     printf 'Source commit: %s\n' "$(git rev-parse HEAD)"

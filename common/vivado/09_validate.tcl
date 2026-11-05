@@ -3,6 +3,14 @@ source [file join $script_dir common.tcl]
 open_work_project
 select_base_bd
 validate_bd_design
+set mode [expr {[info exists ::env(INTEGRATION_MODE)] ? [string trim $::env(INTEGRATION_MODE)] : "mapped"}]
+if {$mode eq "mapped"} {
+    set map [file normalize [require_env ZCU208_BD_MAP]]
+    if {[file exists $map]} {
+        source $map
+        doa_post_validate_assertions
+    }
+}
 save_bd_design
 set output [ensure_output_directory]
 report_ip_status -file [file join $output ip_status.txt]

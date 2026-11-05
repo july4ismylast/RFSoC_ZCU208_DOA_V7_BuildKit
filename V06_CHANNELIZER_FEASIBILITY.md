@@ -631,22 +631,38 @@ stable output and propagated input ready. Evidence is in
 `docs/debug-logs/20261105T144719Z-matlab_hdl/v06_gate4-axis-wrapper-sim.log`
 and `v06_gate4_axis_wrapper_sim.rpt`.
 
-#### Gate 4C — exact RTL payload comparison (next command)
+#### Gate 4C — exact RTL payload comparison (PASS, 2026-11-05)
 
-Gate 4B proves AXI handshake/framing, but not that the 416-bit RTL payload
-matches the MATLAB fixed-point object or confirms all packed lane bits. Gate
-4C now generates deterministic 128-beat input and expected-output hex vectors
-from the transposed `ZU48DRChannelizer`, then compares every accepted XSim
-output beat and TLAST against those golden vectors. Run:
+Gate 4C passed on the user PC (MATLAB R2022b Update 10 + Vivado 2023.2 XSim)
+at commit `ac06c70`:
 
-```bash
-EVIDENCE_PUSH=0 make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim
-```
+- `docs/debug-logs/20261105T150522Z-matlab_hdl/v06_gate4-axis-wrapper-rtl-sim.log`
+- `docs/debug-logs/20261105T150522Z-matlab_hdl/v06_gate4_axis_wrapper_rtl_sim.rpt`
 
-This requires the existing Gate-1T, Gate-3, Gate-4 OOC, and Gate-4B PASS
-reports; it does not repeat them. The debug flow captures MATLAB and XSim
-transcripts plus the Gate-4C report. Afterward use GitHub Desktop **Push
-origin**; the publisher keeps `EVIDENCE_PUSH=0` and commits the snapshot
-locally. Gate 4C still does not authorize packaging: four-channel mapping,
-BD integration, and routed implementation remain later gates. Do not bypass the package guard or externalize these
-signals as board pins.
+All 128 accepted 416-bit AXI4-Stream output beats from the 228-file transposed
+`Channelizer_DUT` + `channelizer_axis_wrapper.sv` matched the fixed-point
+MATLAB `ZU48DRChannelizer` golden vectors bit-for-bit (`exact_data=1`,
+`tlast_index=127`).
+
+#### Gate 5 — AXI4-Stream IP packaging (`step05_channelizer` / `gate5-package`)
+
+With Gates 0T, 1T, 2T, 3, 4, 4B, and 4C complete, `package_generated_rtl.tcl`
+packages `channelizer_axis_wrapper.sv` together with the 228 transposed RTL
+files into `build/ip_repo/matlab_channelizer` under pinned VLNV
+`openai:doa:matlab_channelizer:7.0`, associates `s_axis` (32 bytes = 256 bits)
+and `m_axis` (52 bytes = 416 bits) with `aclk`/`aresetn`, runs
+`ipx::check_integrity` + `check_component_vlnv.sh`, and smoke-tests BD
+instantiation and VHDL target generation (`mts.xpr` uses `TARGET_LANGUAGE = VHDL`).
+
+#### Four-channel subband bridge (`step05_subband_bridge`) & V07 BD integration
+
+`ip/custom/doa_subband_bridge_4ch` (`openai:doa:doa_subband_bridge_4ch:1.0`)
+ingests four lockstep `matlab_channelizer:7.0` 416-bit SSR-8 streams at
+250 MHz (`clkRFdiv2`), quantizes `sfix26_En24 -> sfix16_En15` with half-up
+rounding and symmetric saturation (`SCALE_SHIFT = 9` unity default), emits
+256-beat natural-order `m_axis_search` frames and coherent 4-snapshot
+selected-bin `m_axis_capture` / `m_axis_beam` frames, terminates
+`M_AXIS_CANDIDATE` (192-bit) for closed-loop or manual bin selection, and ties
+off legacy MTS capture hierarchies cleanly. `config/zcu208_bd_map.tcl`
+implements `INTEGRATION_MODE=mapped` on `mts.bd` with zero external fabric
+stream ports.

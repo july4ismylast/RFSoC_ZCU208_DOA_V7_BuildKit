@@ -1,21 +1,17 @@
 # MATLAB/DSP HDL SSR channelizer generation harness
 
-> **Stage V06 status:** Transposed Gates 0T/1T/2T/3T passed on the
-> user PC (MATLAB R2022b). Gate 3 matched all 16 test bins in natural
-> order; with the documented phase correction, steady-state NRMSE was
-> 0.000183, correlation 0.999999983, global gain magnitude 1.00000205
-> and phase −0.0002925°. Transposed is selected as the Plan-A core and
-> `config.mk` default (one channel: 35,902 LUTs, 176 RAMB36, 351-cycle
-> latency in Gate 2T). This is **not** packaged IP or a bitstream: the
-> generated core has raw vector/data-valid ports. The isolated AXI4-Stream
-> wrapper candidate passed Gate-4 OOC synthesis (0 errors; 232 warnings,
-> including missing OOC `HD.CLK_SRC` timing context) and Gate-4B handshake/
-> framing simulation (129 inputs, 128 outputs, one TLAST, eight held cycles).
-> Gate-4C exact-payload comparison with the fixed-point MATLAB golden is next.
-> Packaging, four-channel mapping, and routed implementation remain unfinished.
-> Gate-3 and Gate-4 evidence is under `docs/debug-logs/20261105T134543Z-matlab_hdl/`,
-> `docs/debug-logs/20261105T141754Z-matlab_hdl/`, and
-> `docs/debug-logs/20261105T144719Z-matlab_hdl/`.
+> **Stage V06 status:** Transposed Gates 0T, 1T, 2T, 3, 4 (OOC synth),
+> 4B (handshake/framing sim), and **4C (bit-exact 416-bit RTL payload compare
+> against MATLAB fixed-point golden)** have all passed on the user PC
+> (`docs/debug-logs/20261105T150522Z-matlab_hdl/v06_gate4_axis_wrapper_rtl_sim.rpt`,
+> commit `ac06c70`). `package_generated_rtl.tcl` now packages
+> `channelizer_axis_wrapper.sv` + `Channelizer_DUT.v` (228 transposed files)
+> as `openai:doa:matlab_channelizer:7.0` (`step05_channelizer` /
+> `gate5-package`), reusing existing `hdl_prj/hdlsrc_transposed` RTL when
+> already generated. Four-channel stream adaptation to `/doa_v7` is provided
+> by `ip/custom/doa_subband_bridge_4ch` (`step05_subband_bridge`), and
+> ZCU208 MTS Block Design wiring is implemented in `config/zcu208_bd_map.tcl`
+> (`INTEGRATION_MODE=mapped`).
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
 `dsp.Channelizer` for synthesizable hardware. `build_model.m` now reads
@@ -64,21 +60,14 @@ BRAM-directive record. The completed transposed resource sequence was
 `make probe-transposed`, `make gate1-transposed`, then
 `make gate2t-transposed`; those targets use separate
 `*_transposed` reports and `hdl_prj/hdlsrc_transposed/` RTL so they do
-not overwrite baseline evidence. Gate 3 (`make gate3-transposed`) has passed: it compared the exact
-`ZU48DRChannelizer` wrapper against floating-point `dsp.Channelizer`,
-collected 40 snapshots, discarded startup snapshots, and froze the tested
-bin order/alignment/scaling/phase relation. Gate 4 OOC synthesis and Gate 4B
-handshake/framing simulation have passed. The next runnable step is exact
-payload comparison against MATLAB's fixed-point golden:
-`make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim`. It captures the
-MATLAB/XSim transcript and Gate-4C report in the standard debug snapshot and
-locally commits it for GitHub Desktop Push origin. Package validation,
-four-channel BD integration, and routed timing remain later work. `make hdl` remains the underlying generation
-file-target form.
-Packaging remains intentionally blocked; do not set
-`ALLOW_CHANNELIZER_PACKAGE=1` to bypass the guard. The package target follows
-the selected structure's HDL directory (transposed by default), but that raw
-core is not itself a production IP candidate.
+not overwrite baseline evidence. Gate 3 (`make gate3-transposed`), Gate 4 OOC synthesis (`make gate4-axis-wrapper`),
+Gate 4B handshake/framing simulation (`make gate4-axis-wrapper-sim`), and Gate 4C
+exact payload comparison (`make gate4-axis-wrapper-rtl-sim`) have all passed.
+`make package` (or `make gate5-package` / `make step05_channelizer`) packages
+`channelizer_axis_wrapper.sv` together with `Channelizer_DUT.v` and its 227
+submodules as `openai:doa:matlab_channelizer:7.0` and smoke-tests BD
+instantiation + VHDL target generation. `make hdl` reuses existing generated
+RTL when present; `make hdl-regen` forces MATLAB HDL regeneration.
 
 The Makefile launches MATLAB through `scripts/run_matlab_clean.sh`. This keeps
 the real user home and MATLAB licence configuration, copies MATLAB's factory

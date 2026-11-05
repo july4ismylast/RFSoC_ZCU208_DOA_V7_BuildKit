@@ -16,8 +16,9 @@ case "$gate" in
     gate4-axis-wrapper) report_name="v06_gate4_axis_wrapper_ooc.rpt" ;;
     gate4-axis-wrapper-sim) report_name="v06_gate4_axis_wrapper_sim.rpt" ;;
     gate4-axis-wrapper-rtl-sim) report_name="v06_gate4_axis_wrapper_rtl_sim.rpt" ;;
+    gate5-package) report_name="v06_gate5_package.rpt" ;;
     *)
-        echo "ERROR: unsupported V06 gate '$gate'. Choose probe, probe-transposed, gate1, gate1-transposed, gate2, gate2r-bram, gate2t-transposed, gate3-transposed, gate4-axis-wrapper, gate4-axis-wrapper-sim, or gate4-axis-wrapper-rtl-sim." >&2
+        echo "ERROR: unsupported V06 gate '$gate'. Choose probe, probe-transposed, gate1, gate1-transposed, gate2, gate2r-bram, gate2t-transposed, gate3-transposed, gate4-axis-wrapper, gate4-axis-wrapper-sim, gate4-axis-wrapper-rtl-sim, or gate5-package." >&2
         exit 2
         ;;
 esac

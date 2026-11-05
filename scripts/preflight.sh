@@ -72,7 +72,7 @@ if command -v "${VITIS_HLS:-vitis_hls}" >/dev/null 2>&1; then
     fi
 fi
 echo "INFO channelizer flow=${CHANNELIZER_FLOW:-matlab_hdl}"
-echo "INFO custom IP VLNVs=${CUSTOM_IP_VENDOR:-openai}:${CUSTOM_IP_LIBRARY:-doa}:doa_covariance_4ch_v4:${IPVER_COVARIANCE:-7.1}, spectrum_power4:${IPVER_SPECTRUM:-2.0}, candidate_peak4:${IPVER_CANDIDATE:-1.0}, beam_weight_4ch:${IPVER_BEAM:-2.1}, rfdc_repack4:${IPVER_RFDC_REPACK4:-1.0}, matlab_channelizer:${IPVER_CHANNELIZER:-7.0}"
+echo "INFO custom IP VLNVs=${CUSTOM_IP_VENDOR:-openai}:${CUSTOM_IP_LIBRARY:-doa}:doa_covariance_4ch_v4:${IPVER_COVARIANCE:-7.1}, spectrum_power4:${IPVER_SPECTRUM:-2.0}, candidate_peak4:${IPVER_CANDIDATE:-1.0}, beam_weight_4ch:${IPVER_BEAM:-2.1}, rfdc_repack4:${IPVER_RFDC_REPACK4:-1.0}, matlab_channelizer:${IPVER_CHANNELIZER:-7.0}, doa_subband_bridge_4ch:${IPVER_SUBBAND_BRIDGE:-1.0}"
 echo "INFO RF target=${TARGET_RF_LOW_HZ:-2000000000}-${TARGET_RF_HIGH_HZ:-4000000000} Hz on ${ADC_CHANNEL_COUNT:-4} ADC channels"
 echo "INFO PL contract=${ADC_STREAM_BITS:-512} bits at ${PL_CLOCK_PERIOD_NS:-7.8125} ns"
 echo "SUMMARY failures=$failures warnings=$warnings"

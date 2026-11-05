@@ -103,33 +103,33 @@ Select exactly one implementation:
 | MazinLab OPFB | `CHANNELIZER_FLOW=opfb` | Plan-B only: fetches the pinned set once and builds/imports exactly the ten MazinLab IP definitions used by RFSoC_OPFB `bd/opfb_streaming.tcl` (see `ip/upstream_opfb/README.md`); DOA rate/interface adaptation is still stage V06 |
 | External IP | `CHANNELIZER_FLOW=external EXTERNAL_CHANNELIZER_IP=...` | Previously packaged compatible channelizer |
 
-**Stage V06 status:** Transposed Gates 0T/1T/2T/3T have passed;
-Gate 3 froze natural bin order, alignment and numerical scaling/phase
-against `dsp.Channelizer`. `config.mk` now selects transposed as the
-Plan-A core/default. Gate 2T measured 35,902 LUTs and 176 RAMB36 per
-channel; the crude MTS + 4× screen is 43.7056% LUTs and 69.8611% BRAM
-Tiles. This is not integrated placement/routing, hold, congestion or
-power proof. The generated top is still a raw vector/data-valid core,
-not the frozen AXI4-Stream wrapper, so MATLAB packaging remains guarded
-and `step08` is not a valid next step. Also, the earlier `step06` PASS
-in debug snapshots came from the OPFB build; it does not prove MATLAB
-IP collection. See `V06_CHANNELIZER_FEASIBILITY.md` for Gate-3 results
-and the remaining wrapper contract.
+**Stage V06 status:** Transposed Gates 0T, 1T, 2T, 3, 4, 4B, and 4C
+(`v06_gate4_axis_wrapper_rtl_sim.rpt`, exact 416-bit payload match across
+all 128 output beats) have passed. `step05_channelizer` packages
+`channelizer_axis_wrapper.sv` + the 228 transposed RTL files as
+`openai:doa:matlab_channelizer:7.0` into `build/ip_repo/matlab_channelizer`,
+verifies `component.xml`, and smoke-tests BD instantiation + VHDL target
+generation. When `hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT.v`
+is already present on disk, `step05_channelizer` packages it directly without
+forcing a redundant MATLAB regeneration (`make -C ip/matlab/channelizer_hdl hdl-regen`
+forces regeneration when desired).
+
+### `step05_subband_bridge`
+
+Runs the Python golden reference check, XSim self-checking RTL testbench,
+250 MHz (`4.000 ns`) out-of-context synthesis timing gate, Vivado IP Packager
+export (`openai:doa:doa_subband_bridge_4ch:1.0`), and an in-memory VHDL BD
+smoke test exercising `doa_subband_bridge_4ch`, `axis_clock_converter:1.1`,
+`axis_dwidth_converter:1.1`, `axi_fifo_mm_s:4.3`, `xpm_cdc_gen:1.0`,
+`clk_wiz:6.0`, `proc_sys_reset:5.0`, and `assign_bd_address`.
 
 ### `step06_collect_ip`
 
-Validates every required `component.xml` and writes `ip_manifest.tsv`. It does
-not silently accept an incomplete export.
-
-**Current MATLAB-HDL selection:** the user has switched the build flow to
-`CHANNELIZER_FLOW=matlab_hdl`. Gate-3 feasibility, Gate-4 wrapper OOC
-synthesis, and Gate-4B handshake/framing simulation pass; the next check is
-`make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim`, which compares
-all 416-bit output beats to a fixed-point MATLAB golden. Gate 4C still does
-not authorize packaging or `step08`; the package path, four-channel mapping,
-and routed implementation require validation. Do not treat prior `step06` PASS logs as MATLAB
-collection evidence; those were generated under the earlier OPFB flow. The
-OPFB collection command remains available only for explicit Plan-B evaluation.
+Validates every required `component.xml` and writes `ip_manifest.tsv`. Under
+`CHANNELIZER_FLOW=matlab_hdl` it requires all seven custom IPs:
+`doa_covariance_4ch_v4:7.1`, `spectrum_power4:2.0`, `candidate_peak4:1.0`,
+`beam_weight_4ch:2.1`, `rfdc_repack4:1.0`, `matlab_channelizer:7.0`, and
+`doa_subband_bridge_4ch:1.0`.
 
 ### `step07_vivado_project`
 
@@ -144,9 +144,15 @@ if that file does not exist yet, run stage V03 first — see
 
 ### `step08_vivado_integrate`
 
-Creates the `doa_v7` hierarchy and invokes the only base-specific file,
-`config/zcu208_bd_map.tcl`. The default `mapped` mode fails until actual RFDC,
-clock/reset, AXI control, DMA/FIFO, and detector connections are named.
+Creates `/doa_v7` and invokes `config/zcu208_bd_map.tcl` (`INTEGRATION_MODE=mapped`
+by default): exports `vin1_23`, applies V04 staged 4-ch Zone-2 R2C 2× DDC + MTS
+restore on `/usp_rf_data_converter_1`, moves ADC AXIS clocks/resets and
+`user_sysref_adc` to 250 MHz (`clkRFdiv2`), derives a 125 MHz `/doa_v7` clock
+and synchronous reset, connects `rfdc_repack4` -> 4× `matlab_channelizer` ->
+`doa_subband_bridge_4ch` -> async CDCs -> `/doa_v7` -> PS AXI-Stream RX FIFOs
+(`doa_cov_fifo` & `doa_beam_fifo`), attaches all 6 DOA AXI4-Lite slaves to
+`/control_interconnect`, assigns addresses, validates the BD, and writes
+`build/output/v07_bd_integration.rpt` + `build/output/doa_address_map.txt`.
 
 ### `step09_vivado_validate`
 

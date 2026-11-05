@@ -39,7 +39,12 @@ required=(
     "$IP_REPO/rfdc_repack4|$vendor:$library:rfdc_repack4:${IPVER_RFDC_REPACK4:-1.0}"
 )
 case "${CHANNELIZER_FLOW:-matlab_hdl}" in
-    matlab_hdl) required+=("$IP_REPO/matlab_channelizer|$vendor:$library:matlab_channelizer:${IPVER_CHANNELIZER:-7.0}") ;;
+    matlab_hdl)
+        required+=(
+            "$IP_REPO/matlab_channelizer|$vendor:$library:matlab_channelizer:${IPVER_CHANNELIZER:-7.0}"
+            "$IP_REPO/doa_subband_bridge_4ch|$vendor:$library:doa_subband_bridge_4ch:${IPVER_SUBBAND_BRIDGE:-1.0}"
+        )
+        ;;
     model_composer) required+=("$IP_REPO/model_composer_channelizer|-") ;;
     external) required+=("${EXTERNAL_CHANNELIZER_IP:-}|-") ;;
     opfb)

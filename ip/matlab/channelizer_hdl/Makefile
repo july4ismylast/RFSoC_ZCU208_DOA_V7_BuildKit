@@ -1,9 +1,11 @@
 ROOT := $(abspath ../../..)
 include $(ROOT)/config.mk
-TOP ?= Channelizer_DUT
+DUT_TOP ?= Channelizer_DUT
+PACKAGE_TOP ?= channelizer_axis_wrapper
+WRAPPER_FILE := channelizer_axis_wrapper.sv
 MATLAB_RUNNER ?= $(ROOT)/scripts/run_matlab_clean.sh
-HDL_TOP_FILE := hdl_prj/hdlsrc/zu48dr_channelizer_ip/$(TOP).v
-HDL_TOP_FILE_TRANSPOSED := hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/$(TOP).v
+HDL_TOP_FILE := hdl_prj/hdlsrc/zu48dr_channelizer_ip/$(DUT_TOP).v
+HDL_TOP_FILE_TRANSPOSED := hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/$(DUT_TOP).v
 ifeq ($(CHANNELIZER_FILTER_STRUCTURE),transposed)
 HDL_SELECTED_TOP_FILE := $(HDL_TOP_FILE_TRANSPOSED)
 HDL_SELECTED_SOURCE_DIR := hdl_prj/hdlsrc_transposed
@@ -26,9 +28,10 @@ V06_GATE4_AXIS_WRAPPER_REPORT := $(ROOT)/build/output/v06_gate4_axis_wrapper_ooc
 V06_GATE4_AXIS_WRAPPER_SIM_REPORT := $(ROOT)/build/output/v06_gate4_axis_wrapper_sim.rpt
 V06_GATE4_RTL_GOLDEN_REPORT := $(ROOT)/build/output/v06_gate4_rtl_golden.rpt
 V06_GATE4_RTL_SIM_REPORT := $(ROOT)/build/output/v06_gate4_axis_wrapper_rtl_sim.rpt
-ALLOW_CHANNELIZER_PACKAGE ?= 0
+V06_GATE5_PACKAGE_REPORT := $(ROOT)/build/output/v06_gate5_package.rpt
+ALLOW_CHANNELIZER_PACKAGE ?= 1
 
-.PHONY: all model hdl package package-only require-package-allowed probe probe-transposed gate1 gate1-transposed gate2 gate2r-bram gate2t-transposed gate3-transposed gate4-axis-wrapper gate4-axis-wrapper-sim gate4-axis-wrapper-rtl-sim clean
+.PHONY: all model hdl hdl-regen package package-only gate5-package require-package-allowed probe probe-transposed gate1 gate1-transposed gate2 gate2r-bram gate2t-transposed gate3-transposed gate4-axis-wrapper gate4-axis-wrapper-sim gate4-axis-wrapper-rtl-sim clean
 all: package
 # Stage V06 Gate 0 (passed on the user PC, 2026-11-03): the installed
 # dsphdl.Channelizer accepts the production-size SSR-8/1024-band
@@ -181,20 +184,26 @@ gate4-axis-wrapper-rtl-sim: v06_gate4_generate_rtl_golden.m tb_channelizer_axis_
 model:
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "build_model"
 hdl: $(HDL_SELECTED_TOP_FILE)
-$(HDL_SELECTED_TOP_FILE): $(MATLAB_SOURCES)
+hdl-regen:
+	$(MATLAB_RUNNER) "$(MATLAB)" -batch "generate_hdl"
+	@test -f "$(HDL_SELECTED_TOP_FILE)" || { echo "ERROR: expected generated HDL top is missing: $(HDL_SELECTED_TOP_FILE)"; exit 1; }
+$(HDL_SELECTED_TOP_FILE): | $(MATLAB_SOURCES)
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "generate_hdl"
 	@test -f "$@" || { echo "ERROR: expected generated HDL top is missing: $@"; exit 1; }
 require-package-allowed:
-	@test "$(ALLOW_CHANNELIZER_PACKAGE)" = "1" || { echo "ERROR: MATLAB channelizer packaging is blocked until the AXI4-Stream wrapper contract is implemented. Run the V06 Gate-0/Gate-1/Gate-2/Gate-3 feasibility targets only; do not bypass this guard for a production build."; exit 2; }
+	@test "$(ALLOW_CHANNELIZER_PACKAGE)" = "1" || { echo "ERROR: MATLAB channelizer packaging is disabled by ALLOW_CHANNELIZER_PACKAGE=$(ALLOW_CHANNELIZER_PACKAGE)."; exit 2; }
 package: require-package-allowed $(PACKAGED_COMPONENT)
-$(PACKAGED_COMPONENT): $(HDL_SELECTED_TOP_FILE) package_generated_rtl.tcl
-	$(VIVADO) -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs $(HDL_SELECTED_SOURCE_DIR) $(TOP) $(PART)
+$(PACKAGED_COMPONENT): $(HDL_SELECTED_TOP_FILE) $(WRAPPER_FILE) package_generated_rtl.tcl
+	$(VIVADO) -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs $(HDL_SELECTED_SOURCE_DIR) $(PACKAGE_TOP) $(PART) $(WRAPPER_FILE)
 	@test -f "$@" || { echo "ERROR: Vivado did not create packaged IP: $@"; exit 1; }
 	@$(ROOT)/common/scripts/check_component_vlnv.sh "$@" "$(IP_VLNV)"
 package-only: require-package-allowed
-	@test -f "$(HDL_SELECTED_TOP_FILE)" || { echo "ERROR: generated HDL is missing; run make gate1 or make hdl"; exit 1; }
-	$(VIVADO) -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs $(HDL_SELECTED_SOURCE_DIR) $(TOP) $(PART)
+	@test -f "$(HDL_SELECTED_TOP_FILE)" || { echo "ERROR: generated HDL is missing; run make gate1-transposed or make hdl"; exit 1; }
+	$(VIVADO) -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs $(HDL_SELECTED_SOURCE_DIR) $(PACKAGE_TOP) $(PART) $(WRAPPER_FILE)
 	@test -f "$(PACKAGED_COMPONENT)" || { echo "ERROR: Vivado did not create packaged IP"; exit 1; }
 	@$(ROOT)/common/scripts/check_component_vlnv.sh "$(PACKAGED_COMPONENT)" "$(IP_VLNV)"
+gate5-package: package-only
+	@test -f "$(V06_GATE5_PACKAGE_REPORT)" || { echo "ERROR: Gate-5 package report missing: $(V06_GATE5_PACKAGE_REPORT)"; exit 1; }
+	@grep -q "V06 GATE5 PACKAGE RESULT=PASS" "$(V06_GATE5_PACKAGE_REPORT)" || { echo "ERROR: Gate-5 package did not PASS (see $(V06_GATE5_PACKAGE_REPORT))"; exit 1; }
 clean:
 	rm -rf hdl_prj build zu48dr_channelizer_ip.slx .Xil

@@ -15,6 +15,7 @@ STAGES := \
 	step04_hls_beam \
 	step05_hls_repack \
 	step05_channelizer \
+	step05_subband_bridge \
 	step06_collect_ip \
 	step07_vivado_project \
 	step08_vivado_integrate \
@@ -27,7 +28,8 @@ STAGES := \
 	step15_package
 
 PRODUCTION_STAGES := step00_preflight step02_hls_covariance step03_hls_spectrum \
-	step04_hls_candidate step04_hls_beam step05_hls_repack step05_channelizer step06_collect_ip step07_vivado_project \
+	step04_hls_candidate step04_hls_beam step05_hls_repack step05_channelizer \
+	step05_subband_bridge step06_collect_ip step07_vivado_project \
 	step08_vivado_integrate step09_vivado_validate step10_synth step11_impl \
 	step12_bitstream step13_export_xsa step14_hil_vectors step15_package
 
@@ -59,6 +61,7 @@ help:
 	@echo "  step05_hls_repack        C-sim, synth, and export V05 RFDC SSR-8 I/Q gearbox IP (250 MHz)"
 	@echo "  step05_channelizer       Build selected channelizer flow"
 	@echo "                             CHANNELIZER_FLOW=matlab_hdl|model_composer|opfb|external"
+	@echo "  step05_subband_bridge    Verify, synth-check, and package 4-channel subband stream bridge IP"
 	@echo "  step06_collect_ip        Validate component.xml files and assemble one IP repository"
 	@echo "  step07_vivado_project    Copy a verified ZCU208 base .xpr into an isolated project"
 	@echo "  step08_vivado_integrate  Add DOA V7 using config/zcu208_bd_map.tcl"
@@ -122,6 +125,7 @@ step04_hls_candidate: $(STAMP_DIR)/step04_hls_candidate.done
 step04_hls_beam: $(STAMP_DIR)/step04_hls_beam.done
 step05_hls_repack: $(STAMP_DIR)/step05_hls_repack.done
 step05_channelizer: $(STAMP_DIR)/step05_channelizer.done
+step05_subband_bridge: $(STAMP_DIR)/step05_subband_bridge.done
 step06_collect_ip: $(STAMP_DIR)/step06_collect_ip.done
 step07_vivado_project: $(STAMP_DIR)/step07_vivado_project.done
 step08_vivado_integrate: $(STAMP_DIR)/step08_vivado_integrate.done
@@ -156,6 +160,9 @@ $(STAMP_DIR)/step05_hls_repack.done: $(shell find ip/custom/rfdc_repack4 -type f
 
 $(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/model_composer/channelizer ip/upstream_opfb -type f 2>/dev/null) scripts/build_channelizer.sh scripts/fetch_upstream.sh common/scripts/import_packaged_ip.sh common/scripts/check_component_vlnv.sh common/vivado/create_catalog_project.tcl scripts/run_matlab_clean.sh config.mk config/upstream_repositories.tsv scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step05_channelizer --stamp "$@" --log "$(LOG_DIR)/step05_channelizer.log" -- ./scripts/build_channelizer.sh "$(CHANNELIZER_FLOW)"
+
+$(STAMP_DIR)/step05_subband_bridge.done: $(shell find ip/custom/doa_subband_bridge_4ch -type f 2>/dev/null) common/scripts/check_component_vlnv.sh config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
+	@./scripts/run_stage.sh --id step05_subband_bridge --stamp "$@" --log "$(LOG_DIR)/step05_subband_bridge.log" -- make --no-print-directory -C ip/custom/doa_subband_bridge_4ch all
 
 $(STAMP_DIR)/step06_collect_ip.done: scripts/collect_ip.sh config.mk config/ip_versions.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step06_collect_ip --stamp "$@" --log "$(LOG_DIR)/step06_collect_ip.log" -- ./scripts/collect_ip.sh
@@ -199,10 +206,14 @@ publish-debug-logs:
 # Run one stage, then snapshot its logs even if the stage fails. The snapshot
 # is committed locally; use GitHub Desktop's Push origin on machines without
 # command-line GitHub authentication.
-.PHONY: debug-stage
+.PHONY: debug-stage debug-stages
 debug-stage:
 	@test -n "$(STEP)" || { echo "ERROR: use make debug-stage STEP=stepNN_name"; exit 2; }
 	@bash scripts/run_stage_and_publish_debug.sh "$(STEP)"
+
+debug-stages:
+	@test -n "$(STEPS)" || { echo "ERROR: use make debug-stages STEPS=\"step05_channelizer ...\""; exit 2; }
+	@bash scripts/run_stages_and_publish_debug.sh $(STEPS)
 
 # Run one V06 MATLAB-HDL feasibility gate and snapshot its console transcript
 # plus its report, even when the gate fails.

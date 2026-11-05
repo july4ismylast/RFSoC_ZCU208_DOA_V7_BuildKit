@@ -83,6 +83,24 @@ set mode [expr {[info exists ::env(INTEGRATION_MODE)] ? $::env(INTEGRATION_MODE)
 connect_doa_v7_to_base doa_v7 $mode
 assign_bd_address
 validate_bd_design
+if {$mode eq "mapped"} {
+    doa_post_validate_assertions
+    set addressed_segs [lsort [get_bd_addr_segs -addressed -quiet]]
+    set addr_fh [open [file join $output doa_address_map.txt] w]
+    puts $addr_fh "=== ASSIGNED BD ADDRESS SEGMENTS ==="
+    foreach seg $addressed_segs {
+        set off [doa_inventory_value $seg OFFSET]
+        set rng [doa_inventory_value $seg RANGE]
+        puts $addr_fh [format "%-14s %-12s %s" $off $rng $seg]
+    }
+    close $addr_fh
+    set seg_blob [join $addressed_segs "\n"]
+    foreach expected_slave {covariance candidate_peak beam_monitor doa_cov_fifo doa_beam_fifo doa_subband_bridge_0} {
+        if {[string first $expected_slave $seg_blob] < 0} {
+            error "Expected DOA AXI4-Lite slave '$expected_slave' was not assigned an address segment (see build/output/doa_address_map.txt)"
+        }
+    }
+}
 # save_bd_design persists the BD; Vivado has no "save_project" Tcl command
 # (project-mode property changes persist to the .xpr automatically).
 save_bd_design
