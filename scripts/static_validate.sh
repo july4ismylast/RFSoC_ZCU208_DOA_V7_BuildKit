@@ -118,11 +118,20 @@ for path in files:
     for m in re.finditer(r"\bproc\s+([A-Za-z0-9_:]+)", txt):
         defined_procs.add(m.group(1).lstrip(":"))
 
+NON_PROC_DOA_NAMES = {
+    "doa_cdc_search", "doa_cdc_capture", "doa_cdc_beam", "doa_cdc_candidate",
+    "doa_cov_dwc", "doa_cov_fifo", "doa_beam_dwc", "doa_beam_fifo",
+    "doa_subband_bridge_0", "doa_rfdc_repack_0", "doa_clk_wiz_125m", "doa_rst_125m",
+    "doa_sysref_adc_cdc", "doa_channelizer_0", "doa_channelizer_1",
+    "doa_channelizer_2", "doa_channelizer_3",
+}
 for path in files:
     txt = path.read_text(encoding="utf-8")
+    if re.search(r"get_bd_addr_(spaces|segs)\b[^\n]*-hier\b", txt):
+        sys.exit(f"Invalid -hier flag on get_bd_addr_spaces/get_bd_addr_segs in {path}")
     for m in re.finditer(r"(?:\[|\n\s*)(doa_[A-Za-z0-9_]+)\s", txt):
         fn = m.group(1)
-        if fn not in defined_procs and not fn.startswith("doa_cdc_"):
+        if fn not in defined_procs and fn not in NON_PROC_DOA_NAMES:
             sys.exit(f"Undefined custom Tcl proc '{fn}' called in {path}")
 
 for sv_path in sorted(pathlib.Path("ip").rglob("*.sv")):

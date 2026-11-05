@@ -85,9 +85,8 @@ assign_bd_address
 validate_bd_design
 if {$mode eq "mapped"} {
     doa_post_validate_assertions
-    set addr_spaces [lsort -unique [concat \
-        [get_bd_addr_spaces -quiet] \
-        [get_bd_addr_spaces -hier -quiet]]]
+    set all_bd_cells [get_bd_cells -hier]
+    set addr_spaces [lsort -unique [get_bd_addr_spaces -quiet -of_objects $all_bd_cells]]
     set addressed_segs {}
     foreach sp $addr_spaces {
         set sp_segs [get_bd_addr_segs -quiet -addressed -of_objects $sp]
@@ -95,25 +94,36 @@ if {$mode eq "mapped"} {
             set addressed_segs [concat $addressed_segs $sp_segs]
         }
     }
-    set hier_segs [get_bd_addr_segs -hier -quiet -addressed]
-    if {[llength $hier_segs] > 0} {
-        set addressed_segs [concat $addressed_segs $hier_segs]
-    }
     set addressed_segs [lsort -unique $addressed_segs]
     set addr_fh [open [file join $output doa_address_map.txt] w]
-    puts $addr_fh "=== ASSIGNED BD ADDRESS SEGMENTS ==="
+    puts $addr_fh "=== ASSIGNED BD ADDRESS SEGMENTS (SPACES=[llength $addr_spaces] SEGS=[llength $addressed_segs]) ==="
     foreach seg $addressed_segs {
         set off [doa_inventory_value $seg OFFSET]
         set rng [doa_inventory_value $seg RANGE]
         puts $addr_fh [format "%-14s %-12s %s" $off $rng $seg]
     }
-    close $addr_fh
-    set seg_blob [join $addressed_segs "\n"]
-    foreach expected_slave {covariance candidate_peak beam_monitor doa_cov_fifo doa_beam_fifo doa_subband_bridge_0} {
-        if {[string first $expected_slave $seg_blob] < 0} {
-            error "Expected DOA AXI4-Lite slave '$expected_slave' was not assigned an address segment (see build/output/doa_address_map.txt)"
+    puts $addr_fh "=== DOA SLAVE INTERFACE ADDRESS CHECK ==="
+    foreach {slave_label slave_pin_path} {
+        covariance           /doa_v7/covariance/s_axi_ctrl
+        candidate_peak       /doa_v7/candidate_peak/s_axi_ctrl
+        beam_monitor         /doa_v7/beam_monitor/s_axi_ctrl
+        doa_cov_fifo         /doa_cov_fifo/S_AXI
+        doa_beam_fifo        /doa_beam_fifo/S_AXI
+        doa_subband_bridge_0 /doa_subband_bridge_0/s_axi_ctrl
+    } {
+        set spin [get_bd_intf_pins -quiet $slave_pin_path]
+        if {[llength $spin] != 1} {
+            close $addr_fh
+            error "Missing expected DOA AXI4-Lite slave interface pin '$slave_pin_path'"
+        }
+        set sseg_addressed [get_bd_addr_segs -quiet -addressed -of_objects $spin]
+        puts $addr_fh [format "%-22s %-38s ADDRESSED_SEGS=%s" $slave_label $slave_pin_path $sseg_addressed]
+        if {[llength $sseg_addressed] == 0} {
+            close $addr_fh
+            error "Expected DOA AXI4-Lite slave '$slave_label' ($slave_pin_path) was not assigned an address segment (see build/output/doa_address_map.txt)"
         }
     }
+    close $addr_fh
 }
 # save_bd_design persists the BD; Vivado has no "save_project" Tcl command
 # (project-mode property changes persist to the .xpr automatically).

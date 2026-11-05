@@ -34,10 +34,15 @@ for stage in "${stages[@]}"; do
     if [[ -s "$log" ]]; then
         size=$(wc -c < "$log")
         if (( size > 15000000 )); then
-            echo "ERROR: refusing oversized log (>15 MB): $log" >&2
-            exit 2
+            {
+                head -c 2000000 "$log"
+                printf '\n\n... [TRUNCATED OVERSIZED LOG (%s bytes total); SHOWING HEAD 2MB + TAIL 4MB] ...\n\n' "$size"
+                tail -c 4000000 "$log"
+            } > "$out/$(basename "$log")"
+            echo "Truncated oversized log ($size bytes) into $out/$(basename "$log")"
+        else
+            cp -- "$log" "$out/"
         fi
-        cp -- "$log" "$out/"
         found=$((found + 1))
     fi
 done
