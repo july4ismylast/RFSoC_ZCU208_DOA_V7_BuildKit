@@ -79,7 +79,12 @@ echo "Copied $found stage log(s) plus progress.txt. Review these files before pu
 git add -- "$out"
 git diff --cached --stat -- "$out"
 if [[ "${EVIDENCE_YES:-0}" != 1 ]]; then
-    read -r -p 'Commit and push this debug snapshot on the current branch? [y/N] ' answer
+    if [[ "${EVIDENCE_PUSH:-1}" == 0 ]]; then
+        prompt='Commit this snapshot locally? Push it later with GitHub Desktop. [y/N] '
+    else
+        prompt='Commit and push this debug snapshot on the current branch? [y/N] '
+    fi
+    read -r -p "$prompt" answer
     [[ "$answer" == y || "$answer" == Y ]] || {
         git reset -q -- "$out"
         echo "Not pushed. Snapshot remains at $out for review."

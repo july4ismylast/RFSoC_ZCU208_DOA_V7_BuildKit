@@ -195,6 +195,14 @@ publish-evidence:
 publish-debug-logs:
 	@CHANNELIZER_FLOW="$(CHANNELIZER_FLOW)" BUILD="$(BUILD)" bash scripts/publish_debug_logs.sh
 
+# Run one stage, then snapshot its logs even if the stage fails. The snapshot
+# is committed locally; use GitHub Desktop's Push origin on machines without
+# command-line GitHub authentication.
+.PHONY: debug-stage
+debug-stage:
+	@test -n "$(STEP)" || { echo "ERROR: use make debug-stage STEP=stepNN_name"; exit 2; }
+	@bash scripts/run_stage_and_publish_debug.sh "$(STEP)"
+
 .PHONY: repair-mts-module-refs
 repair-mts-module-refs:
 	@$(VIVADO) -mode batch -nojournal -nolog -source common/vivado/07_repair_mts_module_refs.tcl
