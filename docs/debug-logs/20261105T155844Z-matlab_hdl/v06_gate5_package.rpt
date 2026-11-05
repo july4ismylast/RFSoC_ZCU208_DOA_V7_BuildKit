@@ -1,0 +1,12 @@
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+RTL_DIR=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed
+PACKAGE_TOP=channelizer_axis_wrapper
+PACKAGED_HDL_FILE_COUNT=229
+TOP_SOURCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/channelizer_axis_wrapper.sv
+DUT_SOURCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT.v
+ERROR=invalid command name "doa_vlnv"
+ERROR_INFO=-code 1 -level 0 -errorcode NONE -errorinfo {invalid command name "doa_vlnv"
+    while executing
+"doa_vlnv channelizer"} -errorline 109
+V06 GATE5 PACKAGE RESULT=FAIL
