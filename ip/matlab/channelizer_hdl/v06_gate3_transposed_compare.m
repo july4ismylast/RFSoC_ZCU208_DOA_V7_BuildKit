@@ -672,11 +672,15 @@ end
 function [snapshots, info] = run_dut(coefficients, filterStructure, ...
     waveformQuantized, inputType, padSamples, snapshotsToCollect, ...
     numBands, ssr)
-dut = ZU48DRChannelizer( ...
-    'NumBands', numBands, ...
-    'Coefficients', coefficients, ...
-    'FilterStructure', filterStructure, ...
-    'NormalizeFFT', false);
+% MATLAB R2022b fails to chain the generated name/value constructor for
+% this matlab.System subclass (NoMatchingSuperConstructor).  Assign the
+% nontunable properties before the first step call instead; the System
+% object remains unlocked until that first call.
+dut = ZU48DRChannelizer();
+dut.NumBands = numBands;
+dut.Coefficients = coefficients;
+dut.FilterStructure = filterStructure;
+dut.NormalizeFFT = false;
 
 streamDouble = [complex(zeros(padSamples, 1)); waveformQuantized(:)];
 cycleCount = ceil(numel(streamDouble) / ssr);
