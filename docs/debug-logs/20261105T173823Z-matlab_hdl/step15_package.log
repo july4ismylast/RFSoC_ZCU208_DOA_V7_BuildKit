@@ -1,0 +1,5 @@
+stage=step15_package
+started_utc=2026-11-05T17:38:21Z
+command=./scripts/package_release.sh 
+Packaged /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/release/doa_v7_zcu208_artifacts.tar.gz
+result=PASS

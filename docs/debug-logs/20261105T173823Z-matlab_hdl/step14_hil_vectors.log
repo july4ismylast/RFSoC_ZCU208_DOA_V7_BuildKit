@@ -1,0 +1,30 @@
+stage=step14_hil_vectors
+started_utc=2026-11-05T17:37:46Z
+command=./scripts/generate_hil.sh 
+INFO: bypassing user .matlab7rc.sh for this MATLAB build invocation
+INFO: MATLAB loader isolation enabled; startup directory=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+INFO: MATLAB factory startup file=/media/joshua/Linux/Programs/R2022b/bin/.matlab7rc.sh
+Params loaded. Source=[500,300,200] Platform=[0,0,50]
+Selected source: QAM16, BW 30.0 MHz, symbol rate 20.00 Msym/s
+Realism profile: CALIBRATED_LOS, 14-bit ADC, calibrated coupling and position manifold.
+Created ZU48DR HIL vectors in /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/hil_vectors
+Created ZCU208 V7 HIL vectors in /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/hil_vectors
+
+ans = 
+
+  struct with fields:
+
+       format_version: 1
+     samples_per_beat: 4
+        frame_samples: 4096
+          true_az_deg: 27.3500
+          true_el_deg: -13.2000
+             adc_bits: 14
+    calibration_q2_14: [16384 4.2863e+09 5325174 4.2916e+09]
+        stimulus_file: 'adc_4ch_4spc_axis512.hex'
+          golden_file: 'golden_covariance_i64.csv'
+                board: 'ZCU208'
+               device: 'xczu48dr-fsvg1517-2-e'
+      stream_contract: 'AXI512: 4 lanes x 4 channels x complex int16'
+
+result=PASS

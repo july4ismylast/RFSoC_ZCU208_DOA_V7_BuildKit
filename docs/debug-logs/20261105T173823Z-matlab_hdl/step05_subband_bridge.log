@@ -1,0 +1,1147 @@
+stage=step05_subband_bridge
+started_utc=2026-11-05T16:25:08Z
+command=make --no-print-directory -C ip/custom/doa_subband_bridge_4ch all 
+python3 verify_golden_model.py
+PASS doa_subband_bridge_4ch golden verification
+vivado -mode batch -nojournal -nolog -source package_ip.tcl
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source package_ip.tcl
+# set script_dir [file dirname [file normalize [info script]]]
+# set root_dir   [file normalize [file join $script_dir .. .. ..]]
+# source [file join $root_dir common vivado common.tcl]
+## set ::doa_common_dir [file dirname [file normalize [info script]]]
+## set ::doa_root_dir [file normalize [file join $::doa_common_dir .. ..]]
+## source [file join $::doa_root_dir config ip_versions.tcl]
+### namespace eval ::doa_versions {}
+### proc ::doa_versions::env_or {name default_value} {
+###     if {[info exists ::env($name)] && [string trim $::env($name)] ne ""} {
+###         return [string trim $::env($name)]
+###     }
+###     return $default_value
+### }
+### set ::VIVADO_LOCK_CERTIFIED "2023.2"
+### set ::VIVADO_LOCK_VERSION [::doa_versions::env_or EXPECTED_VIVADO_VERSION $::VIVADO_LOCK_CERTIFIED]
+### set ::PART_PINNED         [::doa_versions::env_or PART "xczu48dr-fsvg1517-2-e"]
+### set ::BOARD_PART_PINNED   [::doa_versions::env_or BOARD_PART "xilinx.com:zcu208:part0:2.0"]
+### set ::BASE_KIND_PINNED    [::doa_versions::env_or BASE_KIND "mts"]
+### set ::CUSTOM_IP_VENDOR  [::doa_versions::env_or CUSTOM_IP_VENDOR  "openai"]
+### set ::CUSTOM_IP_LIBRARY [::doa_versions::env_or CUSTOM_IP_LIBRARY "doa"]
+### set ::IPVER_COVARIANCE  [::doa_versions::env_or IPVER_COVARIANCE  "7.1"]
+### set ::IPVER_SPECTRUM    [::doa_versions::env_or IPVER_SPECTRUM    "2.0"]
+### set ::IPVER_CANDIDATE   [::doa_versions::env_or IPVER_CANDIDATE   "1.0"]
+### set ::IPVER_BEAM        [::doa_versions::env_or IPVER_BEAM        "2.1"]
+### set ::IPVER_RFDC_REPACK4   [::doa_versions::env_or IPVER_RFDC_REPACK4   "1.0"]
+### set ::IPVER_CHANNELIZER    [::doa_versions::env_or IPVER_CHANNELIZER    "7.0"]
+### set ::IPVER_SUBBAND_BRIDGE [::doa_versions::env_or IPVER_SUBBAND_BRIDGE "1.0"]
+### set ::IPVLNV(rfdc)                 "xilinx.com:ip:usp_rf_data_converter:2.6"
+### set ::IPVLNV(ps)                   "xilinx.com:ip:zynq_ultra_ps_e:3.5"
+### set ::IPVLNV(axis_data_fifo)       "xilinx.com:ip:axis_data_fifo:2.0"
+### set ::IPVLNV(axi_data_fifo)        "xilinx.com:ip:axi_data_fifo:2.1"
+### set ::IPVLNV(axi_fifo_mm_s)        "xilinx.com:ip:axi_fifo_mm_s:4.3"
+### set ::IPVLNV(axi_bram_ctrl)        "xilinx.com:ip:axi_bram_ctrl:4.1"
+### set ::IPVLNV(blk_mem_gen)          "xilinx.com:ip:blk_mem_gen:8.4"
+### set ::IPVLNV(axi_dma)              "xilinx.com:ip:axi_dma:7.1"
+### set ::IPVLNV(axi_datamover)        "xilinx.com:ip:axi_datamover:5.1"
+### set ::IPVLNV(axi_interconnect)     "xilinx.com:ip:axi_interconnect:2.1"
+### set ::IPVLNV(smartconnect)         "xilinx.com:ip:smartconnect:1.0"
+### set ::IPVLNV(axi_clock_converter)  "xilinx.com:ip:axi_clock_converter:2.1"
+### set ::IPVLNV(axi_dwidth_converter) "xilinx.com:ip:axi_dwidth_converter:2.1"
+### set ::IPVLNV(axi_register_slice)   "xilinx.com:ip:axi_register_slice:2.1"
+### set ::IPVLNV(axi_gpio)             "xilinx.com:ip:axi_gpio:2.0"
+### set ::IPVLNV(axi_intc)             "xilinx.com:ip:axi_intc:4.1"
+### set ::IPVLNV(proc_sys_reset)       "xilinx.com:ip:proc_sys_reset:5.0"
+### set ::IPVLNV(clk_wiz)              "xilinx.com:ip:clk_wiz:6.0"
+### set ::IPVLNV(ddr4)                 "xilinx.com:ip:ddr4:2.2"
+### set ::IPVLNV(axis_clock_converter)   "xilinx.com:ip:axis_clock_converter:1.1"
+### set ::IPVLNV(axis_dwidth_converter)  "xilinx.com:ip:axis_dwidth_converter:1.1"
+### set ::IPVLNV(axis_register_slice)    "xilinx.com:ip:axis_register_slice:1.1"
+### set ::IPVLNV(axis_broadcaster)       "xilinx.com:ip:axis_broadcaster:1.1"
+### set ::IPVLNV(axis_combiner)          "xilinx.com:ip:axis_combiner:1.1"
+### set ::IPVLNV(axis_switch)            "xilinx.com:ip:axis_switch:1.1"
+### set ::IPVLNV(fir_compiler)           "xilinx.com:ip:fir_compiler:7.2"
+### set ::IPVLNV(util_ds_buf)            "xilinx.com:ip:util_ds_buf:2.2"
+### set ::IPVLNV(xpm_cdc_gen)            "xilinx.com:ip:xpm_cdc_gen:1.0"
+### set ::IPVLNV(xlconcat)               "xilinx.com:ip:xlconcat:2.1"
+### set ::IPVLNV(xlconstant)             "xilinx.com:ip:xlconstant:1.1"
+### set ::IPVLNV(xlslice)                "xilinx.com:ip:xlslice:1.0"
+### set ::IPVLNV(util_reduced_logic)     "xilinx.com:ip:util_reduced_logic:2.0"
+### set ::IPVLNV(util_vector_logic)      "xilinx.com:ip:util_vector_logic:2.0"
+### set ::IPVLNV(ila)                    "xilinx.com:ip:ila:6.2"
+### set ::IPVLNV(vio)                    "xilinx.com:ip:vio:3.0"
+### set ::IPVLNV(covariance) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_covariance_4ch_v4:$::IPVER_COVARIANCE"
+### set ::IPVLNV(spectrum)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:spectrum_power4:$::IPVER_SPECTRUM"
+### set ::IPVLNV(candidate)  "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:candidate_peak4:$::IPVER_CANDIDATE"
+### set ::IPVLNV(beam)       "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:beam_weight_4ch:$::IPVER_BEAM"
+### set ::IPVLNV(rfdc_repack4)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:rfdc_repack4:$::IPVER_RFDC_REPACK4"
+### set ::IPVLNV(channelizer)    "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:matlab_channelizer:$::IPVER_CHANNELIZER"
+### set ::IPVLNV(subband_bridge) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_subband_bridge_4ch:$::IPVER_SUBBAND_BRIDGE"
+### set ::IP_CATALOG_KEYS {
+###     rfdc ps axis_data_fifo axi_data_fifo axi_fifo_mm_s axi_bram_ctrl
+###     blk_mem_gen axi_dma axi_datamover axi_interconnect smartconnect
+###     axi_clock_converter axi_dwidth_converter axi_register_slice axi_gpio
+###     axi_intc proc_sys_reset clk_wiz ddr4 axis_clock_converter
+###     axis_dwidth_converter axis_register_slice axis_broadcaster axis_combiner
+###     axis_switch fir_compiler util_ds_buf xpm_cdc_gen xlconcat xlconstant
+###     xlslice util_reduced_logic util_vector_logic ila vio
+### }
+### set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam rfdc_repack4 channelizer subband_bridge}
+### proc doa_require_vivado_lock {} {
+###     if {$::VIVADO_LOCK_VERSION ne $::VIVADO_LOCK_CERTIFIED} {
+###         error "Vivado lock: config/ip_versions.tcl is certified only for \
+### $::VIVADO_LOCK_CERTIFIED, but EXPECTED_VIVADO_VERSION=$::VIVADO_LOCK_VERSION. \
+### Re-verify every VLNV in this file for that release before changing the lock."
+###     }
+###     set running [version -short]
+###     if {[string first $::VIVADO_LOCK_VERSION $running] == -1} {
+###         error "Vivado lock: need Vivado $::VIVADO_LOCK_VERSION, running $running. \
+### Do not let another Vivado release open/upgrade this project.  If an upgrade \
+### is intended, follow the BD-Tcl guard procedure: run the design in \
+### $::VIVADO_LOCK_VERSION, open it in the new release, use Report IP Status to \
+### upgrade, then write_bd_tcl and re-certify config/ip_versions.tcl."
+###     }
+###     puts "DOA version lock OK: Vivado $running, part $::PART_PINNED, board $::BOARD_PART_PINNED"
+### }
+### proc doa_vlnv {key} {
+###     if {![info exists ::IPVLNV($key)]} {
+###         error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+###     }
+###     return $::IPVLNV($key)
+### }
+### proc doa_pinned_ip {key} {
+###     if {![info exists ::IPVLNV($key)]} {
+###         error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+###     }
+###     set vlnv $::IPVLNV($key)
+###     set defs [get_ipdefs -all -filter "VLNV == $vlnv"]
+###     if {[llength $defs] != 1} {
+###         set ip_name [lindex [split $vlnv :] 2]
+###         set available [get_ipdefs -all -filter "NAME == $ip_name"]
+###         error "Pinned IP for key '$key' not found exactly once: $vlnv \
+### (found [llength $defs]).  Available definitions for NAME=$ip_name: $available. \
+### Fix config/ip_versions.tcl (one line) or rebuild the custom IP -- do not \
+### fall back to a wildcard."
+###     }
+###     return $vlnv
+### }
+### proc doa_create_pinned_ip {key instance} {
+###     return [create_bd_cell -type ip -vlnv [doa_pinned_ip $key] $instance]
+### }
+## proc require_env {name} {
+##     if {![info exists ::env($name)] || [string trim $::env($name)] eq ""} {
+##         error "Required environment variable $name is empty"
+##     }
+##     return $::env($name)
+## }
+## proc doa_append_ip_repo_paths {new_paths} {
+##     set merged {}
+##     foreach path [concat $new_paths [get_property ip_repo_paths [current_project]]] {
+##         set norm [file normalize $path]
+##         if {[lsearch -exact $merged $norm] < 0} { lappend merged $norm }
+##     }
+##     set_property ip_repo_paths $merged [current_project]
+##     update_ip_catalog
+##     return $merged
+## }
+## proc open_work_project {} {
+##     doa_require_vivado_lock
+##     set project [file normalize [require_env WORK_XPR]]
+##     if {![file exists $project]} {
+##         error "Working project not found: $project. Run step07_vivado_project first."
+##     }
+##     open_project $project
+##     set expected_part [require_env PART]
+##     if {[get_property PART [current_project]] ne $expected_part} {
+##         error "Project part [get_property PART [current_project]] does not match $expected_part"
+##     }
+##     set board [get_property BOARD_PART [current_project]]
+##     if {$board ne "" && $board ne $::BOARD_PART_PINNED} {
+##         error "Project board part '$board' does not match pinned '$::BOARD_PART_PINNED' (config/ip_versions.tcl)"
+##     }
+## }
+## proc select_base_bd {} {
+##     set requested ""
+##     if {[info exists ::env(BASE_BD)]} { set requested [string trim $::env(BASE_BD)] }
+##     if {$requested ne ""} {
+##         set candidates [get_files -quiet -all */${requested}.bd]
+##     } else {
+##         set candidates [get_files -quiet -all *.bd]
+##     }
+##     if {[llength $candidates] != 1} {
+##         error "Expected exactly one base BD (or set BASE_BD); found: $candidates"
+##     }
+##     open_bd_design [lindex $candidates 0]
+##     return [current_bd_design]
+## }
+## proc ensure_output_directory {} {
+##     set build [file normalize [require_env BUILD]]
+##     set output [file join $build output]
+##     file mkdir $output
+##     return $output
+## }
+## proc require_successful_run {run_name} {
+##     set run [get_runs -quiet $run_name]
+##     if {[llength $run] != 1} { error "Vivado run $run_name does not exist" }
+##     set status [get_property STATUS $run]
+##     if {![string match "*Complete*" $status]} {
+##         error "Vivado run $run_name is not complete: $status"
+##     }
+## }
+## proc invalidate_downstream_stamps {stamp_names} {
+##     set stamp_dir ""
+##     if {[info exists ::env(STAMP_DIR)] && [string trim $::env(STAMP_DIR)] ne ""} {
+##         set stamp_dir [file normalize $::env(STAMP_DIR)]
+##     } elseif {[info exists ::env(BUILD)] && [string trim $::env(BUILD)] ne ""} {
+##         set stamp_dir [file join [file normalize $::env(BUILD)] .stamps]
+##     }
+##     if {$stamp_dir ne "" && [file isdirectory $stamp_dir]} {
+##         foreach sname $stamp_names {
+##             file delete -force [file join $stamp_dir $sname]
+##         }
+##     }
+## }
+# set build_root [expr {[info exists ::env(BUILD)] ? [file normalize $::env(BUILD)] : [file join $root_dir build]}]
+# set ip_repo    [expr {[info exists ::env(IP_REPO)] ? [file normalize $::env(IP_REPO)] : [file join $build_root ip_repo]}]
+# set ip_root    [file join $ip_repo doa_subband_bridge_4ch]
+# set work_root  [file join $build_root subband_bridge_work]
+# set report_file [file join $build_root output doa_subband_bridge_4ch_package.rpt]
+# set rtl_file [file join $script_dir rtl doa_subband_bridge_4ch.v]
+# set xdc_file [file join $script_dir rtl ooc_constraints.xdc]
+# set tb_file  [file join $script_dir tb tb_doa_subband_bridge_4ch.sv]
+# file mkdir [file dirname $report_file]
+# file delete -force $work_root
+# file mkdir $work_root
+# set report_fh [open $report_file w]
+# proc sb_log {fh msg} {
+#     puts $msg
+#     puts $fh $msg
+#     flush $fh
+# }
+# proc sb_read {path} {
+#     set fh [open $path r]
+#     set txt [read $fh]
+#     close $fh
+#     return $txt
+# }
+# set status FAIL
+# set err_msg ""
+# set err_info ""
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+INFO: [VRFC 10-2263] Analyzing Verilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/rtl/doa_subband_bridge_4ch.v" into library work
+INFO: [VRFC 10-311] analyzing module doa_subband_bridge_4ch
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/tb/tb_doa_subband_bridge_4ch.sv" into library work
+INFO: [VRFC 10-311] analyzing module tb_doa_subband_bridge_4ch
+Vivado Simulator v2023.2
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+Running: /media/joshua/Linux/Programs/X20232/Vivado/2023.2/bin/unwrapped/lnx64.o/xelab -debug typical -timescale 1ns/1ps -s tb_doa_subband_bridge_4ch_snap work.tb_doa_subband_bridge_4ch 
+Multi-threading is on. Using 22 slave threads.
+Starting static elaboration
+Pass Through NonSizing Optimizer
+Completed static elaboration
+Starting simulation data flow analysis
+Completed simulation data flow analysis
+Time Resolution for simulation is 1ps
+Compiling module work.doa_subband_bridge_4ch
+Compiling module work.tb_doa_subband_bridge_4ch
+Built simulation snapshot tb_doa_subband_bridge_4ch_snap
+
+****** xsim v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source xsim.dir/tb_doa_subband_bridge_4ch_snap/xsim_script.tcl
+# xsim {tb_doa_subband_bridge_4ch_snap} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+PASS Test 1: 256-beat natural-order search serializer + rounding/saturation + backpressure
+PASS Test 2: Closed-loop candidate bin 517 capture + beam + AXI4-Lite telemetry
+PASS Test 3: Manual bin 26 override verified
+ALL TESTS PASSED: tb_doa_subband_bridge_4ch
+$finish called at time : 13730 ns : File "/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/tb/tb_doa_subband_bridge_4ch.sv" Line 504
+exit
+INFO: [Common 17-206] Exiting xsim at Thu Nov  5 19:55:16 2026...
+XSIM_RESULT=PASS
+Command: synth_design -top doa_subband_bridge_4ch -part xczu48dr-fsvg1517-2-e -mode out_of_context -flatten_hierarchy rebuilt
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu48dr'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu48dr'
+INFO: [Device 21-403] Loading part xczu48dr-fsvg1517-2-e
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 613244
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 2724.039 ; gain = 343.715 ; free physical = 27338 ; free virtual = 63037
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'doa_subband_bridge_4ch' [/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/rtl/doa_subband_bridge_4ch.v:21]
+INFO: [Synth 8-6155] done synthesizing module 'doa_subband_bridge_4ch' (0#1) [/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/rtl/doa_subband_bridge_4ch.v:21]
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[63] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[62] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[61] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[60] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[59] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[58] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[57] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[56] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[55] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[54] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[53] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[52] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[51] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[50] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[49] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[48] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[47] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[46] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[45] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[44] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[43] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[42] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[41] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[40] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[39] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[38] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[37] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[36] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[35] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[34] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[33] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[32] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[31] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[30] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[29] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[28] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[27] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[26] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[25] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[24] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[23] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[22] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[21] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[20] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[19] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[18] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[17] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[16] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[15] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[14] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[13] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[12] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[11] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[10] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[9] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[8] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[7] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[6] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[5] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[4] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[3] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[2] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[1] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tkeep[0] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[63] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[62] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[61] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[60] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[59] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[58] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[57] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[56] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[55] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[54] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[53] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[52] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[51] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[50] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[49] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[48] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[47] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[46] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[45] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[44] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[43] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[42] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[41] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[40] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[39] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[38] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[37] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[36] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[35] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[34] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[33] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[32] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[31] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[30] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[29] driven by constant 1
+WARNING: [Synth 8-3917] design doa_subband_bridge_4ch has port m_axis_search_tstrb[28] driven by constant 1
+INFO: [Common 17-14] Message 'Synth 8-3917' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-7129] Port s_axis_ch1_tlast in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_ch2_tlast in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_ch3_tlast in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[191] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[190] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[189] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[188] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[187] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[186] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[185] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[184] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[183] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[182] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[181] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[180] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[179] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[178] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[177] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[176] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[175] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[174] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[173] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[172] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[171] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[170] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[169] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[168] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[167] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[166] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[165] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[164] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[163] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[162] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[161] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[160] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[31] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[30] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[29] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[28] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[27] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[26] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[25] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[24] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[23] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[22] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[21] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[20] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[19] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[18] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tdata[17] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[23] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[22] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[21] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[20] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[19] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[18] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[17] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[16] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[15] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[14] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[13] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[12] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[11] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[10] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[9] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[8] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[7] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[6] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[5] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[4] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[3] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[2] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[1] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tkeep[0] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[23] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[22] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[21] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[20] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[19] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[18] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[17] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[16] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[15] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[14] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[13] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[12] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[11] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[10] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[9] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[8] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[7] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[6] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[5] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[4] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[3] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[2] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[1] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tstrb[0] in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axis_candidate_tlast in module doa_subband_bridge_4ch is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_axi_ctrl_awprot[2] in module doa_subband_bridge_4ch is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2804.008 ; gain = 423.684 ; free physical = 27209 ; free virtual = 62934
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2815.883 ; gain = 435.559 ; free physical = 27209 ; free virtual = 62934
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2815.883 ; gain = 435.559 ; free physical = 27209 ; free virtual = 62934
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.04 . Memory (MB): peak = 2815.883 ; gain = 0.000 ; free physical = 27210 ; free virtual = 62935
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/rtl/ooc_constraints.xdc]
+Finished Parsing XDC File [/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/rtl/ooc_constraints.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2976.602 ; gain = 0.000 ; free physical = 27206 ; free virtual = 62917
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2976.637 ; gain = 0.000 ; free physical = 27189 ; free virtual = 62914
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2976.637 ; gain = 596.312 ; free physical = 27189 ; free virtual = 62914
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu48dr-fsvg1517-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2976.637 ; gain = 596.312 ; free physical = 27189 ; free virtual = 62914
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2976.637 ; gain = 596.312 ; free physical = 27189 ; free virtual = 62914
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'srch_state_reg' in module 'doa_subband_bridge_4ch'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2976.637 ; gain = 596.312 ; free physical = 27188 ; free virtual = 62915
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   28 Bit       Adders := 92    
+	   2 Input   16 Bit       Adders := 4     
+	   2 Input    7 Bit       Adders := 2     
+	   2 Input    4 Bit       Adders := 1     
+	   2 Input    2 Bit       Adders := 1     
++---Registers : 
+	              512 Bit    Registers := 5     
+	              384 Bit    Registers := 1     
+	              128 Bit    Registers := 8     
+	               64 Bit    Registers := 2     
+	               32 Bit    Registers := 2     
+	               16 Bit    Registers := 7     
+	               10 Bit    Registers := 3     
+	                8 Bit    Registers := 1     
+	                7 Bit    Registers := 2     
+	                4 Bit    Registers := 2     
+	                3 Bit    Registers := 1     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 23    
++---RAMs : 
+	              64K Bit	(128 X 512 bit)          RAMs := 2     
++---Muxes : 
+	   2 Input  512 Bit        Muxes := 2     
+	   7 Input  512 Bit        Muxes := 1     
+	   2 Input  384 Bit        Muxes := 3     
+	   2 Input  128 Bit        Muxes := 5     
+	   4 Input  128 Bit        Muxes := 2     
+	   2 Input   32 Bit        Muxes := 1     
+	   2 Input   28 Bit        Muxes := 1     
+	   2 Input   16 Bit        Muxes := 203   
+	   6 Input   16 Bit        Muxes := 2     
+	   2 Input   10 Bit        Muxes := 3     
+	   6 Input   10 Bit        Muxes := 1     
+	   2 Input    8 Bit        Muxes := 1     
+	   7 Input    7 Bit        Muxes := 1     
+	   7 Input    3 Bit        Muxes := 2     
+	   2 Input    2 Bit        Muxes := 4     
+	   2 Input    1 Bit        Muxes := 37    
+	   7 Input    1 Bit        Muxes := 7     
+	   4 Input    1 Bit        Muxes := 2     
+	   6 Input    1 Bit        Muxes := 2     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 4272 (col length:192)
+BRAMs: 2160 (col length: RAMB18 192 RAMB36 96)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 2976.637 ; gain = 596.312 ; free physical = 27177 ; free virtual = 62904
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Preliminary Mapping Report (see note below)
++-----------------------+-------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|Module Name            | RTL Object        | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | Cascade Heights | 
++-----------------------+-------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|doa_subband_bridge_4ch | search_lo_mem_reg | 128 x 512(READ_FIRST)  | W |   | 128 x 512(WRITE_FIRST) |   | R | Port A and B     | 1      | 7      |                 | 
+|doa_subband_bridge_4ch | search_hi_mem_reg | 128 x 512(READ_FIRST)  | W |   | 128 x 512(WRITE_FIRST) |   | R | Port A and B     | 1      | 7      |                 | 
++-----------------------+-------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+
+Note: The table above is a preliminary report that shows the Block RAMs at the current stage of the synthesis flow. Some Block RAMs may be reimplemented as non Block RAM primitives later in the synthesis flow. Multiple instantiated Block RAMs are reported only once. 
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:18 ; elapsed = 00:00:18 . Memory (MB): peak = 3292.219 ; gain = 911.895 ; free physical = 26911 ; free virtual = 62561
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:46 ; elapsed = 00:00:46 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26619 ; free virtual = 62214
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Final Mapping Report
++-----------------------+-------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|Module Name            | RTL Object        | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | Cascade Heights | 
++-----------------------+-------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|doa_subband_bridge_4ch | search_lo_mem_reg | 128 x 512(READ_FIRST)  | W |   | 128 x 512(WRITE_FIRST) |   | R | Port A and B     | 1      | 7      |                 | 
+|doa_subband_bridge_4ch | search_hi_mem_reg | 128 x 512(READ_FIRST)  | W |   | 128 x 512(WRITE_FIRST) |   | R | Port A and B     | 1      | 7      |                 | 
++-----------------------+-------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance search_lo_mem_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_lo_mem_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_lo_mem_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_lo_mem_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_lo_mem_reg_4 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_lo_mem_reg_5 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_lo_mem_reg_6 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_lo_mem_reg_7 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_hi_mem_reg_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_hi_mem_reg_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_hi_mem_reg_2 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_hi_mem_reg_3 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_hi_mem_reg_4 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_hi_mem_reg_5 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_hi_mem_reg_6 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance search_hi_mem_reg_7 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:48 ; elapsed = 00:00:48 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26630 ; free virtual = 62213
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:49 ; elapsed = 00:00:50 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26614 ; free virtual = 62211
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:49 ; elapsed = 00:00:50 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26613 ; free virtual = 62210
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:49 ; elapsed = 00:00:50 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26613 ; free virtual = 62210
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:49 ; elapsed = 00:00:50 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26613 ; free virtual = 62210
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:50 ; elapsed = 00:00:50 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26613 ; free virtual = 62210
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:50 ; elapsed = 00:00:50 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26613 ; free virtual = 62210
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+---------+------+
+|      |Cell     |Count |
++------+---------+------+
+|1     |CARRY8   |   406|
+|2     |LUT1     |   266|
+|3     |LUT2     |   244|
+|4     |LUT3     |  1718|
+|5     |LUT4     |   844|
+|6     |LUT5     |  2080|
+|7     |LUT6     |  2829|
+|8     |MUXF7    |   128|
+|9     |RAMB18E2 |     2|
+|10    |RAMB36E2 |    14|
+|11    |FDRE     |  4071|
+|12    |FDSE     |    61|
++------+---------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:50 ; elapsed = 00:00:50 . Memory (MB): peak = 3670.492 ; gain = 1290.168 ; free physical = 26613 ; free virtual = 62210
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 496 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:46 ; elapsed = 00:00:47 . Memory (MB): peak = 3670.492 ; gain = 1129.414 ; free physical = 26613 ; free virtual = 62210
+Synthesis Optimization Complete : Time (s): cpu = 00:00:50 ; elapsed = 00:00:50 . Memory (MB): peak = 3670.500 ; gain = 1290.168 ; free physical = 26613 ; free virtual = 62210
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 3670.500 ; gain = 0.000 ; free physical = 26900 ; free virtual = 62497
+INFO: [Netlist 29-17] Analyzing 534 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'doa_subband_bridge_4ch' is not ideal for floorplanning, since the cellview 'doa_subband_bridge_4ch' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/rtl/ooc_constraints.xdc]
+Finished Parsing XDC File [/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/doa_subband_bridge_4ch/rtl/ooc_constraints.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3702.508 ; gain = 0.000 ; free physical = 26901 ; free virtual = 62498
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: fc1e1e94
+INFO: [Common 17-83] Releasing license: Synthesis
+36 Infos, 202 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:58 ; elapsed = 00:00:57 . Memory (MB): peak = 3702.543 ; gain = 2346.691 ; free physical = 26901 ; free virtual = 62498
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 3401.098; main = 3162.530; forked = 433.354
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4622.332; main = 3702.512; forked = 1000.836
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+WARNING: [Timing 38-242] The property HD.CLK_SRC of clock port "aclk" is not set. In out-of-context mode, this prevents timing estimation for clock delay/skew
+Resolution: Set the HD.CLK_SRC property of the out-of-context port to the location of the clock buffer instance in the top-level design
+report_timing_summary: Time (s): cpu = 00:00:10 ; elapsed = 00:00:09 . Memory (MB): peak = 4365.316 ; gain = 662.773 ; free physical = 26359 ; free virtual = 61956
+OOC_CLOCK_PERIOD_NS=4.000
+OOC_WNS_NS=1.526
+WARNING: [IP_Flow 19-587] [HDL Parser] HDL port or parameter 'srch_mem_we' has a dependency on the module local parameter or undefined parameter 'SRCH_CAPTURE'.
+WARNING: [IP_Flow 19-587] [HDL Parser] HDL port or parameter 'srch_mem_we' has a dependency on the module local parameter or undefined parameter 'SRCH_IDLE'.
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/media/joshua/Linux/Programs/X20232/Vivado/2023.2/data/ip'.
+INFO: [IP_Flow 19-5107] Inferred bus interface 'm_axis_beam' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'm_axis_capture' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'm_axis_mon_ch0' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'm_axis_mon_ch1' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'm_axis_mon_ch2' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'm_axis_mon_ch3' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'm_axis_search' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 's_axis_candidate' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 's_axis_ch0' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 's_axis_ch1' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 's_axis_ch2' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 's_axis_ch3' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 's_axi_ctrl' of definition 'xilinx.com:interface:aximm:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'aresetn' of definition 'xilinx.com:signal:reset:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'aclk' of definition 'xilinx.com:signal:clock:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-4728] Bus Interface 'aresetn': Added interface parameter 'POLARITY' with value 'ACTIVE_LOW'.
+INFO: [IP_Flow 19-4728] Bus Interface 'aclk': Added interface parameter 'ASSOCIATED_BUSIF' with value 'm_axis_beam'.
+INFO: [IP_Flow 19-4728] Bus Interface 'aclk': Added interface parameter 'ASSOCIATED_RESET' with value 'aresetn'.
+WARNING: [IP_Flow 19-11770] Clock interface 'aclk' has no FREQ_HZ parameter.
+INFO: [IP_Flow 19-2181] Payment Required is not set for this core.
+INFO: [IP_Flow 19-2187] The Product Guide file is missing.
+WARNING: [IP_Flow 19-4623] Unrecognized family  zynquplusrfsoc.  Please verify spelling and reissue command to set the supported files.
+SUPPORTED_FAMILIES=zynquplusrfsoc Production zynquplus Production
+ACLK_ASSOCIATED_BUSIF=s_axis_ch0:s_axis_ch1:s_axis_ch2:s_axis_ch3:s_axis_candidate:m_axis_search:m_axis_capture:m_axis_beam:m_axis_mon_ch0:m_axis_mon_ch1:m_axis_mon_ch2:m_axis_mon_ch3:s_axi_ctrl
+ACLK_ASSOCIATED_RESET=aresetn
+WARNING: [IP_Flow 19-2403] Component Definition 'openai:doa:doa_subband_bridge_4ch:1.0 (DOA Four-Channel Subband Stream Bridge)': Unrecognized Family "zynquplusrfsoc"
+WARNING: [IP_Flow 19-11770] Clock interface 'aclk' has no FREQ_HZ parameter.
+INFO: [IP_Flow 19-2181] Payment Required is not set for this core.
+INFO: [IP_Flow 19-2187] The Product Guide file is missing.
+INFO: [Ipptcl 7-1486] check_integrity: Integrity check passed.
+PASS packaged VLNV openai:doa:doa_subband_bridge_4ch:1.0
+PACKAGED_VLNV=openai:doa:doa_subband_bridge_4ch:1.0
+COMPONENT_XML=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/doa_subband_bridge_4ch/component.xml
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1700] Loaded user IP repository '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo'.
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/media/joshua/Linux/Programs/X20232/Vivado/2023.2/data/ip'.
+Wrote  : </media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.srcs/sources_1/bd/smoke_bd/smoke_bd.bd> 
+xpm_cdc_single  *****  1
+Slave segment '/bridge_0/s_axi_ctrl/reg0' is being assigned into address space '/S_AXI_EXT' at <0x0000_0000 [ 4K ]>.
+Slave segment '/fifo_beam/S_AXI/Mem0' is being assigned into address space '/S_AXI_EXT' at <0x44A0_0000 [ 64K ]>.
+INFO: [BD 5-943] Reserving offset range <0x0000_0000 [ 4K ]> from slave interface '/ctrl_sc/S00_AXI' to master interface '/ctrl_sc/M00_AXI'. This will be used by smartconnect on path for routing.
+INFO: [BD 5-943] Reserving offset range <0x44A0_0000 [ 64K ]> from slave interface '/ctrl_sc/S00_AXI' to master interface '/ctrl_sc/M01_AXI'. This will be used by smartconnect on path for routing.
+INFO: [xilinx.com:ip:smartconnect:1.0-1] smoke_bd_ctrl_sc_0: SmartConnect smoke_bd_ctrl_sc_0 is in Low-Area Mode.
+WARNING: [xilinx.com:ip:smartconnect:1.0-1] smoke_bd_ctrl_sc_0: IP smoke_bd_ctrl_sc_0 is configured in Low-area mode as all propagated traffic is low-bandwidth (AXI4LITE). SI S00_AXI has property HAS_BURST == 1. WRAP bursts are not supported in Low-area mode and will result in DECERR if received.
+WARNING: [xilinx.com:ip:smartconnect:1.0-1] smoke_bd_ctrl_sc_0: If WRAP transactions are required then turn off Low-area mode using ADVANCED_PROPERTIES. Execute following: set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells /smoke_bd_ctrl_sc_0]
+INFO: [xilinx.com:ip:clk_wiz:6.0-1] /clk_doa clk_wiz propagate
+CRITICAL WARNING: [BD 41-759] The input pins (listed below) are either not connected or do not have a source port, and they don't have a tie-off specified. These pins are tied-off to all 0's to avoid error in Implementation flow.
+Please check your design and connect them as needed: 
+/bridge_0/s_axis_ch0_tvalid
+/bridge_0/s_axis_ch1_tvalid
+/bridge_0/s_axis_ch2_tvalid
+/bridge_0/s_axis_ch3_tvalid
+/bridge_0/s_axis_candidate_tvalid
+
+Wrote  : </media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.srcs/sources_1/bd/smoke_bd/smoke_bd.bd> 
+INFO: [BD 41-1662] The design 'smoke_bd.bd' is already validated. Therefore parameter propagation will not be re-run.
+CRITICAL WARNING: [BD 41-759] The input pins (listed below) are either not connected or do not have a source port, and they don't have a tie-off specified. These pins are tied-off to all 0's to avoid error in Implementation flow.
+Please check your design and connect them as needed: 
+/bridge_0/s_axis_ch0_tvalid
+/bridge_0/s_axis_ch1_tvalid
+/bridge_0/s_axis_ch2_tvalid
+/bridge_0/s_axis_ch3_tvalid
+/bridge_0/s_axis_candidate_tvalid
+
+VHDL Output written to : /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.gen/sources_1/bd/smoke_bd/synth/smoke_bd.vhd
+VHDL Output written to : /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.gen/sources_1/bd/smoke_bd/sim/smoke_bd.vhd
+VHDL Output written to : /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.gen/sources_1/bd/smoke_bd/hdl/smoke_bd_wrapper.vhd
+INFO: [BD 41-1029] Generation completed for the IP Integrator block clk_doa .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block rst_doa .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block sysref_cdc .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block bridge_0 .
+WARNING: [IP_Flow 19-4994] Overwriting existing constraint file '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.gen/sources_1/bd/smoke_bd/ip/smoke_bd_cdc_beam_0/smoke_bd_cdc_beam_0_ooc.xdc'
+INFO: [BD 41-1029] Generation completed for the IP Integrator block cdc_beam .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block dw_beam .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block fifo_beam .
+Exporting to file /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.gen/sources_1/bd/smoke_bd/ip/smoke_bd_ctrl_sc_0/bd_0/hw_handoff/smoke_bd_ctrl_sc_0.hwh
+Generated Hardware Definition File /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.gen/sources_1/bd/smoke_bd/ip/smoke_bd_ctrl_sc_0/bd_0/synth/smoke_bd_ctrl_sc_0.hwdef
+INFO: [BD 41-1029] Generation completed for the IP Integrator block ctrl_sc .
+Exporting to file /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.gen/sources_1/bd/smoke_bd/hw_handoff/smoke_bd.hwh
+Generated Hardware Definition File /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/subband_bridge_work/vhdl_bd_smoke/subband_bridge_bd_smoke.gen/sources_1/bd/smoke_bd/synth/smoke_bd.hwdef
+VHDL_BD_SMOKE_RESULT=PASS
+# set catch_rc [catch {
+#     sb_log $report_fh "VIVADO_VERSION=[version -short]"
+#     sb_log $report_fh "PART=$::PART_PINNED"
+# 
+#     foreach req [list $rtl_file $xdc_file $tb_file] {
+#         if {![file isfile $req]} {
+#             error "Missing required source file: $req"
+#         }
+#     }
+# 
+#     # -------------------------------------------------------------------------
+#     # 1. XSim RTL self-checking verification
+#     # -------------------------------------------------------------------------
+#     set sim_dir [file join $work_root xsim]
+#     file mkdir $sim_dir
+#     set saved_pwd [pwd]
+#     cd $sim_dir
+#     exec xvlog -work work $rtl_file >@stdout 2>@1
+#     exec xvlog -sv -work work $tb_file >@stdout 2>@1
+#     exec xelab -debug typical -timescale 1ns/1ps \
+#         -s tb_doa_subband_bridge_4ch_snap work.tb_doa_subband_bridge_4ch >@stdout 2>@1
+#     set sim_log [file join $sim_dir xsim.log]
+#     exec xsim tb_doa_subband_bridge_4ch_snap -runall -log $sim_log >@stdout 2>@1
+#     cd $saved_pwd
+# 
+#     if {![file isfile $sim_log]} {
+#         error "XSim log was not created: $sim_log"
+#     }
+#     set sim_txt [sb_read $sim_log]
+#     if {[string first "ALL TESTS PASSED: tb_doa_subband_bridge_4ch" $sim_txt] < 0} {
+#         error "XSim did not report ALL TESTS PASSED; inspect $sim_log"
+#     }
+#     sb_log $report_fh "XSIM_RESULT=PASS"
+# 
+#     # -------------------------------------------------------------------------
+#     # 2. 250 MHz (4.000 ns) out-of-context synthesis timing gate
+#     # -------------------------------------------------------------------------
+#     set ooc_dir [file join $work_root ooc_synth]
+#     file mkdir $ooc_dir
+#     create_project -in_memory -part $::PART_PINNED
+#     read_verilog $rtl_file
+#     read_xdc -mode out_of_context $xdc_file
+#     synth_design -top doa_subband_bridge_4ch -part $::PART_PINNED \
+#         -mode out_of_context -flatten_hierarchy rebuilt
+#     report_utilization -file [file join $ooc_dir utilization.rpt]
+#     report_timing_summary -delay_type min_max -max_paths 10 \
+#         -file [file join $ooc_dir timing_summary.rpt]
+#     set max_paths [get_timing_paths -max_paths 1 -setup]
+#     if {[llength $max_paths] == 0} {
+#         error "No setup timing paths found in 250 MHz OOC synthesis of doa_subband_bridge_4ch"
+#     }
+#     set ooc_wns [get_property SLACK [lindex $max_paths 0]]
+#     sb_log $report_fh "OOC_CLOCK_PERIOD_NS=4.000"
+#     sb_log $report_fh "OOC_WNS_NS=$ooc_wns"
+#     if {$ooc_wns eq "" || $ooc_wns < 0.0} {
+#         error "doa_subband_bridge_4ch failed 250 MHz OOC timing gate: WNS=$ooc_wns ns"
+#     }
+#     close_design
+#     close_project
+# 
+#     # -------------------------------------------------------------------------
+#     # 3. Package as openai:doa:doa_subband_bridge_4ch:1.0
+#     # -------------------------------------------------------------------------
+#     file delete -force $ip_root
+#     file mkdir $ip_root
+#     set pkg_proj_dir [file join $work_root pkg_proj]
+#     create_project -force doa_subband_bridge_4ch_pkg $pkg_proj_dir -part $::PART_PINNED
+#     add_files -norecurse $rtl_file
+#     set_property top doa_subband_bridge_4ch [current_fileset]
+#     update_compile_order -fileset sources_1
+# 
+#     set ip_vendor "openai"
+#     if {[info exists ::env(CUSTOM_IP_VENDOR)] && [string trim $::env(CUSTOM_IP_VENDOR)] ne ""} {
+#         set ip_vendor [string trim $::env(CUSTOM_IP_VENDOR)]
+#     }
+#     set ip_library "doa"
+#     if {[info exists ::env(CUSTOM_IP_LIBRARY)] && [string trim $::env(CUSTOM_IP_LIBRARY)] ne ""} {
+#         set ip_library [string trim $::env(CUSTOM_IP_LIBRARY)]
+#     }
+#     # Keep version strictly as a Tcl string literal (never numeric expr).
+#     set ip_version "1.0"
+#     if {[info exists ::env(IPVER_SUBBAND_BRIDGE)] && [string trim $::env(IPVER_SUBBAND_BRIDGE)] ne ""} {
+#         set ip_version [string trim $::env(IPVER_SUBBAND_BRIDGE)]
+#     }
+#     if {![regexp {^[0-9]+\.[0-9]+$} $ip_version]} {
+#         error "IPVER_SUBBAND_BRIDGE must be major.minor, got '$ip_version'"
+#     }
+# 
+#     ipx::package_project -root_dir $ip_root -vendor $ip_vendor -library $ip_library \
+#         -taxonomy /UserIP -import_files -set_current true
+#     set core [ipx::current_core]
+#     set_property name doa_subband_bridge_4ch $core
+#     set_property display_name "DOA Four-Channel Subband Stream Bridge" $core
+#     set_property description "250 MHz 4x SSR-8 channelizer to 512-bit /doa_v7 search/capture/beam bridge with closed-loop candidate bin tracking" $core
+#     set_property version $ip_version $core
+#     set_property supported_families {zynquplusrfsoc Production zynquplus Production} $core
+#     sb_log $report_fh "SUPPORTED_FAMILIES=[get_property supported_families $core]"
+# 
+#     set expected_busifs {
+#         s_axis_ch0 s_axis_ch1 s_axis_ch2 s_axis_ch3
+#         s_axis_candidate
+#         m_axis_search m_axis_capture m_axis_beam
+#         m_axis_mon_ch0 m_axis_mon_ch1 m_axis_mon_ch2 m_axis_mon_ch3
+#         s_axi_ctrl
+#     }
+#     foreach bif_name $expected_busifs {
+#         set bif [ipx::get_bus_interfaces $bif_name -of_objects $core]
+#         if {[llength $bif] == 0} {
+#             error "IP Packager failed to infer expected bus interface '$bif_name'"
+#         }
+#         ipx::associate_bus_interfaces -busif $bif_name -clock aclk $core
+#     }
+# 
+#     set rst_bif [ipx::get_bus_interfaces aresetn -of_objects $core]
+#     if {[llength $rst_bif] == 0} {
+#         error "IP Packager failed to infer reset interface 'aresetn'"
+#     }
+#     set rst_pol [ipx::get_bus_parameters POLARITY -of_objects $rst_bif]
+#     if {[llength $rst_pol] == 0} {
+#         set rst_pol [ipx::add_bus_parameter POLARITY $rst_bif]
+#     }
+#     set_property value ACTIVE_LOW $rst_pol
+# 
+#     set clk_bif [ipx::get_bus_interfaces aclk -of_objects $core]
+#     if {[llength $clk_bif] == 0} {
+#         error "IP Packager failed to infer clock interface 'aclk'"
+#     }
+#     set clk_busif [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects $clk_bif]
+#     if {[llength $clk_busif] == 0} {
+#         set clk_busif [ipx::add_bus_parameter ASSOCIATED_BUSIF $clk_bif]
+#     }
+#     set_property value [join $expected_busifs ":"] $clk_busif
+#     set clk_rst [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects $clk_bif]
+#     if {[llength $clk_rst] == 0} {
+#         set clk_rst [ipx::add_bus_parameter ASSOCIATED_RESET $clk_bif]
+#     }
+#     set_property value aresetn $clk_rst
+#     sb_log $report_fh "ACLK_ASSOCIATED_BUSIF=[get_property value $clk_busif]"
+#     sb_log $report_fh "ACLK_ASSOCIATED_RESET=[get_property value $clk_rst]"
+# 
+#     # Ensure s_axi_ctrl memory map advertises >= 4 KB so SmartConnect / AXI Interconnect
+#     # assign_bd_address cleanly allocates a standard 4 KB / 64 KB slave window.
+#     set mm [ipx::get_memory_maps s_axi_ctrl -of_objects $core]
+#     if {[llength $mm] == 0} {
+#         error "IP Packager failed to infer memory map for s_axi_ctrl"
+#     }
+#     set ab [ipx::get_address_blocks -of_objects $mm]
+#     if {[llength $ab] == 0} {
+#         error "IP Packager failed to infer address block for s_axi_ctrl"
+#     }
+#     set_property range 4096 [lindex $ab 0]
+# 
+#     ipx::create_xgui_files $core
+#     ipx::update_checksums $core
+#     ipx::check_integrity $core
+#     ipx::save_core $core
+#     close_project
+# 
+#     set comp_xml [file join $ip_root component.xml]
+#     set expected_vlnv [doa_vlnv subband_bridge]
+#     exec bash [file join $root_dir common scripts check_component_vlnv.sh] $comp_xml $expected_vlnv >@stdout 2>@1
+#     sb_log $report_fh "PACKAGED_VLNV=$expected_vlnv"
+#     sb_log $report_fh "COMPONENT_XML=$comp_xml"
+# 
+#     # -------------------------------------------------------------------------
+#     # 4. VHDL Block Design smoke test (validates IPI instantiation + helper IPs)
+#     # -------------------------------------------------------------------------
+#     set bd_proj_dir [file join $work_root vhdl_bd_smoke]
+#     create_project -force subband_bridge_bd_smoke $bd_proj_dir -part $::PART_PINNED
+#     set_property target_language VHDL [current_project]
+#     set_property ip_repo_paths [list $ip_repo] [current_project]
+#     update_ip_catalog -rebuild
+# 
+#     create_bd_design smoke_bd
+#     set clk250 [create_bd_port -dir I -type clk -freq_hz 250000000 clk_250m]
+#     set clk500 [create_bd_port -dir I -type clk -freq_hz 500000000 clk_500m]
+#     set rst250 [create_bd_port -dir I -type rst rst_250m_n]
+#     set_property CONFIG.POLARITY ACTIVE_LOW $rst250
+#     set sysref_in [create_bd_port -dir I sysref_500m]
+#     set sysref_out [create_bd_port -dir O sysref_250m]
+# 
+#     set s_axi_ext [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_EXT]
+#     set_property -dict [list \
+#         CONFIG.PROTOCOL {AXI4LITE} \
+#         CONFIG.ADDR_WIDTH {32} \
+#         CONFIG.DATA_WIDTH {32} \
+#     ] $s_axi_ext
+#     set_property CONFIG.ASSOCIATED_BUSIF {S_AXI_EXT} $clk250
+#     set_property CONFIG.ASSOCIATED_RESET {rst_250m_n} $clk250
+# 
+#     set clk_doa [doa_create_pinned_ip clk_wiz clk_doa]
+#     set_property -dict [list \
+#         CONFIG.PRIM_SOURCE {No_buffer} \
+#         CONFIG.PRIM_IN_FREQ {250.000} \
+#         CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {125.000} \
+#         CONFIG.USE_RESET {false} \
+#         CONFIG.USE_LOCKED {true} \
+#     ] $clk_doa
+# 
+#     set rst_doa [doa_create_pinned_ip proc_sys_reset rst_doa]
+# 
+#     set sysref_cdc [doa_create_pinned_ip xpm_cdc_gen sysref_cdc]
+#     set_property -dict [list \
+#         CONFIG.CDC_TYPE {xpm_cdc_single} \
+#         CONFIG.SRC_INPUT_REG {1} \
+#         CONFIG.DEST_SYNC_FF {2} \
+#         CONFIG.WIDTH {1} \
+#     ] $sysref_cdc
+# 
+#     set bridge_0 [doa_create_pinned_ip subband_bridge bridge_0]
+# 
+#     set cdc_beam [doa_create_pinned_ip axis_clock_converter cdc_beam]
+#     set_property CONFIG.IS_ACLK_ASYNC {1} $cdc_beam
+# 
+#     set dw_beam [doa_create_pinned_ip axis_dwidth_converter dw_beam]
+#     set_property CONFIG.M_TDATA_NUM_BYTES {4} $dw_beam
+# 
+#     set fifo_beam [doa_create_pinned_ip axi_fifo_mm_s fifo_beam]
+#     set_property -dict [list \
+#         CONFIG.C_DATA_INTERFACE_TYPE {0} \
+#         CONFIG.C_USE_TX_DATA {0} \
+#         CONFIG.C_USE_TX_CTRL {0} \
+#         CONFIG.C_USE_RX_DATA {1} \
+#         CONFIG.C_RX_FIFO_DEPTH {2048} \
+#     ] $fifo_beam
+# 
+#     set ctrl_sc [doa_create_pinned_ip smartconnect ctrl_sc]
+#     set_property -dict [list \
+#         CONFIG.NUM_SI {1} \
+#         CONFIG.NUM_MI {2} \
+#         CONFIG.NUM_CLKS {2} \
+#     ] $ctrl_sc
+# 
+#     # Clocks & resets
+#     connect_bd_net $clk250 [get_bd_pins $clk_doa/clk_in1]
+#     set clk125 [get_bd_pins $clk_doa/clk_out1]
+#     connect_bd_net $clk125 [get_bd_pins $rst_doa/slowest_sync_clk]
+#     connect_bd_net $rst250 [get_bd_pins $rst_doa/ext_reset_in]
+#     connect_bd_net [get_bd_pins $clk_doa/locked] [get_bd_pins $rst_doa/dcm_locked]
+#     set rst125 [get_bd_pins $rst_doa/peripheral_aresetn]
+# 
+#     connect_bd_net $clk500 [get_bd_pins $sysref_cdc/src_clk]
+#     connect_bd_net $clk250 [get_bd_pins $sysref_cdc/dest_clk]
+#     connect_bd_net $sysref_in [get_bd_pins $sysref_cdc/src_in]
+#     connect_bd_net [get_bd_pins $sysref_cdc/dest_out] $sysref_out
+# 
+#     connect_bd_net $clk250 [get_bd_pins $bridge_0/aclk] [get_bd_pins $cdc_beam/s_axis_aclk] [get_bd_pins $ctrl_sc/aclk]
+#     connect_bd_net $rst250 [get_bd_pins $bridge_0/aresetn] [get_bd_pins $cdc_beam/s_axis_aresetn] [get_bd_pins $ctrl_sc/aresetn]
+#     connect_bd_net $clk125 [get_bd_pins $cdc_beam/m_axis_aclk] [get_bd_pins $dw_beam/aclk] [get_bd_pins $fifo_beam/s_axi_aclk] [get_bd_pins $ctrl_sc/aclk1]
+#     connect_bd_net $rst125 [get_bd_pins $cdc_beam/m_axis_aresetn] [get_bd_pins $dw_beam/aresetn] [get_bd_pins $fifo_beam/s_axi_aresetn]
+# 
+#     # AXI-Stream chain: 512b@250MHz -> 512b@125MHz -> 32b@125MHz -> axi_fifo_mm_s
+#     connect_bd_intf_net [get_bd_intf_pins $bridge_0/m_axis_beam] [get_bd_intf_pins $cdc_beam/S_AXIS]
+#     connect_bd_intf_net [get_bd_intf_pins $cdc_beam/M_AXIS] [get_bd_intf_pins $dw_beam/S_AXIS]
+#     set fifo_rx_pin [get_bd_intf_pins -of_objects $fifo_beam -filter {VLNV == "xilinx.com:interface:axis_rtl:1.0" && MODE == "Slave"}]
+#     if {[llength $fifo_rx_pin] != 1} {
+#         error "Expected exactly 1 slave AXIS pin on axi_fifo_mm_s, found: $fifo_rx_pin"
+#     }
+#     connect_bd_intf_net [get_bd_intf_pins $dw_beam/M_AXIS] [lindex $fifo_rx_pin 0]
+# 
+#     # AXI4-Lite control
+#     connect_bd_intf_net $s_axi_ext [get_bd_intf_pins $ctrl_sc/S00_AXI]
+#     connect_bd_intf_net [get_bd_intf_pins $ctrl_sc/M00_AXI] [get_bd_intf_pins $bridge_0/s_axi_ctrl]
+#     connect_bd_intf_net [get_bd_intf_pins $ctrl_sc/M01_AXI] [get_bd_intf_pins $fifo_beam/S_AXI]
+# 
+#     assign_bd_address
+#     validate_bd_design
+#     save_bd_design
+#     set bd_file [get_files *smoke_bd.bd]
+#     generate_target synthesis $bd_file
+#     close_project
+#     sb_log $report_fh "VHDL_BD_SMOKE_RESULT=PASS"
+# 
+#     set status PASS
+# } err_msg err_info]
+# if {$catch_rc != 0} {
+#     sb_log $report_fh "ERROR=$err_msg"
+#     sb_log $report_fh "ERROR_INFO=$err_info"
+# }
+# sb_log $report_fh "DOA SUBBAND BRIDGE PACKAGE RESULT=$status"
+DOA SUBBAND BRIDGE PACKAGE RESULT=PASS
+# close $report_fh
+# if {$catch_rc != 0} { exit 1 }
+# exit 0
+INFO: [Common 17-206] Exiting Vivado at Thu Nov  5 19:56:31 2026...
+result=PASS

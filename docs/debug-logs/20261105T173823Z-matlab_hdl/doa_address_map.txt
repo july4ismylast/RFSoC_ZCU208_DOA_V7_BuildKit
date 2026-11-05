@@ -1,0 +1,8 @@
+=== ASSIGNED BD ADDRESS SEGMENTS (SPACES=21 SEGS=0) ===
+=== DOA SLAVE INTERFACE ADDRESS CHECK ===
+covariance             /doa_v7/covariance/s_axi_ctrl          ADDRESSED_SEGS=/doa_v7/covariance/s_axi_ctrl/Reg
+candidate_peak         /doa_v7/candidate_peak/s_axi_ctrl      ADDRESSED_SEGS=/doa_v7/candidate_peak/s_axi_ctrl/Reg
+beam_monitor           /doa_v7/beam_monitor/s_axi_ctrl        ADDRESSED_SEGS=/doa_v7/beam_monitor/s_axi_ctrl/Reg
+doa_cov_fifo           /doa_cov_fifo/S_AXI                    ADDRESSED_SEGS=/doa_cov_fifo/S_AXI/Mem0
+doa_beam_fifo          /doa_beam_fifo/S_AXI                   ADDRESSED_SEGS=/doa_beam_fifo/S_AXI/Mem0
+doa_subband_bridge_0   /doa_subband_bridge_0/s_axi_ctrl       ADDRESSED_SEGS=/doa_subband_bridge_0/s_axi_ctrl/reg0
