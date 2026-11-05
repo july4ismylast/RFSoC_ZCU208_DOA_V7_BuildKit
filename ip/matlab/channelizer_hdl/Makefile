@@ -23,9 +23,10 @@ V06_GATE2R_BRAM_REPORT := $(ROOT)/build/output/v06_gate2r_bram_ooc_synthesis.rpt
 V06_GATE2T_TRANSPOSED_REPORT := $(ROOT)/build/output/v06_gate2t_transposed_ooc_synthesis.rpt
 V06_GATE3_TRANSPOSED_REPORT := $(ROOT)/build/output/v06_gate3_transposed_numerics.rpt
 V06_GATE4_AXIS_WRAPPER_REPORT := $(ROOT)/build/output/v06_gate4_axis_wrapper_ooc.rpt
+V06_GATE4_AXIS_WRAPPER_SIM_REPORT := $(ROOT)/build/output/v06_gate4_axis_wrapper_sim.rpt
 ALLOW_CHANNELIZER_PACKAGE ?= 0
 
-.PHONY: all model hdl package package-only require-package-allowed probe probe-transposed gate1 gate1-transposed gate2 gate2r-bram gate2t-transposed gate3-transposed gate4-axis-wrapper clean
+.PHONY: all model hdl package package-only require-package-allowed probe probe-transposed gate1 gate1-transposed gate2 gate2r-bram gate2t-transposed gate3-transposed gate4-axis-wrapper gate4-axis-wrapper-sim clean
 all: package
 # Stage V06 Gate 0 (passed on the user PC, 2026-11-03): the installed
 # dsphdl.Channelizer accepts the production-size SSR-8/1024-band
@@ -143,6 +144,22 @@ gate4-axis-wrapper: channelizer_axis_wrapper.sv v06_gate4_axis_wrapper_ooc.tcl v
 	$(VIVADO) -mode batch -nojournal -nolog -source v06_gate4_axis_wrapper_ooc.tcl
 	@test -f "$(V06_GATE4_AXIS_WRAPPER_REPORT)" || { echo "ERROR: Gate-4 report missing: $(V06_GATE4_AXIS_WRAPPER_REPORT)"; exit 1; }
 	@grep -q "V06 GATE4 AXI WRAPPER OOC SYNTHESIS RESULT=PASS" "$(V06_GATE4_AXIS_WRAPPER_REPORT)" || { echo "ERROR: Gate-4 wrapper OOC synthesis did not PASS (see $(V06_GATE4_AXIS_WRAPPER_REPORT))"; exit 1; }
+
+# Gate 4B: simulate the exact one-channel RTL and wrapper in XSim. The
+# testbench checks one 1024-sample SSR-8 frame, an eight-cycle downstream
+# stall, output stability, ready propagation, and TLAST on output beat 128.
+# This is behavioral interface verification, not numerical/bitstream proof.
+gate4-axis-wrapper-sim: tb_channelizer_axis_wrapper.sv v06_gate4_axis_wrapper_sim.tcl
+	@test -f "$(V06_GATE1_TRANSPOSED_REPORT)" || { echo "ERROR: transposed Gate-1 report missing; run make debug-channelizer-gate GATE=gate1-transposed first"; exit 1; }
+	@grep -q "V06 GATE1 HDL GENERATION RESULT=PASS" "$(V06_GATE1_TRANSPOSED_REPORT)" || { echo "ERROR: transposed Gate-1 has not PASSed"; exit 1; }
+	@test -f "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-3 report missing; run make debug-channelizer-gate GATE=gate3-transposed first"; exit 1; }
+	@grep -q "V06 GATE3 TRANSPOSED NUMERICS RESULT=PASS" "$(V06_GATE3_TRANSPOSED_REPORT)" || { echo "ERROR: Gate-3 has not PASSed"; exit 1; }
+	@test -f "$(V06_GATE4_AXIS_WRAPPER_REPORT)" || { echo "ERROR: Gate-4 OOC report missing; run make debug-channelizer-gate GATE=gate4-axis-wrapper first"; exit 1; }
+	@grep -q "V06 GATE4 AXI WRAPPER OOC SYNTHESIS RESULT=PASS" "$(V06_GATE4_AXIS_WRAPPER_REPORT)" || { echo "ERROR: Gate-4 OOC synthesis has not PASSed"; exit 1; }
+	@test -f "$(HDL_TOP_FILE_TRANSPOSED)" || { echo "ERROR: transposed Gate-1 RTL top missing: $(HDL_TOP_FILE_TRANSPOSED)"; exit 1; }
+	$(VIVADO) -mode batch -nojournal -nolog -source v06_gate4_axis_wrapper_sim.tcl
+	@test -f "$(V06_GATE4_AXIS_WRAPPER_SIM_REPORT)" || { echo "ERROR: Gate-4B simulation report missing: $(V06_GATE4_AXIS_WRAPPER_SIM_REPORT)"; exit 1; }
+	@grep -q "V06 GATE4 AXI WRAPPER SIM RESULT=PASS" "$(V06_GATE4_AXIS_WRAPPER_SIM_REPORT)" || { echo "ERROR: Gate-4B simulation did not PASS (see $(V06_GATE4_AXIS_WRAPPER_SIM_REPORT))"; exit 1; }
 
 model:
 	$(MATLAB_RUNNER) "$(MATLAB)" -batch "build_model"

@@ -599,32 +599,42 @@ correction. Reproduce and capture the gate with:
 make debug-channelizer-gate GATE=gate3-transposed
 ```
 
-#### Gate 4 — isolated AXI4-Stream wrapper candidate OOC synthesis (next command)
+#### Gate 4 — isolated AXI4-Stream wrapper candidate OOC synthesis (PASS)
 
-A standalone wrapper candidate now exists in
+A standalone wrapper candidate exists in
 `ip/matlab/channelizer_hdl/channelizer_axis_wrapper.sv`. It maps V05's
 SSR-8 `{Q,I}` input words to the raw Gate-1T split-I/Q ports, packs the
 signed 26-bit output lanes, propagates downstream `TREADY` directly to
 upstream `TREADY` and the core clock-enable, and asserts `TLAST` on each
-128th accepted output beat. These are explicit candidate semantics, not yet
-validated production behavior: V05 expects continuous always-ready search
-traffic and treats a stall/FIFO overflow as a system error, while Gate 3
-establishes 128 output beats per 1024-bin snapshot. No BD wiring or package
-guard bypass is involved.
+128th accepted output beat. These are candidate semantics: V05 expects
+continuous always-ready search traffic and treats a stall/FIFO overflow as a
+system error, while Gate 3 establishes 128 output beats per 1024-bin
+snapshot. No BD wiring or package guard bypass is involved.
 
-The exact next command on the user's R2022b/Vivado machine is:
+Gate 4 passed in Vivado 2023.2 on `xczu48dr-fsvg1517-2-e` using the 228
+Gate-1T HDL sources. Synthesis reported 0 errors and 0 critical warnings,
+with 232 warnings; the important timing caveat is `[Timing 38-242]`: OOC
+clock port `aclk` has no `HD.CLK_SRC`, so clock delay/skew is not estimated.
+This is a synthesis/interface-elaboration pass, **not** timing closure or
+behavioral proof. The saved evidence is
+`docs/debug-logs/20261105T141754Z-matlab_hdl/v06_gate4_axis_wrapper_ooc.rpt`
+and the matching full transcript.
+
+#### Gate 4B — wrapper handshake/framing simulation (next command)
+
+A new XSim testbench drives one 1024-sample snapshot, inserts an eight-cycle
+sink stall with a pending source beat, and checks output stability, upstream
+ready propagation, 128 accepted output transfers, and TLAST only on transfer
+128. Run and capture it with:
 
 ```bash
-EVIDENCE_PUSH=0 make debug-channelizer-gate GATE=gate4-axis-wrapper
+EVIDENCE_PUSH=0 make debug-channelizer-gate GATE=gate4-axis-wrapper-sim
 ```
 
-This Gate-4 target checks the passed transposed Gate-1/Gate-3 evidence,
-runs isolated Vivado OOC synthesis at 4.0 ns, and captures both transcript
-and report through the existing debug-log flow. It does **not** prove
-cycle-accurate stall/hold behavior or TLAST framing. After the run, inspect
-the saved snapshot and use GitHub Desktop **Push origin**; the runner keeps
-`EVIDENCE_PUSH=0` and commits the snapshot locally. Behavioral wrapper
-verification and contract confirmation must pass before packaging; four-
-channel mapping, BD integration, and routed implementation remain later
-gates. Do not bypass the package guard or externalize these signals as board
-pins.
+The runner verifies Gate-1T, Gate-3, and Gate-4 PASS evidence, then captures
+the XSim transcript/report in the existing debug flow. Afterward use GitHub
+Desktop **Push origin**; the evidence publisher keeps `EVIDENCE_PUSH=0` and
+commits the snapshot locally. A Gate-4B pass still does not authorize
+packaging: four-channel mapping, BD integration, and routed implementation
+remain later gates. Do not bypass the package guard or externalize these
+signals as board pins.
