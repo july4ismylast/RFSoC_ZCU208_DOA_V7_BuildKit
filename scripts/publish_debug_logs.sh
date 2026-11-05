@@ -43,6 +43,16 @@ if (( found == 0 )); then
     echo "ERROR: no stage logs found under $build/logs" >&2
     exit 2
 fi
+inventory="$build/output/step08_base_bd_inventory.txt"
+if [[ -s "$inventory" ]]; then
+    size=$(wc -c < "$inventory")
+    if (( size > 15000000 )); then
+        echo "ERROR: refusing oversized BD inventory (>15 MB): $inventory" >&2
+        exit 2
+    fi
+    cp -- "$inventory" "$out/"
+    echo 'Included Vivado base-BD inventory.'
+fi
 {
     printf 'Captured UTC: %s\n' "$(date -u +%FT%TZ)"
     printf 'Source commit: %s\n' "$(git rev-parse HEAD)"
