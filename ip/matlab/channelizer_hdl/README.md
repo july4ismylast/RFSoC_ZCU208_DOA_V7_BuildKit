@@ -9,11 +9,13 @@
 > latency in Gate 2T). This is **not** packaged IP or a bitstream: the
 > generated core has raw vector/data-valid ports. The isolated AXI4-Stream
 > wrapper candidate passed Gate-4 OOC synthesis (0 errors; 232 warnings,
-> including missing OOC `HD.CLK_SRC` timing context). Gate-4B XSim
-> handshake/framing verification is the next gate. Packaging, four-channel
-> mapping, and routed implementation remain unfinished. Gate-3 evidence is
-> committed at `docs/debug-logs/20261105T134543Z-matlab_hdl/`; Gate-4
-> evidence is at `docs/debug-logs/20261105T141754Z-matlab_hdl/`.
+> including missing OOC `HD.CLK_SRC` timing context) and Gate-4B handshake/
+> framing simulation (129 inputs, 128 outputs, one TLAST, eight held cycles).
+> Gate-4C exact-payload comparison with the fixed-point MATLAB golden is next.
+> Packaging, four-channel mapping, and routed implementation remain unfinished.
+> Gate-3 and Gate-4 evidence is under `docs/debug-logs/20261105T134543Z-matlab_hdl/`,
+> `docs/debug-logs/20261105T141754Z-matlab_hdl/`, and
+> `docs/debug-logs/20261105T144719Z-matlab_hdl/`.
 
 Use DSP HDL Toolbox `dsphdl.Channelizer` rather than the simulation-oriented
 `dsp.Channelizer` for synthesizable hardware. `build_model.m` now reads
@@ -65,13 +67,13 @@ BRAM-directive record. The completed transposed resource sequence was
 not overwrite baseline evidence. Gate 3 (`make gate3-transposed`) has passed: it compared the exact
 `ZU48DRChannelizer` wrapper against floating-point `dsp.Channelizer`,
 collected 40 snapshots, discarded startup snapshots, and froze the tested
-bin order/alignment/scaling/phase relation. Gate 4 OOC synthesis has now
-passed. The next runnable step is wrapper behavior verification:
-`make debug-channelizer-gate GATE=gate4-axis-wrapper-sim`. It captures the
-XSim transcript and Gate-4B report in the standard debug snapshot and locally
-commits it for GitHub Desktop Push origin. Gate 4B checks backpressure hold
-and TLAST framing; package validation, four-channel BD integration, and
-routed timing remain later work. `make hdl` remains the underlying generation
+bin order/alignment/scaling/phase relation. Gate 4 OOC synthesis and Gate 4B
+handshake/framing simulation have passed. The next runnable step is exact
+payload comparison against MATLAB's fixed-point golden:
+`make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim`. It captures the
+MATLAB/XSim transcript and Gate-4C report in the standard debug snapshot and
+locally commits it for GitHub Desktop Push origin. Package validation,
+four-channel BD integration, and routed timing remain later work. `make hdl` remains the underlying generation
 file-target form.
 Packaging remains intentionally blocked; do not set
 `ALLOW_CHANNELIZER_PACKAGE=1` to bypass the guard. The package target follows

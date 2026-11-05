@@ -620,24 +620,33 @@ behavioral proof. The saved evidence is
 `docs/debug-logs/20261105T141754Z-matlab_hdl/v06_gate4_axis_wrapper_ooc.rpt`
 and the matching full transcript.
 
-#### Gate 4B — wrapper handshake/framing simulation (next command)
+#### Gate 4B — wrapper handshake/framing simulation (PASS)
 
-A new XSim testbench drives one 1024-sample snapshot, inserts an eight-cycle
-sink stall with a pending source beat, and checks output stability, upstream
-ready propagation, 128 accepted output transfers, and TLAST only on transfer
-128. Run and capture it with:
+The first attempt compiled with `xvlog` but failed at `xelab` because the
+testbench had a timescale while the wrapper/generated RTL did not. The script
+was corrected with `-timescale 1ns/1ps`, then Gate 4B passed in Vivado 2023.2:
+129 accepted input beats (128 frame beats plus one held beat), 128 accepted
+output beats, one TLAST at output index 127, and eight stalled cycles with
+stable output and propagated input ready. Evidence is in
+`docs/debug-logs/20261105T144719Z-matlab_hdl/v06_gate4-axis-wrapper-sim.log`
+and `v06_gate4_axis_wrapper_sim.rpt`.
+
+#### Gate 4C — exact RTL payload comparison (next command)
+
+Gate 4B proves AXI handshake/framing, but not that the 416-bit RTL payload
+matches the MATLAB fixed-point object or confirms all packed lane bits. Gate
+4C now generates deterministic 128-beat input and expected-output hex vectors
+from the transposed `ZU48DRChannelizer`, then compares every accepted XSim
+output beat and TLAST against those golden vectors. Run:
 
 ```bash
-EVIDENCE_PUSH=0 make debug-channelizer-gate GATE=gate4-axis-wrapper-sim
+EVIDENCE_PUSH=0 make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim
 ```
 
-The first Gate-4B attempt compiled with `xvlog` but failed at `xelab` because
-the testbench had a timescale while the wrapper/generated RTL did not. The
-simulation script now supplies `-timescale 1ns/1ps` to `xelab`; the same
-command below is the correction rerun. The runner verifies Gate-1T, Gate-3,
-and Gate-4 PASS evidence, then captures the XSim transcript/report in the
-existing debug flow. Afterward use GitHub Desktop **Push origin**; the evidence
-publisher keeps `EVIDENCE_PUSH=0` and commits the snapshot locally. A Gate-4B
-pass still does not authorize packaging: four-channel mapping, BD integration,
-and routed implementation remain later gates. Do not bypass the package guard or externalize these
+This requires the existing Gate-1T, Gate-3, Gate-4 OOC, and Gate-4B PASS
+reports; it does not repeat them. The debug flow captures MATLAB and XSim
+transcripts plus the Gate-4C report. Afterward use GitHub Desktop **Push
+origin**; the publisher keeps `EVIDENCE_PUSH=0` and commits the snapshot
+locally. Gate 4C still does not authorize packaging: four-channel mapping,
+BD integration, and routed implementation remain later gates. Do not bypass the package guard or externalize these
 signals as board pins.

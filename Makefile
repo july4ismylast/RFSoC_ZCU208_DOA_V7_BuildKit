@@ -47,7 +47,7 @@ help:
 	@echo "Inspect progress:    make status"
 	@echo "Static validation:   make lint"
 	@echo "Dry-run a stage:     make -n step10_synth"
-	@echo "Run/capture V06 gate: make debug-channelizer-gate GATE=gate4-axis-wrapper-sim"
+	@echo "Run/capture V06 gate: make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim"
 	@echo
 	@echo "Stages (each can be invoked independently):"
 	@echo "  step00_preflight         Check tools, part, versions, and configuration"
@@ -208,7 +208,7 @@ debug-stage:
 # plus its report, even when the gate fails.
 .PHONY: debug-channelizer-gate
 debug-channelizer-gate:
-	@test -n "$(GATE)" || { echo "ERROR: use make debug-channelizer-gate GATE=gate4-axis-wrapper-sim"; exit 2; }
+	@test -n "$(GATE)" || { echo "ERROR: use make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim"; exit 2; }
 	@BUILD="$(BUILD)" bash scripts/run_channelizer_gate_and_publish_debug.sh "$(GATE)"
 
 .PHONY: repair-mts-module-refs

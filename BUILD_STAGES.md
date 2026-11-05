@@ -122,12 +122,12 @@ Validates every required `component.xml` and writes `ip_manifest.tsv`. It does
 not silently accept an incomplete export.
 
 **Current MATLAB-HDL selection:** the user has switched the build flow to
-`CHANNELIZER_FLOW=matlab_hdl`. Gate-3 feasibility and Gate-4 wrapper OOC
-synthesis pass; the next check is `make debug-channelizer-gate
-GATE=gate4-axis-wrapper-sim`. Gate 4 is synthesis only, and Gate 4B is
-behavioral interface verification; neither authorizes packaging or `step08`.
-The wrapper's package path, four-channel mapping, and routed implementation
-still require validation. Do not treat prior `step06` PASS logs as MATLAB
+`CHANNELIZER_FLOW=matlab_hdl`. Gate-3 feasibility, Gate-4 wrapper OOC
+synthesis, and Gate-4B handshake/framing simulation pass; the next check is
+`make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim`, which compares
+all 416-bit output beats to a fixed-point MATLAB golden. Gate 4C still does
+not authorize packaging or `step08`; the package path, four-channel mapping,
+and routed implementation require validation. Do not treat prior `step06` PASS logs as MATLAB
 collection evidence; those were generated under the earlier OPFB flow. The
 OPFB collection command remains available only for explicit Plan-B evaluation.
 
