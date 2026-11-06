@@ -146,7 +146,7 @@ output_loop:
         m_axis.write(output);
     }
 
-    // --- six CORDIC phases ---------------------------------------------------
+    // --- six phases through one shared CORDIC --------------------------------
     axis128_t phaseWord;
     phaseWord.data = 0;
     phaseWord.keep = -1;

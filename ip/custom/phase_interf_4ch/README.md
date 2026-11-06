@@ -98,7 +98,8 @@ exists so that:
 
 * the phase path is a fixed, testable hardware contract rather than an R5
   software routine whose precision depends on the build;
-* the six CORDICs cost ~7 k LUT and no DSP, which is cheaper than the R5 time
-  for 6 `atan2` per frame at the DOA frame rate;
+* one shared CORDIC datapath costs ~2–3 k LUT, no DSP and ~250 cycles per frame —
+  cheaper than six `atan2` calls on the R5, and deterministic (the software path's
+  precision depends on the build);
 * a future bin-rate mode (one phase per bin) is a pipelining change inside this
   block, not a new design.
