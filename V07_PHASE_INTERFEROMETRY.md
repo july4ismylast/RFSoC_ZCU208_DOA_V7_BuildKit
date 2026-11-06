@@ -555,6 +555,7 @@ Integration itself is G4: `step08` … `step11`, unrun.
 | G0 front-end feasibility screen | `python3 scripts/estimate_wideband_dsp_resources.py` | **PASS** (screen only) |
 | G1a fixed-point core | `make -C ip/custom/phase_interf_4ch host-check` | **PASS** |
 | G1b kernel + C-sim testbench on the host (shimmed) | `make -C ip/custom/phase_interf_4ch host-kernel-check` | **PASS** |
+| G1c packaging/VLNV contract (config.mk ⇄ `build_hls.tcl` ⇄ `collect_ip.sh`) | `check_component_vlnv.sh` against a synthetic export, see evidence | **PASS** (contract only — not that Vitis produced it) |
 | G2 HLS C-sim + csynth + export | `make step05_hls_phase_interf` | **NOT RUN** |
 | G3 OOC synthesis + timing of the packaged IP at 4.0 ns | `make -C ip/custom/phase_interf_4ch gate3-ooc` (`gate3_ooc.tcl`, `v06_gate2` style) | **NOT RUN** — script written, never executed; it fails the gate on WNS < 0 or if `ap_clk` is not the 4.0 ns wideband period |
 | G4 BD integration, validate, timing | `step08`…`step11` | **NOT RUN** |
