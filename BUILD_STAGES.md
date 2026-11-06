@@ -123,13 +123,29 @@ smoke test exercising `doa_subband_bridge_4ch`, `axis_clock_converter:1.1`,
 `axis_dwidth_converter:1.1`, `axi_fifo_mm_s:4.3`, `xpm_cdc_gen:1.0`,
 `clk_wiz:6.0`, `proc_sys_reset:5.0`, and `assign_bd_address`.
 
+### `step05_hls_phase_interf`
+
+Builds the V07 per-bin phase-interferometry block
+(`openai:doa:phase_interf_4ch:1.0`, see
+[V07_PHASE_INTERFEROMETRY.md](V07_PHASE_INTERFEROMETRY.md)): C simulation,
+synthesis at the pinned clock, and catalogue export into `build/ip_repo`.
+The tool-independent half of the verification does not need Vitis:
+
+```bash
+make -C ip/custom/phase_interf_4ch host-check   # g++, bit-exact core test
+make rebuild STEP=step05_hls_phase_interf      # needs Vitis HLS 2023.2
+```
+
+Accumulator layout is deliberately identical to `doa_covariance_4ch_v4`, so the
+PS writes one calibration table and one frame length to both blocks.
+
 ### `step06_collect_ip`
 
 Validates every required `component.xml` and writes `ip_manifest.tsv`. Under
-`CHANNELIZER_FLOW=matlab_hdl` it requires all seven custom IPs:
+`CHANNELIZER_FLOW=matlab_hdl` it requires all eight custom IPs:
 `doa_covariance_4ch_v4:7.1`, `spectrum_power4:2.0`, `candidate_peak4:1.0`,
-`beam_weight_4ch:2.1`, `rfdc_repack4:1.0`, `matlab_channelizer:7.0`, and
-`doa_subband_bridge_4ch:1.0`.
+`beam_weight_4ch:2.1`, `rfdc_repack4:1.0`, `matlab_channelizer:7.0`,
+`doa_subband_bridge_4ch:1.0`, and `phase_interf_4ch:1.0`.
 
 ### `step07_vivado_project`
 

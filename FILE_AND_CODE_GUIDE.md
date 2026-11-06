@@ -57,6 +57,7 @@ testbench, `build_hls.tcl`, local Makefile, and block README.
 | `ip/custom/doa_covariance_4ch_v4` | AXI512 samples → 16 AXI64 words | Q2.14 correction plus four powers and six complex cross-products. |
 | `ip/custom/spectrum_power4` | AXI512 samples → AXI256 powers | Four-channel incoherent power for four lanes. |
 | `ip/custom/candidate_peak4` | AXI256 powers → AXI192 record | Frame peak, average, bin, and programmable validity gate. |
+| `ip/custom/phase_interf_4ch` | AXI512 beats → AXI64 accumulators + AXI128 phases | V07 per-bin cross-spectrum (six baselines), integer CORDIC `atan2`, frame tag. `make host-check` runs the production core on g++ without Xilinx headers. |
 | `ip/custom/beam_weight_4ch` | AXI512 samples → AXI256 beam | Optional four-lane complex weighted sum. |
 
 For each block, `build_hls.tcl` follows the same lines: read target part/period

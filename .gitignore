@@ -1,0 +1,13 @@
+# Generated build trees (never committed: every stage stamps into build/)
+/build/
+
+# Python caches from the host-side verification scripts
+__pycache__/
+*.pyc
+
+# Vitis HLS project directories (the packaged IP goes to build/ip_repo)
+**/*_prj/
+**/*_hls/
+ip/custom/**/vitis_hls.log
+*.jou
+*.log

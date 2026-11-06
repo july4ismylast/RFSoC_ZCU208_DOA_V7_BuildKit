@@ -54,3 +54,22 @@ The MATLAB and independent numerical checks support plausibility. A final
 ZU48DR fit/performance claim still requires the included Vitis HLS synthesis
 report, Vivado place-and-route timing/utilization report, repeated RFDC MTS
 startup measurements, exact board HIL capture and a calibrated far-field test.
+
+## V07.1 wideband phase interferometry (2026-11-06)
+
+- `PhaseInterferometryEstimator`: per-bin cross-spectrum DOA on the four channel
+  spectra, six-baseline coherence-weighted least squares, contraction to the
+  +x hemisphere, automatic cluster detection, and per-cluster diagnostics
+  (coherence, SNR, amplitude balance, ambiguity flag).
+- The multi-frequency phase-slope fit is retained only as a reported diagnostic:
+  measured 457x worse than coherent WPI for a 50 MHz emitter and 5.8x worse even
+  for a 2 GHz band-filling emitter (see `V07_PHASE_INTERFEROMETRY.md`).
+- `FixedPointMode` reproduces the PL exactly: Q3.17 calibrated integers, exact
+  integer cross-spectrum sums, and the same 16-iteration CORDIC as
+  `ip/custom/phase_interf_4ch` (`phase_from_cordic_q13`, bit-identical to the
+  C++ core on 48/48 test vectors).
+- `verify_phase_interferometry_2x2`: time-domain chain (IFFT, 16-bit
+  quantisation, raised-cosine window, FFT), CORDIC accuracy, fixed-point parity,
+  narrowband vs wideband estimator comparison, and the 50 mm ambiguity case.
+- Geometry unchanged and now explicitly justified: 25 mm axes / 35.4 mm
+  diagonal, unambiguous to 4.24 GHz.

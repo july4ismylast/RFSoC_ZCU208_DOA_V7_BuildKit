@@ -16,6 +16,7 @@ STAGES := \
 	step05_hls_repack \
 	step05_channelizer \
 	step05_subband_bridge \
+	step05_hls_phase_interf \
 	step06_collect_ip \
 	step07_vivado_project \
 	step08_vivado_integrate \
@@ -29,7 +30,7 @@ STAGES := \
 
 PRODUCTION_STAGES := step00_preflight step02_hls_covariance step03_hls_spectrum \
 	step04_hls_candidate step04_hls_beam step05_hls_repack step05_channelizer \
-	step05_subband_bridge step06_collect_ip step07_vivado_project \
+	step05_subband_bridge step05_hls_phase_interf step06_collect_ip step07_vivado_project \
 	step08_vivado_integrate step09_vivado_validate step10_synth step11_impl \
 	step12_bitstream step13_export_xsa step14_hil_vectors step15_package
 
@@ -50,6 +51,7 @@ help:
 	@echo "Static validation:   make lint"
 	@echo "Dry-run a stage:     make -n step10_synth"
 	@echo "Run/capture V06 gate: make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim"
+	@echo "V07 host checks:     make verify-phase-interf"
 	@echo
 	@echo "Stages (each can be invoked independently):"
 	@echo "  step00_preflight         Check tools, part, versions, and configuration"
@@ -62,6 +64,7 @@ help:
 	@echo "  step05_channelizer       Build selected channelizer flow"
 	@echo "                             CHANNELIZER_FLOW=matlab_hdl|model_composer|opfb|external"
 	@echo "  step05_subband_bridge    Verify, synth-check, and package 4-channel subband stream bridge IP"
+	@echo "  step05_hls_phase_interf  C-sim, synth, and export V07 per-bin phase-interferometry IP"
 	@echo "  step06_collect_ip        Validate component.xml files and assemble one IP repository"
 	@echo "  step07_vivado_project    Copy a verified ZCU208 base .xpr into an isolated project"
 	@echo "  step08_vivado_integrate  Add DOA V7 using config/zcu208_bd_map.tcl"
@@ -134,6 +137,7 @@ step04_hls_beam: $(STAMP_DIR)/step04_hls_beam.done
 step05_hls_repack: $(STAMP_DIR)/step05_hls_repack.done
 step05_channelizer: $(STAMP_DIR)/step05_channelizer.done
 step05_subband_bridge: $(STAMP_DIR)/step05_subband_bridge.done
+step05_hls_phase_interf: $(STAMP_DIR)/step05_hls_phase_interf.done
 step06_collect_ip: $(STAMP_DIR)/step06_collect_ip.done
 step07_vivado_project step07_create_project: $(STAMP_DIR)/step07_vivado_project.done
 step08_vivado_integrate step08_integrate: $(STAMP_DIR)/step08_vivado_integrate.done
@@ -172,6 +176,9 @@ $(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/
 $(STAMP_DIR)/step05_subband_bridge.done: $(shell find ip/custom/doa_subband_bridge_4ch -type f 2>/dev/null) common/scripts/check_component_vlnv.sh config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step05_subband_bridge --stamp "$@" --log "$(LOG_DIR)/step05_subband_bridge.log" -- make --no-print-directory -C ip/custom/doa_subband_bridge_4ch all
 
+$(STAMP_DIR)/step05_hls_phase_interf.done: $(shell find ip/custom/phase_interf_4ch -type f 2>/dev/null) config.mk common/scripts/check_component_vlnv.sh scripts/run_stage.sh $(FORCE_DEP)
+	@./scripts/run_stage.sh --id step05_hls_phase_interf --stamp "$@" --log "$(LOG_DIR)/step05_hls_phase_interf.log" -- make --no-print-directory -C ip/custom/phase_interf_4ch all
+
 $(STAMP_DIR)/step06_collect_ip.done: scripts/collect_ip.sh config.mk config/ip_versions.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step06_collect_ip --stamp "$@" --log "$(LOG_DIR)/step06_collect_ip.log" -- ./scripts/collect_ip.sh
 
@@ -201,6 +208,16 @@ $(STAMP_DIR)/step14_hil_vectors.done: hil/matlab/generate_zcu208_hil_vectors.m s
 
 $(STAMP_DIR)/step15_package.done: scripts/package_release.sh config.mk scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step15_package --stamp "$@" --log "$(LOG_DIR)/step15_package.log" -- ./scripts/package_release.sh
+
+# V07 phase-interferometry checks that need no Vitis/Vivado licence: the
+# estimator Monte-Carlo, the front-end resource screen, and the bit-exact host
+# test of the production HLS core.  Deliberately not part of pipeline/all
+# (they need python3+numpy and a host C++ compiler, not the FPGA tools).
+.PHONY: verify-phase-interf
+verify-phase-interf:
+	@python3 scripts/phase_interf_verify.py
+	@python3 scripts/estimate_wideband_dsp_resources.py
+	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 
 # Deliberate user action only: never part of pipeline/all.
 .PHONY: publish-evidence

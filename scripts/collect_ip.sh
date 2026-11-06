@@ -37,6 +37,7 @@ required=(
     "$IP_REPO/candidate_peak4|$vendor:$library:candidate_peak4:${IPVER_CANDIDATE:-1.0}"
     "$IP_REPO/beam_weight_4ch|$vendor:$library:beam_weight_4ch:${IPVER_BEAM:-2.1}"
     "$IP_REPO/rfdc_repack4|$vendor:$library:rfdc_repack4:${IPVER_RFDC_REPACK4:-1.0}"
+    "$IP_REPO/phase_interf_4ch|$vendor:$library:phase_interf_4ch:${IPVER_PHASE_INTERF:-1.0}"
 )
 case "${CHANNELIZER_FLOW:-matlab_hdl}" in
     matlab_hdl)

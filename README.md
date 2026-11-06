@@ -13,7 +13,10 @@ The critical design decisions are:
 - keep search and triggered covariance on independent streams so a completed
   covariance frame cannot stop continuous detection;
 - process four complex samples per clock on all custom PL blocks;
-- compute calibrated four-channel/six-baseline covariance in PL;
+- compute calibrated four-channel/six-baseline cross-spectra in PL, per
+  frequency bin, and extract the six baseline phases in a small CORDIC block
+  (V07 phase interferometry — see
+  [V07_PHASE_INTERFEROMETRY.md](V07_PHASE_INTERFEROMETRY.md));
 - initially run V7 WPI, bounded local ML/Gauss–Newton, and the unit-vector EKF
   on the R5, with the A53 supervising calibration, logging, and networking;
 - require C simulation, BD validation, timing closure, exact covariance HIL,
@@ -53,6 +56,7 @@ RFDC base-design pin names. For a structural-only BD check, use
 
 ## Documentation
 
+- [Wideband phase interferometry: adopt / correct / reject](V07_PHASE_INTERFEROMETRY.md)
 - [Implementation and algorithm guide](ZCU208_IMPLEMENTATION_GUIDE.md)
 - [Every build stage and recovery command](BUILD_STAGES.md)
 - [File-by-file and code walkthrough](FILE_AND_CODE_GUIDE.md)
@@ -60,6 +64,19 @@ RFDC base-design pin names. For a structural-only BD check, use
 - [First-draft audit and direct comparison](AUDIT_AND_COMPARISON.md)
 - [What was and was not validated here](VALIDATION_REPORT.md)
 - [Original draft source matrix](SOURCE_MATRIX.md)
+
+## Why the DOA estimator is phase interferometry, not phase slope
+
+The wideband path measures the angle from the *carrier* phase of the summed
+cross-spectrum, not from a phase-versus-frequency slope. `scripts/phase_interf_verify.py`
+(committed report under `docs/evidence/2026-11-06-phase-interf/`) measures
+0.22° RMSE at 20 dB/bin for a 50 MHz emitter with the coherent estimator, and
+101° for the slope estimator proposed by the external review — the slope
+estimator's effective lever arm is `B/sqrt(12)` against the carrier's `f_c`, and
+`f_c > B` always. The same script rejects 50 mm element spacing (106° error at
+3.75 GHz where 25 mm gives 0.27°), and
+`scripts/estimate_wideband_dsp_resources.py` shows why a 16K FFT at 2.048 GSPS
+is neither instantiable nor necessary.
 
 ## Accuracy statement
 
