@@ -129,11 +129,11 @@ pipelined" understates the arithmetic by ~10× and omits the calibration multipl
 
 ### 3.6 "CORDIC 16-bit, 12 iterations, 28 clocks total"
 
-Six CORDICs (one per baseline) are needed, and 16-bit phase accuracy needs
-~16 iterations, not 12. One shared datapath is ~2–3 k LUT and no DSP (§7.4). The
-latency claim
-is irrelevant: the block runs at the **250 MHz wideband fabric clock** on the
-channelizer's output stream (`WIDEBAND_CLOCK_PERIOD_NS` = 4.0 ns), and the
+Six phases (one per baseline) at 16-bit accuracy need ~16 iterations, not 12, and
+they do not need six dedicated CORDICs: one shared datapath at ~2–3 k LUT and no
+DSP (§7.4) serves all six, because the pass runs once per frame. The latency
+claim is irrelevant: the block runs at the **250 MHz wideband fabric clock** on
+the channelizer's output stream (`WIDEBAND_CLOCK_PERIOD_NS` = 4.0 ns), and the
 CORDIC pass happens once per frame, not once per sample.
 
 ### 3.7 Block-floating-point is ignored
