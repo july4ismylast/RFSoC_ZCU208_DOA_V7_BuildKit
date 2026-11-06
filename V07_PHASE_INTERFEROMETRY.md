@@ -519,6 +519,31 @@ Two HLS hazards were removed before they could cost a synthesis run:
   cascaded adder chains, ~10 ns each, at a 4.0 ns clock. The loop is now a
   sequential state machine sharing one datapath.
 
+### 7.5 What G4 has to do (integration is deliberately not written yet)
+
+`phase_interf_4ch` is packaged and collected by `step05`/`step06`, but
+`config/zcu208_bd_map.tcl` does **not** instantiate it:
+`08_integrate_doa_v7.tcl` attaches the six existing DOA AXI4-Lite slaves (it says
+so in its header), and a seventh block cannot be added to a base design nobody
+has measured. Wiring it blind would violate the rule that nothing is claimed that
+was not run, so the integration checklist lives here instead:
+
+| Item | Requirement |
+|---|---|
+| `ap_clk` | the **250 MHz wideband** net the `doa_subband_bridge_4ch` output lives on (`clkRFdiv2`-derived), not `/doa_v7` 125 MHz |
+| `ap_rst_n` | same active-low synchronised reset as `doa_covariance_4ch_v4` |
+| `s_axis` | `doa_subband_bridge_4ch` selected-bin output, 512-bit, `word = lane*4 + channel`, `{Q[31:16], I[15:0]}` |
+| `m_axis` | an AXI4-Stream RX FIFO to the PS (the record the PS turns into WPI/coherence) |
+| `m_phase` | 128-bit per frame; may share the same FIFO path behind a small arbiter, or a second FIFO |
+| AXI4-Lite | its own address segment on `/control_interconnect`; `cal0..3` written with the **same** table as the covariance block |
+| Clock-domain crossing | none needed if the above clock is respected; the existing 4 async converters are for the PS streams, not this block |
+
+The PS sequence per frame is: write `frameSamples`, write `frameTag` from the
+search result, read 16 words (`m_axis`) and one phase word (`m_phase`), then run
+`estimate_doa_from_covariance_v7.m` verbatim.
+
+Integration itself is G4: `step08` … `step11`, unrun.
+
 ---
 
 ## 8. Gates to close before any accuracy claim
