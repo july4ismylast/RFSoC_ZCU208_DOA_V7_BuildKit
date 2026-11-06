@@ -1,7 +1,9 @@
 ROOT := $(abspath ../../..)
 include $(ROOT)/config.mk
 
-IP_OUT := $(CURDIR)/phase_interf_4ch_prj/solution1/impl/ip
+SOLUTION := $(CURDIR)/phase_interf_4ch_prj/solution1
+IP_OUT := $(SOLUTION)/impl/ip
+OUTPUT_DIR := $(ROOT)/build/output
 DEST := $(IP_REPO)/phase_interf_4ch
 IP_VLNV := $(CUSTOM_IP_VENDOR):$(CUSTOM_IP_LIBRARY):phase_interf_4ch:$(IPVER_PHASE_INTERF)
 
@@ -9,10 +11,10 @@ CXX ?= g++
 HOST_BIN := $(ROOT)/build/host/phase_interf_host_tb
 HOST_KERNEL_BIN := $(ROOT)/build/host/phase_interf_kernel_tb
 
-.PHONY: all hls install host-check host-kernel-check gate3-ooc clean
+.PHONY: all hls install collect-reports host-check host-kernel-check gate3-ooc clean
 
 # `all` is the production path (needs Vitis HLS 2023.2).
-all: hls install
+all: hls install collect-reports
 
 hls:
 	$(VITIS_HLS) -f build_hls.tcl
@@ -24,6 +26,21 @@ install: hls
 	mkdir -p "$(DEST)"
 	cp -a "$(IP_OUT)/." "$(DEST)/"
 	@echo "Installed phase-interferometry IP at $(DEST)"
+
+# Copy the Vitis reports that the review needs into build/output/, where
+# scripts/publish_debug_logs.sh can pick them up (it refuses paths outside
+# BUILD).  Gate G2 evidence lives here: csynth reports II, latency and the
+# 4.000 ns clock target that build_hls.tcl asked for.
+collect-reports:
+	@mkdir -p "$(OUTPUT_DIR)"
+	@for report in csynth csynth_design_size csynth_design_utilization csynth_design_timing; do \
+	    src="$(SOLUTION)/syn/report/$$report.rpt"; \
+	    if [ -f "$$src" ]; then cp "$$src" "$(OUTPUT_DIR)/v07_gate2_$$report.rpt"; fi; \
+	done
+	@ls $(SOLUTION)/sim/report/*.log >/dev/null 2>&1 && \
+	    cp $(SOLUTION)/sim/report/*.log "$(OUTPUT_DIR)/v07_gate2_csim.log" 2>/dev/null || true
+	@ls "$(OUTPUT_DIR)"/v07_gate2_*.rpt >/dev/null 2>&1 || \
+	    echo "collect-reports: no Vitis reports found (did 'make hls' run?)"
 
 # Tool-independent check of the production core (g++, no Xilinx headers).
 # This is V07 gate G1 and runs on any machine.

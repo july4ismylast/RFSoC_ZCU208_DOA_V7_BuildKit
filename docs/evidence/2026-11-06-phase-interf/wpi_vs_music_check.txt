@@ -1,0 +1,93 @@
+# V07 estimator comparison: wideband phase interferometry vs 2D MUSIC
+# generated 2026-11-06T15:33:27Z
+# script: scripts/compare_wpi_vs_music.py (python3 + numpy only)
+# array: 4 elements, 2x2, 25 mm axes (35.4 mm diagonal)
+# band: 2.25-3.75 GHz, 32 bins, centre 3.00 GHz
+# seed=20261106 trials=40
+#
+# Convention: coherent_wpi uses S_ba = X_b*conj(X_a) and the leading minus
+# of the HDL block / estimate_doa_from_covariance_v7.m.
+
+Study A: one emitter, az 12.5 deg el -8.3 deg, 20 dB/bin, N=16, 2 GHz
+  estimator        az RMSE   el RMSE   az / WPI
+  coherent_wpi      0.147     0.121       1.00x
+  issm              0.362     0.442       2.47x
+  nb_music          0.708     0.635       4.82x
+  crb (floor)       0.121     0.115          -
+  WPI 1.22x the CRB: the coherent phase estimate is already at the
+  information limit, so MUSIC has nothing to add for one emitter.
+
+Study B: how many emitters can this array resolve at all?
+         A planar grid with spacing d has alpha = pi*f*d*(uy+uz)/c and
+         beta = pi*f*d*(uy-uz)/c, i.e. a steering vector [e^-ja, e^jb,
+         e^-jb, e^ja] = one fixed phase pattern times a single phase
+         term. The span of { a(az, el0) : az } therefore has a hard
+         rank, and that rank is how many emitters a subspace method can
+         represent AT ALL -- whatever the SNR, snapshots or estimator.
+  array                  elements  rank   singular values (first 4)
+  2x2 (shipped)          4         2      [1.    0.441 0.    0.   ]
+  2x3                    6         2      [1.    0.441 0.    0.   ]
+  3x3                    9         3      [1.    0.698 0.181 0.   ]
+  3x4                    12        3      [1.    0.698 0.181 0.   ]
+  4x1 ULA along y        4         4      [1.    0.886 0.399 0.071]
+
+  Consequence, measured twice on the same scene (two 0.5-power emitters,
+  30 dB/bin, N=128, 10 trials, 1.5 deg tolerance):
+    2x2 (shipped, 4 el)  separation 10.0 deg -> both found  0/10
+    2x2 (shipped, 4 el)  separation 20.0 deg -> both found  0/10
+    3x3 (9 el)           separation 10.0 deg -> both found 10/10
+    3x3 (9 el)           separation 20.0 deg -> both found 10/10
+  The 4-element 2x2 is a single-emitter direction finder by geometry.
+  Two-emitter capability needs >= 3 rows (9 elements) or a shape that
+  breaks the product structure -- it is an array change, not an
+  estimator change, and it is outside this build kit's 4-channel
+  contract (V04: 4 RF-ADC channels).
+
+Study C: residual per-channel delay, 20 dB/bin, N=16, one emitter.
+         'single coeff' = the shipped block: one complex Q2.14 value per
+         channel, best case aligned at band centre.  'per-bin' = the PS
+         rewrites cal0..cal3 for each selected bin.
+   tau_rms   single coeff        per-bin
+        ps    az RMSE deg    az RMSE deg
+         0          0.134          0.134
+        25          0.197          0.144
+        50          0.240          0.146
+       100          0.502          0.144
+       200          0.448          0.145
+
+Study D: residual element-position error, one emitter, 20 dB/bin, N=16.
+         (No MUSIC column: on this manifold its peak is not a stable
+         function of the geometry, so it would flatter or slander the
+         wrong thing. The point below is the shipped estimator.)
+    sigma mm    WPI az RMSE
+         0.0          0.137
+         0.1          0.278
+         0.5          1.113
+  Position error enters as ~2.2 deg per mm (0.5 mm -> 1.11 deg): it is
+  geometry, not the estimator, that decides whether 0.5 deg is met.
+
+VERDICT
+  [PASS] one emitter, 0.5 deg requirement: WPI 0.147 deg vs CRB 0.121 deg
+         (1.22x the floor). ISSM 0.362 deg, narrowband MUSIC 0.708 deg.
+         MUSIC cannot beat the bound, so it cannot improve single-emitter
+         accuracy at all -- the floor is the bandwidth, not the estimator.
+  [PASS] two emitters: the shipped 2x2 spans rank 2 at one elevation,
+         so NO subspace method can represent two emitters on it --
+         2D MUSIC included, at any SNR. A 3x3 spans rank 3 and does
+         resolve them. Multi-emitter capability is an array change,
+         not an estimator change.
+  [PASS] calibration: one coefficient per channel degrades from 0.13 deg
+         to 0.50 deg as residual delay grows; per-bin calibration stays
+         at 0.15 deg. A 2 GHz band needs frequency-dependent calibration,
+         and no estimator fixes a calibration error it does not model.
+  [INFO] geometry: 0.5 mm of element position error alone costs 1.11 deg,
+         i.e. more than the simulated 0.5 deg requirement itself.
+
+  So the answer to 'MUSIC for 0.5 deg' is no: 0.5 deg is bounded by
+  bandwidth (met statistically at 0.15 deg), by calibration and by
+  geometry, and MUSIC trades none of those. Its one genuine benefit --
+  two-emitter resolution -- needs a different array: the shipped 2x2
+  spans rank 2 at one elevation and cannot represent two emitters at
+  any SNR.
+
+RESULT=PASS

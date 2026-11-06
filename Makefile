@@ -227,9 +227,15 @@ matlab-lint:
 	    echo "SKIP matlab-lint: mh_lint (pip install miss_hit) not installed"; \
 	fi
 
+# Section 10 of V07: wideband interferometry vs 2D MUSIC, plus the manifold-rank
+# result that decides how many emitters this array can represent at all.
+compare-estimators:
+	@python3 scripts/compare_wpi_vs_music.py
+
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
+	@python3 scripts/compare_wpi_vs_music.py
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
 
@@ -241,6 +247,16 @@ publish-evidence:
 .PHONY: publish-debug-logs
 publish-debug-logs:
 	@CHANNELIZER_FLOW="$(CHANNELIZER_FLOW)" BUILD="$(BUILD)" bash scripts/publish_debug_logs.sh
+
+# Commit AND push the current build/logs + build/output allowlist without the
+# interactive prompt, so gated runs can end with one command.  Review the staged
+# snapshot first: the script prints `git diff --cached --stat` before committing,
+# and stage logs can contain hostnames and local paths.
+.PHONY: push-gate-logs
+push-gate-logs:
+	@EVIDENCE_YES=1 EVIDENCE_PUSH=1 \
+	    CHANNELIZER_FLOW="$(CHANNELIZER_FLOW)" BUILD="$(BUILD)" IP_REPO="$(IP_REPO)" \
+	    bash scripts/publish_debug_logs.sh
 
 # Run one stage, then snapshot its logs even if the stage fails. The snapshot
 # is committed locally; use GitHub Desktop's Push origin on machines without

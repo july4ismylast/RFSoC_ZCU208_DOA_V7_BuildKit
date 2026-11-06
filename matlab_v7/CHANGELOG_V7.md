@@ -74,6 +74,11 @@ startup measurements, exact board HIL capture and a calibrated far-field test.
   constrains `WIDEBAND_CLOCK_PERIOD_NS` (4.0 ns, the clock the block actually
   runs on) instead of `PL_CLOCK_PERIOD_NS` (7.8125 ns). The resource table in
   V07 §7.4 is now counted from the per-beat multiply tree instead of asserted.
+* **Estimator question closed with numbers.** `scripts/compare_wpi_vs_music.py`
+  (V07 §10) shows coherent WPI at 1.22× the CRB, per-bin MUSIC 2.47× and
+  narrowband MUSIC 4.82× worse, and — structurally — that a 2×2 grid spans rank 2
+  at one elevation, so no subspace method can represent two emitters on it at any
+  SNR. Two-emitter capability needs ≥ 3 rows (9 elements).
 * **New tools.** `ip/custom/phase_interf_4ch/tb/host_shim/` + `make
   host-kernel-check` run the production kernel and its Vitis testbench on g++;
   `gate3_ooc.tcl` + `make gate3-ooc` are the (unrun) OOC timing gate.

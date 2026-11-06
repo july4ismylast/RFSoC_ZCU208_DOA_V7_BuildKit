@@ -136,6 +136,8 @@ make -C ip/custom/phase_interf_4ch host-check        # g++, bit-exact core test
 make -C ip/custom/phase_interf_4ch host-kernel-check # kernel + C-sim TB via host shim
 make -C ip/custom/phase_interf_4ch gate3-ooc         # Vivado 2023.2, OOC timing at 4.0 ns
 make rebuild STEP=step05_hls_phase_interf      # needs Vitis HLS 2023.2
+make -C ip/custom/phase_interf_4ch collect-reports  # csynth reports -> build/output/v07_gate2_*
+make push-gate-logs                            # commit+push the gate evidence (see GATES_RUNBOOK.md)
 ```
 
 Accumulator layout is deliberately identical to `doa_covariance_4ch_v4`, so the

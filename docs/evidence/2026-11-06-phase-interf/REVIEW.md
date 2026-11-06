@@ -11,6 +11,7 @@ Monte-Carlo reproducible on any machine with `python3` + `numpy` and `g++`.
 | `wideband_frontend_screen.txt` | `python3 scripts/estimate_wideband_dsp_resources.py` | Front-end feasibility: 1024-band channelizer (measured) vs 1024/4096/16384-point SSR-8 FFT, device projection, IP support, and the equal-integration-time argument |
 | `phase_interf_kernel_hostrun.txt` | `make -C ip/custom/phase_interf_4ch host-kernel-check` (`g++`) | The **production kernel and production Vitis testbench** compile and pass: AXI beat packing, 16-word order + `TLAST`, phase-record bit positions, frame-tag echo, az/el sign — over a 16-sample frame, the 4096-sample production frame, and a physical steering case |
 | `matlab_syntax_check.txt` | `mh_lint` (MISS_HIT 0.9.44) | The three `matlab_v7/*.m` reference files parse as MATLAB. Parse only — they have not been executed |
+| `wpi_vs_music_check.txt` | `python3 scripts/compare_wpi_vs_music.py` (`make compare-estimators`) | V07 §10: WPI at 1.22× the CRB vs 2.5–4.8× worse for per-bin and narrowband MUSIC; the 2×2 manifold rank that makes two-emitter subspace processing impossible; per-bin vs single-coefficient calibration; position sensitivity |
 | `packaging_vlnv_check.txt` | `common/scripts/check_component_vlnv.sh` | The VLNV `config.mk` asks for is the one `build_hls.tcl` would export (`openai:doa:phase_interf_4ch:1.0`) and `step06` rejects any other. Exercises the checker with a synthetic `component.xml`; it does not prove Vitis produced one |
 
 Reproduce everything, including the bit-exact host test of the production core

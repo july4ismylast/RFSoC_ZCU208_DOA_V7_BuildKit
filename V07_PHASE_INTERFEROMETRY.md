@@ -553,6 +553,7 @@ Integration itself is G4: `step08` … `step11`, unrun.
 |---|---|---|
 | G0 estimator physics (host) | `python3 scripts/phase_interf_verify.py` | **PASS** |
 | G0 front-end feasibility screen | `python3 scripts/estimate_wideband_dsp_resources.py` | **PASS** (screen only) |
+| G0 estimator comparison vs 2D MUSIC/ISSM (§10) | `make compare-estimators` | **PASS** |
 | G1a fixed-point core | `make -C ip/custom/phase_interf_4ch host-check` | **PASS** |
 | G1b kernel + C-sim testbench on the host (shimmed) | `make -C ip/custom/phase_interf_4ch host-kernel-check` | **PASS** |
 | G1c packaging/VLNV contract (config.mk ⇄ `build_hls.tcl` ⇄ `collect_ip.sh`) | `check_component_vlnv.sh` against a synthetic export, see evidence | **PASS** (contract only — not that Vitis produced it) |
@@ -565,13 +566,18 @@ Integration itself is G4: `step08` … `step11`, unrun.
 Until G4–G6 exist, the only accuracy numbers this project may quote are the
 simulated ones in §6, labelled as simulated.
 
+**How to run each gate, what to look at, and how to publish the logs:**
+[`GATES_RUNBOOK.md`](GATES_RUNBOOK.md). It also documents the two guards that
+will stop you (an `arena/*` branch is required before logs may be pushed, and
+`phase_interf_4ch` is not instantiated in the BD yet — §7.5).
+
 ---
 
 ## 9. Deferred and rejected
 
 | Item | Disposition |
 |---|---|
-| MUSIC / CSSM / ESPRIT | Deferred (4 elements, 1–2 emitters, WPI+ML already meets the requirement) |
+| MUSIC / CSSM / ESPRIT | Deferred — and now **measured**, not assumed: §10. 2.5–4.8× worse than WPI for one emitter, and structurally unable to separate two emitters on a 2×2 grid (manifold rank 2 at one elevation) |
 | 16K FFT @ 2 GSPS | Rejected (§4) |
 | 4.096 GSPS clock plan | Rejected (§3.1) |
 | Fabric halfband decimator | Rejected — hardened in the RFDC (§3.4) |
@@ -582,13 +588,105 @@ simulated ones in §6, labelled as simulated.
 
 ---
 
-## 10. Files
+---
+
+## 10. Wideband 2D MUSIC vs interferometry, measured
+
+The fair follow-up to §9's "MUSIC deferred" is: *if 0.5° is the requirement, is a
+wideband 2D MUSIC/CSSM chain the better primary estimator?* Answered by
+`scripts/compare_wpi_vs_music.py`, which runs four estimators on this array and
+this band and compares them against the Cramér-Rao bound. Report:
+[`docs/evidence/2026-11-06-phase-interf/wpi_vs_music_check.txt`](docs/evidence/2026-11-06-phase-interf/wpi_vs_music_check.txt).
+
+### 10.1 One emitter: interferometry is already at the bound
+
+4 elements, 2×2, 25 mm axes, 2.25–3.75 GHz, 20 dB/bin, 16 snapshots, az 12.5°,
+el −8.3°, 40 Monte-Carlo trials:
+
+| Estimator | az RMSE | el RMSE | vs WPI |
+|---|---|---|---|
+| **coherent WPI** (what the PL block accumulates) | **0.147°** | **0.121°** | 1.00× |
+| ISSM (per-bin 2D MUSIC, spectra averaged over the band) | 0.362° | 0.442° | 2.47× |
+| narrowband 2D MUSIC at 3.0 GHz, best single bin | 0.708° | 0.635° | 4.82× |
+| **CRB (the information floor)** | **0.121°** | 0.115° | — |
+
+WPI sits 1.22× above the CRB. Nothing — MUSIC included — can be materially
+better, because 0.5° is not being limited by the estimator: it is limited by
+bandwidth (2 GHz, already the V04 maximum), by SNR, and by snapshots. A
+super-resolution estimator spends PS cycles to approach the same bound from the
+wrong side.
+
+### 10.2 Two emitters: the 2×2 array cannot represent them, at any SNR
+
+This is the result that settles the architecture question, and it is structural
+rather than numerical. For a planar grid the steering vector is
+
+```text
+a(θ) = [e^-jα, e^+jβ, e^-jβ, e^+jα],   α = π·f·d·(uy+uz)/c,  β = π·f·d·(uy-uz)/c
+```
+
+i.e. one fixed phase pattern times a *single* phase term. So the span of
+`{a(az, el₀) : az}` has a hard rank at each elevation, and that rank is the
+number of emitters a subspace method can even represent:
+
+| Array | Elements | Rank at el = −8.3° | Two emitters found (30 dB/bin, N=128, 10 trials) |
+|---|---|---|---|
+| 2×2 (shipped) | 4 | **2** | 0/10 at 10° **and** 0/10 at 20° separation |
+| 2×3 | 6 | 2 | — |
+| 3×3 | 9 | 3 | 10/10 at 10° and 20° |
+| 3×4 | 12 | 3 | — |
+| 4×1 ULA along y | 4 | 4 | (azimuth only, no elevation) |
+
+Read the 2×2 and 4×1 rows together: **the same four elements give rank 2 in a
+2×2 grid and rank 4 in a ULA.** The 2×2 buys 2D coverage and gives up
+multi-emitter capability; that trade is inherent to the geometry, not to the
+estimator, and it is why two emitters collapse into one angle on this build kit
+no matter what runs in the PS. Getting both would mean nine elements (3×3), which
+is outside the V04 four-channel contract.
+
+### 10.3 What actually blocks 0.5°: calibration and geometry
+
+| Error source | Measured effect on the shipped chain |
+|---|---|
+| Residual per-channel delay, **one** complex coefficient per channel (as shipped) | 0.13° → **0.50°** as delay reaches 200 ps rms |
+| Residual per-channel delay, per-bin calibration (PS rewrites `cal0..cal3` per selected bin) | stays **0.15°** |
+| Element position error 0.1 mm | 0.28° |
+| Element position error 0.5 mm | **1.11°** — more than the whole 0.5° budget |
+| Calibration phase residual 1.0° / 3.0° (constant, §6) | 0.83° / 2.40° |
+
+The delay row is actionable and new: `cal0..cal3` is one complex Q2.14 value per
+channel, which is a **narrowband** calibration. Across 2 GHz, a residual delay
+leaves a phase ramp that no single coefficient can remove, and the coherent sum
+loses coherence. The fix is free — the block processes one selected bin cluster
+per frame, so the PS should rewrite the calibration coefficients *for that bin*
+before each frame, from a measured frequency-dependent calibration table. That
+belongs in G5/G6, not in a new PL block.
+
+### 10.4 Verdict
+
+* **Keep coherent WPI as the primary estimator.** It is at the CRB, it is ~40
+  DSP48 of arithmetic rather than a 2D search per bin, and it fits the existing
+  4-channel contract.
+* **Do not add 2D MUSIC/CSSM for accuracy.** Measured 2.5–4.8× worse for one
+  emitter, and its one real benefit is unreachable on this array (rank 2).
+* **Spend the effort where the budget actually goes:** frequency-dependent
+  calibration (per-bin `cal`), array position measurement to ~0.1 mm, and the
+  G5/G6 measurements. A 0.5° claim without those is a calibration claim, not an
+  estimator claim.
+* **If two emitters ever become a requirement**, it is an array change (≥ 3×3)
+  and a channel-count change, not an estimator change. That is a V08-sized
+  decision, and §10.2 is the number to start it from.
+
+---
+
+## 11. Files
 
 | File | Role |
 |---|---|
 | `V07_PHASE_INTERFEROMETRY.md` | this decision record |
 | `scripts/phase_interf_verify.py` | estimator Monte-Carlo, writes the accuracy report |
 | `scripts/estimate_wideband_dsp_resources.py` | front-end/device screen, writes the resource report |
+| `scripts/compare_wpi_vs_music.py` | §10: interferometry vs wideband 2D MUSIC/ISSM, manifold-rank result, calibration and geometry sensitivity |
 | `ip/custom/phase_interf_4ch/` | per-bin cross-spectrum + CORDIC phase block, host test, HLS build |
 | `matlab_v7/PhaseInterferometryEstimator.m` | MATLAB reference of the PS-side estimator selection |
 | `matlab_v7/verify_phase_interferometry_2x2.m` | time-domain (windowed FFT + quantised) verification |
@@ -598,8 +696,9 @@ Run:
 
 ```bash
 make verify-phase-interf              # reports + host core test + shimmed kernel test
+make compare-estimators               # section 10: WPI vs 2D MUSIC, ~15 s
 make matlab-lint                      # optional parse check, needs pip install miss_hit
-make step05_hls_phase_interf          # needs Vitis HLS 2023.2
+make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md
 ```
 
 `make verify-phase-interf` needs only python3 + numpy + g++; it regenerates both

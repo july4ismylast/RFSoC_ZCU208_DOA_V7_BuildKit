@@ -23,7 +23,7 @@ stages=(
     step00_preflight step01_fetch_references
     step02_hls_covariance step03_hls_spectrum step04_hls_candidate
     step04_hls_beam step05_hls_repack step05_channelizer
-    step05_subband_bridge step06_collect_ip step07_vivado_project
+    step05_subband_bridge step05_hls_phase_interf step06_collect_ip step07_vivado_project
     step08_vivado_integrate step09_vivado_validate step10_synth
     step11_impl step12_bitstream step13_export_xsa
     step14_hil_vectors step15_package
@@ -88,6 +88,17 @@ for extra_report in \
     v06_gate5_package.rpt \
     doa_subband_bridge_4ch_package.rpt \
     v07_bd_integration.rpt \
+    v07_gate2_csynth.rpt \
+    v07_gate2_csynth_design_size.rpt \
+    v07_gate2_csynth_design_utilization.rpt \
+    v07_gate2_csynth_design_timing.rpt \
+    v07_gate2_csim.log \
+    v07_gate3_ooc_synthesis.rpt \
+    v07_gate3_utilization.rpt \
+    v07_gate3_timing_summary.rpt \
+    v07_gate3_timing_paths.rpt \
+    v07_gate3_clocks.rpt \
+    v07_gate3_check_timing.rpt \
     doa_address_map.txt \
     ip_status.txt \
     validation_messages.txt \
