@@ -26,9 +26,9 @@ by a script in this repository, or explicitly marked unproven.
 | 2 GHz instantaneous bandwidth | **ADOPT** — already locked by V04 (4.000 GSPS, RFDC fine NCO, decimation 2 → 2.000 GS/s complex) | §2 |
 | DDC ×2 only, no ×80 chain | **ADOPT** — the RFDC hardening does this for free; there is no fabric FIR to build | §2, §3.4 |
 | Per-bin cross-spectrum | **ADOPT** — new `phase_interf_4ch` block | §5 |
-| Multi-frequency **phase-slope fit** as the accuracy mechanism | **REJECT as primary; keep as a diagnostic for band-filling emitters** — measured 457× worse than coherent phase for the build kit's 50 MHz waveform, and still 5.8× worse for a 2 GHz band-filling emitter | §4, §6 |
+| Multi-frequency **phase-slope fit** as the accuracy mechanism | **ADOPT for band-filling emitters, through the origin and without unwrapping** — 0.066° at 30 mm over 2–4 GHz, 5× better than the band-centroid average; the review's *intercept* version is 0.235° and loses 9–10 of 10 narrowband frames, so it is rejected | §4, §11.2, §11.4 |
 | FFT **16K at 2.048 GSPS** | **REJECT** — not an instantiable IP configuration; 4-channel BRAM 26 %…165 % of the device; buys no accuracy | §4 |
-| Array spacing **d = 50 mm** | **REJECT** — unambiguous only to 3 GHz; measured 106° error at 3.75 GHz / az 55° where 25 mm gives 0.27° | §4.4, §6 |
+| Array spacing **d = 50 mm** | **REJECT** — unambiguous only to 3 GHz; measured 106° error at 3.75 GHz / az 55° where 25 mm gives 0.27°, and 33.9°/104.2° off over the full band where 30 mm holds 1.6°/1.1° | §4.4, §11.1 |
 | Amplitude-assisted "face selection" | **ADOPT, restated** — amplitude resolves only the ±45° quadrant; it cannot resolve an interferometer ambiguity | §5.5 |
 | MUSIC / CSSM | **DEFER** — agreed; not needed for the demonstrated accuracy, and 4 elements do not support it | §9 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
@@ -243,10 +243,15 @@ of the captured band. Measured (case 4 of the evidence report), az = 55°,
 | coherent WPI | **106.2°** (wrapped) | **0.27°** |
 
 A larger baseline does improve raw angular sensitivity (`σ_θ ∝ 1/d`), but only
-inside the unambiguous sector. The correct way to obtain both is a two-baseline
-(coarse/fine) array — a geometry change that must be decided before the array is
-built, not a firmware change. This build kit keeps 25 mm axes / 35.4 mm
-diagonal (valid to 4.24 GHz) and the `DOA2x2:AmbiguousBaseline` guard.
+inside the unambiguous sector. The correct way to obtain *both* from four
+elements is a two-baseline (coarse/fine) array — a geometry change that must be
+decided before the array is built, not a firmware change. With a square 2×2 the
+constraint is the diagonal: `d·√2·sin θ ≤ λ_min/2`, which gives 32.3 mm for the
+declared ±55° scan at 4 GHz. **§11 replaces the 25 mm figure with 30 mm** on that
+rule and measures what each spacing does over the whole band; the
+`DOA2x2:AmbiguousBaseline` guard stays either way. The 50 mm rejection above is
+confirmed there, not weakened: 50 mm is measured 33.9° and 104.2° off in the two
+directions where the rule says it must wrap.
 
 ---
 
@@ -381,6 +386,12 @@ It is *not* used to resolve the interferometer ambiguity; that is what the
 Model: four coherent channels, 2.000 GS/s, 16K bins, `F_C` 3.000 GHz, one
 emitter, flat noise density, per-bin SNR quoted in one 122.07 kHz bin,
 150 Monte-Carlo trials per row, RMSE over azimuth and elevation jointly.
+
+This report keeps the **25 mm fallback geometry** so that its numbers stay
+comparable with the V06/V07 record; the adopted 30 mm pitch is measured over the
+full 2–4 GHz band in §11, with much coarser 15.6 MHz bins, so the narrowband
+RMSE there (0.25°) is not directly comparable with the 0.222° below — the bin
+count is 8× lower, which alone costs about `√8`.
 
 **Narrowband 50 MHz emitter at 3.500 GHz, d = 25 mm, 20 dB/bin**
 
@@ -679,7 +690,178 @@ belongs in G5/G6, not in a new PL block.
 
 ---
 
-## 11. Files
+## 11. The 2×2 for 2–4 GHz at 0.5°: 30 mm, and a frequency-domain estimator
+
+§4.4 rejected the review's 50 mm spacing on the strength of a *single-bin*
+inversion at 3.75 GHz. That rejection is still correct, but it was one case of a
+more general rule, and the review's other proposals (multi-frequency slope fit,
+amplitude face selection, wrap rejection, RANSAC) deserve to be judged against
+the whole band rather than one frequency. `scripts/compare_wideband_estimators.py`
+does that: it simulates 128 bins over the full 2.000–4.000 GHz captured band,
+four elements on a 2×2 grid, 20 dB per bin per element, 16 snapshots, and runs
+five estimators on *the same* per-bin cross-spectra. The generated report is
+[`docs/evidence/2026-11-06-phase-interf/wideband_df_check.txt`](docs/evidence/2026-11-06-phase-interf/wideband_df_check.txt);
+everything in this section is a simulated number and says so.
+
+### 11.1 The ambiguity rule for a square 2×2
+
+A 2×2 grid has four baselines of length `d` and two diagonals of `d√2`. For a
+direction in a cone of half-angle θ the largest projection on the diagonal is
+`sin θ` (at 45° in azimuth), so the array is wrap-free while
+
+```text
+d · √2 · sin θ ≤ λ_min / 2      ⇒      d ≤ c / (2√2 · f_max · sin θ)
+```
+
+| Field half-angle | 2.0 GHz | 3.0 GHz | 4.0 GHz |
+|---|---|---|---|
+| ±30° | 106.0 mm | 70.7 mm | **53.0 mm** |
+| ±45° | 74.9 mm | 50.0 mm | **37.5 mm** |
+| ±55° (declared scan) | 64.7 mm | 43.1 mm | **32.3 mm** |
+| ±60° | 61.2 mm | 40.8 mm | **30.6 mm** |
+
+The declared scan is ±55°, so the rule allows **32.3 mm**. That single line
+settles the spacing question: 30 mm is inside it, 37.5 mm is outside it, and the
+review's 50 mm is outside it by a factor of 1.7 — its *diagonal alone* is
+70.7 mm, which wraps above 2.6 GHz at the edge of the cone. The rule is
+implemented in the script (`max_spacing_mm`, `two_by_two_limit_deg`) and
+`config.mk` now carries `ARRAY_AXIS_SPACING_M ?= 0.030` together with
+`ARRAY_CONE_HALF_ANGLE_DEG ?= 55`.
+
+The rule was then measured rather than trusted (50 MHz emitter at 3.9 GHz, worst
+|az error| of 6 trials, single-bin inversion):
+
+| az / el | 22 mm | 25 mm | **30 mm** | 37.5 mm | 50 mm |
+|---|---|---|---|---|---|
+| 0 / 55 (elevation axis) | 0.86° | 1.64° | **1.79°** | 1.30° | 0.69° |
+| 45.2 / −35.4 (diagonal stressed) | 1.18° | 0.63° | **1.60°** | **41.9°** | **33.9°** |
+| 65 / 0 (outside the scan) | 1.71° | 1.71° | **1.10°** | 1.67° | **104.2°** |
+
+37.5 mm and 50 mm lose the frame where the rule says they should, and 22–30 mm do
+not. The 1.6–1.8° residuals at 30 mm are the *single-bin* estimator's noise, not
+aliasing; the band-coherent estimators in §11.2 give 0.25°.
+
+### 11.2 Spacing against estimator, measured over the whole band
+
+RMSE in degrees, 20 trials, az 12.5° / el −8.3°, 20 dB/bin, N = 16. "wideband"
+is a 2 GHz emitter filling the band, "narrowband" a 50 MHz emitter at 3 GHz.
+
+| d | centroid WB | nb_centre WB | slope_icpt WB | **slope_origin WB** | wb_ml WB | centroid NB | slope_icpt NB | slope_origin NB | wb_ml NB |
+|---|---|---|---|---|---|---|---|---|---|
+| 22 mm | 0.084 | 0.662 | 0.424 | 0.071 | 0.075 | 0.383 | **85.5** | 0.387 | 0.449 |
+| 25 mm | 0.096 | 0.691 | 0.290 | 0.068 | 0.085 | 0.429 | **79.5** | 0.423 | 0.482 |
+| **30 mm** | 0.107 | 0.456 | 0.235 | **0.066** | 0.084 | **0.252** | **83.4** | 0.265 | 0.263 |
+| 37.5 mm | 0.075 | 0.379 | 0.270 | 0.032 | 0.046 | 0.238 | **56.9** | 0.242 | 0.268 |
+| 50 mm | 0.062 | 0.266 | 0.166 | 0.020 | 0.036 | 0.210 | **41.4** | 0.190 | 0.247 |
+| 75 mm | 0.064 | 0.146 | 0.102 | 0.023 | 0.029 | 0.148 | **25.1** | 0.142 | 0.174 |
+
+Three things fall out of this table, and they are the reason §0's verdict on the
+phase-slope fit is restated in §11.4:
+
+1. **The through-origin fit is the best estimator for a wideband emitter** — 5×
+   better than the current band-centroid coherent average at 30 mm (0.066° vs
+   0.107°) and 9× better than a single-bin inversion. The review's mechanism is
+   right.
+2. **The review's own version of that fit — unwrap, then include an intercept —
+   is the worst estimator in the table**: 0.235° wideband at 30 mm, and
+   *catastrophic* (75–86° RMSE) for a narrowband emitter, where it loses 9–10 of
+   10 frames at every SNR (§11.4). An intercept is a parameter the physics does
+   not contain: the source phase cancels in `X_b·conj(X_a)`, so the fit is
+   through the origin by construction.
+3. **The band-coherent centroid average, which is what the HDL does today, is
+   already inside 0.1° wideband and 0.25° narrowband at 30 mm.** The estimator is
+   not the limiter; §11.3 is.
+
+The narrowband column is *conservative*: the simulation uses 128 bins across
+2 GHz (15.6 MHz bins), while the real channelizer has 1.953 MHz bins, i.e. 8×
+more bins per 50 MHz emitter and about `√8` less angle noise.
+
+### 11.3 Geometry and calibration still dominate
+
+Random element-position error `δ` perturbs the phase by `k·δ·u`, so the angle
+error scales as `δ/d` in first order. Measured (13 trials, wideband emitter,
+RMSE azimuth in degrees):
+
+| d | 0.1 mm rms | 0.25 mm | 0.5 mm | 1.0 mm |
+|---|---|---|---|---|
+| 25 mm | 0.243 | 0.537 | 1.276 | 2.685 |
+| **30 mm** | 0.245 | 0.630 | **0.792** | 1.720 |
+| 37.5 mm | 0.160 | 0.330 | 0.756 | 1.324 |
+| 50 mm | 0.133 | 0.253 | 0.607 | 1.676 |
+
+At 30 mm, a 0.5 mm position residual costs **0.79°** against a 0.066° noise term
+— a factor of 12. 0.5° therefore needs a position/calibration residual of
+≈0.3 mm, which is G6 work, not a firmware change. This is consistent with §10.3
+and with the review's instinct that the geometry has to be *validated* (4.6);
+it is inconsistent with treating a spacing change as an accuracy fix.
+
+### 11.4 The review's chain, item by item
+
+| Review item | Verdict | Reason (measured unless marked *computed*) |
+|---|---|---|
+| Corrected SSR chain: NCO → halfband ×2 → 2.048 GSPS complex, 2 GHz BW, **not** ×80 | **ADOPT — already true** | V04 locks 4.000 GSPS ÷ 2 = 2.000 GS/s complex (§5.1). The review's 2.048 GSPS is the 4.096 GSPS converter's rate; this board runs 4.000 GSPS, so the decimated rate is 2.000 GS/s and the centre is 3.000 GHz, not 3.072 GHz (§3.1). |
+| 4.6 ambiguity validation: linear-fit R² > 0.95 | **ADOPT as a diagnostic, not a gate** | On a single emitter the through-origin fit is linear by construction, so R² ≈ 1 even at 0 dB/bin; it detects multi-emitter and hardware faults, not accuracy. Compute it on the *through-origin* fit, report it in telemetry, and do not gate the estimate on it. |
+| 4.6 baseline consistency: CH1−CH2 vs CH3−CH4, CH1−CH3 vs CH2−CH4 within 2° | **ADOPT — cheapest real fault check** | The 2×2 gives all six cross-products; pairs (0,1)/(2,3) and (0,2)/(1,3) are the same baseline twice, so their phases must agree to within the phase noise. Set the threshold from the measured per-bin SNR (`σ_φ ≈ 1/√(2·N·SNR)`), not as a fixed 2°. |
+| 4.6 phase-wrap rejection: `|Δφ(k+1) − Δφ(k)| > π` | **REJECT as a gate** | The rule fires on the true solution at high angle and low SNR. Measured: the unwrap-plus-intercept fit loses 9–10 of 10 frames on a 50 MHz emitter at 20 dB down to 0 dB, while the through-origin fit and the frequency-steered ML lose 0. Keep it only as a per-bin *flag* that down-weights a bin. |
+| 4.6 RANSAC two-line fit for two targets | **REJECT — wrong tool for this hardware** | The 2×2 manifold has rank 2 at these elevations, so two emitters are mathematically unrepresentable (0/10 detections, §10.2) whatever the estimator; a RANSAC sweep is 10²–10³× the PS cost per frame for a result the array cannot support. Two targets is a ≥3×3 array decision (V08), not an estimator decision. |
+| Amplitude face selection: `|X₂|²−|X₁|²` sign + 256-entry ratio LUT, 3–10° zones | **REJECT for identical broadside elements** | Measured |X₂|²/|X₁|² spread over 0–65° is **0.006** — the ratio carries no angular information at the 10⁻² level, so the LUT would store noise. It works only with squinted or offset feeds, which this aperture does not have. The existing rule (§5.5: amplitude resolves the ±45° quadrant, phase resolves the ambiguity) stands. |
+| 4.4 multi-frequency phase-slope fitter: Σx, Σy, Σxy, Σx² accumulators, 48-bit, arcsin LUT, ~10 DSP48 | **ADOPT with three corrections** | (i) Fit **through the origin** — no intercept (0.066° vs 0.235° measured). (ii) **Do not unwrap and do not build the slope test on `atan`**: the equivalent and branch-free form is the complex frequency-steered sum `|Σ_k S_b(k)·w_k·e^{+j2πf_k b·u/c}|²`, which needs one CORDIC per hypothesis rather than one per bin, and it is what the `wb_ml` column measures (0.084° wideband, 0.263° narrowband). (iii) The four-accumulator form is fine as a *diagnostic* (it is the R² generator), and 48-bit accumulation with 12-bit phase is right; the arcsin LUT is unnecessary because the direction comes out as `u = −c/(2π)·(BᵀB)⁻¹Bᵀg`. |
+| `d_az = d_el = 50 mm` | **REJECT — 1.7× too wide** | §11.1: the rule gives 32.3 mm for ±55° at 4 GHz, and 50 mm is measured 33.9°/104.2° off where 30 mm holds 1.6°/1.1°. `ARRAY_AXIS_SPACING_M` is now 0.030. |
+| Bin width 125 kHz (16K FFT at 2.048 GSPS) | **REJECT — unchanged from §3.1/§4** | 2.048 GSPS / 16 384 = 125 kHz, so the number is internally right and still 16× finer than anything this design needs; the 1024-band channelizer already gives 1.953 MHz with 100 dB stopband. Finer bins buy emitter separation inside the band, not angular accuracy at equal observation time (§4.3). |
+| Kaiser β = 6 window | **ADOPT, if a window is used at all** | β = 6 is a ~60 dB sidelobe taper, appropriate for a 1024-band PFB whose prototype is already specified at 100 dB stopband with 12 taps. No change to the adopted channelizer; recorded here because it is a reasonable choice, not a defect. |
+| CFAR / AMC / Kalman tracker (Singer, χ² gate, 100 ms coast) | **UNCHANGED — out of scope for 0.5°** | Detection and tracking do not move the angular estimate; they are already in the PS plan and deferred. |
+
+### 11.5 What changed in this repository
+
+| Change | File |
+|---|---|
+| `ARRAY_AXIS_SPACING_M` 0.025 → **0.030**, plus `ARRAY_CONE_HALF_ANGLE_DEG ?= 55`, with the rule written into the comment | `config.mk` |
+| MATLAB reference geometry follows the same constant (`P.Antenna.d`, `P.dx/P.dy`, `dx/dy`) | `matlab_v7/sim3d_params.m`, `doa_search_params.m`, `SyntheticFourChannelSource.m` |
+| New study script + evidence report | `scripts/compare_wideband_estimators.py`, `docs/evidence/2026-11-06-phase-interf/wideband_df_check.txt` |
+| `make wideband-df` (full study) and `make compare-estimators` (both studies) | `Makefile` |
+| Estimator order in the PS spec: through-origin fit first, band-centroid average for narrowband, single-bin inversion only as a fallback with the ambiguity guard | this section, §5.4 |
+| Guards: baseline-consistency check and R² diagnostic adopted; wrap-rejection gate and amplitude face selection not adopted | this section, §11.4 |
+
+#### 11.5.1 The arithmetic the PS has to run
+
+For each of the six baselines `B_j` and the `K` bins the block reports, with
+`f_k` the bin centre and `S_j(k)` the accumulated cross-spectrum:
+
+```text
+through-origin slope   g_j = Σ_k w_jk · f_k · φ_jk  /  Σ_k w_jk · f_k²      [rad/Hz]
+                       (φ_jk = arg S_j(k), w_jk = coherence-derived weight)
+joint direction        u  = −(c/2π) · (BᵀWB)⁻¹ BᵀW g        (2×2 inverse, closed form)
+residual / quality     R²_j = 1 − Σ w (φ − g f)² / Σ w φ²
+baseline consistency   Δ_j = φ_j − φ_j'   for the duplicate pairs (0,1)/(2,3) and (0,2)/(1,3)
+wrap flag              |φ_j(k) − g_j f_k| > π   per bin, used as a weight, never as a reject
+```
+
+`g_j` is a 48-bit accumulator pair per baseline (12-bit phase × 32-bit frequency
+× 1024 bins overflows 32 bits); the 6 → 2 solve is six multiply-accumulates and
+one 2×2 inverse, i.e. the "~10 DSP48" the review quotes. The frequency-steered
+ML alternative (§11.2) replaces the whole block with
+`max_{u} Σ_k |Σ_j S_j(k) w_jk e^{+j2πf_k B_j·u/c}|²`, which costs a CORDIC per
+grid hypothesis instead of per bin and is what should be used to resolve an
+ambiguity or to report a two-peak score.
+
+The 25 mm geometry of §4.4 remains available as `ARRAY_AXIS_SPACING_M=0.025`;
+it is the right choice if the qualified field ever becomes ±90° in both axes,
+and it costs 1.3–1.6× in the geometry term. What is *not* available is 50 mm.
+
+### 11.6 What is still not proven here
+
+* Everything in this section is a **simulation** of per-bin cross-spectra. No RF,
+  no antenna, no mutual coupling, no calibration measurement is behind it.
+* Mutual coupling is ignored. At 30 mm, the low end of the band is 0.20λ, which
+  is the tightly-coupled-dipole regime, not the Vivaldi/horn regime; a 0.3λ
+  element cannot be built at 2 GHz into a 30 mm pitch. This is a *front-end
+  feasibility* question that no amount of estimator work answers.
+* The 0.5° claim still waits on G5 (RF loopback) and G6 (calibration/geometry),
+  exactly as §8 and §10.4 say.
+
+---
+
+## 12. Files
 
 | File | Role |
 |---|---|
@@ -687,6 +869,7 @@ belongs in G5/G6, not in a new PL block.
 | `scripts/phase_interf_verify.py` | estimator Monte-Carlo, writes the accuracy report |
 | `scripts/estimate_wideband_dsp_resources.py` | front-end/device screen, writes the resource report |
 | `scripts/compare_wpi_vs_music.py` | §10: interferometry vs wideband 2D MUSIC/ISSM, manifold-rank result, calibration and geometry sensitivity |
+| `scripts/compare_wideband_estimators.py` | §11: spacing rule for a square 2×2, five estimators over the full 2–4 GHz band, ambiguity/geometry/wrap studies |
 | `ip/custom/phase_interf_4ch/` | per-bin cross-spectrum + CORDIC phase block, host test, HLS build |
 | `matlab_v7/PhaseInterferometryEstimator.m` | MATLAB reference of the PS-side estimator selection |
 | `matlab_v7/verify_phase_interferometry_2x2.m` | time-domain (windowed FFT + quantised) verification |
@@ -696,7 +879,9 @@ Run:
 
 ```bash
 make verify-phase-interf              # reports + host core test + shimmed kernel test
-make compare-estimators               # section 10: WPI vs 2D MUSIC, ~15 s
+make compare-estimators               # sections 10 and 11: both studies, full
+make wideband-df                      # section 11 only, ~6 min
+python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md
 ```

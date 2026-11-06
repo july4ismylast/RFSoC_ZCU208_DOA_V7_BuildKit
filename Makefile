@@ -52,6 +52,8 @@ help:
 	@echo "Dry-run a stage:     make -n step10_synth"
 	@echo "Run/capture V06 gate: make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim"
 	@echo "V07 host checks:     make verify-phase-interf"
+	@echo "V07 estimator study: make compare-estimators  (or: make wideband-df)"
+	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
 	@echo "  step00_preflight         Check tools, part, versions, and configuration"
@@ -229,15 +231,41 @@ matlab-lint:
 
 # Section 10 of V07: wideband interferometry vs 2D MUSIC, plus the manifold-rank
 # result that decides how many emitters this array can represent at all.
+# Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
+# that decides ADOPT/REJECT for the review's frequency-domain chain.
+.PHONY: compare-estimators wideband-df
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
+	@python3 scripts/compare_wideband_estimators.py
+
+wideband-df:
+	@python3 scripts/compare_wideband_estimators.py
 
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
 	@python3 scripts/compare_wpi_vs_music.py
+	@python3 scripts/compare_wideband_estimators.py --quick
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
+
+# Every custom HLS model in this kit, in dependency-free order.  Each block is
+# the same `make -C ip/custom/<ip> all` that its numbered stage runs, so this
+# target builds exactly what step02...step05 build, without the Vivado stages.
+# Needs Vitis HLS 2023.2 (the version lock in config.mk).
+HLS_IPS = doa_covariance_4ch_v4 spectrum_power4 candidate_peak4 beam_weight_4ch \
+          rfdc_repack4 doa_subband_bridge_4ch phase_interf_4ch
+.PHONY: hls-all hls-clean
+hls-all:
+	@for ip in $(HLS_IPS); do \
+	    echo "=== HLS $$ip ==="; \
+	    $(MAKE) --no-print-directory -C ip/custom/$$ip all || exit 1; \
+	done
+
+hls-clean:
+	@for ip in $(HLS_IPS); do \
+	    $(MAKE) --no-print-directory -C ip/custom/$$ip clean || true; \
+	done
 
 # Deliberate user action only: never part of pipeline/all.
 .PHONY: publish-evidence

@@ -102,9 +102,16 @@ CHANNELIZER_BIN_SPACING_HZ ?= 1953125
 DOA_CLOCK_HZ ?= 125000000
 # V07 phase-interferometry contract (V07_PHASE_INTERFEROMETRY.md).  The DOA
 # angles are estimated from per-bin cross-spectra, not from a frame covariance
-# alone.  Array axes stay at 25 mm (35.4 mm diagonal): d = 50 mm would be
-# ambiguous above 3 GHz and is rejected for the 2-4 GHz band.
-ARRAY_AXIS_SPACING_M ?= 0.025
+# alone.  Array geometry is set by the wrap-free rule for a SQUARE 2x2 in a cone
+# of half-angle ARRAY_CONE_HALF_ANGLE_DEG at the top of the band:
+#     d * sqrt(2) * sin(theta) <= lambda_min / 2
+#     => d <= c / (2*sqrt(2)*f_high*sin(theta)) = 32.3 mm at 4.0 GHz, 55 deg.
+# 30 mm is the widest round spacing inside that rule (62 deg of cone at 4 GHz);
+# the review's 50 mm needs 32 deg and is rejected, and 25 mm is kept as the
+# fallback for a +/-90 deg field.  Measured in
+# docs/evidence/2026-11-06-phase-interf/wideband_df_check.txt (V07 section 11).
+ARRAY_AXIS_SPACING_M ?= 0.030
+ARRAY_CONE_HALF_ANGLE_DEG ?= 55
 PHASE_INTERF_FRAME_SAMPLES ?= 4096
 
 # matlab_hdl, model_composer, opfb, or external. MATLAB HDL transposed is
@@ -159,7 +166,7 @@ export RFDC_PL_CLOCK_HZ COMPLEX_SAMPLE_RATE_HZ WIDEBAND_FABRIC_CLOCK_HZ WIDEBAND
 export WIDEBAND_SAMPLES_PER_CLOCK CHANNELIZER_NUM_BANDS
 export CHANNELIZER_TAPS_PER_BAND CHANNELIZER_STOPBAND_DB CHANNELIZER_NORMALIZE
 export CHANNELIZER_FILTER_STRUCTURE CHANNELIZER_BIN_SPACING_HZ DOA_CLOCK_HZ
-export ARRAY_AXIS_SPACING_M PHASE_INTERF_FRAME_SAMPLES
+export ARRAY_AXIS_SPACING_M ARRAY_CONE_HALF_ANGLE_DEG PHASE_INTERF_FRAME_SAMPLES
 export CHANNELIZER_FLOW MODEL_COMPOSER_MODEL EXTERNAL_CHANNELIZER_IP
 export FETCH_SET FETCH_RETRIES FETCH_TIMEOUT_SECONDS
 export BASE_XPR BASE_BD ZCU208_BD_MAP INTEGRATION_MODE WORK_XPR PL_CLOCK_PERIOD_NS FRAME_SAMPLES ADC_STREAM_BITS

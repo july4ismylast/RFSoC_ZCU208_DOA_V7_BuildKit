@@ -88,6 +88,7 @@ for extra_report in \
     v06_gate5_package.rpt \
     doa_subband_bridge_4ch_package.rpt \
     v07_bd_integration.rpt \
+    v07_wideband_df_quick.txt \
     v07_gate2_csynth.rpt \
     v07_gate2_csynth_design_size.rpt \
     v07_gate2_csynth_design_utilization.rpt \

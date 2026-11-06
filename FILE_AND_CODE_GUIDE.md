@@ -59,6 +59,7 @@ testbench, `build_hls.tcl`, local Makefile, and block README.
 | `ip/custom/candidate_peak4` | AXI256 powers → AXI192 record | Frame peak, average, bin, and programmable validity gate. |
 | `GATES_RUNBOOK.md` | Operator sheet for gates G2–G6: exact commands, artefacts to read, pass criteria, and the log-publishing flow (`make push-gate-logs`). |
 | `scripts/compare_wpi_vs_music.py` | V07 §10: interferometry vs wideband 2D MUSIC/ISSM, the manifold-rank result for the 4-element 2×2, and calibration/geometry sensitivity. |
+| `scripts/compare_wideband_estimators.py` | V07 §11: the wrap-free spacing rule for a square 2×2 over 2–4 GHz (`d·√2·sin θ ≤ λ/2`), five estimators on the same per-bin cross-spectra, measured diagonal aliasing, position-error sensitivity, and the unwrap-fit frame losses. `make wideband-df`. |
 | `ip/custom/phase_interf_4ch` | AXI512 beats → AXI64 accumulators + AXI128 phases | V07 per-bin cross-spectrum (six baselines), integer CORDIC `atan2`, frame tag. `make host-check` runs the production core on g++ without Xilinx headers, `make host-kernel-check` compiles the kernel and its Vitis testbench against `tb/host_shim/`, and `gate3_ooc.tcl` is the (unrun) OOC timing gate at 4.0 ns. |
 | `ip/custom/beam_weight_4ch` | AXI512 samples → AXI256 beam | Optional four-lane complex weighted sum. |
 

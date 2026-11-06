@@ -78,6 +78,16 @@ estimator's effective lever arm is `B/sqrt(12)` against the carrier's `f_c`, and
 `scripts/estimate_wideband_dsp_resources.py` shows why a 16K FFT at 2.048 GSPS
 is neither instantiable nor necessary.
 
+Over the *whole* 2–4 GHz band the answer is more precise, and it is measured in
+`scripts/compare_wideband_estimators.py` (V07 §11): a square 2×2 is wrap-free
+while `d·√2·sin θ ≤ λ/2`, which allows 32.3 mm for the declared ±55° scan at
+4 GHz, so the array pitch in `config.mk` is **30 mm** — not the review's 50 mm,
+which is 1.7× too wide and is measured 34° and 104° off where 30 mm holds 1.6°
+and 1.1°. In the same run a *through-origin* frequency-domain fit reaches 0.066°
+on a 2 GHz emitter and 0.25° on a 50 MHz one, while the review's
+unwrap-plus-intercept variant reaches 0.235° and loses every narrowband frame.
+Estimator: `make compare-estimators`. Geometry, not the estimator, sets 0.5°.
+
 ## Accuracy statement
 
 V7 demonstrated a 3-D Monte-Carlo RMSE below 0.1° in its stated simulated

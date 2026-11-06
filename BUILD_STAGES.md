@@ -123,6 +123,14 @@ smoke test exercising `doa_subband_bridge_4ch`, `axis_clock_converter:1.1`,
 `axis_dwidth_converter:1.1`, `axi_fifo_mm_s:4.3`, `xpm_cdc_gen:1.0`,
 `clk_wiz:6.0`, `proc_sys_reset:5.0`, and `assign_bd_address`.
 
+### `hls-all` (every custom HLS model at once)
+
+`make hls-all` runs `make -C ip/custom/<ip> all` for all seven blocks
+(`doa_covariance_4ch_v4`, `spectrum_power4`, `candidate_peak4`,
+`beam_weight_4ch`, `rfdc_repack4`, `doa_subband_bridge_4ch`,
+`phase_interf_4ch`) — exactly what `step02…step05` run, without the Vivado
+stages. `make hls-clean` resets them.
+
 ### `step05_hls_phase_interf`
 
 Builds the V07 per-bin phase-interferometry block

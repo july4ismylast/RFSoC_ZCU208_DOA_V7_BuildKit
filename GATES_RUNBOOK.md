@@ -15,9 +15,14 @@ gate's, so skipping ahead costs licence hours rather than saving them.
 
 ```bash
 make lint                     # Tcl/XDC/SV syntax, shell, dry-runs, IP VLNV pins (~5 s)
-make verify-phase-interf      # estimator + resource + WPI-vs-MUSIC reports, g++ core and kernel tests (~1 min)
+make verify-phase-interf      # estimator + resource studies, g++ core and kernel tests (~3 min)
+make compare-estimators       # V07 section 10 and 11 at full trial counts (~6 min)
 make status                   # which stages already have stamps
 ```
+
+`make compare-estimators` is the one that decides the *hardware* questions —
+element pitch (30 mm), which estimator the PS runs, and whether the external
+review's frequency-domain chain is adopted. Run it before anyone cuts metal.
 
 If those are green, the remaining failures are tool issues (versions, licences,
 `BASE_XPR`, MATLAB path) rather than code issues.
@@ -30,11 +35,67 @@ Configuration that must be right *before* G2:
 | `BASE_XPR` | `config.mk` (`BASE_KIND=mts` default) | The whole flow copies a *verified* ZCU208 MTS base project; a substitute base invalidates every downstream comparison |
 | `WIDEBAND_CLOCK_PERIOD_NS` | `config.mk` (4.0) | `phase_interf_4ch` is constrained at 4.0 ns by `build_hls.tcl`; G3 fails loudly if the packaged IP disagrees |
 | `V7_MATLAB_ROOT` | `config.mk` | Only needed for G5 (`step14_hil_vectors`) |
+| `ARRAY_AXIS_SPACING_M` | `config.mk` (0.030) | Set by the wrap-free rule in V07 section 11; 50 mm is rejected, 25 mm is the ±90° fallback |
 
 ```bash
 make step00_preflight         # tools, part, versions, catalog
 make step01_fetch_references  # upstream references (once)
 ```
+
+---
+
+## 0.1 The whole chain, step 0 to the release, in one page
+
+Host-only (no licence): run these first; they are the only ones that can be
+green in this environment.
+
+```bash
+make lint                                  # static checks, ~5 s
+make verify-phase-interf                   # host estimator/kernel checks, ~3 min
+make compare-estimators                    # V07 section 10 + 11 studies, ~6 min
+make matlab-lint                           # optional, needs MISS_HIT
+```
+
+Licence tools (Vitis HLS 2023.2, Vivado 2023.2, MATLAB R2024a). Every HLS model
+in the kit is a target of its own, and `make hls-all` builds all seven of them in
+one command (`doa_covariance_4ch_v4`, `spectrum_power4`, `candidate_peak4`,
+`beam_weight_4ch`, `rfdc_repack4`, `doa_subband_bridge_4ch`, `phase_interf_4ch`):
+
+```bash
+make step00_preflight                      # tools, part, version lock, IP catalog
+make step01_fetch_references               # pins the upstream references (once)
+
+make hls-all                               # every custom HLS IP: csim, csynth, export
+# or one at a time, exactly what the numbered stages do:
+make step02_hls_covariance                 # V7 4-channel covariance
+make step03_hls_spectrum                   # 4-lane spectrum power
+make step04_hls_candidate                  # streaming peak/noise candidate
+make step04_hls_beam                       # optional vector beam monitor
+make step05_hls_repack                     # V05 RFDC SSR-8 I/Q gearbox
+make step05_channelizer                    # 1024-band channelizer (CHANNELIZER_FLOW=...)
+make step05_subband_bridge                 # 4-channel subband stream bridge
+make step05_hls_phase_interf               # V07 per-bin cross-spectrum + phase  <- new block
+
+make -C ip/custom/phase_interf_4ch collect-reports   # G2 reports into build/output/
+make step06_collect_ip                     # VLNV check, one IP repository
+
+make step07_vivado_project                 # copy the verified MTS base
+make step08_vivado_integrate               # add DOA V7 through config/zcu208_bd_map.tcl
+make step09_vivado_validate                # BD validation, clock/interface reports
+make step10_synth                          # synthesis
+make -C ip/custom/phase_interf_4ch gate3-ooc   # G3: OOC timing at 4.0 ns
+make step11_impl                           # opt/place/route
+make step12_bitstream                      # .bit/.hwh
+make step13_export_xsa                     # hardware handoff
+make step14_hil_vectors                    # V7 fixed-point HIL vectors (MATLAB)
+make step15_package                        # release bundle + manifests
+
+make status                                # which stamps exist
+make push-gate-logs                        # commit + push the allowlisted logs
+```
+
+`make pipeline` runs steps 00–15 in order once the prerequisites exist; the list
+above is the same thing with every artefact-producing sub-step named.
 
 ---
 
@@ -197,8 +258,9 @@ What it must produce, from `V07` §6 and §10.3:
    before each frame — a single coefficient per channel costs 0.50° at 200 ps of
    residual delay (measured, §10.3).
 2. **Geometry.** Element positions measured (or mechanically fixtured) to
-   ≤ 0.1 mm. 0.5 mm of position error alone is 1.1° at 3 GHz — larger than the
-   whole requirement.
+   ≤ 0.1 mm. At the adopted 30 mm pitch, 0.5 mm of position error alone costs
+   0.79° (measured, V07 §11.3) against a 0.066° noise term — larger than the
+   whole requirement, so the 0.5° claim is a calibration claim.
 3. **Angle sweep against truth.** A source at known az/el on a rotator or in a
    chamber, ≥ 20 angles across ±50°, multiple snapshots, record bias and RMS per
    angle and the residual against the §6 simulated 0.22°.
