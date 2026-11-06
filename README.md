@@ -88,6 +88,11 @@ on a 2 GHz emitter and 0.25° on a 50 MHz one, while the review's
 unwrap-plus-intercept variant reaches 0.235° and loses every narrowband frame.
 Estimator: `make compare-estimators`. Geometry, not the estimator, sets 0.5°.
 
+For **multiple emitters** the same script's sibling, `make multisource-df`, shows
+the boundary (V07 §12): the 2×2 finds 1.2 of 8 emitters over 2 GHz, a 4×4 at
+60 mm finds 7, and a 6×6 at 75 mm finds all eight at 0.295°. Doubling the aperture
+doubles detection; tripling the bandwidth does not move it.
+
 ## Accuracy statement
 
 V7 demonstrated a 3-D Monte-Carlo RMSE below 0.1° in its stated simulated

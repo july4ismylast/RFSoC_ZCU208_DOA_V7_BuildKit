@@ -30,7 +30,7 @@ by a script in this repository, or explicitly marked unproven.
 | FFT **16K at 2.048 GSPS** | **REJECT** — not an instantiable IP configuration; 4-channel BRAM 26 %…165 % of the device; buys no accuracy | §4 |
 | Array spacing **d = 50 mm** | **REJECT** — unambiguous only to 3 GHz; measured 106° error at 3.75 GHz / az 55° where 25 mm gives 0.27°, and 33.9°/104.2° off over the full band where 30 mm holds 1.6°/1.1° | §4.4, §11.1 |
 | Amplitude-assisted "face selection" | **ADOPT, restated** — amplitude resolves only the ±45° quadrant; it cannot resolve an interferometer ambiguity | §5.5 |
-| MUSIC / CSSM | **DEFER** — agreed; not needed for the demonstrated accuracy, and 4 elements do not support it | §9 |
+| MUSIC / CSSM | **DEFER for one emitter, ADOPT for multi-emitter** — not needed for the demonstrated single-emitter accuracy, and the 2×2 cannot carry it; for eight emitters the 2×2 finds 1.2 of 8 while a 6×6 at 75 mm finds all eight at 0.295° | §9, §12 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
 
@@ -861,7 +861,92 @@ and it costs 1.3–1.6× in the geometry term. What is *not* available is 50 mm.
 
 ---
 
-## 12. Files
+## 12. Eight emitters over 2 GHz: a different array, and 2D MUSIC
+
+§11 answers "one emitter, 0.5°, 2–4 GHz" with 30 mm and per-bin phase
+interferometry. A requirement of *eight simultaneous emitters* inside the same
+2 GHz band is not a firmware question: it changes how many elements are needed,
+how the block has to be built, and which estimator runs. This section measures
+where the boundary is. `scripts/multisource_capacity.py`
+→ [`multisource_capacity.txt`](docs/evidence/2026-11-06-phase-interf/multisource_capacity.txt).
+
+Model: eight emitters at az −40…+40°, el −14…+12° (6–15° apart), 20 dB per bin
+per emitter, 96 snapshots per bin, 48 bins over 2.000–4.000 GHz. Estimator:
+per-bin incoherent 2D MUSIC (ISSM) — one covariance per bin, one 2D
+pseudo-spectrum per bin, summed over the band, the strongest local maxima taken
+as the source set and matched to the truth. Every number below is simulated.
+
+### 12.1 The 2×2 cannot be part of this answer
+
+| Array | Elements | M−1 bound | Measured manifold rank | 8-detection |
+|---|---|---|---|---|
+| 2×2 @ 30 mm | 4 | 3 | 4 | **1.2 of 8** |
+| 3×3 @ 30 mm | 9 | 8 | 9 | 2.0 of 8 |
+| 4×4 @ 30 mm | 16 | 15 | 16 | 4.5 of 8 |
+| 4×4 @ 60 mm | 16 | 15 | 16 | 7.0 of 8, RMSE 0.394° |
+| 5×5 @ 60 mm | 25 | 24 | 25 | 7.0 of 8, RMSE 0.317° |
+| **6×6 @ 75 mm** | **36** | 35 | 36 | **8.0 of 8 in 12/12, RMSE 0.295°** |
+
+The "manifold rank" column is measured over the whole 2-D field at 3 GHz (it is
+the element count until the array runs out of independent directions); the
+*fixed-elevation slice* of §10.2 is rank 2, which is the number that matters when
+all emitters share an elevation. The 2×2 finds 1.2 of 8 because four elements
+carry at most three sources and, on a single elevation, only one — the array,
+not the estimator, is the limit. The single-emitter accuracy of §11 (0.066°) does not transfer to a
+multi-emitter requirement by any algorithmic trick.
+
+### 12.2 Aperture, not bandwidth, separates them
+
+Same eight emitters, same estimator, only the captured band changes:
+
+| Array | 600 MHz | 2 GHz |
+|---|---|---|
+| 4×4 @ 30 mm (90 mm aperture) | 4.9 of 8 | 4.8 of 8 |
+| 4×4 @ 60 mm (180 mm aperture) | 7.0 of 8 | 7.0 of 8 |
+
+Doubling the *aperture* doubles the detection; tripling the *bandwidth* does not
+move it. Resolution is set by aperture and by the low edge of the band
+(`1.22·λ/D`: 58° at 2 GHz for the 180 mm array — MUSIC super-resolves that at
+these SNRs, which is exactly why it needs the extra elements). What the 2 GHz
+bandwidth buys is the alias rejection of §11 and `√K` noise averaging; it is
+not a substitute for aperture.
+
+Note also that the winning geometry uses 75 mm pitch — twice what §11 allows for
+a ±55° *single-emitter* scan — because a multi-source array may be spatially
+undersampled per bin as long as the frequency ramp resolves the resulting
+aliases. That is the same argument as §11.1, used in the other direction.
+
+### 12.3 What the algorithm has to become
+
+| Single emitter (shipped) | Eight emitters (would be V08) |
+|---|---|
+| per-bin cross-spectrum, 6 baselines, one phase vector | per-bin **spatial covariance** `R(k) = X(k)ᴴX(k)`, M×M, M ≥ 9 |
+| closed-form WLS on 6 phases (~40 DSP48 in PL) | per-bin eigendecomposition of an M×M covariance plus a 2D grid search — PS/ARM work, or a systolic PL solver |
+| one direction out, per frame | K peaks, then **association and tracking** across frames (the χ²-gated tracker already in the PS plan) |
+| 4 RF channels, `phase_interf_4ch` | 16–36 RF channels: 4 → 9/16/36 ADC lanes, a wider `rfdc_repack`, and a covariance block per bin (M² accumulators per bin — 256 complex accumulators for 16 elements) |
+
+Nothing in the present build kit implements any of that: `phase_interf_4ch`
+produces six phases, not a covariance, and the platform carries four ADC
+channels. It is a channel-count and device-size decision (the ZCU208 has 8 ADC
+and 8 DAC tiles per ZU48DR — 16 elements is at the edge of one device, 36 is
+not), i.e. V08, not a patch to V07.
+
+### 12.4 Honest limits of these numbers
+
+* Equal-power emitters, no mutual coupling, no calibration error, no
+  correlated sources. Real arrays with 8 emitters fail on calibration and
+  dynamic range long before they fail on the estimator.
+* Sources were held at fixed angles across trials; detection statistics for
+  closely spaced pairs (≤ 3°) are not characterised here.
+* MUSIC was given the true source count (8). In hardware it has to be estimated
+  (MDL/AIC on the per-bin eigenvalues), and an error there is the usual cause of
+  a missed or spurious peak.
+* 0.295° is a *four-element-per-row* array at 75 mm pitch, i.e. a 375 mm
+  aperture. At 2 GHz that is 2.5λ; the low band edge, not the estimator, sets it.
+
+---
+
+## 13. Files
 
 | File | Role |
 |---|---|
@@ -870,6 +955,7 @@ and it costs 1.3–1.6× in the geometry term. What is *not* available is 50 mm.
 | `scripts/estimate_wideband_dsp_resources.py` | front-end/device screen, writes the resource report |
 | `scripts/compare_wpi_vs_music.py` | §10: interferometry vs wideband 2D MUSIC/ISSM, manifold-rank result, calibration and geometry sensitivity |
 | `scripts/compare_wideband_estimators.py` | §11: spacing rule for a square 2×2, five estimators over the full 2–4 GHz band, ambiguity/geometry/wrap studies |
+| `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
 | `ip/custom/phase_interf_4ch/` | per-bin cross-spectrum + CORDIC phase block, host test, HLS build |
 | `matlab_v7/PhaseInterferometryEstimator.m` | MATLAB reference of the PS-side estimator selection |
 | `matlab_v7/verify_phase_interferometry_2x2.m` | time-domain (windowed FFT + quantised) verification |
@@ -881,6 +967,7 @@ Run:
 make verify-phase-interf              # reports + host core test + shimmed kernel test
 make compare-estimators               # sections 10 and 11: both studies, full
 make wideband-df                      # section 11 only, ~6 min
+make multisource-df                   # section 12, ~4 min
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md

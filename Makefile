@@ -53,6 +53,7 @@ help:
 	@echo "Run/capture V06 gate: make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim"
 	@echo "V07 host checks:     make verify-phase-interf"
 	@echo "V07 estimator study: make compare-estimators  (or: make wideband-df)"
+	@echo "Multi-source study:  make multisource-df"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -233,19 +234,26 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df
+.PHONY: compare-estimators wideband-df multisource-df
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
+	@python3 scripts/multisource_capacity.py
 
 wideband-df:
 	@python3 scripts/compare_wideband_estimators.py
+
+# Section 12 of V07: how many emitters the geometry can represent at all, and
+# what an eight-emitter / 2 GHz requirement does to the array and the algorithm.
+multisource-df:
+	@python3 scripts/multisource_capacity.py
 
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py --quick
+	@python3 scripts/multisource_capacity.py --quick
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
 
