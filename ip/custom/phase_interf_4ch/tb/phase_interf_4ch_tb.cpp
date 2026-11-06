@@ -46,8 +46,8 @@ struct FrameResult {
     std::uint16_t tag;
 };
 
-FrameResult runFrame(const std::vector<std::int16_t>& realSamples,   // [channel][lane*beats]
-                     const std::vector<std::int16_t>& imagSamples,
+FrameResult runFrame(const std::vector<std::vector<std::int16_t>>& realSamples,  // [channel][sample]
+                     const std::vector<std::vector<std::int16_t>>& imagSamples,
                      int frameSamples,
                      const pir::CalCoefficient cal[4],
                      std::uint16_t tag,
@@ -101,16 +101,16 @@ FrameResult runFrame(const std::vector<std::int16_t>& realSamples,   // [channel
     FrameResult result{};
     for (int index = 0; index < 16; ++index) {
         axis64_t word = accumulators.read();
-        result.accumulators[index] = (std::int64_t)(ap_int<64>)word.data;
-        if (verify && index == 15 && !word.last) {
+        result.accumulators[index] = static_cast<std::int64_t>(word.data.to_uint64());
+        if (verify && index == 15 && word.last.to_uint() == 0) {
             std::printf("FAIL accumulator word 15 missing TLAST\n");
             ++failures;
         }
     }
     axis128_t phaseWord = phases.read();
     for (int pair = 0; pair < 6; ++pair) {
-        ap_uint<16> bits = phaseWord.data.range(16 * pair + 15, 16 * pair);
-        result.phases[pair] = (std::int16_t)(ap_int<16>)bits;
+        ap_int<16> bits = phaseWord.data.range(16 * pair + 15, 16 * pair);
+        result.phases[pair] = static_cast<std::int16_t>(bits.to_int());
     }
     result.tag = (std::uint16_t)phaseWord.data.range(111, 96);
 
@@ -162,8 +162,8 @@ int main() {
     // ---- frame 1: 4 beats, deterministic, unity calibration ---------------
     {
         const int frameSamples = 16;
-        std::vector<std::int16_t> realSamples(4, std::vector<std::int16_t>(frameSamples));
-        std::vector<std::int16_t> imagSamples(4, std::vector<std::int16_t>(frameSamples));
+        std::vector<std::vector<std::int16_t>> realSamples(4, std::vector<std::int16_t>(frameSamples));
+        std::vector<std::vector<std::int16_t>> imagSamples(4, std::vector<std::int16_t>(frameSamples));
         for (int channel = 0; channel < 4; ++channel) {
             for (int index = 0; index < frameSamples; ++index) {
                 realSamples[channel][index] =
@@ -179,8 +179,8 @@ int main() {
     // ---- frame 2: production frame with non-unity calibration -------------
     {
         const int frameSamples = 4096;
-        std::vector<std::int16_t> realSamples(4, std::vector<std::int16_t>(frameSamples));
-        std::vector<std::int16_t> imagSamples(4, std::vector<std::int16_t>(frameSamples));
+        std::vector<std::vector<std::int16_t>> realSamples(4, std::vector<std::int16_t>(frameSamples));
+        std::vector<std::vector<std::int16_t>> imagSamples(4, std::vector<std::int16_t>(frameSamples));
         unsigned state = 0x12345678u;
         for (int channel = 0; channel < 4; ++channel) {
             for (int index = 0; index < frameSamples; ++index) {
@@ -199,27 +199,38 @@ int main() {
         std::printf("  frame 2 (4096 samples, calibrated): accumulators and phases match core\n");
     }
 
-    // ---- frame 3: injected phase step, sign convention --------------------
+    // ---- frame 3: physical sign convention, az > 0 and el < 0 -------------
     {
         const int frameSamples = 64;
-        std::vector<std::int16_t> realSamples(4, std::vector<std::int16_t>(frameSamples));
-        std::vector<std::int16_t> imagSamples(4, std::vector<std::int16_t>(frameSamples));
-        const double phi = 0.25;
+        std::vector<std::vector<std::int16_t>> realSamples(4, std::vector<std::int16_t>(frameSamples));
+        std::vector<std::vector<std::int16_t>> imagSamples(4, std::vector<std::int16_t>(frameSamples));
+        const double f = 3.5e9;
+        const double spacing = 0.025;
+        const double lightSpeed = 299792458.0;
+        const double azimuth = 20.0 * 3.14159265358979 / 180.0;
+        const double elevation = -12.0 * 3.14159265358979 / 180.0;
+        const double uy = std::cos(elevation) * std::sin(azimuth);
+        const double uz = std::sin(elevation);
+        const double half = spacing / 2.0;
+        const double position[4][2] = {{-half, -half}, {+half, -half}, {-half, +half}, {+half, +half}};
         const double amplitude = 6000.0;
         for (int index = 0; index < frameSamples; ++index) {
             for (int channel = 0; channel < 4; ++channel) {
-                const double phase = (channel == 1 || channel == 2) ? -phi : 0.0;
+                const double projection = position[channel][0] * uy + position[channel][1] * uz;
+                const double phase = -2.0 * 3.14159265358979 * f * projection / lightSpeed;
                 realSamples[channel][index] = (std::int16_t)std::lround(amplitude * std::cos(phase));
                 imagSamples[channel][index] = (std::int16_t)std::lround(amplitude * std::sin(phase));
             }
         }
         FrameResult result = runFrame(realSamples, imagSamples, frameSamples, unity, 3, true);
+        const double expectedAz = -2.0 * 3.14159265358979 * f * spacing * uy / lightSpeed;
+        const double expectedEl = -2.0 * 3.14159265358979 * f * spacing * uz / lightSpeed;
         const double azPhase = (double)result.phases[0] / 8192.0;
         const double elPhase = (double)result.phases[1] / 8192.0;
-        std::printf("  frame 3 sign check: az %+.4f rad, el %+.4f rad (injected %+.4f)\n",
-                    azPhase, elPhase, phi);
-        if (!(azPhase > phi - 0.01 && azPhase < phi + 0.01) ||
-            !(elPhase > phi - 0.01 && elPhase < phi + 0.01)) {
+        std::printf("  frame 3 sign check: az %+.4f (expect %+.4f), el %+.4f (expect %+.4f)\n",
+                    azPhase, expectedAz, elPhase, expectedEl);
+        if (!(azPhase < 0.0 && std::fabs(azPhase - expectedAz) < 3.0 / 8192.0) ||
+            !(elPhase > 0.0 && std::fabs(elPhase - expectedEl) < 3.0 / 8192.0)) {
             std::printf("FAIL sign convention on the az/el baselines\n");
             ++failures;
         }

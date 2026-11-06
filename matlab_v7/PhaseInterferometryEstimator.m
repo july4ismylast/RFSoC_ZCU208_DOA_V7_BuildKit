@@ -30,9 +30,12 @@ classdef PhaseInterferometryEstimator < matlab.System
     % integers, int64 cross-spectrum accumulators and the same integer CORDIC
     % atan2 as ip/custom/phase_interf_4ch (Q3.13 output, <=2 LSB error).
     %
-    % Sign convention (identical to estimate_doa_from_covariance_v7.m):
-    %   A_n = exp(-1j*k*(p_n . u));  S_ab = X_a*conj(X_b) => angle = +k*B*u
-    %   u = (B'WB)^-1 * B'W*phi / k;  uy from CH1->CH2 (+y), uz from CH1->CH3 (+z).
+    % Sign convention (bit-identical to doa_covariance_4ch_v4 and to
+    % estimate_doa_from_covariance_v7.m, so the PL output can feed that function
+    % unchanged):
+    %   A_n = exp(-1j*k*(p_n . u));  S_ba = X_b*conj(X_a) => angle = -k*B*u
+    %   u = -(B'WB)^-1 * B'W*phi / k;  uy from CH1->CH2 (+y), uz from CH1->CH3 (+z).
+    %   For a target at positive uy the baseline phase is therefore negative.
     %
     % See also verify_phase_interferometry_2x2, DOAEstimator4Ch,
     % estimate_doa_from_covariance_v7.
@@ -112,8 +115,9 @@ classdef PhaseInterferometryEstimator < matlab.System
             pairs = obj.BaselinePairs;
             crossSpectrum = complex(zeros(numberOfBins,6));
             for pair = 1:6
-                crossSpectrum(:,pair) = calibrated(:,pairs(pair,1)) .* ...
-                                        conj(calibrated(:,pairs(pair,2)));
+                % S_ba = X_b*conj(X_a), the same product order the PL accumulates
+                crossSpectrum(:,pair) = calibrated(:,pairs(pair,2)) .* ...
+                                        conj(calibrated(:,pairs(pair,1)));
             end
             if obj.FixedPointMode
                 scale = 2^obj.AccumulatorFractionBits;
@@ -169,10 +173,10 @@ classdef PhaseInterferometryEstimator < matlab.System
                 for pair = 1:6
                     first = pairs(pair,1);
                     second = pairs(pair,2);
-                    realAccumulator = sum(qr(:,first).*qr(:,second) + ...
-                                          qi(:,first).*qi(:,second));
-                    imagAccumulator = sum(qi(:,first).*qr(:,second) - ...
-                                          qr(:,first).*qi(:,second));
+                    realAccumulator = sum(qr(:,second).*qr(:,first) + ...
+                                          qi(:,second).*qi(:,first));
+                    imagAccumulator = sum(qi(:,second).*qr(:,first) - ...
+                                          qr(:,second).*qi(:,first));
                     accumulated(pair) = complex(realAccumulator, imagAccumulator);
                     phase(pair) = double(phase_from_cordic_q13(imagAccumulator, ...
                                                               realAccumulator))/8192;
@@ -193,7 +197,9 @@ classdef PhaseInterferometryEstimator < matlab.System
             waveNumber = 2*pi*centerHz/obj.LightSpeed;
             weightedBaseline = baseline .* weights;
             normalMatrix = baseline.' * weightedBaseline + 1e-12*eye(2);
-            directionYZ = normalMatrix \ (weightedBaseline.' * phase(:)) / waveNumber;
+            % angle(S_ba) = -k*B*u, hence the leading minus (same as
+            % estimate_doa_from_covariance_v7.m)
+            directionYZ = -normalMatrix \ (weightedBaseline.' * phase(:)) / waveNumber;
             
             if norm(directionYZ) > 0.999999
                 directionYZ = 0.999999 * directionYZ / norm(directionYZ);
@@ -264,7 +270,9 @@ classdef PhaseInterferometryEstimator < matlab.System
                 end
                 slope = sum(weight .* (frequencies - meanFrequency) .* ...
                             (unwrapped - meanPhase)) / denominator;
-                results(axis) = slope * obj.LightSpeed / (2*pi*spacing(axis));
+                % d(angle S_ba)/df = -2*pi*d*u/c, so the minus sign is required;
+                % dropping it mirrors every wideband estimate.
+                results(axis) = -slope * obj.LightSpeed / (2*pi*spacing(axis));
             end
             uy = results(1);
             uz = results(2);

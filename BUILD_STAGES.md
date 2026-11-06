@@ -132,7 +132,9 @@ synthesis at the pinned clock, and catalogue export into `build/ip_repo`.
 The tool-independent half of the verification does not need Vitis:
 
 ```bash
-make -C ip/custom/phase_interf_4ch host-check   # g++, bit-exact core test
+make -C ip/custom/phase_interf_4ch host-check        # g++, bit-exact core test
+make -C ip/custom/phase_interf_4ch host-kernel-check # kernel + C-sim TB via host shim
+make -C ip/custom/phase_interf_4ch gate3-ooc         # Vivado 2023.2, OOC timing at 4.0 ns
 make rebuild STEP=step05_hls_phase_interf      # needs Vitis HLS 2023.2
 ```
 

@@ -91,37 +91,62 @@ void testQuadrants() {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Cross-spectrum sign convention for the azimuth and elevation baselines
-//    X_b = X_a * exp(+j*phi)  =>  phase(S_ab) = +phi  =>  u > 0
+// 4. Cross-spectrum sign convention (must match doa_covariance_4ch_v4)
+//
+//    Physically, A_n = exp(-j*2*pi*f*(p_n . u)/c).  For a target at positive uy,
+//    channel 2 lags channel 1, so the accumulated S_ba = X_b*conj(X_a) has a
+//    NEGATIVE phase.  The test feeds the exact per-channel phasors of a target
+//    at az = +20 deg, el = -12 deg (so uy > 0 but uz < 0, which makes one
+//    baseline phase negative and the other positive) and requires
+//
+//        phase(baseline 0) = -2*pi*f*d*uy/c  < 0
+//        phase(baseline 1) = -2*pi*f*d*uz/c  > 0
+//
+//    If this test is "fixed" by flipping a sign, the PS would report mirrored
+//    angles together with estimate_doa_from_covariance_v7.m.
 // ---------------------------------------------------------------------------
 void testSignConvention() {
     pir::CalCoefficient unity[pir::kChannels];
     for (int c = 0; c < pir::kChannels; ++c) { unity[c].re = 1 << 14; unity[c].im = 0; }
 
-    const double phi = 0.37;                    // rad
-    const double amplitude = 8000.0;
+    const double f = 3.5e9;
+    const double spacing = 0.025;
+    const double lightSpeed = 299792458.0;
+    const double azimuth = 20.0 * M_PI / 180.0;
+    const double elevation = -12.0 * M_PI / 180.0;
+    const double uy = std::cos(elevation) * std::sin(azimuth);   // > 0
+    const double uz = std::sin(elevation);                       // < 0
+
+    // positions are +-spacing/2 in y and z (same 2x2 as the MATLAB reference)
+    const double half = spacing / 2.0;
+    const double position[4][2] = {{-half, -half}, {+half, -half}, {-half, +half}, {+half, +half}};
+    const double amplitude = 7000.0;
+
     pir::FrameAccumulator frame;
     for (int lane = 0; lane < 64; ++lane) {
         std::int16_t real[pir::kChannels];
         std::int16_t imag[pir::kChannels];
         for (int c = 0; c < pir::kChannels; ++c) {
-            // Steering convention A_n = exp(-j*2*pi*f*(p_n.u)/c): a positive
-            // projection onto the baseline means channel n LAGS the reference,
-            // so inject -phi on channels 1 and 2 and expect phase(S_ab) = +phi.
-            const double channelPhase = (c == 1) ? -phi : (c == 2) ? -phi : 0.0;
-            real[c] = static_cast<std::int16_t>(std::lround(amplitude * std::cos(channelPhase)));
-            imag[c] = static_cast<std::int16_t>(std::lround(amplitude * std::sin(channelPhase)));
+            const double projection = position[c][0] * uy + position[c][1] * uz;
+            const double phase = -2.0 * M_PI * f * projection / lightSpeed;
+            real[c] = static_cast<std::int16_t>(std::lround(amplitude * std::cos(phase)));
+            imag[c] = static_cast<std::int16_t>(std::lround(amplitude * std::sin(phase)));
         }
         frame.addLane(unity, real, imag);
     }
+
     std::int16_t phases[pir::kBaselines];
     frame.phases(phases);
-    const double azPhase = q13_to_rad(phases[0]);   // pair (0,1)
-    const double elPhase = q13_to_rad(phases[1]);   // pair (0,2)
-    std::printf("  sign convention: az baseline phase %+.4f rad, el %+.4f rad (injected %+.4f)\n",
-                azPhase, elPhase, phi);
-    check(azPhase > 0.36 && azPhase < 0.38, "az baseline phase positive and correct");
-    check(elPhase > 0.36 && elPhase < 0.38, "el baseline phase positive and correct");
+    const double expectedAz = -2.0 * M_PI * f * spacing * uy / lightSpeed;
+    const double expectedEl = -2.0 * M_PI * f * spacing * uz / lightSpeed;
+    const double azPhase = q13_to_rad(phases[0]);
+    const double elPhase = q13_to_rad(phases[1]);
+    std::printf("  sign convention: az %+.4f rad (expect %+.4f), el %+.4f rad (expect %+.4f)\n",
+                azPhase, expectedAz, elPhase, expectedEl);
+    check(azPhase < 0.0 && std::fabs(azPhase - expectedAz) < 3.0 / 8192.0,
+          "az baseline phase negative and equal to -2*pi*f*d*uy/c");
+    check(elPhase > 0.0 && std::fabs(elPhase - expectedEl) < 3.0 / 8192.0,
+          "el baseline phase positive and equal to -2*pi*f*d*uz/c");
 }
 
 // ---------------------------------------------------------------------------
@@ -168,8 +193,10 @@ void testAccumulation() {
         for (int p = 0; p < pir::kBaselines; ++p) {
             const int a = pir::kFirst[p];
             const int b = pir::kSecond[p];
-            refRe[p] += re[a] * re[b] + im[a] * im[b];
-            refIm[p] += im[a] * re[b] - re[a] * im[b];
+            // same product order as the core and doa_covariance_4ch_v4:
+            // S_ba = X_b * conj(X_a)
+            refRe[p] += re[b] * re[a] + im[b] * im[a];
+            refIm[p] += im[b] * re[a] - re[b] * im[a];
         }
     }
 

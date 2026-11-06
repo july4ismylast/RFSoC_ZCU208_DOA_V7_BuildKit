@@ -131,8 +131,9 @@ pipelined" understates the arithmetic by ~10× and omits the calibration multipl
 
 Six CORDICs (one per baseline) are needed, and 16-bit phase accuracy needs
 ~16 iterations, not 12. The area is ~7 k LUT and no DSP (§7). The latency claim
-is irrelevant: the block runs at the 125 MHz DOA clock behind the channel
-selector, not at the bin rate.
+is irrelevant: the block runs at the **250 MHz wideband fabric clock** on the
+channelizer's output stream (`WIDEBAND_CLOCK_PERIOD_NS` = 4.0 ns), and the
+CORDIC pass happens once per frame, not once per sample.
 
 ### 3.7 Block-floating-point is ignored
 
@@ -267,8 +268,8 @@ diagonal (valid to 4.24 GHz) and the `DOA2x2:AmbiguousBaseline` guard.
 phase_interf_4ch  ◄──────────── bin selector (existing subband bridge)
   │  per selected bin, over N snapshots:
   │    4× calibrated channel powers
-  │    6× complex cross-spectra  S_ab = Σ_n X_a conj(X_b)
-  │    6× phase  atan2(Im S_ab, Re S_ab)   (16-iteration CORDIC)
+  │    6× complex cross-spectra  S_ba = Σ_n X_b conj(X_a)   (covariance-block order)
+  │    6× phase  atan2(Im S_ba, Re S_ba)   (16-iteration CORDIC)
   │    6× |S_ab|²  for coherence weights
   ▼
 PS (A53/R5): calibration, WPI solution, ambiguity/amplitude check,
@@ -282,26 +283,39 @@ For channel `n` at array position `p_n`, direction `u`, RF frequency `f`:
 ```text
 X_n(f) = A_n(f)·S(f) + N_n(f),      A_n(f) = exp(-j·2π·f·(p_n·u)/c)
 
-S_ab(f) = X_a(f)·conj(X_b(f)) = exp(+j·2π·f·(p_b - p_a)·u/c)·|S(f)|²
+S_ba(f) = X_b(f)·conj(X_a(f)) = exp(-j·2π·f·(p_b - p_a)·u/c)·|S(f)|²
 ```
 
-so for the azimuth pair CH1→CH2 (baseline `+y`, spacing `d`) and the elevation
-pair CH1→CH3 (baseline `+z`):
+The product order is **`X_b·conj(X_a)`, i.e. the same order
+`doa_covariance_4ch_v4` already accumulates**, so the block's 16-word output is
+a drop-in replacement for that block and the PS can reuse
+`estimate_doa_from_covariance_v7.m` unchanged. For the azimuth pair CH1→CH2
+(baseline `+y`, spacing `d`) and the elevation pair CH1→CH3 (baseline `+z`):
 
 ```text
-uy = +angle(Σ_k S_12(k))·c / (2π·f_c·d)
-uz = +angle(Σ_k S_13(k))·c / (2π·f_c·d)
+uy = -angle(Σ_k S_12(k))·c / (2π·f_c·d)
+uz = -angle(Σ_k S_13(k))·c / (2π·f_c·d)
 az = atan2(uy, sqrt(1-uy²-uz²)),   el = asin(uz)
 ```
 
 where the sum runs over the emitter's occupied bins and `f_c` is the
-power-weighted centroid of those bins. This is the coherence-weighted
-six-baseline phase LS already in `estimate_doa_from_covariance_v7.m`, with the
-frequency dimension retained until the last step.
+power-weighted centroid of those bins — the leading minus is the one in
+`estimate_doa_from_covariance_v7.m` (`directionYZ = -(B'WB)^-1·B'W·φ/k`), not a
+new convention. This is that same coherence-weighted six-baseline phase LS, with
+the frequency dimension retained until the last step.
 
-**Sign convention is proven numerically**: `scripts/phase_interf_verify.py`
-checks the sign for both baselines against an independent steering model, and
-the block's host testbench checks the same sign at bit level.
+**A target at positive `uy` therefore produces a negative baseline-0 phase.** If
+this is ever "fixed" by dropping the minus, every angle is mirrored: the
+reference WLS port reports az `+12.5°` as `-12.5°` with otherwise identical
+statistics, which looks plausible on a scope and is wrong on the sky.
+
+**Sign convention is asserted four times**: the host core test feeds the exact
+per-channel phasors of a target at az `+20°`, el `-12°` (one baseline negative,
+the other positive, so a uniform flip cannot pass) and requires
+`-2π·f·d·u/c` within 3 LSB; the HLS C-simulation testbench repeats it through
+the AXI ports; `scripts/phase_interf_verify.py` checks it against an independent
+steering model; and the MATLAB estimator applies the same product order and the
+same minus.
 
 ### 5.3 Calibration, coherence, and the bits that matter
 
@@ -432,9 +446,9 @@ what the HIL and chamber gates in `VALIDATION_REPORT.md` exist to prove.
 |---|---|
 | Input | `s_axis` 512-bit, lane-major `word = lane*4 + channel`, `{Q[31:16], I[15:0]}`, 4 lanes × 4 channels (same beat as `doa_covariance_4ch_v4`) |
 | Control | AXI4-Lite: `cal0..cal3` (Q2.14 complex), `frameSamples` (default 4096), `frameTag` |
-| Output A | `m_axis` 64-bit × 16 words per frame: 4 powers, 6 cross-spectrum real parts, 6 imaginary parts — **bit-identical layout to `doa_covariance_4ch_v4`**, so the PS can compute coherence/WPI itself |
+| Output A | `m_axis` 64-bit × 16 words per frame: 4 powers, 6 cross-spectrum real parts, 6 imaginary parts — **bit-identical to `doa_covariance_4ch_v4`**, including the `X_b·conj(X_a)` product order, so the PS can feed `estimate_doa_from_covariance_v7.m` unchanged |
 | Output B | `m_phase` 128-bit × 1 per frame: 6 × phase Q3.13 (96 b), frame tag `[111:96]`, phases-valid bit 112 |
-| Clock | `ap_clk` = DOA clock (≤125 MHz), `II=1` on the accumulation loop |
+| Clock | `ap_clk` = **250 MHz wideband fabric clock (4.0 ns)**, the channelizer's output domain (`WIDEBAND_CLOCK_PERIOD_NS`); `II=1` on the accumulation loop. An earlier draft of `build_hls.tcl` used `PL_CLOCK_PERIOD_NS` (7.8125 ns) — proving closure at 128 MHz for a block that never runs at 128 MHz — and that was fixed |
 | VLNV | `openai:doa:phase_interf_4ch:1.0` |
 
 ### 7.2 Structure
@@ -443,7 +457,7 @@ what the HIL and chamber gates in `VALIDATION_REPORT.md` exist to prove.
 beat → 4× calibration (complex Q2.14) → 20-bit I/Q per channel
       → 4 power accumulators        (int64, 51-bit worst case)
       → 6 cross-spectra             (int64 Re/Im)
-      → frame end → 6× CORDIC atan2 (16 iterations, integer, Q3.13)
+      → frame end → 6× atan2 through ONE shared normaliser+CORDIC (Q3.13)
       → m_axis (16 words, covariance-compatible) + m_phase (6 phases + tag)
 ```
 
@@ -454,9 +468,16 @@ beat → 4× calibration (complex Q2.14) → 20-bit I/Q per channel
 | Fixed-point core compiles and runs on the host, bit-exact golden vectors | **PASS** (`make -C ip/custom/phase_interf_4ch host-check`, g++) |
 | CORDIC error ≤ 1 LSB over 0…2π | **PASS** (host test, 4 096 angles) |
 | Accumulator growth worst case (4096 samples, 20-bit calibrated) | **PASS** — 51 bits of 64, asserted by the test |
+| **The production kernel and the production C-simulation testbench compile and pass on the host** (AXI beat packing, 16-word order + `TLAST`, phase-record bit positions, frame-tag echo, az/el sign) | **PASS** — `make … host-kernel-check`, via the minimal shim in `tb/host_shim/`; three frames incl. the 4096-sample production frame |
 | C simulation / synthesis / export in Vitis HLS 2023.2 | **NOT RUN** — requires the user's licensed tool; `step05_hls_phase_interf` is wired but unproven |
+| Scheduling / II / latency / HLS overflow semantics | **NOT RUN** — the shim cannot model them (it ignores `#pragma HLS`) |
 | OOC timing at 4.0 ns | **NOT RUN** |
 | Integration into the BD, timing closure, hardware | **NOT RUN** |
+
+The last row of the passing block is the important one for a first Vitis run: the
+two most common ways to lose a day on a licensed machine — the kernel not
+compiling, and the AXI record being packed differently from what the PS expects
+— are already excluded for free, on any machine with `g++`.
 
 The block is deliberately small (§7.4) so that, unlike the front end, its
 feasibility is not in doubt; but "small" is not "proven", and the gate table
@@ -464,13 +485,39 @@ below keeps the distinction.
 
 ### 7.4 Budget
 
-| Resource | Estimate |
+Counted, not guessed. Per 512-bit beat the kernel processes 4 lanes × 4 channels:
+
+| Multiplies per beat | Count |
 |---|---|
-| DSP48 | ~40 (16 calibration + 24 cross-spectrum multiplies) |
-| LUT | ~8 k (6 CORDICs ≈ 7 k, control/packing ≈ 1 k) |
-| FF | ~7 k |
-| BRAM | 0 |
-| Latency | frame + ~100 cycles (6 pipelined CORDIC passes) after the last beat |
+| Calibration, 16 complex multiplies × 4 real | 64 |
+| Channel powers, 16 × 2 real | 32 |
+| Cross-spectra, 4 lanes × 6 pairs × 4 real | 96 |
+| **Total real multiplies per beat** | **192** |
+
+| Resource | Estimate (and why it is an estimate) |
+|---|---|
+| DSP48 at `II=1` | **≈192–384**. One multiplier per cycle needs 192 DSP48E2 at best; the calibrated operands are 20-bit, which does not fit the 27×18 multiplier, so some products cost two DSPs. 4–9 % of the 4 272 DSP on the ZU48DR |
+| DSP48 at `II=4` | ≈48–96. A channelised bin delivers ~2 MS/s, i.e. a 4096-sample frame every ~2 ms, so a beat every 16 ns is still ~500× faster than needed. Relax the iteration interval only with measured G2/G3 numbers in hand |
+| LUT | ~3–8 k. **One** shared normaliser+CORDIC datapath (see the `phase_loop` comment), not six |
+| FF | ~5–10 k (64-bit accumulators, 20-bit pipeline registers) |
+| BRAM | 0 (the 16-entry 30-bit arctan table is LUTROM) |
+| Phase-pass latency | ~250 cycles ≈ 1 µs at 250 MHz, once per frame — 0.05 % of a 2 ms channelised frame; this is why the CORDIC is shared rather than replicated |
+| Clock domain | 250 MHz wideband (`ap_clk` ← channelizer output clock, 4.0 ns) |
+
+These are arithmetic, not synthesis results. G2 must replace every row with the
+`csynth` report, and G3 with the Vivado OOC report
+(`build/output/v07_gate3_ooc_synthesis.rpt`, `V07_GATE3_OOC_*` keys).
+
+Two HLS hazards were removed before they could cost a synthesis run:
+
+* The CORDIC normaliser was two data-dependent `while` loops. Vitis HLS cannot
+  schedule a loop whose bound depends on data, so it is now 51 fixed-trip
+  conditional steps (the host test still shows 1 LSB worst-case error, i.e. the
+  change is bit-identical where it matters).
+* `PIPELINE II=1` was on the phase loop. At `II=1` HLS would have to
+  instantiate six copies of a fully unrolled 16-stage 64-bit CORDIC — six
+  cascaded adder chains, ~10 ns each, at a 4.0 ns clock. The loop is now a
+  sequential state machine sharing one datapath.
 
 ---
 
@@ -480,9 +527,10 @@ below keeps the distinction.
 |---|---|---|
 | G0 estimator physics (host) | `python3 scripts/phase_interf_verify.py` | **PASS** |
 | G0 front-end feasibility screen | `python3 scripts/estimate_wideband_dsp_resources.py` | **PASS** (screen only) |
-| G1 fixed-point core | `make -C ip/custom/phase_interf_4ch host-check` | **PASS** |
+| G1a fixed-point core | `make -C ip/custom/phase_interf_4ch host-check` | **PASS** |
+| G1b kernel + C-sim testbench on the host (shimmed) | `make -C ip/custom/phase_interf_4ch host-kernel-check` | **PASS** |
 | G2 HLS C-sim + csynth + export | `make step05_hls_phase_interf` | **NOT RUN** |
-| G3 one-channel OOC at 4.0 ns | add to `v06_gate2` style script | **NOT RUN** |
+| G3 OOC synthesis + timing of the packaged IP at 4.0 ns | `make -C ip/custom/phase_interf_4ch gate3-ooc` (`gate3_ooc.tcl`, `v06_gate2` style) | **NOT RUN** — script written, never executed; it fails the gate on WNS < 0 or if `ap_clk` is not the 4.0 ns wideband period |
 | G4 BD integration, validate, timing | `step08`…`step11` | **NOT RUN** |
 | G5 RF loopback: measured phase vs known delay, sign and offset | HIL | **NOT RUN** |
 | G6 calibrated array, chamber/field accuracy | HIL/chamber | **NOT RUN** |
@@ -522,10 +570,12 @@ simulated ones in §6, labelled as simulated.
 Run:
 
 ```bash
-make verify-phase-interf              # estimator + resource reports + host core test
+make verify-phase-interf              # reports + host core test + shimmed kernel test
+make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2
 ```
 
 `make verify-phase-interf` needs only python3 + numpy + g++; it regenerates both
-reports in `docs/evidence/2026-11-06-phase-interf/` and re-runs the bit-exact
-core test.
+reports in `docs/evidence/2026-11-06-phase-interf/`, re-runs the bit-exact core
+test, and compiles plus runs the production kernel and testbench against the
+host shim.

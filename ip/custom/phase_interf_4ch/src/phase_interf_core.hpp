@@ -13,10 +13,16 @@
 // Conventions (proven numerically by scripts/phase_interf_verify.py):
 //
 //   X_n = channel n spectrum, A_n = exp(-j*2*pi*f*(p_n . u)/c)
-//   S_ab = X_a * conj(X_b)  =>  phase(S_ab) = +2*pi*f*(p_b - p_a).u/c
 //
-//   baseline 0 : a=0, b=1   azimuth pair   (+y),  uy = +phase*c/(2*pi*f*d)
-//   baseline 1 : a=0, b=2   elevation pair (+z),  uz = +phase*c/(2*pi*f*d)
+//   ACCUMULATED PRODUCT (deliberately identical to doa_covariance_4ch_v4):
+//       S_ba = X_b * conj(X_a)     with a = kFirst[pair], b = kSecond[pair]
+//   so  phase(S_ba) = -2*pi*f*(p_b - p_a).u/c
+//   and the PS solves u = -(B'WB)^-1 * B'W*phase / k, which is exactly what
+//   matlab_v7/estimate_doa_from_covariance_v7.m already does.  The 16-word
+//   output is therefore a drop-in replacement for the covariance block's.
+//
+//   baseline 0 : a=0, b=1   azimuth pair   (+y)
+//   baseline 1 : a=0, b=2   elevation pair (+z)
 //   baselines 2..5 : (0,3), (1,2), (1,3), (2,3) -- redundant, for WPI weighting
 //
 // Fixed-point formats
@@ -73,8 +79,22 @@ inline std::int16_t atan2_q13(std::int64_t y_in, std::int64_t x_in) {
     std::int64_t ay = y_in < 0 ? -y_in : y_in;
     std::int64_t big = ax > ay ? ax : ay;
     int shift = 0;
-    while (big >= (std::int64_t(1) << 29)) { big >>= 1; ++shift; }
-    while (big < (std::int64_t(1) << 28)) { big <<= 1; --shift; }
+    // FIXED trip count, not `while`: Vitis HLS cannot schedule a loop whose
+    // bound depends on data (it either refuses to schedule the region or
+    // synthesises a one-shot body), so the normaliser is written as 51
+    // conditional steps.  51 always brings an int64 magnitude into
+    // [2^28, 2^29) and cost nothing afterwards, because once the value is in
+    // range neither branch fires.  On the real input (<= 51-bit accumulators)
+    // the value is typically in range after <= 7 steps.
+    for (int step = 0; step < 51; ++step) {
+        if (big >= (std::int64_t(1) << 29)) {
+            big >>= 1;
+            ++shift;
+        } else if (big < (std::int64_t(1) << 28)) {
+            big <<= 1;
+            --shift;
+        }
+    }
 
     std::int32_t x = static_cast<std::int32_t>(
         shift >= 0 ? (x_in >> shift) : (x_in << (-shift)));
@@ -146,11 +166,11 @@ public:
         for (int p = 0; p < kBaselines; ++p) {
             const int a = kFirst[p];
             const int b = kSecond[p];
-            // S_ab = X_a * conj(X_b)
-            crossRe_[p] += static_cast<std::int64_t>(re[a]) * re[b] +
-                           static_cast<std::int64_t>(im[a]) * im[b];
-            crossIm_[p] += static_cast<std::int64_t>(im[a]) * re[b] -
-                           static_cast<std::int64_t>(re[a]) * im[b];
+            // S_ba = X_b * conj(X_a): Re = rb*ra + ib*ia, Im = ib*ra - rb*ia
+            crossRe_[p] += static_cast<std::int64_t>(re[b]) * re[a] +
+                           static_cast<std::int64_t>(im[b]) * im[a];
+            crossIm_[p] += static_cast<std::int64_t>(im[b]) * re[a] -
+                           static_cast<std::int64_t>(re[b]) * im[a];
         }
         ++beats_;
     }

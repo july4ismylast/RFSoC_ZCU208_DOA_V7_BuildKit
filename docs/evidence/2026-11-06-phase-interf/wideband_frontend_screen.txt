@@ -1,5 +1,5 @@
 V07 WIDEBAND FRONT-END FEASIBILITY SCREEN -- ZCU208 / XCZU48DR (ZU48DR)
-generated : 2026-11-06T14:48:06Z
+generated : 2026-11-06T15:05:32Z
 throughput: 2.000 GS/s complex per channel, 8 samples/clk at 250 MHz, 4 channels
 
 DEVICE CAPACITY / ROUTED MTS BASE (V06 evidence)

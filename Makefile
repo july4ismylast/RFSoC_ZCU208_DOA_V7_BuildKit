@@ -214,10 +214,24 @@ $(STAMP_DIR)/step15_package.done: scripts/package_release.sh config.mk scripts/r
 # test of the production HLS core.  Deliberately not part of pipeline/all
 # (they need python3+numpy and a host C++ compiler, not the FPGA tools).
 .PHONY: verify-phase-interf
+# Optional: parse check of the MATLAB reference files with MISS_HIT (pip install
+# miss_hit).  Skips cleanly when the tool is absent, so it is not part of the
+# default gate; the same three files were checked with MISS_HIT 0.9.44 and the
+# output is stored in docs/evidence/2026-11-06-phase-interf/.
+matlab-lint:
+	@if command -v mh_lint >/dev/null 2>&1; then \
+	    mh_lint --brief matlab_v7/PhaseInterferometryEstimator.m \
+	        matlab_v7/phase_from_cordic_q13.m \
+	        matlab_v7/verify_phase_interferometry_2x2.m; \
+	else \
+	    echo "SKIP matlab-lint: mh_lint (pip install miss_hit) not installed"; \
+	fi
+
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
+	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
 
 # Deliberate user action only: never part of pipeline/all.
 .PHONY: publish-evidence

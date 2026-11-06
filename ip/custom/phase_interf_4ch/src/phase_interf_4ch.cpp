@@ -8,26 +8,35 @@
 // accumulates, from the calibrated lanes:
 //
 //   power[c]      = sum |X_c|^2
-//   cross[p]      = sum X_a * conj(X_b)     for the six baselines below
+//   cross[p]      = sum X_b * conj(X_a)     for the six baselines below
 //
-// and then extracts six phases with a 16-iteration CORDIC.  The convolution-free
-// sign convention (proven by the host test and by
-// scripts/phase_interf_verify.py) is
+// and then extracts six phases with a 16-iteration CORDIC.  The product order is
+// deliberately the same as doa_covariance_4ch_v4, so the 16-word output is a
+// drop-in replacement for that block and the PS can reuse
+// estimate_doa_from_covariance_v7.m unchanged.  With A_n = exp(-j*k*p_n.u):
 //
-//   phase(S_ab) = +2*pi*f*(p_b - p_a).u/c   =>   u_axis = +phase*c/(2*pi*f*d)
+//   phase(S_ba) = -2*pi*f*(p_b - p_a).u/c
 //
-// so a positive phase on baseline 0 (CH1->CH2, +y) means uy > 0, and baseline 1
-// (CH1->CH3, +z) means uz > 0.
+// so for a target at positive uy the baseline-0 phase (CH1->CH2, +y) is
+// NEGATIVE, and the PS applies the leading minus of
+// u = -(B'WB)^-1 * B'W*phase / k.
 //
-// The phase record is produced at the DOA clock (behind the bin selector), not
-// at the 250 MHz bin rate: six CORDICs at 250 MHz for every bin would be absurd,
-// and the PS only needs phases for the bins that the search branch selected.
+// Clock: ap_clk is the 250 MHz wideband fabric clock (4.0 ns), the channelizer's
+// output domain -- see build_hls.tcl, which constrains WIDEBAND_CLOCK_PERIOD_NS.
+// The phases are produced once per frame, not once per bin, so a single shared
+// CORDIC datapath is enough (see the phase_loop comment below).
 // -----------------------------------------------------------------------------
+
+// .to_int()/.to_int64() are used instead of C-style casts on ap_int so the same
+// source compiles both in Vitis HLS and against tb/host_shim (make host-kernel-check).
+static std::int16_t signedHalf(ap_uint<32> packed, int lowBit) {
+    return static_cast<std::int16_t>(((ap_int<16>)packed.range(lowBit + 15, lowBit)).to_int());
+}
 
 static pir::CalCoefficient unpackCal(ap_uint<32> packed) {
     pir::CalCoefficient cal;
-    cal.re = static_cast<std::int16_t>((ap_int<16>)packed.range(15, 0));
-    cal.im = static_cast<std::int16_t>((ap_int<16>)packed.range(31, 16));
+    cal.re = signedHalf(packed, 0);
+    cal.im = signedHalf(packed, 16);
     return cal;
 }
 
@@ -97,8 +106,8 @@ beat_loop:
 #pragma HLS UNROLL
                 const int word = lane * 4 + channel;
                 ap_uint<32> packed = input.data.range(32 * word + 31, 32 * word);
-                const std::int16_t xr = static_cast<std::int16_t>((ap_int<16>)packed.range(15, 0));
-                const std::int16_t xi = static_cast<std::int16_t>((ap_int<16>)packed.range(31, 16));
+                const std::int16_t xr = signedHalf(packed, 0);
+                const std::int16_t xi = signedHalf(packed, 16);
                 pir::calibrate(xr, xi, cal[channel],
                                realValue[channel], imagValue[channel]);
                 power[channel] += (ap_int<64>)realValue[channel] * realValue[channel] +
@@ -109,10 +118,10 @@ beat_loop:
 #pragma HLS UNROLL
                 const int first = pir::kFirst[pair];
                 const int second = pir::kSecond[pair];
-                crossReal[pair] += (ap_int<64>)realValue[first] * realValue[second] +
-                                   (ap_int<64>)imagValue[first] * imagValue[second];
-                crossImag[pair] += (ap_int<64>)imagValue[first] * realValue[second] -
-                                   (ap_int<64>)realValue[first] * imagValue[second];
+                crossReal[pair] += (ap_int<64>)realValue[second] * realValue[first] +
+                                   (ap_int<64>)imagValue[second] * imagValue[first];
+                crossImag[pair] += (ap_int<64>)imagValue[second] * realValue[first] -
+                                   (ap_int<64>)realValue[second] * imagValue[first];
             }
         }
     }
@@ -143,11 +152,19 @@ output_loop:
     phaseWord.keep = -1;
     phaseWord.strb = -1;
     phaseWord.last = 1;
+// ONE shared CORDIC, deliberately sequential.  Pipelining this loop at II=1
+// would need six fully unrolled 16-stage 64-bit CORDICs (six cascaded adder
+// chains, ~16 levels deep) which cannot close 4.0 ns; the loop is instead run
+// as a state machine that reuses a single normaliser+CORDIC datapath.  The
+// cost is ~250 cycles once per frame.  For the channelised input this frame is
+// 4096 samples of a ~2 MS/s bin, i.e. ~2 ms, so the phase pass is ~0.01 % of
+// the frame time.  If this block is ever fed a continuous stream instead, the
+// choice must be re-measured: six replications cost ~6x the CORDIC LUT.
 phase_loop:
     for (int pair = 0; pair < 6; ++pair) {
-#pragma HLS PIPELINE II=1
-        const std::int64_t y = (std::int64_t)crossImag[pair];
-        const std::int64_t x = (std::int64_t)crossReal[pair];
+#pragma HLS LOOP_TRIPCOUNT min=6 max=6 avg=6
+        const std::int64_t y = crossImag[pair].to_int64();
+        const std::int64_t x = crossReal[pair].to_int64();
         const ap_uint<16> bits = (ap_uint<16>)pir::atan2_q13(y, x);
         phaseWord.data.range(16 * pair + 15, 16 * pair) = bits;
     }

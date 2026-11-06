@@ -24,6 +24,17 @@ slope_naive    the external review's exact recipe: np.unwrap + weighted
                polyfit, as written in its MATLAB block.
 single_bin     peak-bin phase only, no bin averaging (bin-SNR limited).
 
+Sign convention
+---------------
+This script forms the conjugate-ordered statistic S_ab = X_a*conj(X_b), so the
+baseline phase is +2*pi*f*(p_b-p_a).u/c and the direction cosines carry a leading
+plus.  The HDL block (ip/custom/phase_interf_4ch) accumulates the other order,
+S_ba = X_b*conj(X_a), exactly as doa_covariance_4ch_v4 does, so its phase has the
+opposite sign and the PS applies the leading minus of
+estimate_doa_from_covariance_v7.m.  The two are numerically identical estimators:
+the sign of the statistic is a wiring choice, not a physics choice.  Every
+accuracy number below is invariant to it.
+
 Model
 -----
 Four coherent channels, complex baseband after the RFDC DDC (Fs = 2.000 GS/s,
