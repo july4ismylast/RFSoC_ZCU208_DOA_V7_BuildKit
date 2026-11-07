@@ -166,6 +166,18 @@ destroys its direction (82–120° of error) because a 2×2 seen at elevation 0 
 two-channel array. The deliverable is a labelled map: one row per emitter, the
 hopper as scattered blocks along it, the static emitter as a fixed column.
 
+A **moving** emitter changes what "cluster" means (V07 §16, `make moving-targets`).
+Direction stops being a key and becomes the state you predict: holding the last
+direction keeps 98 % of a 0.5°/frame mover and 73 % at 1°/frame — the measurement
+noise — but shatters into 6.6–7.0 pieces at 8–16°/frame, while a constant-velocity
+prediction with an acquisition gate opened to the maximum angular speed holds
+89–100 % continuity to 16°/frame. A 10°/frame manoeuvre breaks the track as it
+must (3.1 tracks for two emitters); identity is then re-established from bandwidth
+and cadence with 100 % of the detections staying on the right emitter. Two
+constant-velocity movers crossing pass through each other with 0 % swaps, which is
+a different result from §14.6's 15–30 %, where the decoy manoeuvred while staying
+close. What is constant along a track is its slope, not its position.
+
 ## Accuracy statement
 
 V7 demonstrated a 3-D Monte-Carlo RMSE below 0.1° in its stated simulated

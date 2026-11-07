@@ -1,0 +1,137 @@
+Clustering an emitter that moves: direction is predicted, not held
+seed 20261109, 8 draws, 64 bins of 1.953 MHz, 16 snapshots per frame
+Simulated with the same per-bin cross-spectra and the same six-baseline
+direction estimator as V07 §15.
+
+Study M1: how fast can an emitter move before the association breaks?
+  mover: 1 MHz hopping, azimuth -55 deg + step per frame, 8 frames;
+  a static 5 MHz emitter at +55 deg. 16 snapshots (0.3 deg per frame),
+  4 deg gate. Three association rules.
+  step      rule                           tracks   pieces    longest  identity
+  deg/frame                                                     piece      kept
+  0.5       last direction                    3.4      1.1        98%      100%
+  0.5       predicted                         3.6      1.4        87%      100%
+  0.5       predicted, first gate open        3.4      1.1        96%      100%
+  1.0       last direction                    4.8      1.9        73%      100%
+  1.0       predicted                         3.8      1.1        96%      100%
+  1.0       predicted, first gate open        4.0      1.0        98%       98%
+  2.0       last direction                    5.6      2.2        55%      100%
+  2.0       predicted                         2.8      1.1        98%      100%
+  2.0       predicted, first gate open        3.4      1.0       100%      100%
+  4.0       last direction                    8.1      4.8        31%       98%
+  4.0       predicted                         4.6      2.1        83%      100%
+  4.0       predicted, first gate open        4.0      1.1        95%       98%
+  8.0       last direction                    9.9      6.6        14%       92%
+  8.0       predicted                         9.8      7.4        13%       98%
+  8.0       predicted, first gate open        3.4      1.2        95%       98%
+  16.0      last direction                    9.2      7.0        14%       94%
+  16.0      predicted                         9.1      7.2        14%       98%
+  16.0      predicted, first gate open        3.2      1.5        89%       96%
+  Holding the last direction is what §15 did, and it is not silly: it
+  keeps 98% of the mover in one piece at 0.5 deg/frame and 73% at
+  1 deg/frame, which is the measurement noise -- and then falls apart: at
+  16 deg the mover becomes 7.0 pieces and only 14% stays together.
+  where the mover becomes 7.0 pieces and only 14% of it stays in
+  one track.
+  Prediction carries the same mover with 1.5 pieces and 89% in one
+  track at 16 deg/frame. Prediction alone is not enough (7.2 pieces):
+  with no history the predicted direction is the last one, so the first
+  step still has to pass the gate. Opening that gate for the first two
+  frames is what makes acquisition work, and it costs nothing after.
+
+Study M2: acquisition -- how open must the first gate be?
+  a mover at a fixed step, 8 frames, both rules with prediction; the
+  first-gate width is swept. The number is the mover's pieces (1 =
+  acquired in one track).
+  step           gate 4    gate 8   gate 16   gate 20
+  4 deg             2.2       1.4       1.2       1.2
+  8 deg             7.6       2.4       1.5       1.1
+  16 deg            6.5       7.4       2.8       1.4
+  The first gate has to be at least the step plus a few times the
+  per-frame noise -- 16 deg for a 16 deg/frame mover -- and it only
+  applies to the first two frames of a track; after that the measured
+  rate carries the gate back to 4 deg.
+
+Study M3: a manoeuvre, and what carries identity through it
+  T1 1 MHz hopping, +5 deg/frame for 5 frames then -5 deg/frame for 5
+  (a 10 deg/frame change). T2 1 MHz CW at +40 deg -- SAME bandwidth, so
+  only cadence can name them. 4 deg gate, prediction on, first gate open.
+  with a 4 deg gate and a 10 deg/frame turn: 3.1 tracks for two
+  emitters, 2.1 pieces of the mover, 100% of its detections still in
+  the right identity.
+  The geometry breaks at the turn -- the prediction is wrong by twice the
+  step -- and the track is re-acquired within a frame or two because the
+  gate that re-acquires it is scored on cadence as well: 100% of the
+  mover's detections stay with the mover and none go to the CW emitter
+  that shares its bandwidth. That is the point of the invariants: the
+  angle failed, the identity did not.
+
+Study M4: two movers crossing each other
+  T1 from -30 deg at +5 deg/frame, T2 from +30 deg at -5 deg/frame,
+  10 frames: they meet at 0 deg around frame 6. Both 1 MHz hoppers, same
+  bandwidth, equal mean power, 4 dB rms of per-frame fading.
+  rule                               tracks    swapped  final error
+  last direction                       12.2         0%     13.70 deg
+  predicted, first gate open            2.6         0%      1.27 deg
+  Prediction lands within 1.3 deg of the truth at the end and keeps
+  100% of runs on the right identity; the last-direction rule needs
+  12.2 tracks and misses by 13.7 deg. A crossing is not automatically a
+  swap. These two are inside the 4 deg gate of each other for a single
+  frame, and one frame of ambiguity is resolved by the rate that each
+  track has already measured. The 15-30 % swaps of V07 14.6 came from a
+  decoy that stayed close for tens of hops and manoeuvred; that is the
+  case where only a multi-hypothesis tracker helps.
+
+Study M5: the map of a moving emitter -- azimuth against frame
+  three emitters over 12 frames: one moving +3 deg/frame from -40, one
+  moving -2 deg/frame from +35, one static at 0. Columns are frames,
+  rows 10 deg. This is the §15 map with time on the other axis.
+  frame   012345678901
+    -50   ............
+    -40   .1..........
+    -30   ..111.......
+    -20   .....1111...
+    -10   .........111
+      0   #33333333333
+     10   ..........22
+     20   .....22222..
+     30   .2222.......
+     40   2...........
+     50   ............
+  1 moves up, 2 moves down, 3 stands still. Each emitter is a line, not
+  a fixed cell: clustering finds the *lines*, and the thing that is
+  constant along a line is its slope, not its position.
+
+VERDICT
+  Correct objection: for a moving emitter the direction is not a key.
+  It becomes a prediction. The identity of a mover is carried by
+  continuity (a bounded angular rate), bandwidth and cadence -- measured
+  here, in that order of usefulness.
+  1. associating on the last direction is what a static-target
+     tracker does; it survives 1.0 deg/frame and turns the mover into
+     7.0 pieces at 16 deg/frame (M1).
+  2. predicting the direction from the measured rate carries the same
+     mover with 1.5 piece at 16 deg/frame (M1), provided the first
+     gate is opened to the maximum angular speed for two frames (M2:
+     1.4 pieces with a 20 deg first gate against 6.5 with 4 deg).
+  3. a manoeuvre breaks the prediction (a 10 deg/frame turn leaves the
+     track at 2.1 pieces) and identity is re-established from
+     bandwidth and cadence: 100% of the mover's detections stay with
+     it, none go to the equal-bandwidth emitter standing beside it (M3).
+  4. two movers crossing swap in 0% of runs when both keep a
+     constant velocity and fade; a decoy that manoeuvres through the
+     crossing is the V07 14.6 case, where prediction only softens it.
+  So the cluster key for a moving emitter is not a direction and not a
+  fingerprint: it is (bandwidth, cadence, continuity), with the
+  direction and its rate as the state you predict. Masking appears
+  nowhere in it.
+
+  [PASS] a static-direction association breaks once the step passes the gate
+  [PASS] prediction with an open first gate keeps the mover in one track
+  [PASS] without the open first gate prediction fragments at acquisition
+  [PASS] a first gate >= the step acquires the mover
+  [PASS] identity survives a manoeuvre on bandwidth and cadence
+  [PASS] a crossing of two movers is reported, not solved
+  [PASS] the map is produced
+
+RESULT=PASS

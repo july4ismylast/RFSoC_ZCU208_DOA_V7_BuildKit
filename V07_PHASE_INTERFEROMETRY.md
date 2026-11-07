@@ -35,6 +35,7 @@ by a script in this repository, or explicitly marked unproven.
 | The protected emitter is a **radar** (transmit + receive) | **ADOPT time ordering ahead of every spectral rung** — a decoy must hear the pulse before repeating it, so the repeat is always later by at least its turnaround: the leading edge gives the radar's direction to 0.09–0.79° where the whole-pulse method is 12–16° wrong, the tail gives the decoy's direction (39.6° for 40°) plus the delay, a Doppler pull-off changes neither, and the half-sample delay from the edge makes the two-path ML exact at 5–50 MHz without a search | §13.7 |
 | A **hopping** emitter, 1–100 MHz, 2.7–3.5 GHz | **ADOPT track-and-combine, not fingerprint-first** — the hop range is alias-free (measured 0.06° at 3.5 GHz / 70°, first failure 6 GHz); one 1 MHz hop gives 0.29° at 64 snapshots; combining 64 hops through-origin gives 0.078° (8.5×); association by prediction gate plus the bandwidth invariant is worth 28 → 0 wrong hops, and the invariant itself is quantised by the bin width (1 and 2 MHz are identical) | §14 |
 | **Clustering** several emitters in one cube | **ADOPT label, do not mask** — clusters form on (direction, bandwidth) and are linked over frames; a carrier-only link recovers 1 of 3 emitters and fragments the hopper into 20.7 tracks, the pair recovers 3 of 3 at purity 1.00, and cadence separates two emitters that share both (2.3 → 3.0 of 3, purity 0.70 → 1.00). Masking is measured to be unavailable: the notch deletes the co-channel emitter (kept 0 %), the null keeps it but destroys its direction (82–120°, because a 2×2 at elevation 0 has two channels), and predicting the next hop is worth 0.20 % | §15 |
+| A **moving** target | **ADOPT predict, don't hold** — direction stops being a key and becomes a state: holding the last direction keeps 98 % of a 0.5°/frame mover and 73 % at 1°/frame but shatters at 8–16°/frame (6.6–7.0 pieces), prediction with an acquisition gate holds 89–100 % to 16°/frame, and after a 10°/frame manoeuvre breaks the track (2.1 pieces) identity is re-established from bandwidth and cadence with 100 % of detections staying put | §16 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
 
@@ -1854,7 +1855,169 @@ claim is implied.
 
 ---
 
-## 16. Files
+## 16. What if the targets move? Direction becomes a prediction, not a key
+
+§15 clustered on *(direction, bandwidth)* and that quietly assumed a direction
+that stays put. The objection is correct: a real emitter moves, so "the same
+direction" is not something you can associate on. What is left to cluster on?
+
+Measured answer: **continuity**. The direction stops being a key and becomes a
+*state you predict* — the track's own measured rate, gated at a few degrees —
+while **bandwidth** and **cadence** carry the identity. The cluster key for a
+mover is `(bandwidth, cadence, continuity)`; the azimuth and its rate are the
+part you extrapolate, not the part you hold fixed.
+
+```
+ detections per frame                    (bin, level, direction)
+        |
+        v
+ per-frame clusters                      (direction, bandwidth)
+        |
+        v
+ +------------------------------------------------------------+
+ | track state:  az, az_rate, last_carrier, bandwidth, cadence |
+ |                                                             |
+ |   predicted direction = az + az_rate        <-- the mover   |
+ |   gate = 4 deg, opened for the first 2 frames               |
+ |                                                             |
+ |   cost = (d_az / gate)^2 + (d_bins / 1.5)^2 + cadence term  |
+ +------------------------------------------------------------+
+        |
+        v
+ identity  <- bandwidth + cadence when the geometry is lost
+```
+
+All numbers from `scripts/moving_targets.py` →
+[`moving_targets.txt`](docs/evidence/2026-11-06-phase-interf/moving_targets.txt)
+(`make moving-targets`, 14 s, seed 20261109, 8 draws per cell, 16 snapshots per
+frame — measured to about **1° per frame**, not 0.3°).
+
+### 16.1 How fast can it move before the association breaks?
+
+One moving 1 MHz hopper (azimuth −55° + step per frame, 8 frames), a static
+5 MHz emitter at +55°, a 4° gate, three association rules. `longest` is the
+largest share of the mover's detections that ends up in one track:
+
+| step °/frame | rule | tracks | pieces | longest | identity |
+|---|---|---|---|---|---|
+| 0.5 | last direction | 3.4 | 1.1 | 98 % | 100 % |
+| 0.5 | predicted | 3.6 | 1.4 | 87 % | 100 % |
+| 0.5 | predicted, first gate open | 3.4 | 1.1 | 96 % | 100 % |
+| 1.0 | last direction | 4.8 | 1.9 | 73 % | 100 % |
+| 1.0 | predicted, first gate open | 4.0 | 1.0 | 98 % | 98 % |
+| 2.0 | last direction | 5.6 | 2.2 | 55 % | 100 % |
+| 2.0 | predicted, first gate open | 3.4 | 1.0 | **100 %** | 100 % |
+| 4.0 | last direction | 8.1 | 4.8 | 31 % | 98 % |
+| 4.0 | predicted, first gate open | 4.0 | 1.1 | 95 % | 98 % |
+| 8.0 | last direction | 9.9 | 6.6 | 14 % | 92 % |
+| 8.0 | predicted, first gate open | 3.4 | 1.2 | 95 % | 98 % |
+| 16.0 | last direction | 9.2 | 7.0 | 14 % | 94 % |
+| 16.0 | predicted, first gate open | 3.2 | 1.5 | 89 % | 96 % |
+
+Two things are worth reading carefully:
+
+* **Holding the last direction is not silly at small steps.** At 0.5°/frame it
+  keeps 98 % of the mover together, and at 1°/frame — the measurement noise — 73 %.
+  It is the *same* rule §15 used, and it is the right rule for a slow target.
+* **It falls apart once the step exceeds the noise.** At 4°/frame, three quarters
+  of the mover is in fragments; at 16°/frame it is 7 pieces, and the track is
+  really "one track per frame".
+
+Prediction moves that limit from the noise to the gate: 89–100 % continuity all
+the way to 16°/frame. The interesting exception is 0.5°/frame, where prediction
+is *worse* than holding still (87 % against 98 %): when the step is below the
+measurement noise, extrapolating the rate doubles the error instead of removing
+it.
+
+### 16.2 Acquisition: the first gate has to be opened
+
+A prediction has no rate until it has seen two detections, so on the second frame
+it predicts the first position — and the mover has already left it. Pieces of the
+mover against the width of the gate that applies to a track's first two frames:
+
+| step | gate 4° | gate 8° | gate 16° | gate 20° |
+|---|---|---|---|---|
+| 4°/frame | 2.2 | 1.4 | 1.2 | 1.2 |
+| 8°/frame | 7.6 | 2.4 | 1.5 | **1.1** |
+| 16°/frame | 6.5 | 7.4 | 2.8 | **1.4** |
+
+The acquisition gate has to be at least the maximum angular speed plus a few
+times the per-frame noise. After two frames the measured rate carries the gate
+back to 4°, so nothing is wasted in steady tracking. This is the price of
+tracking a mover that a static-target design does not pay.
+
+### 16.3 A manoeuvre: the geometry fails, the identity does not
+
+The mover turns: +5°/frame for five frames then −5°/frame for five. The
+prediction is wrong by twice the step at the turn, which is outside the gate, and
+the track breaks — **3.1 tracks for two emitters, 2.1 pieces of the mover**. But
+the emitter standing beside it has the *same* bandwidth (1 MHz), so only cadence
+can name them, and it does: **100 % of the mover's detections stay in the mover's
+identity, none go to the CW emitter**. Re-attaching a broken piece with a gate
+that is scored on cadence and bandwidth as well as geometry is what makes that
+work — the invariants of §15 hold while the geometry is being re-acquired.
+
+### 16.4 Two movers crossing
+
+Both constant velocity, opposite directions, meeting at 0° around frame 6, with
+4 dB rms of per-frame fading:
+
+| rule | tracks | swapped | final error |
+|---|---|---|---|
+| last direction | 12.2 | 0 % | 13.70° |
+| predicted, first gate open | **2.6** | **0 %** | **1.27°** |
+
+A crossing is **not** automatically a swap. These two are inside the gate of each
+other for a single frame, and one frame of ambiguity is settled by the rate each
+track has already measured — the two lines pass through each other. The 15–30 %
+swaps of §14.6 came from a decoy that stayed close for tens of hops *and*
+manoeuvred, which is the case where nothing short of a multi-hypothesis tracker
+helps. That distinction is worth keeping: crossing is a geometry, manoeuvring in
+company is the hard problem.
+
+### 16.5 The map, with time on the other axis
+
+Azimuth rows against frame columns, three emitters over 12 frames (one moving
++3°/frame, one −2°/frame, one standing still). This is the §15 map with time
+exchanged for frequency:
+
+```
+  frame   012345678901
+    -40   .1..........
+    -30   ..111.......
+    -20   .....1111...
+    -10   .........111
+      0   #33333333333
+     10   ..........22
+     20   .....22222..
+     30   .2222.......
+     40   2...........
+```
+
+Each emitter is a **line**, not a cell. What is constant along a line is its
+slope, not its position — which is the whole answer to "you cannot cluster on a
+fixed direction": you cluster on the *line*, and a line is defined by a rate, not
+by a value. The `#` at frame 0 is a collision in the other axis (two emitters in
+one bin), marked, not erased.
+
+### 16.6 What to run
+
+```bash
+make moving-targets                          # this section, ~14 s
+python3 scripts/moving_targets.py --quick    # ~4 s smoke run
+```
+
+**Caveats.** Host simulation, elevation 0, no multipath, no calibration error,
+20 dB per bin, 16 snapshots per frame. The estimator is the same six-baseline WLS
+as everywhere else; the track is a cost assignment with a constant-velocity
+state, not a Kalman filter, and there is no process noise or IMM. "Per frame"
+here means 16 snapshots (8 µs of data) — the angular rate a real scene shows
+depends on how often frames are formed, which this study does not model. No gate,
+bitstream or hardware claim.
+
+---
+
+## 17. Files
 
 | File | Role |
 |---|---|
@@ -1866,6 +2029,7 @@ claim is implied.
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
 | `docs/DECOY_DISCRIMINATION.md` | §13 in one place: every algorithm with its block diagram, pseudocode, measured table and failure case, plus the G7 acceptance numbers |
 | `docs/decoy-flow.mmd` | the master runtime flow as a Mermaid diagram |
+| `scripts/moving_targets.py` | §16: a moving emitter — how far a static-direction association carries it, acquisition-gate width, a manoeuvre that breaks the track, two movers crossing, and the azimuth-vs-frame map |
 | `scripts/target_clustering.py` | §15: clustering in the (frequency, azimuth, time) cube — per-frame features, linking rules, what masking would cost (band mask, notch, null, cancellation, cancellation with gain error), when two emitters are separable at all, and the map itself as text |
 | `scripts/hopping_target.py` | §14: a hopping emitter — per-hop accuracy, the alias-free limit, the 800 MHz synthetic aperture across hops, association rules with and without the bandwidth invariant, and the crossing limit |
 | `scripts/radar_decoys.py` | §13.7: the radar case — leading-edge gate vs whole-pulse DOA, window length vs SNR, the decoy's tail, Doppler pull-off, and the delay the edge hands the two-path ML |
@@ -1888,6 +2052,7 @@ make decoy-df                         # section 13, ~1 min
 make radar-decoy                      # section 13.7, ~3 min
 make hopping-target                   # section 14, ~10 s
 make target-clusters                  # section 15, ~6 s
+make moving-targets                   # section 16, ~14 s
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md
