@@ -28,6 +28,10 @@ STAGES := \
 	step14_hil_vectors \
 	step15_package
 
+# scripts/run_stage.sh rebuilds docs/progress/PROGRESS.md from this list.
+STAGES_MANIFEST := $(BUILD)/stages.txt
+$(shell mkdir -p $(BUILD) && printf '%s\n' $(STAGES) > $(STAGES_MANIFEST))
+
 PRODUCTION_STAGES := step00_preflight step02_hls_covariance step03_hls_spectrum \
 	step04_hls_candidate step04_hls_beam step05_hls_repack step05_channelizer \
 	step05_subband_bridge step05_hls_phase_interf step06_collect_ip step07_vivado_project \
@@ -38,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -65,6 +69,8 @@ help:
 	@echo "Association policy:  make policy"
 	@echo "AMC on the R5 (G8a): make amc-port"
 	@echo "What is installed:   make tools   (or: make tools MATLAB=1)"
+	@echo "Model Composer GUI:  make mc      (R2022b; logs to docs/progress/)"
+	@echo "Progress pages:      make progress  -> docs/progress/PROGRESS.md"
 	@echo "Every step bench:    make steps"
 	@echo "Bring-up checklist:  bash step7_board_bringup/checklist.sh"
 	@echo "Every custom HLS IP: make hls-all"
@@ -133,6 +139,20 @@ rebuild:
 
 status:
 	@./scripts/stage_status.sh "$(BUILD)" $(STAGES)
+	@echo
+	@echo "Tracked pages: docs/progress/PROGRESS.md (make progress)"
+	@echo "Model Composer GUI: make mc   (R2022b through the launcher)"
+
+# Rebuild docs/progress/PROGRESS.md from the stamps, the logs and the pages.
+# Every stage also refreshes it, so this target is for after a manual edit or a
+# fresh clone where build/ was copied around.
+progress: $(STAGES_MANIFEST)
+	@./scripts/progress_report.sh "$(BUILD)"
+
+# Open the Model Composer GUI with MATLAB R2022b first on PATH, log the launch to
+# build/logs/model_composer_launch.log, and write docs/progress/model_composer_launch.md.
+mc:
+	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log"
 
 graph:
 	@cat docs/build-stages.mmd

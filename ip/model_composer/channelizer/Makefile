@@ -8,11 +8,15 @@ MATLAB_RUNNER ?= $(ROOT)/scripts/run_matlab_clean.sh
 # the fallback, and the command-line MATLAB (usually R2024a) is never used here:
 # silently using it is how this stage fails with "xlGenerateButton unavailable".
 ifeq ($(strip $(MODEL_COMPOSER)),)
-MC_LAUNCH := $(MATLAB_RUNNER) "$(MATLAB_2022B)"
-MC_WHY    := MATLAB_2022B
+MC_PREPEND := $(if $(strip $(MATLAB_2022B)),PATH="$(dir $(MATLAB_2022B)):$$PATH" ,)
+MC_LAUNCH  := $(MATLAB_RUNNER) "$(MATLAB_2022B)"
+MC_WHY     := MATLAB_2022B
 else
-MC_LAUNCH := "$(MODEL_COMPOSER)"
-MC_WHY    := the Model Composer launcher
+# The launcher starts "matlab" from PATH; put R2022b first so the GUI cannot
+# pick up the newer command-line release that shares the same name.
+MC_PREPEND := $(if $(strip $(MATLAB_2022B)),PATH="$(dir $(MATLAB_2022B)):$$PATH" ,)
+MC_LAUNCH  := "$(MODEL_COMPOSER)"
+MC_WHY     := the Model Composer launcher (MATLAB $(if $(strip $(MATLAB_2022B)),2022b,from its own PATH))
 endif
 
 all: export
@@ -29,6 +33,6 @@ export:
 	    echo "       MODEL_COMPOSER_MODEL=/abs/path/channelizer.slx"; \
 	    exit 2; fi
 	@echo "Model Composer export via $(MC_WHY)"
-	$(MC_LAUNCH) -batch "addpath(pwd); export_model_composer_ip('$(MODEL_COMPOSER_MODEL)')"
+	$(MC_PREPEND)$(MC_LAUNCH) -batch "addpath(pwd); export_model_composer_ip('$(MODEL_COMPOSER_MODEL)')"
 clean:
 	rm -rf build .Xil

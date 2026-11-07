@@ -16,8 +16,13 @@ MATLAB ?= matlab
 #   make step05_channelizer CHANNELIZER_FLOW=model_composer \
 #        MODEL_COMPOSER=/path/Model_Composer/2023.2/bin/model_composer \
 #        MODEL_COMPOSER_MODEL=/abs/path/channelizer.slx
-# Left undefined on purpose: define them in config.local.mk or on the
-# command line, so a stale empty default cannot shadow them.
+# This workstation (the ZCU208 host), as measured by `make tools` on 2026-11-07:
+# MATLAB R2024a is the `matlab` on PATH; R2022b is installed next to Model
+# Composer and has no symlink, so it is named by its absolute path.  Model
+# Composer 2023.2 only runs with R2022b.  Override either in config.local.mk
+# (plain `=` there) or on the command line.
+MATLAB_2022B   ?= /media/joshua/Linux/Programs/R2022b/bin/matlab
+MODEL_COMPOSER ?= /media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin/model_composer
 JOBS ?= 8
 
 BUILD ?= $(CURDIR)/build

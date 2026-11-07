@@ -20,16 +20,49 @@ uses which install, and where to put the paths.
 The channelizer is the **only** stage that needs 2022b. Everything else — the
 whole G2 chain, G3, G4, the codegen, the studies — uses the command-line 2024a.
 
-## How to set it
+## The two steps at a command prompt
 
-Preferred: `config.local.mk` in the repository root (not tracked, see
-`.gitignore`), so nothing is exported by hand and nothing is committed:
+This is the sequence that works on the ZCU208 host, verbatim:
+
+```bash
+# step 1 -- put MATLAB R2022b first on PATH, so "matlab" means R2022b
+export PATH="/media/joshua/Linux/Programs/R2022b/bin:$PATH"
+
+# step 2 -- start the Model Composer 2023.2 GUI (R2022b is already on PATH)
+/media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin/model_composer \
+    2>&1 | tee build/output/v06_model_composer_launch.log
+```
+
+Check step 1 took effect before step 2 — `command -v matlab` must print the
+R2022b path. If it still prints `/usr/local/bin/matlab`, step 2 starts the GUI
+on R2024a and the export fails later with `xlGenerateButton unavailable`.
+
+`make mc` runs both steps from `config.mk`, refuses to start if `matlab` still
+resolves to another release, and writes `docs/progress/model_composer_launch.md`
+(a tracked page) so a push shows the GUI was launched:
+
+```bash
+make mc                        # or: make mc MODEL_COMPOSER=/path/to/model_composer
+```
+
+## How to set the paths
+
+`config.mk` already carries this workstation's two paths (tracked, so a fresh
+clone on the same host works without setup):
+
+```make
+MATLAB_2022B   ?= /media/joshua/Linux/Programs/R2022b/bin/matlab
+MODEL_COMPOSER ?= /media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin/model_composer
+```
+
+A different machine overrides them in `config.local.mk` (not tracked, see
+`.gitignore`; use plain `=`, and the command line always wins):
 
 ```make
 # config.local.mk
-MATLAB         ?= /usr/local/bin/matlab
-MATLAB_2022B   ?= /path/to/R2022b/bin/matlab
-MODEL_COMPOSER ?= /media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin/model_composer
+MATLAB         = /usr/local/bin/matlab
+MATLAB_2022B   = /opt/MATLAB/R2022b/bin/matlab
+MODEL_COMPOSER = /opt/Model_Composer/2023.2/bin/model_composer
 ```
 
 or per command:

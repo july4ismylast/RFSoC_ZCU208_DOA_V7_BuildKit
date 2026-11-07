@@ -82,6 +82,28 @@ Three of those commands need a file that does not exist yet and the table says
 so: the chamber script, the `--from-capture` flag, and the DMA reader. They are
 listed because pretending they exist would be worse than naming them.
 
+### Every stage leaves a tracked page
+
+`build/logs/*.log` is not in git (large, machine-specific), so a pushed branch
+used to show nothing about what had run. Now every stage writes two things:
+
+| file | tracked | what it holds |
+|---|---|---|
+| `build/logs/<stage>.log` | no | the full output, every line |
+| `docs/progress/<stage>.md` | **yes** | result, start/finish/duration, the command, the 40 lines that matter, and the path of the full log |
+| `docs/progress/PROGRESS.md` | **yes** | one table over all 20 stages: PASS / FAIL / NOT-RUN, finished time, link to the page |
+
+Both are written by `scripts/run_stage.sh` whatever the result, so a failed
+stage is visible too. Rebuild the table by hand with:
+
+```bash
+make progress      # -> docs/progress/PROGRESS.md
+make status        # the same information on the terminal
+```
+
+Commit `docs/progress/` after a run on the board host; that is what makes
+"where did the build get to" answerable from GitHub.
+
 ### Two MATLABs
 
 If Model Composer is installed, it pins its own MATLAB (2023.2 → R2022b) while

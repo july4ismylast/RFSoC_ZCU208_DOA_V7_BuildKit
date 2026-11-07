@@ -199,7 +199,22 @@ MODEL_COMPOSER ?= /path/Model_Composer/2023.2/bin/model_composer
 ```
 
 `make tools MATLAB=1` prints both installs and an explicit `[ok]`/`[MISS]` for
-every toolbox the code generator needs.
+every toolbox the code generator needs. `make mc` opens the Model Composer GUI
+with R2022b first on `PATH`, and refuses to start on any other release.
+
+## Progress that survives a push
+
+Logs live in `build/logs/` and are not tracked. Every stage also writes a small
+page in [`docs/progress/`](docs/progress/PROGRESS.md) — result, times, command,
+the lines that matter — and `PROGRESS.md` is one table over all 20 stages:
+
+```bash
+make step02_hls_covariance     # writes build/logs/... and docs/progress/step02_hls_covariance.md
+make progress                  # rebuilds docs/progress/PROGRESS.md
+```
+
+Commit `docs/progress/` after a run; then the branch itself shows how far the
+build got, including the stages that failed.
 
 ## The eight steps, one folder each
 
