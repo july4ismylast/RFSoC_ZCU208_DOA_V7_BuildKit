@@ -24,6 +24,13 @@ for index = 1:numel(frames)
     end
     shown = shown + 1;
     fprintf(2, '  at %s line %d (%s)\n', frame.name, frame.line, frame.file);
+    % xmcGenerate ships as a protected .p file: the "source" is not text, and
+    % printing it produced a page of binary noise in a real log.
+    [~, ~, extension] = fileparts(frame.file);
+    if strcmpi(extension, '.p')
+        fprintf(2, '    (protected .p file: line numbers are meaningless, source not readable)\n');
+        continue;
+    end
     printWindow(frame.file, frame.line);
 end
 if shown == 0

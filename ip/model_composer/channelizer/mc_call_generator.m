@@ -1,17 +1,18 @@
 function mc_call_generator(name, model, hub)
-%MC_CALL_GENERATOR Invoke the generate entry point, trying every plausible shape.
-%   `xmcGenerate('model')` is the documented call (UG1259) and is what the GUI
-%   button ends up doing, but on a real install it died with
+%MC_CALL_GENERATOR Start generation, with the arguments xmcGenerate documents.
+%   `help xmcGenerate` on the real install says:
 %
-%       Index exceeds the number of array elements. Index must not exceed 0.
+%       xmcGenerate('MyModel')                     uses the Hub block settings
+%       status = xmcGenerate('MyModel', 'MyModel_hubInfo.json')
+%       status = xmcGenerate('MyModel', 'closeProgressWindow', 1)
 %
-%   which names no parameter -- that error comes from inside AMD's code, most
-%   likely on a Hub field that is still empty.  So: try the documented shape, then
-%   the GUI button (xlGenerateButton with no arguments works on the current
-%   figure, which is why open_system + CurrentFigure are set first), then the
-%   other entry points.  If everything fails, dump the Hub parameters and the
-%   source line that failed, so the next run answers the question instead of
-%   producing another "multiple causes".
+%   so the shape is the model name plus optional name-value pairs.  A run without
+%   them died inside the protected xmcGenerate.p with
+%   "Index exceeds the number of array elements", while the Hub dump showed
+%   SubsystemName and IpName EMPTY -- that is what is fixed in configureHub.
+%
+%   'closeProgressWindow', 1 is used first because a failed call left a wait box
+%   open ("Close Wait Box due to exception"), which blocks the next attempt.
 arguments
     name (1, :) char
     model (1, :) char
@@ -19,14 +20,10 @@ arguments
 end
 
 open_system(model);
-focusFigure(model);
 
 attempts = { ...
+    {name, {model, 'closeProgressWindow', 1}};
     {name, {model}};
-    {'xlGenerateButton', {}};
-    {'xmcGenerateButton', {model}};
-    {'xmcHubGenerate', {model}};
-    {'xlGenerate', {model}};
     {'xlGenerateButton', {model}}};
 
 firstFailure = [];
@@ -44,11 +41,13 @@ for index = 1:size(attempts, 1)
     tried{end + 1} = shape; %#ok<AGROW>
     fprintf('calling %s\n', shape);
     try
-        feval(entry, shapeArgs{:});
+        status = feval(entry, shapeArgs{:});
         fprintf('%s returned\n', entry);
+        printStatus(status);
         return;
     catch problem
         fprintf(2, '  %s failed: %s\n', shape, problem.message);
+        closeWaitBox();
         if isempty(firstFailure)
             firstFailure = problem;
         end
@@ -70,13 +69,33 @@ error('mc_call_generator:failed', ...
      'line are printed above; paste that block and it can be fixed.']);
 end
 
-function focusFigure(model)
-%FOCUSFIGURE Make the model the current figure, which the GUI buttons use.
+% ---------------------------------------------------------------------------
+function printStatus(status)
+%PRINTSTATUS xmcGenerate returns the result of the run; do not guess its type.
+if isempty(status)
+    fprintf('  status: <none returned>\n');
+elseif ischar(status) || isstring(status)
+    fprintf('  status: %s\n', char(status));
+elseif islogical(status) || isnumeric(status)
+    fprintf('  status: %s\n', mat2str(status));
+elseif isstruct(status)
+    fprintf('  status: struct with fields %s\n', strjoin(fieldnames(status)', ', '));
+else
+    fprintf('  status: <%s>\n', class(status));
+end
+end
+
+function closeWaitBox()
+%CLOSEWAITBOX Close a progress window a failed call left behind.
+%   A real run printed "ERROR: Close Wait Box due to exception" after the first
+%   failure and then blocked the following attempts.
 try
-    handle = get_param(model, 'Handle');
-    set(0, 'CurrentFigure', handle);
+    windows = findall(0, 'Type', 'figure', 'Name', 'Wait Box');
+    for index = 1:numel(windows)
+        delete(windows(index));
+    end
 catch problem
-    fprintf('  note: could not focus %s: %s\n', model, problem.message);
+    fprintf('  note: no wait box to close: %s\n', problem.message);
 end
 end
 

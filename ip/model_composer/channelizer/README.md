@@ -46,6 +46,40 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## Root cause found: `SubsystemName` and `IpName` were empty
+
+`help xmcGenerate` (protected `.p`, but its help is readable) settled the
+argument question:
+
+```
+xmcGenerate('MyModel')                              % uses the Hub block settings
+status = xmcGenerate('MyModel', 'MyModel_hubInfo.json')
+status = xmcGenerate('MyModel', 'closeProgressWindow', 1)
+```
+
+and the Hub dump from the same run named the culprit:
+
+```
+EMPTY  SubsystemName
+EMPTY  IpName
+```
+
+`IPInfoJsonString` was correct, but the Hub keeps `SubsystemName` and `IpName`
+as their own parameters, and `xmcGenerate` indexes the (empty) cell it builds
+from them: *Index exceeds the number of array elements.*  `configureHub` now
+writes
+
+```matlab
+set_param(hub, 'SubsystemName', 'channelizer_dut');
+set_param(hub, 'IpName',        'channelizer_dut');
+```
+
+and the call is `xmcGenerate(model, 'closeProgressWindow', 1)`, because a failed
+run left a wait box open ("Close Wait Box due to exception") that blocked the
+next attempt -- `mc_call_generator` now closes it before retrying, prints the
+returned `status`, and skips printing the binary contents of `.p` files in the
+source window.
+
 ## `xmcGenerate('channelizer')` is the documented call, and it went inside AMD's code
 
 UG1259 shows exactly the call this builder makes:

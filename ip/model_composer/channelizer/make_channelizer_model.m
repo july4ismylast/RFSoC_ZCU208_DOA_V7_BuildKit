@@ -241,6 +241,11 @@ applyParam(hub, 'ClockFrequency', num2str(settings.sampleHz / 1e6));
 applyParam(hub, 'SamplePeriod', '-1');
 applyParam(hub, 'sysclk_period', num2str(1e9 / settings.sampleHz));
 applyParam(hub, 'simulink_period', '1');
+% xmcGenerate indexed an empty array until these two were set: the Hub keeps
+% them next to IPInfoJsonString, and a live run reported both EMPTY even though
+% the JSON string was correct.
+applyParam(hub, 'SubsystemName', 'channelizer_dut');
+applyParam(hub, 'IpName', 'channelizer_dut');
 applyParam(hub, 'IPInfoJsonString', sprintf(['{"HDLSubsystem":{' ...
     '"SubsystemName":"channelizer_dut","IPName":"channelizer_dut",' ...
     '"IPLibrary":"model_composer","IPVendor":"doa.v7","IPVersion":"1.0"}}']));
