@@ -56,6 +56,7 @@ help:
 	@echo "Multi-source study:  make multisource-df"
 	@echo "1-50 MHz 8-target:   make narrowband-targets"
 	@echo "Decoy discrimination:make decoy-df"
+	@echo "Radar + decoy:       make radar-decoy"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -236,13 +237,14 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
 	@python3 scripts/multisource_capacity.py
 	@python3 scripts/narrowband_targets.py
 	@python3 scripts/decoy_discrimination.py
+	@python3 scripts/radar_decoys.py
 
 wideband-df:
 	@python3 scripts/compare_wideband_estimators.py
@@ -261,6 +263,11 @@ narrowband-targets:
 # carrier/angle/coherence/joint-ML ladder and the case that cannot be solved.
 decoy-df:
 	@python3 scripts/decoy_discrimination.py
+
+# Section 13.7 of V07: the source is a radar (transmit + receive), so the decoy
+# must hear the pulse first -- leading-edge gate, the tail, and the delay.
+radar-decoy:
+	@python3 scripts/radar_decoys.py
 
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py

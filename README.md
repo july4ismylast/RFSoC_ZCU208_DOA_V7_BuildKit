@@ -108,8 +108,24 @@ DOA that wobbles across the band (43.8° rms against 0.31° for a clean emitter)
 and a cepstrum ripple whose period is the delay (101 ns recovered from 100 ns),
 and then *resolved* by a two-path ML with the delay searched jointly: both
 directions correct in 100% of trials at 20–50 MHz bandwidth on the shipped 2×2,
-0% at 1 MHz. A decoy that is co-located, co-carrier and zero-delay is not
-distinguishable on this hardware, and the document says so.
+0% at 1 MHz.
+
+If the protected emitter is a **radar** — it transmits *and* receives — the
+problem is easier and the answer changes (V07 §13.7, `make radar-decoy`). A decoy
+has to hear a pulse before it can repeat it, so the repeat is always later than
+the direct path by at least its turnaround: the triangle inequality plus a
+non-negative processing delay. The first tens of nanoseconds of every pulse
+therefore carry the radar alone, and its DOA from a 20–100 ns window is
+0.09–0.79° where the whole-pulse method is 12–16° wrong; ±2 ns of edge jitter
+still gives 0.22°. After the pulse ends, whatever is still on the air is the
+decoy, for exactly the delay it inserted: the tail measures the decoy's own
+direction (39.6° for a decoy at 40°) with no model at all. A Doppler pull-off
+leaves the gate at 0.19–0.36°. The half-sample delay read off the leading edge
+is also what the two-path ML needs: with it, 5–50 MHz emitters resolve both
+directions exactly, without the blind search that only works at 25–100%. A
+co-located, zero-delay decoy — unsolvable for a continuous emitter — is
+separated here in *time*; a continuous-wave source has no leading edge and falls
+back to the rungs above.
 
 ## Accuracy statement
 

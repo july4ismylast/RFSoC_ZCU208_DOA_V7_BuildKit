@@ -32,6 +32,7 @@ by a script in this repository, or explicitly marked unproven.
 | Amplitude-assisted "face selection" | **ADOPT, restated** — amplitude resolves only the ±45° quadrant; it cannot resolve an interferometer ambiguity | §5.5 |
 | MUSIC / CSSM | **DEFER for one emitter; needed only for co-channel sources** — eight *co-channel* emitters need 36 elements (2×2 finds 1.2 of 8), but eight 1–50 MHz emitters at different carriers are separated by the channelizer and the shipped 2×2 detects 8.0 of 8 | §9, §12.1, §12.4 |
 | One protected emitter behind decoys | **ADOPT a ladder, cheapest rung first, and state the rung that fails** — off-carrier decoys cost 0.00° (the channelizer counts them, 1/2/4/7 clusters); independent co-channel decoys need more than four elements (0.4 of 2 found); a coherent repeater is *detected* by a DOA wobble of 43.8° rms against 0.31° clean and a cepstrum peak of 101 ns from a true 100 ns, then *resolved* by a joint delay+angle ML that recovers both directions 100 % at 20–50 MHz and 0 % at 1 MHz; a co-located zero-delay decoy is indistinguishable and is reported as such | §13 |
+| The protected emitter is a **radar** (transmit + receive) | **ADOPT time ordering ahead of every spectral rung** — a decoy must hear the pulse before repeating it, so the repeat is always later by at least its turnaround: the leading edge gives the radar's direction to 0.09–0.79° where the whole-pulse method is 12–16° wrong, the tail gives the decoy's direction (39.6° for 40°) plus the delay, a Doppler pull-off changes neither, and the half-sample delay from the edge makes the two-path ML exact at 5–50 MHz without a search | §13.7 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
 
@@ -1080,6 +1081,13 @@ So two questions have to be answered separately:
 1. **which** of the received signals is the source and which are decoys;
 2. how to get the **direction** of the source once the decoys are in the band.
 
+**If the protected source is a radar — it transmits and receives — read §13.7
+first.** A decoy has to hear the pulse before it can repeat it, which gives an
+arrival-time ordering no decoy can beat; that single fact beats every rung in the
+table below, needs no coherence model, and even separates the co-located
+zero-delay decoy that §13.5 calls impossible on this hardware. The rungs below
+are what remains for a continuous emitter.
+
 The answer is a ladder of discriminators, cheapest first. Each rung below has a
 number measured in this repository
 (`scripts/decoy_discrimination.py` →
@@ -1093,7 +1101,7 @@ runs: 2×2 at 30 mm, 2.500 GHz, az +10° (the protected emitter), 20 dB/bin,
 | 1 | **carrier** — the 1024-band channelizer | nothing new | 0/1/3/6 off-carrier decoys → 1/2/4/7 clusters, source error ≤ 0.07° | the decoy sits inside the source's own 1–50 MHz |
 | 2 | **angle** — per-bin interferometry or MUSIC | angular separation, and > M elements for co-channel | independent co-channel decoy: 0.4 of 2 found on 2×2, 2.0 on 3×3 | the decoy is coherent with the source (rank 1) |
 | 3 | **coherence** — wobble across the band + cepstrum ripple | a *wideband* emitter (several bins) | wobble 43.8° rms vs 0.31° clean; delay 101 ns from 100 ns, peak/median 11 vs 2 | the emitter fills ≤ 1 bin, or the delay is zero |
-| 4 | **joint delay + angle ML** — recover *both* paths | ≥ 10 bins and the 2×2 is enough | both directions correct in 100 % at 20 and 50 MHz, 0 % at 1 MHz | narrowband, > 2 paths, co-located zero-delay decoy |
+| 4 | **two-path ML** — recover *both* paths | ≥ 3 bins **and a measured delay** (0.5 ns); the 2×2 is enough | both directions 100 % at 5, 20 and 50 MHz with the delay known to 0.5 ns, 0 % at 1 MHz; a blind delay search only reaches 25–100 % | one bin, > 2 paths, > 5 ns of delay error at 20–50 MHz |
 | 5 | **kinematics** — tracks that diverge | a tracker (this kit has none in evidence) | **not simulated — unproven** | decoy manoeuvres with the source |
 
 ### 13.1 Rung 1: the carrier costs nothing
@@ -1173,45 +1181,58 @@ flagged as the reason not to throw bins away.
 
 Detecting the repeater is not the same as measuring the source. Since the two
 paths are rank 1 per bin, no per-bin estimator separates them; but the *delay*
-is known from rung 3, and that is the extra dimension four elements lack. In bin
-*k* the spatial vector is
+supplies the one piece of information four elements lack — how the relative
+phase between the two paths changes across the band. In bin *k* the spatial
+vector is
 
 ```
-v_k  ∝  a(θ_src) + g·exp(−j2π f_k τ)·a(θ_decoy)   ×  unknown complex amplitude
+v_k  ∝  a(θ_src) + g·exp(−j2π(f_k − f_c)·τ)·a(θ_decoy)   ×  unknown complex amplitude
 ```
 
-so a two-path ML over (θ_src, θ_decoy, g) with τ known resolves both. Emitter at
-az 8°, repeater at az 37°, equal power, 100 ns, 1° search grid:
+with **g complex**. That detail matters and cost one round of measurements: an
+earlier version of this estimator put the whole relative phase on τ (real *g*)
+and was measured to collapse as soon as the delay was 0.1 ns off, because
+2π·f_c·Δτ is then already 1.57 rad. Physically that is wrong — the decoy's own
+amplifier and cable lengths add a phase the delay cannot predict — so the
+correct model lets the delay set only the *slope* and leaves the absolute phase
+free. Signal model, 2×2 at 30 mm, emitter az 8°, repeater az 37°, equal power,
+1° search grid:
 
-| array | path 1 | path 2 | simultaneous hits (< 3° each) |
+| array | delay given | path 1 | path 2 | simultaneous hits (< 3° each) |
+|---|---|---|---|---|
+| 2×2 @ 30 mm | true | 8.0° | 37.0° | **100 %** |
+| 3×3 @ 30 mm | true | 8.0° | 37.0° | 100 % |
+
+The shipped four elements are enough, because 26 bins of frequency diversity
+substitute for elements. What the delay has to be is set by the *band*, not by
+the carrier — measured with the delay handed in deliberately wrong:
+
+| bandwidth | bins | delay error 0.5 ns | delay error 5 ns |
 |---|---|---|---|
-| 2×2 @ 30 mm | 8.0° | 37.0° | **100 %** |
-| 3×3 @ 30 mm | 8.0° | 37.0° | 100 % |
+| 1 MHz | 1 | 0 % | 6 % |
+| 5 MHz | 3 | **100 %** | 100 % |
+| 20 MHz | 10 | **100 %** | 0 % |
+| 50 MHz | 26 | **100 %** | 0 % |
 
-The shipped four elements are enough — because 26 bins of frequency diversity
-substitute for elements. Two caveats, both measured:
+So the tolerance is about 1/(10·bandwidth): half a nanosecond at 50 MHz, a few
+nanoseconds at 20 MHz. Half a sample at 2 GS/s meets it — and §13.7 shows how a
+pulsed radar hands you exactly that number, for free, before any spectral
+processing. **A 1 MHz emitter is still out of reach**: one bin carries no
+frequency diversity, the ML surface is flat to 1e-5, and no delay fixes that.
 
-* **The delay must be right to about 1 ns.** Handing the search a delay scaled
-  by 1.01 (i.e. 1 ns of the 100 ns) drops it to 0 %: the relative phase across
-  the band fixes the topology, and 1 ns of the 20 ns delay resolution of a
-  50 MHz band is already too much. The cepstrum peak is a confirmatory alarm,
-  not a precise enough seed.
-* **So the delay must be estimated jointly.** Searching 42 delay hypotheses
-  (0–300 ns coarse at 10 ns, then ±10 ns at 2 ns) together with both angles
-  needs no prior at all:
+Searching the delay *blindly* is the weaker option (42 hypotheses, 0–300 ns
+coarse at 10 ns then ±10 ns at 2 ns, 5.3 s per scene on one numpy core):
 
 | emitter bandwidth | bins | delay found | path 1 / path 2 | simultaneous hits |
 |---|---|---|---|---|
-| 1 MHz | 1 | 152 ns (wrong) | 8.2° / 36.8° | **0 %** |
+| 1 MHz | 1 | 0 ns | 17.5° / 29.0° | **0 %** |
 | 5 MHz | 3 | 117 ns | 9.8° / 35.0° | 25 % |
 | 20 MHz | 10 | 100 ns | 8.0° / 37.0° | **100 %** |
 | 50 MHz | 26 | 100 ns | 8.0° / 37.0° | **100 %** |
 
-That is the honest boundary of the whole method: **it is a wideband method.**
-A 1 MHz emitter lands in one 1.953 MHz bin, the ripple disappears, and four
-elements have no other handle on a coherent decoy. For a narrowband source the
-answer stays at rung 3's alarm ("a second path is present") without a recovered
-direction, or moves to more elements.
+A blind search maximises a statistic that is not comparable across delay
+hypotheses, so it over-fits: 25 % at 5 MHz where a measured delay gives 100 %.
+Measure the delay, do not search it.
 
 ### 13.5 The case that cannot be solved on this hardware
 
@@ -1230,26 +1251,37 @@ collect:
   to separate the two emitters in range, not in angle.
 
 Claiming otherwise would be exactly the kind of unproven claim this document
-refuses to make.
+refuses to make — **for a continuous emitter**. If the protected source is a
+radar, §13.7 replaces this paragraph: the decoy still has to receive before it
+can repeat, so a co-located decoy is separable *in time* (the leading edge of the
+pulse carries the radar alone), which is the case the rest of this section could
+not solve.
 
 ### 13.6 What to run, and what it costs
 
-Runtime order for the operator (all of it is a runtime choice, no hardware
-change):
+Runtime order for the operator (all of it a runtime choice, no hardware change):
 
 1. cluster the channelizer bins by power — one cluster per carrier (rung 1);
-2. for the cluster the operator designates as priority, fit the per-bin DOA
-   curve; a residual above ~5° rms from a straight line raises the repeater flag
-   (§13.3), otherwise report the fit and stop;
-3. if flagged, run the joint delay + angle search over 42 delay hypotheses and
-   report **two** directions, with the delay that explains the ripple;
-4. if the search returns one path only, say so — that is the §13.5 case.
+2. **is the source pulsed?** Look for pulse edges on the raw 2 GS/s stream. If
+   yes, §13.7 is the whole answer and it is cheaper than everything below: DOA
+   from the first tens of nanoseconds of each pulse, and the decoy's DOA from
+   the tail after the pulse ends;
+3. if the source is continuous, fit the per-bin DOA curve of the priority
+   cluster; a residual above ~5° rms from a straight line raises the repeater
+   flag (§13.3), otherwise report the fit and stop;
+4. if flagged, run the two-path ML **with a measured delay** (§13.4) and report
+   two directions; a blind delay search is the fallback, at 25 % where a
+   measured delay gives 100 %;
+5. if only one path survives the fit, say so — that is the §13.5 case.
 
-Cost, measured on the host: ≈ 5 s per scene per numpy core for 42 delay
-hypotheses × 61 angles × 3 gains × 26 bins (≈ 7 700 model evaluations). The
-per-bin cross-spectrum and curve fit of steps 1–2 are already in
-`ip/custom/phase_interf_4ch`; steps 3–4 are **host models only** — no PL
-implementation, no resource estimate, and gate G2/G4 untouched by this section.
+Cost, measured on the host: 0.15 s per delay hypothesis per numpy core
+(61 angles × 3 gain magnitudes × 8 phases × 26 bins, fully vectorised over the
+angle pairs), so 5.3 s for the 42-hypothesis blind search. The pulse-edge gate of
+step 2 is a threshold crossing plus one 4×4 covariance — negligible. The per-bin
+cross-spectrum and curve fit of steps 3–4 are already in
+`ip/custom/phase_interf_4ch`; the gate, the tail and the ML are **host models
+only** — no PL implementation, no resource estimate, and gates G2/G4 untouched
+by this section.
 
 **Caveats for the whole section.** Everything is a host simulation of per-bin
 cross-spectra: two paths only, equal power, identical bandwidth, no mutual
@@ -1259,6 +1291,110 @@ the same 20 dB/bin SNR in every bin. Real calibration error (±0.5 dB / ±5° pe
 thresholds (4× median-power cluster, peak/median ≥ 5 cepstrum) are rules of
 thumb, not CFAR with a measured false-alarm rate. Nothing here has been run on
 an RFSoC.
+
+### 13.7 If the source is a radar: the first arrival, and the tail
+
+Everything above assumed a continuous emitter. The requirement is a radar: it
+transmits and receives, which means it emits pulses, which means **a decoy has
+to hear the pulse before it can repeat it**. That single fact decides both
+questions, and no spectral processing is needed to use it
+(`scripts/radar_decoys.py` →
+[`radar_decoys.txt`](docs/evidence/2026-11-06-phase-interf/radar_decoys.txt)).
+
+**Why the ordering cannot be beaten.** Radar at range *R* = 5 km, decoy at
+range *r* from the array, turnaround τ:
+
+| decoy position | path (m) | repeat arrives after the direct path by |
+|---|---|---|
+| on the axis, 500 m out | 5 000 | τ (+ 0 path excess) |
+| on the axis, 2 000 m out | 5 000 | τ (+ 0) |
+| 60° off-axis, 1 000 m | 5 583 | 2 043 ns |
+| 90° off-axis, 300 m | 5 309 | 1 131 ns |
+
+The path excess is the triangle inequality and cannot be negative; the
+turnaround is never negative either. So the repeat is *always* later, by at
+least the decoy's processing delay — and a 100 ns turnaround is **200 samples at
+2 GS/s**. This is the resolution the channelizer throws away: bins of 1.953 MHz
+cannot see a delay below 256 ns (§13.3), while the raw samples see 0.5 ns.
+
+**Rung A — the leading edge.** The first instants of every pulse carry the radar
+and nothing else. 50 MHz LFM over 1 µs at 2 GS/s, coherent repeater at az 40°,
+equal power, 0 dB per sample, 64 pulses, 2×2 at 30 mm, azimuth error in degrees:
+
+| delay | whole pulse (§13.3 method) | gate W = τ/2 | gate W = τ | gate W = 2τ |
+|---|---|---|---|---|
+| 20 ns | 14.07 | 0.79 | **0.44** | 9.15 |
+| 50 ns | 15.78 | 0.39 | **0.22** | 9.55 |
+| 100 ns | 12.28 | 0.46 | **0.29** | 9.23 |
+| 200 ns | 15.48 | 0.18 | **0.09** | 9.18 |
+
+The whole-pulse column is exactly the §13.3 failure — two coherent paths pulling
+the answer 12–16° off — and the gate removes it while it stays inside the dead
+time. Over-running to W = 2τ lets the repeat in and the error returns to ~9°.
+With a ±2 ns error on the edge position the 100 ns gate still measures 0.22°.
+
+How much window is enough (RMSE in degrees, delay 100 ns):
+
+| per-sample SNR | W = 5 ns | 10 ns | 20 ns | 50 ns | 100 ns |
+|---|---|---|---|---|---|
+| −10 dB | 6.61 | 4.45 | 2.89 | 2.20 | 2.46 |
+| 0 dB | 1.56 | 0.91 | 0.52 | 0.49 | 0.21 |
+| +10 dB | 0.47 | 0.37 | 0.21 | 0.20 | 0.12 |
+
+Shortening the window costs SNR, not truth: at 0 dB per sample, 20 ns (40
+samples) is already under a degree, and 20 ns is five times shorter than the
+dead time a 100 ns DRFM needs. Only a pathologically fast decoy (τ ≈ 1 ns) needs
+the 5 ns window, and then it needs a strong direct path.
+
+**Rung B — the tail.** After the radar stops transmitting, whatever is still on
+the air belongs to the decoy, for exactly τ. That is the decoy's own direction,
+measured directly, with no model at all (10 µs pulse, gate-free segment):
+
+| delay | tail length | tail azimuth | error |
+|---|---|---|---|
+| 20 ns | 20 ns | 39.3° | 0.67° |
+| 50 ns | 50 ns | 39.4° | 0.59° |
+| 100 ns | 100 ns | **39.6°** | 0.41° |
+| 200 ns | 200 ns | 39.4° | 0.59° |
+
+Truth is 40°. So one record gives both answers — the radar at +10° in the first
+100 ns of its own pulse, the decoy at 40° in the 100 ns after that pulse ends —
+and the delay falls out as the tail length.
+
+**A velocity pull-off changes neither.** A DRFM that also shifts Doppler to fake
+a velocity (0/100 kHz/1 MHz) leaves the leading edge at 0.19/0.36/0.33° while the
+whole-pulse method sits at 13.1/13.2/14.1°.
+
+**What the edge delay then buys the estimator.** The half-sample delay measured
+in rung A is what §13.4 needs; with it the two-path ML needs no search:
+
+| bandwidth | bins | delay error 0.5 ns | delay error 5 ns |
+|---|---|---|---|
+| 1 MHz | 1 | 0 % | 6 % |
+| 5 MHz | 3 | 100 % | 100 % |
+| 20 MHz | 10 | 100 % | 0 % |
+| 50 MHz | 26 | 100 % | 0 % |
+
+So the radar case closes the narrowband gap for 5 MHz and wider emitters, and
+makes the ML a deterministic evaluation instead of a search. It does not rescue
+1 MHz: one bin has no frequency diversity, but it no longer matters — rung A
+already gives the correct direction for a 1 MHz radar too, because the gate uses
+time, not bandwidth.
+
+**Where this fails, stated plainly.**
+
+* A **continuous-wave** source has no leading edge and no tail. §13.1–13.5 are
+  then all that exists, with the limits measured there.
+* The gate needs an **edge time reference**. It is a threshold crossing on the
+  direct path, measured to 0.22° with ±2 ns of jitter, but it assumes the direct
+  path is above the noise in a few samples. At −10 dB per sample that costs
+  2.9° (table above), so a weak direct path needs a longer window and therefore
+  a slower decoy.
+* A decoy that **does not have to hear the pulse** — a look-alike waveform
+  replayed from a library on its own schedule — breaks the ordering. It is then
+  an *independent* co-channel source, and §13.2 applies: 0.4 of 2 on the 2×2.
+* Everything here is LFM-modelled, equal power, no multipath, no calibration
+  error, and host-only. **G2–G6 are still not run.**
 
 ---
 
@@ -1272,6 +1408,7 @@ an RFSoC.
 | `scripts/compare_wpi_vs_music.py` | §10: interferometry vs wideband 2D MUSIC/ISSM, manifold-rank result, calibration and geometry sensitivity |
 | `scripts/compare_wideband_estimators.py` | §11: spacing rule for a square 2×2, five estimators over the full 2–4 GHz band, ambiguity/geometry/wrap studies |
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
+| `scripts/radar_decoys.py` | §13.7: the radar case — leading-edge gate vs whole-pulse DOA, window length vs SNR, the decoy's tail, Doppler pull-off, and the delay the edge hands the two-path ML |
 | `scripts/decoy_discrimination.py` | §13: one protected emitter behind decoys — carrier/angle/coherence discriminators, the cepstrum delay alarm, and the joint delay+angle ML that recovers both directions |
 | `scripts/narrowband_targets.py` | §12.4: eight 1–50 MHz targets at different carriers on the shipped 2×2 — detection, accuracy vs bandwidth and dwell, the co-channel failure, and the dwell the two accuracy classes need |
 | `ip/custom/phase_interf_4ch/` | per-bin cross-spectrum + CORDIC phase block, host test, HLS build |
@@ -1288,6 +1425,7 @@ make wideband-df                      # section 11 only, ~6 min
 make multisource-df                   # section 12.1-12.4, ~4 min
 make narrowband-targets               # section 12.4, ~10 s
 make decoy-df                         # section 13, ~1 min
+make radar-decoy                      # section 13.7, ~3 min
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md

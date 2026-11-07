@@ -1,5 +1,5 @@
 # one protected emitter at 2.5 GHz behind decoys
-# generated 2026-11-07T08:38:12Z
+# generated 2026-11-07T08:50:42Z
 # script: scripts/decoy_discrimination.py (python3 + numpy only)
 # source: 2.500 GHz, az +10 deg, el 0, 20 dB/bin, 64 snapshots per bin
 # array: 2x2 at 30 mm unless stated; seed=20261107, trials=16
@@ -68,10 +68,10 @@ Study E: can the pair be resolved anyway?  Yes -- using the delay
   Delay sensitivity (2x2@30 mm, delay handed in scaled by):
   delay in     both < 3 deg   path 1/2
   1.00x                100%   8/37 deg
-  1.01x                  0%  12/22 deg
+  1.01x                  0%  12/32 deg
   1.02x                  0%  19/25 deg
-  1.05x                  0%  19/27 deg
-  1.10x                  0%  18/27 deg
+  1.05x                  0%  14/31 deg
+  1.10x                  0%  20/24 deg
   The delay must be right to a small fraction of 1/bandwidth: the
   relative phase across the band fixes the topology and even 1% of
   delay error (1 ns) loses it, so a supplied delay has to be right to
@@ -86,7 +86,7 @@ Study F: the same search with NO delay supplied
   delay and both directions searched jointly -- 31 coarse + 11 fine
   delay hypotheses, 1 deg angle grid, per trial
   bandwidth      bins        delay   path 1   path 2   both < 3 deg
-  1 MHz             1       152 ns    8.2     36.8             0%
+  1 MHz             1         0 ns   17.5     29.0             0%
   5 MHz             3       117 ns    9.8     35.0            25%
   20 MHz           10       100 ns    8.0     37.0           100%
   50 MHz           26       100 ns    8.0     37.0           100%

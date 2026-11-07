@@ -176,15 +176,24 @@ def cepstrum_peak(power, bin_hz, max_delay_s=1e-6):
     return float(delays[peak]), ratio, np.abs(spectrum)
 
 
-def two_path_ml(data, freqs, positions, delay_s, gains=(0.6, 1.0, 1.6), grid_deg=2.0,
-                search_deg=60.0):
-    """Resolve BOTH directions of a source + repeater using the known delay.
+def two_path_ml(data, freqs, positions, delay_s, gains=(0.6, 1.0, 1.6),
+                phase_steps=8, grid_deg=2.0, search_deg=60.0):
+    """Resolve BOTH directions of a source plus a repeater, delay given.
 
-    Each bin k carries one spatial vector m_k = a(az1) + g*exp(-j2*pi*f_k*tau)*a(az2)
-    times an unknown complex amplitude, so the ML statistic for a candidate pair
-    is sum_k |m_k^H v_k|^2 / |m_k|^2, with v_k the dominant eigenvector of the
-    per-bin covariance. The delay supplies the extra dimension that four
-    elements do not have.
+    Model, physically: in bin k the spatial vector is
+
+        m_k = a(theta_1) + g * exp(-j*2*pi*df_k*tau) * a(theta_2)
+
+    with a COMPLEX g (magnitude and phase searched) and df_k measured from the
+    band centre. The delay therefore only sets the slope of the relative phase
+    across the band; its absolute value at the carrier is absorbed by g, which
+    is correct -- the decoy's own hardware adds an arbitrary phase that the
+    delay alone cannot predict. The first version of this estimator tied the
+    whole relative phase to tau (real g) and was measured to fail for a 0.1 ns
+    delay error, which is not a usable requirement.
+
+    Statistic: sum_k |m_k^H v_k|^2 / |m_k|^2, maximised over the pair of angles
+    for every (|g|, phase) hypothesis. Vectorised over all angle pairs.
     """
     vectors = []
     for index in range(len(freqs)):
@@ -193,24 +202,31 @@ def two_path_ml(data, freqs, positions, delay_s, gains=(0.6, 1.0, 1.6), grid_deg
         vector = eigenvectors[:, -1]
         vectors.append(vector * np.conj(vector[0]) / max(abs(vector[0]), 1e-12))
     vectors = np.array(vectors)
+    elements = positions.shape[0]
 
     azs = np.arange(-search_deg, search_deg + 1e-9, grid_deg)
-    steering_set = np.array([
-        [steering(u_of(az), freq, positions) for az in azs]
-        for freq in freqs])                       # (bins, az, elements)
-    ramp = np.exp(-1j * 2.0 * np.pi * freqs * delay_s)[:, None, None]
+    manifold = np.array([[steering(u_of(az), freq, positions) for az in azs]
+                         for freq in freqs])          # (bins, az, elements)
+    inner = np.einsum("bae,be->ba", manifold.conj(), vectors)   # (bins, az)
+    gram = np.einsum("bae,bfe->baf", manifold.conj(), manifold)  # (bins,az,az)
+    ramp = np.exp(-1j * 2.0 * np.pi * (freqs - np.mean(freqs)) * delay_s)
 
     best = (-np.inf, None, None, None)
-    for first in range(len(azs)):
-        for gain in gains:
-            model = steering_set[:, first:first + 1, :] + gain * ramp * steering_set
-            numerator = np.abs(np.sum(np.conj(model) * vectors[:, None, :], axis=2)) ** 2
-            denominator = np.sum(np.abs(model) ** 2, axis=2)
+    for magnitude in gains:
+        for step in range(phase_steps):
+            gain = magnitude * np.exp(1j * 2.0 * np.pi * step / phase_steps)
+            coefficient = gain * ramp
+            numerator = np.abs(inner[:, :, None]
+                               + np.conj(coefficient)[:, None, None]
+                               * inner[:, None, :]) ** 2
+            denominator = (elements * (1.0 + magnitude ** 2)
+                           + 2.0 * np.real(gram * coefficient[:, None, None]))
             statistic = np.sum(numerator / np.maximum(denominator, 1e-18), axis=0)
-            second = int(np.argmax(statistic))
-            if statistic[second] > best[0]:
-                best = (float(statistic[second]), float(azs[first]),
-                        float(azs[second]), float(gain))
+            flat = int(np.argmax(statistic))
+            first, second = np.unravel_index(flat, statistic.shape)
+            if statistic[first, second] > best[0]:
+                best = (float(statistic[first, second]), float(azs[first]),
+                        float(azs[second]), float(magnitude))
     return best[1], best[2], best[3], best[0]
 
 
