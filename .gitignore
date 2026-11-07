@@ -11,3 +11,6 @@ __pycache__/
 ip/custom/**/vitis_hls.log
 *.jou
 *.log
+
+# Scenes, captures and fixtures written by the step test benches
+step*/data/

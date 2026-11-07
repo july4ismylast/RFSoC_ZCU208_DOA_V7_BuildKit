@@ -1,0 +1,10 @@
+# The eight kernels of the PL, in pipeline order.
+# columns: name, folder, does, host_check (runs today), hls_command (needs Vitis HLS), gate
+name	folder	does	host_check	hls_command	gate
+rfdc_repack4	ip/custom/rfdc_repack4	2 GS/s x 4 real -> SSR complex, 558.8 Gb/s		make -C ip/custom/rfdc_repack4 hls	G2
+doa_subband_bridge_4ch	ip/custom/doa_subband_bridge_4ch	4-channel AXI-Stream bridge, bit exact	python3 ip/custom/doa_subband_bridge_4ch/verify_golden_model.py	make -C ip/custom/doa_subband_bridge_4ch ip	G1c / G4
+spectrum_power4	ip/custom/spectrum_power4	410 carriers, power per bin		make -C ip/custom/spectrum_power4 hls	G2
+candidate_peak4	ip/custom/candidate_peak4	peak + noise gate -> candidate bins		make -C ip/custom/candidate_peak4 hls	G2
+doa_covariance_4ch_v4	ip/custom/doa_covariance_4ch_v4	4096 snapshots -> 4x4 covariance, int64		make -C ip/custom/doa_covariance_4ch_v4 hls	G2
+phase_interf_4ch	ip/custom/phase_interf_4ch	cross-spectrum per bin + CORDIC phase	make -C ip/custom/phase_interf_4ch host-check	make -C ip/custom/phase_interf_4ch hls	G1a / G2 / G3
+beam_weight_4ch	ip/custom/beam_weight_4ch	optional beam weights		make -C ip/custom/beam_weight_4ch hls	G4

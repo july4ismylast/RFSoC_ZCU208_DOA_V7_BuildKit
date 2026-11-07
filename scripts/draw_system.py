@@ -30,15 +30,15 @@ DEFAULT_OUT = os.path.join(ROOT, "docs", "diagrams")
 W, H = 100.0, 166.0
 
 ZONES = {
-    "rf": (1.0, 138.0, 98.0, 18.0, "1  RF FRONT END  (board)",
+    "rf": (1.0, 138.0, 98.0, 18.0, "1  RF FRONT END  (board)   —   step0_antenna · step1_rfadc_mts",
            "#fff4e6", "#e8a33d"),
-    "pl": (1.0, 100.0, 98.0, 35.0, "2  PROGRAMMABLE LOGIC  (XCZU48DR, 4.0 ns clock)",
+    "pl": (1.0, 100.0, 98.0, 35.0, "2  PROGRAMMABLE LOGIC  (XCZU48DR, 4.0 ns clock)   —   step2_pl_ip",
            "#eaf2fb", "#3d7ec0"),
-    "r5": (1.0, 51.0, 98.0, 46.0, "3  PS / RPU  Cortex-R5F, bare metal  —  the decision surface",
+    "r5": (1.0, 51.0, 98.0, 46.0, "3  PS / RPU  Cortex-R5F, bare metal   —   step3_r5_doa · step4_r5_amc · step5_r5_tracking",
            "#eaf7ee", "#3f9a5b"),
-    "a53": (1.0, 24.0, 98.0, 24.0, "4  PS / APU  Cortex-A53, Linux  —  supervision",
+    "a53": (1.0, 24.0, 98.0, 24.0, "4  PS / APU  Cortex-A53, Linux   —   step6_ps_linux",
             "#f3edfa", "#7c5cb0"),
-    "host": (1.0, 4.0, 98.0, 16.0, "5  HOST  (no licence)  —  every green result in this repository",
+    "host": (1.0, 4.0, 98.0, 16.0, "5  HOST  (no licence)   —   every green result in this repository   ·   step7_board_bringup = the open gates",
              "#f2f2f2", "#666666"),
 }
 
@@ -52,7 +52,7 @@ def zone(ax, key):
     ax.add_patch(patches.FancyBboxPatch(
         (x, y), w, h, boxstyle="round,pad=0.3,rounding_size=1.2",
         linewidth=1.2, edgecolor=edge, facecolor=face, zorder=1))
-    ax.text(x + 0.7, y + h - 1.0, label, fontsize=9.5, fontweight="bold",
+    ax.text(x + 0.7, y + h - 1.0, label, fontsize=8.6, fontweight="bold",
             color=edge, ha="left", va="center", zorder=5)
 
 

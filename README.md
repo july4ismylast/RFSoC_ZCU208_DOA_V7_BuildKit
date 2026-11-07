@@ -184,7 +184,32 @@ If the constant is the **modulation**, the label needs an automatic classifier (
 
 All of it is one **policy**, and the policy is a ladder (V07 §19, `make policy`): `mod → direction → bandwidth → cadence → [cepstrum]`, each rung applied to the cells the previous one left. Measured over six scenes, each rung solves exactly one scene and removing any rung loses exactly that scene: different modulation 100 % on the label alone, same modulation with different directions 100 % on direction alone, a bandwidth-only pair and a cadence-only pair likewise. A pair with the same modulation *and* the same direction must **not** be split — one cell is the correct answer — and when one of the two is a repeater, the cell is flagged by a verification index (cepstrum) that reports two arrivals 100 ns apart, 97 % of the time with a 0 % false-alarm rate, and never invents a partition. `--policy` replaces the ladder, and the report says what the replacement costs.
 
-The modulation label is the one algorithm that runs on the **RPU** (V07 §20, `make amc-port`, [`docs/AMC_ON_R5.md`](docs/AMC_ON_R5.md)): six features, one 1024-point FFT, nearest class mean, no allocation — the MATLAB source (`matlab_v7/classify_modulation.m`) is compiled by Embedded Coder for `ARM Cortex-R`, and the C firmware the RPU links is verified on the host against the same model: 100 % label agreement on 120 bursts, worst feature error 1.4e-5 in single precision, accuracy identical to the model (72.5 %). Embedded Coder and the board are gates G8b/G8c, not claims. The whole machine on one page, as a figure ([PNG](docs/diagrams/system_block.png), [SVG](docs/diagrams/system_block.svg), `make diagram`), is is [`docs/SYSTEM_BLOCK_DIAGRAM.md`](docs/SYSTEM_BLOCK_DIAGRAM.md); every gate with its blocker is [`docs/GATES_G1_G7.md`](docs/GATES_G1_G7.md); every algorithm with its evidence is [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md).
+The modulation label is the one algorithm that runs on the **RPU** (V07 §20, `make amc-port`, [`docs/AMC_ON_R5.md`](docs/AMC_ON_R5.md)): six features, one 1024-point FFT, nearest class mean, no allocation — the MATLAB source (`matlab_v7/classify_modulation.m`) is compiled by Embedded Coder for `ARM Cortex-R`, and the C firmware the RPU links is verified on the host against the same model: 100 % label agreement on 120 bursts, worst feature error 1.4e-5 in single precision, accuracy identical to the model (72.5 %). Embedded Coder and the board are gates G8b/G8c, not claims. The whole machine on one page, as a figure ([PNG](docs/diagrams/system_block.png), [SVG](docs/diagrams/system_block.svg), `make diagram`), is [`docs/SYSTEM_BLOCK_DIAGRAM.md`](docs/SYSTEM_BLOCK_DIAGRAM.md); every gate with its blocker is [`docs/GATES_G1_G7.md`](docs/GATES_G1_G7.md); every algorithm with its evidence is [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md).
+
+## The eight steps, one folder each
+
+The repository is also organised the way you build it — eight folders in signal
+order, each with a `GUIDE.md` (formulas, what to implement, what fails), the
+MATLAB, the C or the python, and a test bench that runs:
+
+| folder | you get | bench |
+|---|---|---|
+| `step0_antenna/` | the 2×2 array, the ambiguity limit, and the scene files everything else is tested on | `PASS 7/7` |
+| `step1_rfadc_mts/` | the 64 kB capture record, 12-bit quantiser, **0.73 ps** MTS skew budget, loopback | `PASS 5/5` |
+| `step2_pl_ip/` | the eight HLS kernels, the exact `vitis_hls` command for each, Q13 fixed-point budget | `PASS 3/3` |
+| `step3_r5_doa/` | **WPI → ML → Gauss–Newton** on the R5F in C, with the numpy reference | `PASS 6/6` |
+| `step4_r5_amc/` | the classifier, MATLAB → Embedded Coder → C, both builds | `PASS 5/5` |
+| `step5_r5_tracking/` | the ladder, the track store, the decoy check | `PASS 7/7` |
+| `step6_ps_linux/` | the A53 supervisor, cross-compile and systemd instructions | `PASS 5/5` |
+| `step7_board_bringup/` | the 12-command checklist and every gate still open | `PASS 5/5` |
+
+```bash
+make steps     # all eight, ~40 s, no licence, no board
+```
+
+[`STEPS.md`](STEPS.md) is the map, and it also lists every command that has been
+written but never run, with what each one needs. `make tools` prints where those
+tools would have to be on your machine.
 
 ## Accuracy statement
 

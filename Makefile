@@ -65,6 +65,8 @@ help:
 	@echo "Association policy:  make policy"
 	@echo "AMC on the R5 (G8a): make amc-port"
 	@echo "What is installed:   make tools   (or: make tools MATLAB=1)"
+	@echo "Every step bench:    make steps"
+	@echo "Bring-up checklist:  bash step7_board_bringup/checklist.sh"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -235,6 +237,14 @@ $(STAMP_DIR)/step15_package.done: scripts/package_release.sh config.mk scripts/r
 matlab-lint:
 	@if command -v mh_lint >/dev/null 2>&1; then \
 	    mh_lint --brief matlab_v7/PhaseInterferometryEstimator.m \
+	        step0_antenna/matlab/step0_antenna_model.m \
+	        step0_antenna/matlab/step0_make_scene.m \
+	        step1_rfadc_mts/matlab/step1_capture_header.m \
+	        step2_pl_ip/matlab/step2_fixed_point_budget.m \
+	        step3_r5_doa/matlab/step3_doa_from_capture.m \
+	        step4_r5_amc/matlab/step4_classify_burst.m \
+	        step4_r5_amc/matlab/step4_build_r5.m \
+	        step5_r5_tracking/matlab/step5_ladder_costs.m \
 	        matlab_v7/phase_from_cordic_q13.m \
 	        matlab_v7/verify_phase_interferometry_2x2.m \
 	        matlab_v7/classify_modulation.m matlab_v7/amc_features.m \
@@ -248,7 +258,7 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters policy amc-port amc-export tools diagram
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters policy amc-port amc-export tools diagram steps scenes step0 step1 step2 step3 step4 step5 step6 step7
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
@@ -334,6 +344,34 @@ tools:
 # The diagram of record: docs/diagrams/system_block.png and .svg
 diagram:
 	@python3 scripts/draw_system.py
+
+# ---------------------------------------------------------------------------
+# The eight step folders.  `make steps` runs every test bench in order; each
+# step also has its own target, so a reader can run one thing.
+# ---------------------------------------------------------------------------
+.PHONY: steps step0 step1 step2 step3 step4 step5 step6 step7 scenes
+steps: step0 step1 step2 step3 step4 step5 step6 step7
+	@echo "all eight test benches passed"
+
+scenes:
+	@python3 step0_antenna/py/make_scenes.py
+
+step0:
+	@python3 step0_antenna/testbench/run_testbench.py
+step1:
+	@python3 step1_rfadc_mts/testbench/run_testbench.py
+step2:
+	@python3 step2_pl_ip/testbench/run_testbench.py
+step3:
+	@python3 step3_r5_doa/testbench/run_testbench.py
+step4:
+	@python3 step4_r5_amc/testbench/run_testbench.py
+step5:
+	@python3 step5_r5_tracking/testbench/run_testbench.py
+step6:
+	@python3 step6_ps_linux/testbench/run_testbench.py
+step7:
+	@python3 step7_board_bringup/testbench/run_testbench.py
 
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
