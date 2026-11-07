@@ -44,6 +44,7 @@ calls = { ...
     {'xmcHubInit', {hub}};
     {name, {model, 'closeProgressWindow', 1}};
     {'xmcApplyButtonClick', {hub}};
+    {'xmcGenerateButtonPressed', {getSimulinkBlockHandle(hub)}};
     {name, {model, 'closeProgressWindow', 1}}};
 
 for index = 1:size(calls, 1)
@@ -66,13 +67,16 @@ for index = 1:size(calls, 1)
         reassertHub(hub);
     end
     try
-        status = feval(entry, shapeArgs{:});
-        printStatus(status);
         if strcmp(entry, name)
+            status = feval(entry, shapeArgs{:});
+            printStatus(status);
             fprintf('%s returned\n', entry);
             return;
         end
-        % A GUI helper ran; the generate call that follows it decides the outcome.
+        % GUI callbacks return nothing: asking for an output made every one of
+        % them fail with "Too many output arguments", which looked like the
+        % functions being unusable.  Call them the way the GUI calls them.
+        feval(entry, shapeArgs{:});
         fprintf('  %s ran\n', entry);
     catch problem
         fprintf(2, '  %s failed: %s\n', shape, problem.message);

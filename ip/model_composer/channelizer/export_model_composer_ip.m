@@ -53,6 +53,7 @@ fprintf('export target:  %s\n', target);
 
 checkSubsystemName(model, generator{1});
 makeDirParametersAbsolute(generator{1}, folder);
+groundUnconnectedInputs(generator{1}, model);
 
 [name, available] = mc_generate_function();
 fprintf('generate entry: %s\n', available{:});
@@ -236,4 +237,38 @@ end
 function yes = isAbsolute(path)
 %ISABSOLUTE True for a path that starts at the filesystem root.
 yes = ~isempty(path) && (path(1) == '/' || (numel(path) > 1 && path(2) == ':'));
+end
+
+function groundUnconnectedInputs(hub, model)
+%GROUNDUNCONNECTEDINPUTS Give every Hub input a signal.
+%   The example's Hub has two data inputs, driven by blocks of AMD's design; the
+%   graft deletes those blocks, leaving the ports unconnected.  Whatever the engine
+%   walks when it looks for sources then comes back empty -- the same empty array
+%   that produces the index error.  Constants cost nothing and remove the
+%   possibility.
+ports = get_param(hub, 'PortHandles');
+for index = 1:numel(ports.Inport)
+    line = get_param(ports.Inport(index), 'Line');
+    if line ~= -1
+        continue;
+    end
+    path = sprintf('%s/HubInput%d', model, index);
+    if getSimulinkBlockHandle(path) == -1
+        add_block('built-in/Constant', path, 'Position', ...
+            [20, 220 + 40 * index, 60, 240 + 40 * index]);
+        try
+            set_param(path, 'Value', '0', 'SampleTime', '1', ...
+                'OutDataTypeStr', 'double');
+        catch problem
+            fprintf('  note: could not set %s: %s\n', path, problem.message);
+        end
+    end
+    try
+        add_line(model, sprintf('HubInput%d/1', index), ...
+            sprintf('%s/%d', hub, index), 'autorouting', 'on');
+    catch problem
+        fprintf('  note: could not drive Hub input %d: %s\n', index, problem.message);
+    end
+end
+fprintf('Hub inputs: %d, each driven\n', numel(ports.Inport));
 end

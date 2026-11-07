@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-libs mc-probe mc-eval mc-shell-help graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -74,6 +74,7 @@ help:
 	@echo "AMD 2023.2 example:  make mc-example   (reference only, not committed)"
 	@echo "Blocks not found:    make mc-libs      (where the libraries are)"
 	@echo "What can this run:   make mc-probe     (Hub parameters, generate entry)"
+	@echo "IP without Model Composer: make ip-from-hdl (packages channelizer_dut.v)"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
@@ -232,6 +233,18 @@ mc-shell-help:
 
 # What can this installation actually run?  Libraries, generate entry points,
 # every Hub mask parameter and its value.
+# Package the hand-written Verilog as an IP Catalog component (no Model Composer).
+ip-from-hdl:
+	@mkdir -p "$(IP_REPO)" "$(LOG_DIR)"
+	@echo "packaging ip/model_composer/channelizer/channelizer_dut.v as an IP"
+	@IP_REPO="$(IP_REPO)" MC_PART="$(PART)" $(VIVADO) -mode batch -notrace \
+		-source scripts/package_channelizer_ip.tcl \
+		-log $(LOG_DIR)/package_channelizer_ip.log \
+		-journal $(LOG_DIR)/package_channelizer_ip.jou
+	@test -f $(IP_REPO)/channelizer_ip/component.xml \
+		&& echo "IP_PACKAGE_OK $(IP_REPO)/channelizer_ip/component.xml" \
+		|| (echo "packaging failed; see $(LOG_DIR)/package_channelizer_ip.log"; exit 1)
+
 mc-probe:
 	@./scripts/mc_eval.sh "mc_probe_generate"
 
