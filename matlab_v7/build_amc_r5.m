@@ -45,7 +45,14 @@ cfg.GenCodeOnly = true;              % Embedded Coder: sources + makefile
 % The target is the ZynqMP RPU: Cortex-R5F, little endian, single-precision FPU
 % only. Double arithmetic is soft-float there, which is why the default build
 % of firmware/amc_r5 uses float accumulators.
-cfg.HardwareImplementation.ProdHWDeviceType = 'ARM Compatible->ARM Cortex-R';
+%
+% 'ARM Compatible->ARM Cortex-R' is a generic device description: it does NOT
+% need the "Embedded Coder Support Package for ARM Cortex-R Processors" (that
+% package adds the on-target / PIL deployment path). With coder.config('lib')
+% and GenCodeOnly the sources are produced for any release that knows the
+% device type, and armr5-none-eabi-gcc does the actual ARM build.  The device
+% type is chosen in the loop below, so a release that does not accept the
+% Cortex-R entry falls back instead of stopping the build.
 cfg.HardwareImplementation.ProdEndianess = 'LittleEndian';
 cfg.HardwareImplementation.ProdBitPerChar = 8;
 cfg.HardwareImplementation.ProdBitPerShort = 16;
@@ -60,9 +67,29 @@ cfg.SupportNonFinite = false;        % a NaN label is worse than a wrong label
 burst = coder.typeof(single(complex(0, 0)), [1024 1], [0 1]);
 arg = {burst, coder.Constant(int32(4))};
 
-fprintf('Embedded Coder -> %s\n', outdir);
-codegen('-config', cfg, 'classify_modulation', '-args', arg, ...
-        '-d', outdir, '-report');
+device_types = {'ARM Compatible->ARM Cortex-R', ...
+                'ARM Compatible->ARM Cortex', ...
+                'Unspecified (assume 32-bit Generic)'};
+generated = false;
+for index = 1:numel(device_types)
+    cfg.HardwareImplementation.ProdHWDeviceType = device_types{index};
+    fprintf('Embedded Coder -> %s  (device type: %s)\n', outdir, device_types{index});
+    try
+        codegen('-config', cfg, 'classify_modulation', '-args', arg, ...
+                '-d', outdir, '-report');
+        fprintf('G8b: codegen succeeded with device type "%s"\n', device_types{index});
+        generated = true;
+        break;
+    catch problem
+        fprintf('G8b: codegen refused "%s": %s\n', device_types{index}, problem.message);
+    end
+end
+if ~generated
+    error('build_amc_r5:codegen', ...
+          ['codegen failed for every device type. The usual cause is a missing ' ...
+           'product: run `make tools MATLAB=1` and check MATLAB Coder and ' ...
+           'Embedded Coder are [ok].']);
+end
 
 fprintf('\nGenerated files are in %s/codegen/lib/classify_modulation.\n', outdir);
 fprintf('RPU compile flags used by the build kit:\n');

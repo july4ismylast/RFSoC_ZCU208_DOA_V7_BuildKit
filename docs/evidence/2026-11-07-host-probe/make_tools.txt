@@ -1,0 +1,58 @@
+make tools -- the user's PC, 2026-11-07 (pasted by the user; not produced in the
+authoring container, which has none of these tools)
+
+=== host
+  uname                  Linux 6.8.0-138-generic x86_64
+  cores                  24
+  memory                 62Gi
+  disk (root)            20G free
+
+=== G2 G3 G4  Vitis HLS and Vivado 2023.2
+  vivado                 /media/joshua/Linux/Programs/X20232/Vivado/2023.2/bin/vivado
+                         vivado v2023.2 (64-bit) SW Build 4029153 (2023-10-13)
+  vivado_lab             /media/joshua/Linux/Programs/X20232/Vitis/2023.2/bin/vivado_lab
+                         Vivado Lab Edition v2023.2
+  vitis_hls              /media/joshua/Linux/Programs/X20232/Vitis_HLS/2023.2/bin/vitis_hls
+                         Vitis HLS v2023.2 (64-bit) SW Build 4023990 (2023-10-11)
+  vitis                  /media/joshua/Linux/Programs/X20232/Vitis/2023.2/bin/vitis
+                         Vitis v2023.2 (64-bit)
+  XILINX_VIVADO          /media/joshua/Linux/Programs/X20232/Vivado/2023.2
+  XILINX_HLS             /media/joshua/Linux/Programs/X20232/Vitis_HLS/2023.2
+
+=== G4  the licensed base project
+  BASE_XPR               .../build/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr
+    exists               NO -- stage V03 has not been run yet, so G4 cannot start
+
+=== G8b  MATLAB, Embedded Coder and the R5 toolchain
+  matlab                 /usr/local/bin/matlab                (symlink -> R2024a)
+  MODEL_COMPOSER         /media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin/model_composer
+  (that launcher requires MATLAB R2022b, which is installed but has no symlink)
+  armr5-none-eabi-gcc    .../PetaLinux/2023.2/tools/xsct/gnu/armr5/.../armr5-none-eabi-gcc  12.2.0
+  arm-none-eabi-gcc      .../gnu/aarch32/lin/gcc-arm-none-eabi/bin/arm-none-eabi-gcc        12.2.0
+  aarch64-none-elf-gcc   .../gnu/aarch64/lin/aarch64-none/bin/aarch64-none-elf-gcc          12.2.0
+  V7_MATLAB_ROOT         <repo>/matlab_v7  (exists)
+
+  matlab -batch ver (products seen before the paste was cut, alphabetical):
+    DDS Blockset, DSP HDL Toolbox, Datafeed Toolbox, Deep Learning HDL Toolbox,
+    Embedded Coder, Filter Design HDL Coder, Fixed-Point Designer,
+    Fuzzy Logic Toolbox, HDL Coder, HDL Coder BSP Tools,
+    HDL Coder BSP: Analog Devices Inc, HDL Verifier, MATLAB, MATLAB Coder,
+    MATLAB Compiler, MATLAB Compiler SDK, MATLAB Report Generator, MATLAB Test,
+    Mixed-Signal Blockset, Model Predictive Control Toolbox, SerDes Toolbox,
+    Signal Integrity Toolbox
+    -> Embedded Coder, MATLAB Coder, Fixed-Point Designer and HDL Coder are
+       present.  Simulink Coder and the ARM Cortex-R support package are NOT in
+       the part of the list that was pasted; `make tools MATLAB=1` now prints an
+       explicit [ok]/[MISS] verdict for each of them.
+
+=== G5 G6 G7b  the board
+  serial devices         none attached
+  usb (Xilinx)           0
+  ethernet               192.168.1.6/24 (UP)
+
+=== host toolchain for the studies (G0, G1a/b, G8a)
+  python3                Python 3.10.12
+  gcc / g++              11.4.0 (Ubuntu 22.04)
+  make                   GNU Make 4.3
+  numpy                  1.21.5
+  matplotlib             3.5.1

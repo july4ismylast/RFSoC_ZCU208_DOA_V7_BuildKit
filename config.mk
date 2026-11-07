@@ -6,6 +6,18 @@ PROJECT_NAME ?= doa_v7_zcu208
 VIVADO ?= vivado
 VITIS_HLS ?= vitis_hls
 MATLAB ?= matlab
+# Two MATLABs are normal on a machine that also has Model Composer.  The
+# command-line one (MATLAB, default 'matlab') runs the codegen, the HIL vectors
+# and the preflight; Model Composer 2023.2 needs the release it shipped with
+# (R2022b) and its own launcher.  Set both absolutely in config.local.mk or on
+# the command line; only `step05_channelizer CHANNELIZER_FLOW=model_composer`
+# reads them.
+#
+#   make step05_channelizer CHANNELIZER_FLOW=model_composer \
+#        MODEL_COMPOSER=/path/Model_Composer/2023.2/bin/model_composer \
+#        MODEL_COMPOSER_MODEL=/abs/path/channelizer.slx
+# Left undefined on purpose: define them in config.local.mk or on the
+# command line, so a stale empty default cannot shadow them.
 JOBS ?= 8
 
 BUILD ?= $(CURDIR)/build
@@ -151,6 +163,13 @@ ADC_STREAM_BITS ?= 512
 V7_MATLAB_ROOT ?= $(CURDIR)/matlab_v7
 HIL_OUTPUT_DIR ?= $(BUILD)/hil_vectors
 
+# Per-machine overrides: tool paths, licences, the base project.  Not tracked
+# (see .gitignore), so every machine keeps its own.  Example:
+#   MATLAB_2022B   ?= /opt/MATLAB/R2022b/bin/matlab
+#   MODEL_COMPOSER ?= /opt/Model_Composer/2023.2/bin/model_composer
+#   BASE_XPR       ?= /data/vivado/mts/mts.xpr
+-include $(CURDIR)/config.local.mk
+
 export PART BOARD_PART PROJECT_NAME VIVADO VITIS_HLS MATLAB JOBS
 export BUILD UPSTREAM IP_REPO RELEASE_DIR EXPECTED_VIVADO_VERSION EXPECTED_MATLAB_RELEASE
 export SKIP_IP_CATALOG_CHECK BASE_KIND CUSTOM_IP_VENDOR CUSTOM_IP_LIBRARY
@@ -168,6 +187,7 @@ export CHANNELIZER_TAPS_PER_BAND CHANNELIZER_STOPBAND_DB CHANNELIZER_NORMALIZE
 export CHANNELIZER_FILTER_STRUCTURE CHANNELIZER_BIN_SPACING_HZ DOA_CLOCK_HZ
 export ARRAY_AXIS_SPACING_M ARRAY_CONE_HALF_ANGLE_DEG PHASE_INTERF_FRAME_SAMPLES
 export CHANNELIZER_FLOW MODEL_COMPOSER_MODEL EXTERNAL_CHANNELIZER_IP
+export MODEL_COMPOSER MATLAB_2022B
 export FETCH_SET FETCH_RETRIES FETCH_TIMEOUT_SECONDS
 export BASE_XPR BASE_BD ZCU208_BD_MAP INTEGRATION_MODE WORK_XPR PL_CLOCK_PERIOD_NS FRAME_SAMPLES ADC_STREAM_BITS
 export V7_MATLAB_ROOT HIL_OUTPUT_DIR

@@ -186,6 +186,21 @@ All of it is one **policy**, and the policy is a ladder (V07 §19, `make policy`
 
 The modulation label is the one algorithm that runs on the **RPU** (V07 §20, `make amc-port`, [`docs/AMC_ON_R5.md`](docs/AMC_ON_R5.md)): six features, one 1024-point FFT, nearest class mean, no allocation — the MATLAB source (`matlab_v7/classify_modulation.m`) is compiled by Embedded Coder for `ARM Cortex-R`, and the C firmware the RPU links is verified on the host against the same model: 100 % label agreement on 120 bursts, worst feature error 1.4e-5 in single precision, accuracy identical to the model (72.5 %). Embedded Coder and the board are gates G8b/G8c, not claims. The whole machine on one page, as a figure ([PNG](docs/diagrams/system_block.png), [SVG](docs/diagrams/system_block.svg), `make diagram`), is [`docs/SYSTEM_BLOCK_DIAGRAM.md`](docs/SYSTEM_BLOCK_DIAGRAM.md); every gate with its blocker is [`docs/GATES_G1_G7.md`](docs/GATES_G1_G7.md); every algorithm with its evidence is [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md).
 
+## Two MATLABs on one machine
+
+Model Composer 2023.2 needs MATLAB **R2022b**; everything else (preflight, the
+HIL vectors, the Embedded Coder build, HDL Coder) uses the `matlab` on `PATH`,
+usually R2024a. [`docs/TWO_MATLABS.md`](docs/TWO_MATLABS.md) says which command
+uses which install, and `config.local.mk` (untracked) is where the two paths go:
+
+```make
+MATLAB_2022B   ?= /path/to/R2022b/bin/matlab
+MODEL_COMPOSER ?= /path/Model_Composer/2023.2/bin/model_composer
+```
+
+`make tools MATLAB=1` prints both installs and an explicit `[ok]`/`[MISS]` for
+every toolbox the code generator needs.
+
 ## The eight steps, one folder each
 
 The repository is also organised the way you build it — eight folders in signal

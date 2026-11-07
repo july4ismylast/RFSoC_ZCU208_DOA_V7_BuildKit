@@ -14,3 +14,6 @@ ip/custom/**/vitis_hls.log
 
 # Scenes, captures and fixtures written by the step test benches
 step*/data/
+
+# Per-machine tool paths and licences (see config.mk)
+config.local.mk

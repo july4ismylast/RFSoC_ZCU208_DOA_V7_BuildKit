@@ -82,6 +82,14 @@ Three of those commands need a file that does not exist yet and the table says
 so: the chamber script, the `--from-capture` flag, and the DMA reader. They are
 listed because pretending they exist would be worse than naming them.
 
+### Two MATLABs
+
+If Model Composer is installed, it pins its own MATLAB (2023.2 → R2022b) while
+the command line runs a newer release. Only `step05_channelizer
+CHANNELIZER_FLOW=model_composer` needs the old one; [`docs/TWO_MATLABS.md`](docs/TWO_MATLABS.md)
+has the table and the `config.local.mk` snippet, and `make tools MATLAB=1`
+prints an `[ok]`/`[MISS]` verdict for every toolbox the code generator needs.
+
 ### What to send back, and what happens then
 
 Run `make tools` (add `MATLAB=1` if you want the toolbox list) and send the
