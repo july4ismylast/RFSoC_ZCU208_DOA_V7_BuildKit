@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-gui mc-verify graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-gui mc-verify mc-find mc-path graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -69,7 +69,8 @@ help:
 	@echo "Association policy:  make policy"
 	@echo "AMC on the R5 (G8a): make amc-port"
 	@echo "What is installed:   make tools   (or: make tools MATLAB=1)"
-	@echo "Model Composer IP:   make mc  MODEL_COMPOSER_MODEL=/abs/x.slx   (builds, R2022b)"
+	@echo "Model Composer IP:   make mc   (builds the .slx in ip/model_composer/; R2022b)"
+	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (only to create/edit that .slx)"
 	@echo "After a GUI compile: make mc-verify MODEL_COMPOSER_MODEL=/abs/x.slx"
 	@echo "Progress pages:      make progress  -> docs/progress/PROGRESS.md"
@@ -158,16 +159,26 @@ progress: $(STAGES_MANIFEST)
 # same stage as step05_channelizer, so the log, the stamp and the row in
 # docs/progress/PROGRESS.md are the ones a reader expects.
 #
-# The model is MODEL_COMPOSER_MODEL, or the single .slx in
-# ip/model_composer/channelizer/ if there is exactly one.
-MC_MODEL := $(or $(strip $(MODEL_COMPOSER_MODEL)),$(firstword $(wildcard ip/model_composer/channelizer/*.slx)))
+# The model is MODEL_COMPOSER_MODEL, or -- when there is exactly one -- the .slx
+# under ip/model_composer/.  This repository ships no .slx (it is a binary that
+# is built once in the GUI), so `make mc` with no model says where it goes
+# instead of inventing a path.
+MC_MODELS := $(wildcard ip/model_composer/*/*.slx)
+MC_MODEL  := $(or $(strip $(MODEL_COMPOSER_MODEL)),$(if $(filter 1,$(words $(MC_MODELS))),$(MC_MODELS)))
 
 mc:
 	@if [ -z "$(MC_MODEL)" ]; then \
-	    echo "make mc builds a model that exists.  None was given:"; \
-	    echo "  MODEL_COMPOSER_MODEL=/absolute/path/channelizer.slx make mc"; \
-	    echo "  (or keep exactly one .slx in ip/model_composer/channelizer/)"; \
-	    echo "To create or edit that model first, open the GUI: make mc-gui"; \
+	    echo "make mc builds a real .slx, and this repository has none (it is built once in the GUI)."; \
+	    if [ -n "$(MC_MODELS)" ]; then \
+	        echo "Several candidates, so say which:"; \
+	        for one in $(MC_MODELS); do echo "  make mc MODEL_COMPOSER_MODEL=$(CURDIR)/$$one"; done; \
+	    else \
+	        echo "The model goes here, and then \`make mc\` needs no path:"; \
+	        echo "  $(CURDIR)/ip/model_composer/channelizer/channelizer.slx"; \
+	        echo "Create it: make mc-gui   (File > New > Blank Model, build it,"; \
+	        echo "           one System Generator token, target IP Catalog, save there)"; \
+	        echo "Already have one somewhere?  make mc-find"; \
+	    fi; \
 	    exit 2; fi
 	@if [ ! -e "$(MC_MODEL)" ]; then \
 	    echo "ERROR: model not found: $(MC_MODEL)"; \
@@ -185,6 +196,21 @@ mc:
 # -r -- so `make mc` never goes through it.
 mc-gui:
 	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log"
+
+# Where is the .slx?  Nothing is guessed: every candidate is listed with its date.
+mc-find:
+	@./scripts/find_mc_models.sh
+
+# The exact absolute path `make mc` uses here, and whether it exists.
+mc-path:
+	@if [ -n "$(strip $(MODEL_COMPOSER_MODEL))" ]; then \
+	    echo "from MODEL_COMPOSER_MODEL: $(MODEL_COMPOSER_MODEL)"; fi; \
+	 if [ -n "$(MC_MODEL)" ]; then \
+	    echo "make mc would build: $(abspath $(MC_MODEL))"; \
+	 else \
+	    echo "make mc has no model yet. It looks for:"; \
+	    echo "  $(CURDIR)/ip/model_composer/channelizer/channelizer.slx"; \
+	    echo "(that file does not exist -- a .slx is built once in the GUI, never committed)"; fi
 
 # Fallback after a GUI compile: install the component.xml the token left next to
 # the model, then run the same artifact check the headless build runs.

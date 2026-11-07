@@ -208,10 +208,15 @@ fails the stage if no IP came out. It deliberately does **not** go through the
 Model Composer launcher, which evals its arguments and appends its own `-r`; a
 real run died there ([evidence](docs/evidence/2026-11-07-host-probe/model_composer_launcher_eval_bug.txt)).
 
+No `.slx` is committed (it is a binary built once in the GUI), so the model
+goes in `<repo>/ip/model_composer/channelizer/channelizer.slx` and then:
+
 ```bash
-make mc MODEL_COMPOSER_MODEL=/abs/path/channelizer.slx   # builds the IP
-make mc-gui                                              # creates/edits the .slx
-make mc-verify MODEL_COMPOSER_MODEL=/abs/x.slx           # after a GUI compile
+make mc-path        # the exact path this checkout uses, and whether it exists
+make mc             # builds the IP from that file
+make mc-gui         # only to create/edit the .slx
+make mc-find        # if you already have one somewhere else
+make mc-verify      # after a GUI compile
 ```
 
 ## Progress that survives a push

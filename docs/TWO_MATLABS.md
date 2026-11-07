@@ -47,11 +47,28 @@ start if `matlab` still resolves to another release, and writes
 The GUI is not the deliverable — the IP is.
 
 ```bash
-make mc MODEL_COMPOSER_MODEL=/absolute/path/channelizer.slx
+make mc-path     # the exact absolute path this checkout uses, and whether it exists
+make mc          # builds it -- no argument needed once the file is there
 ```
 
-which is the same stage as `make step05_channelizer
-CHANNELIZER_FLOW=model_composer MODEL_COMPOSER_MODEL=...`.
+Which file? The one place `make mc` looks by itself:
+
+```
+<repo>/ip/model_composer/channelizer/channelizer.slx
+```
+
+A `.slx` is a binary built once in the GUI, so **no `.slx` is committed** (check:
+`git ls-files '*.slx'` is empty).  `make mc` with no model prints that exact
+path for your checkout, `make mc-find` lists every `.slx` on the machine with
+its date and the command to use it, and `make mc-path` prints the resolved path
+plus whether it exists. If the file lives elsewhere, name it:
+
+```bash
+make mc MODEL_COMPOSER_MODEL=/wherever/you/saved/channelizer.slx
+```
+
+Same stage as `make step05_channelizer CHANNELIZER_FLOW=model_composer
+MODEL_COMPOSER_MODEL=...`.
 
 **It does not go through the Model Composer launcher**, and a real run on this
 machine is why ([evidence](evidence/2026-11-07-host-probe/model_composer_launcher_eval_bug.txt)):

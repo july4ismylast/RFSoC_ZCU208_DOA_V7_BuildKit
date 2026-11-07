@@ -67,6 +67,7 @@ testbench, `build_hls.tcl`, local Makefile, and block README.
 | `scripts/progress_report.sh` | Rebuilds `docs/progress/PROGRESS.md`, one table over all 20 stages, from the stamps, the logs and the pages. `make progress`. |
 | `scripts/build_model_composer_ip.sh` | The headless Model Composer build: check `MATLAB_2022B` is R2022b, find the Model Composer and Vivado roots, check `scripts/sysgen/matlab`, run `matlab -batch mc_batch_export`. Used by `make mc` and `step05_channelizer CHANNELIZER_FLOW=model_composer`. |
 | `ip/model_composer/channelizer/mc_batch_export.m` | Inside MATLAB: add the Model Composer and System Generator paths plus `sysgen.jar`, call `xmcStart` only if `xlGenerateButton` is missing, then export the model's token and install the IP. Prints `MC_EXPORT_OK`. |
+| `scripts/find_mc_models.sh` | Lists every `.slx` on the machine with its date and the exact `make mc` command for the newest; prints where the model must go when none exists. `make mc-find`. |
 | `scripts/mc_collect_ip.sh` | Fallback after a GUI compile: copy the `component.xml` the token left next to the model into `$(IP_REPO)`. `make mc-verify`. |
 | `scripts/launch_model_composer.sh` | The two command-prompt steps for the Model Composer **GUI**: put R2022b first on `PATH`, launch 2023.2 through a log, write the launch page. `make mc-gui`; the build itself is `make mc` → `step05_channelizer`. |
 | `docs/progress/` | Tracked build progress: `PROGRESS.md` plus one page per stage. Raw logs stay in `build/logs/` (ignored). |
