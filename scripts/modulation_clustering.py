@@ -136,13 +136,22 @@ def fit(rng, train_snrs=(0.0, 5.0, 10.0, 15.0, 20.0, 25.0), n_symbols=256,
     return means, centre, spread
 
 
-def classify(model, x):
-    """Label and the margin to the runner-up (both in z-units)."""
+def classify_from_features(model, vector):
+    """Label and the margin to the runner-up, from the six features.
+
+    Shared with the R5 firmware port (scripts/amc_port_check.py): the same
+    expression runs on both sides of the comparison.
+    """
     means, centre, spread = model
-    z = (features(x) - centre) / spread
+    z = (np.asarray(vector, dtype=float) - centre) / spread
     scores = {mod: float(np.linalg.norm(z - mean)) for mod, mean in means.items()}
     order = sorted(scores.items(), key=lambda item: item[1])
     return order[0][0], order[1][1] - order[0][1]
+
+
+def classify(model, x):
+    """Label and the margin to the runner-up (both in z-units)."""
+    return classify_from_features(model, features(x))
 
 
 def accuracy(model, rng, mod, snr_db, n_symbols, draws):

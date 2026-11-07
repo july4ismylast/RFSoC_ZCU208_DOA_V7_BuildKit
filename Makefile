@@ -63,6 +63,7 @@ help:
 	@echo "Feature models:      make feature-models"
 	@echo "Modulation (AMC):    make modulation-clusters"
 	@echo "Association policy:  make policy"
+	@echo "AMC on the R5 (G8a): make amc-port"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -234,7 +235,10 @@ matlab-lint:
 	@if command -v mh_lint >/dev/null 2>&1; then \
 	    mh_lint --brief matlab_v7/PhaseInterferometryEstimator.m \
 	        matlab_v7/phase_from_cordic_q13.m \
-	        matlab_v7/verify_phase_interferometry_2x2.m; \
+	        matlab_v7/verify_phase_interferometry_2x2.m \
+	        matlab_v7/classify_modulation.m matlab_v7/amc_features.m \
+	        matlab_v7/amc_model_params.m matlab_v7/build_amc_r5.m \
+	        matlab_v7/verify_amc_vectors.m; \
 	else \
 	    echo "SKIP matlab-lint: mh_lint (pip install miss_hit) not installed"; \
 	fi
@@ -243,7 +247,7 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters policy
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters policy amc-port amc-export
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
@@ -313,6 +317,14 @@ modulation-clusters:
 policy:
 	@python3 scripts/cluster_policy.py
 
+# Section 20 of V07: the modulation classifier as the R5F will link it. G8a is
+# the host check (firmware against the model); G8b/G8c need MATLAB and the board.
+amc-export:
+	@python3 scripts/amc_export.py
+
+amc-port:
+	@python3 scripts/amc_port_check.py
+
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
@@ -328,6 +340,7 @@ verify-phase-interf:
 	@python3 scripts/feature_models.py --quick
 	@python3 scripts/modulation_clustering.py --quick
 	@python3 scripts/cluster_policy.py --quick
+	@python3 scripts/amc_port_check.py
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
 

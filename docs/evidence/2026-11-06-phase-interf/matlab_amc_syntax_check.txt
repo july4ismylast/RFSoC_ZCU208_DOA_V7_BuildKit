@@ -1,0 +1,20 @@
+# MATLAB syntax/parse check - V07 section 20, the AMC chain
+# generated 2026-11-07T11:14:55Z
+# tool: MISS_HIT 0.9.44
+# command: mh_lint --brief matlab_v7/classify_modulation.m \
+#            matlab_v7/amc_features.m matlab_v7/amc_model_params.m \
+#            matlab_v7/build_amc_r5.m matlab_v7/verify_amc_vectors.m
+
+MISS_HIT Lint Summary: 5 file(s) analysed, everything seems fine
+
+Notes:
+  * This proves the five files PARSE as MATLAB (function declarations, arguments,
+    comments, coder directives). It does not execute them: no MATLAB and no
+    Octave is available in the authoring environment.
+  * It says nothing about codegen. Embedded Coder has not run here, so G8b is
+    NOT RUN: matlab_v7/build_amc_r5.m is written and parses, and nothing more.
+  * What IS measured is the C firmware that the RPU would link:
+    docs/evidence/2026-11-06-phase-interf/amc_port.txt (make amc-port, G8a).
+    The MATLAB and the C read the same generated constants
+    (matlab_v7/amc_model_params.m and firmware/amc_r5/amc_model.h both come from
+    scripts/amc_export.py), which is what keeps them from drifting.

@@ -1,0 +1,46 @@
+V07 section 20 -- the R5 firmware against the model it must reproduce
+========================================================================
+scripts/amc_port_check.py  seed 20261111  120 bursts x 1024 samples
+model: firmware/amc_r5/amc_model.h
+firmware: firmware/amc_r5/amc.c + firmware/amc_r5/amc.h
+
+P1  does the firmware return the same LABEL as the model?
+    (the model is re-derived from the features in the vector file)
+    build         agree         of
+    double       100.0%       120
+    single       100.0%       120
+
+P2  does the firmware compute the same FEATURES?  (max |error|, per feature)
+    feature           double       single   (double / single accumulator)
+    |C40|          4.93e-07     7.00e-06
+    C42            6.00e-07     3.78e-06
+    sigma_ap       4.92e-07     1.37e-05
+    gamma_max      6.84e-07     6.95e-06
+    freq_std       4.95e-07     8.55e-07
+    spike          4.99e-07     4.99e-07
+
+P3  accuracy against the true class, through the firmware
+    build      accuracy
+    double       72.5%
+    single       72.5%
+    model        72.5%
+
+P4  where the single-precision build disagrees with the double one
+    none
+
+P5  the cost side, counted rather than measured on target
+    work per burst: 1024 samples, one 1024-point complex FFT, 1024 atan2,
+    4 sqrt, no allocation. Static buffers: 4 x 1024 floats = 16.0 kB,
+    plus a 512-entry twiddle table (4.0 kB).
+    Cycles on the R5F are NOT measured here: that is G8c.
+
+  [PASS] the double build agrees with the model on every burst
+  [PASS] every feature agrees to better than 1e-3
+  [PASS] the single build agrees on at least 90 % of bursts
+  [PASS] the firmware reaches the model's own accuracy
+
+RESULT=PASS
+
+What this does not prove: that Embedded Coder emits this code, that the
+library links and fits the RPU memory, that a frame meets its deadline on
+the R5F, or anything about the PL. G8b and G8c are those gates.

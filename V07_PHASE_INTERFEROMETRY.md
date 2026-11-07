@@ -36,6 +36,7 @@ by a script in this repository, or explicitly marked unproven.
 | A **hopping** emitter, 1–100 MHz, 2.7–3.5 GHz | **ADOPT track-and-combine, not fingerprint-first** — the hop range is alias-free (measured 0.06° at 3.5 GHz / 70°, first failure 6 GHz); one 1 MHz hop gives 0.29° at 64 snapshots; combining 64 hops through-origin gives 0.078° (8.5×); association by prediction gate plus the bandwidth invariant is worth 28 → 0 wrong hops, and the invariant itself is quantised by the bin width (1 and 2 MHz are identical) | §14 |
 | **Clustering** several emitters in one cube | **ADOPT label, do not mask** — clusters form on (direction, bandwidth) and are linked over frames; a carrier-only link recovers 1 of 3 emitters and fragments the hopper into 20.7 tracks, the pair recovers 3 of 3 at purity 1.00, and cadence separates two emitters that share both (2.3 → 3.0 of 3, purity 0.70 → 1.00). Masking is measured to be unavailable: the notch deletes the co-channel emitter (kept 0 %), the null keeps it but destroys its direction (82–120°, because a 2×2 at elevation 0 has two channels), and predicting the next hop is worth 0.20 % | §15 |
 | **What you cluster on**, when bandwidth and direction both change | **ADOPT one model per feature, chosen by the ratio of per-frame change to measurement error** — a smoothly drifting bandwidth breaks a fixed cost (38–50 % kept) and a rate restores 100 %; a bandwidth that *jumps* cannot be a position key (a ±1.5 bin gate keeps a newcomer but shreds the hopper 50 %, ±4 bins does the reverse) so it is either dropped or replaced by its cadence, which separates 100 % of the time and only after a few frames; a direction that jumps is not fast motion (the track splits 50/50 at every gate, by design) and a gate wide enough to admit it costs 0–25 % confusion with a neighbour at the landing point; with both features drifting, only modelling both keeps the track (100 % against 38–50 %) | §17 |
+| **The architecture after §16–§20** | **ADOPT software decision surface, unchanged PL** — moving targets, per-feature models, a modulation label, an ordered association ladder and a decoy verification index all landed in the RPU/A53, and no bitstream changes for any of them. AMC is 6 features + nearest class mean on a 1024-sample burst, verified as C on the host (100 % label agreement with the model, 1.4e-5 worst feature error in single precision) and specified for Embedded Coder → R5F (G8b/G8c not run, no timing claim) | §20 |
 | **One general policy** for the whole scene family | **ADOPT an ordered ladder of indices, user-selectable** — `mod → direction → bandwidth → cadence → [cepstrum]`. Each separating rung solves exactly one scene and is necessary (removing it loses that scene): different modulation 100 % on the label alone, same modulation/different direction 100 % on direction alone, a bandwidth-only pair and a cadence-only pair likewise. A pair with the same modulation and direction **must not** be split — one cell is the correct answer — and when one of the two is a repeater the cell is flagged by a verification index that never partitions it (97 % found, 0 % false alarms, delay estimated to 16 ns). `--policy` replaces the ladder and the report shows what that choice costs | §19 |
 | **Modulation** as the one constant feature (AMC) | **ADOPT as a mode term, never as a key** — a label is constant within a burst and jumps at a reconfiguration, so its error is a probability, not a degree: 100 % accuracy at 10 dB with 64 symbols, chance at 0 dB (every burst decided as 16QAM), 0 % for BPSK/QPSK once a 1e-3/sample carrier remains, and a 3-frame vote that buys stickiness (0.26 → 0.18 flips) rather than truth. As a cost term it separates emitters that differ only in modulation (covered 1.42 → 3.00 of 3, purity 0.75 → 1.00) and does nothing for emitters that share it | §18 |
 | A **moving** target | **ADOPT predict, don't hold** — direction stops being a key and becomes a state: holding the last direction keeps 98 % of a 0.5°/frame mover and 73 % at 1°/frame but shatters at 8–16°/frame (6.6–7.0 pieces), prediction with an acquisition gate holds 89–100 % to 16°/frame, and after a 10°/frame manoeuvre breaks the track (2.1 pieces) identity is re-established from bandwidth and cadence with 100 % of detections staying put | §16 |
@@ -2557,7 +2558,102 @@ which arrival is the protected one. No gate, bitstream or hardware claim.
 
 ---
 
-## 20. Files
+## 20. Assumptions v8: what changed in the architecture, and AMC on the R5
+
+§16–§19 changed what the system has to *decide*, not what it has to *measure*. The
+PL still reduces 2 GS/s to 128 bytes of covariance and a per-bin phase vector;
+what grew is the software that turns those into emitters. This section records the
+change so the rest of the repository can be read against it, and adds the one new
+hardware target: modulation classification on the RPU.
+
+The whole system on one page, with every gate positioned on it:
+[`docs/SYSTEM_BLOCK_DIAGRAM.md`](docs/SYSTEM_BLOCK_DIAGRAM.md). Every algorithm in
+one table with its evidence and its failure mode:
+[`docs/ALGORITHMS.md`](docs/ALGORITHMS.md). Every gate with its blockers and the
+work to close it: [`docs/GATES_G1_G7.md`](docs/GATES_G1_G7.md).
+
+### 20.1 The revised assumption set
+
+| # | Assumption (new since §15) | Consequence | Where it lands |
+|---|---|---|---|
+| 1 | Targets **move** | direction is a predicted state, not a key; the acquisition gate opens for a track's first frames | R5 track state, §16 |
+| 2 | Features change **continuously or by jumps**, and each needs its own model | rate model, mode model, or removal from the cost | R5 cost function, §17 |
+| 3 | **Modulation** is a usable invariant | an AMC label enters the cost as a mode term with a vote | **R5, new task**, §18, §20 |
+| 4 | A **ladder** of indices, ordered and user-selectable | association is a policy, not a fixed rule | R5 association, §19 |
+| 5 | Two emitters with the same modulation and direction **must not be split** | one cell is a valid answer; the tracker keeps one track | R5, §19.2 |
+| 6 | A **decoy** inside such a cell must be *found*, not separated | a verification index (cepstrum) adjudicates the cell | R5, §13, §19 |
+| 7 | All of it must be **selectable** by the operator | `--policy` on the host, a configuration table on the target | host + R5, §19.6 |
+
+Nothing in 1–7 changes the PL. That is the point of putting the decision surface
+in software: the requirements moved four times in four sections, and no bitstream
+has to be rebuilt for any of it.
+
+### 20.2 Where AMC runs, and why there
+
+```
+ capture path ──▶ 1024-sample burst per detection ──▶ amc_features (6)  ──▶ nearest class mean
+                                                        │                       │
+                                             one 1024-point FFT          label + margin
+                                                                                │
+                                              association ladder (§19) ◀────────┘
+```
+
+| File | Role | Status |
+|---|---|---|
+| `firmware/amc_r5/amc.c`, `amc.h` | the firmware the RPU links | **verified on the host** |
+| `firmware/amc_r5/amc_model.h` | fitted constants, generated | regenerated by `scripts/amc_export.py` |
+| `matlab_v7/amc_features.m`, `classify_modulation.m` | the Embedded Coder source | written, not run |
+| `matlab_v7/amc_model_params.m` | the same constants, for MATLAB, generated | regenerated |
+| `matlab_v7/build_amc_r5.m` | `coder.config('lib')`, target `ARM Cortex-R`, `GenCodeOnly` | written, not run |
+| `matlab_v7/verify_amc_vectors.m` | MATLAB against the shared vectors | written, not run |
+| `scripts/amc_export.py`, `scripts/amc_port_check.py` | generator and host check | **`make amc-port`, PASS** |
+
+The model is generated once and consumed three times, so the Python model, the C
+firmware and the MATLAB source cannot drift apart.
+
+### 20.3 What the host check measured (gate G8a)
+
+`make amc-port` compiles the firmware twice — double accumulators, and
+`-DAMC_SINGLE_ACC` for the R5F, whose FPU has no double — and compares against the
+model on 120 bursts spanning 0–20 dB
+([`amc_port.txt`](docs/evidence/2026-11-06-phase-interf/amc_port.txt)):
+
+| | double | single |
+|---|---|---|
+| label agreement with the model | **100 %** | **100 %** |
+| worst feature error | 7e-7 | 1.4e-5 |
+| accuracy against truth | 72.5 % | 72.5 % |
+| labels changed by dropping to single | — | none |
+
+Residual work, counted not timed: 8 kB input, 16 kB work buffers, 4 kB twiddle
+table, one 1024-point FFT, 1024 `atan2`, no allocation. **Cycles on the R5F are
+not measured** — that is G8c, and no latency claim may be quoted before it.
+
+### 20.4 The new gate
+
+| Gate | Question | Status |
+|---|---|---|
+| G8a | does the firmware reproduce the model? | **PASS** (`make amc-port`) |
+| G8b | does Embedded Coder build and link it for the RPU? | **NOT RUN** — needs MATLAB + Embedded Coder |
+| G8c | does a frame meet its deadline on the R5F? | **NOT RUN** — needs the board |
+
+The order matters: G8a before G8b, because codegen can faithfully reproduce a
+wrong algorithm, and the vectors that G8a uses are the ones G8b must reproduce on
+the target.
+
+### 20.5 What the revision does not change
+
+* **No hardware accuracy claim.** G2–G6 are still unwritten; every number in
+  §10–§19 remains a host or simulation number.
+* **No new PL block.** AMC, the ladder and the cepstrum all run in software.
+* **No authentication.** The label is an identity aid; a decoy that copies the
+  waveform copies the label (§18.6). Decoy rejection remains coherence and
+  geometry, and remains a DWQ/DOA problem, not ECCM.
+* **No timing claim on the RPU** until G8c.
+
+---
+
+## 21. Files
 
 | File | Role |
 |---|---|
@@ -2569,6 +2665,11 @@ which arrival is the protected one. No gate, bitstream or hardware claim.
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
 | `docs/DECOY_DISCRIMINATION.md` | §13 in one place: every algorithm with its block diagram, pseudocode, measured table and failure case, plus the G7 acceptance numbers |
 | `docs/decoy-flow.mmd` | the master runtime flow as a Mermaid diagram |
+| `firmware/amc_r5/` | §20: the modulation classifier as the RPU will link it — `amc.c` (six features, one 1024-point FFT, nearest class mean, no allocation), the generated `amc_model.h`, and the host harness used by `make amc-port` |
+| `matlab_v7/classify_modulation.m`, `amc_features.m`, `build_amc_r5.m` | §20: the Embedded Coder source and its `coder.config('lib')` for `ARM Cortex-R`, with `verify_amc_vectors.m` as the gate before codegen. Written, not run (no MATLAB here) |
+| `docs/SYSTEM_BLOCK_DIAGRAM.md` | the whole machine on one page: RF → PL → RPU/A53, every box, and where G0–G8 sit |
+| `docs/GATES_G1_G7.md` | every gate: what it asks, why it is not implemented, what closing it takes, where it sits |
+| `docs/ALGORITHMS.md` | A1–A18: inputs, outputs, evidence file, failure mode, compute location, status |
 | `scripts/cluster_policy.py` | §19: one general policy — an ordered ladder of indices (mod, direction, bandwidth, cadence, then the verifying cepstrum), every scene against every ladder, who split what, drop-one-out, the same ladders at 0 dB, and a user-supplied ladder via `--policy` |
 | `scripts/modulation_clustering.py` | §18: what you cluster on when the modulation is the constant — AMC accuracy against SNR, training set and burst length, the carrier recovery it needs, the 0 dB failure where the label vanishes, label stability and the vote, two emitters that differ only in modulation, and the same-modulation limit |
 | `scripts/feature_models.py` | §17: what you cluster on — one model per feature, chosen by how it changes: a drifting bandwidth (rate vs fixed vs dropped), a hopping dipper against a newcomer (gate width vs cadence), a direction that jumps (not motion), and both features drifting at once |
@@ -2599,6 +2700,7 @@ make moving-targets                   # section 16, ~14 s
 make feature-models                   # section 17, ~22 s
 make modulation-clusters              # section 18, ~6 s
 make policy                           # section 19, ~2 s
+make amc-port                         # section 20 / gate G8a, ~2 s
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md
