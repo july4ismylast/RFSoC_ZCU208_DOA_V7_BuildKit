@@ -34,7 +34,8 @@ for index = 1:size(attempts, 1)
     if exist(entry, 'file') == 0 %#ok<EXIST>
         continue;
     end
-    shape = sprintf('%s(%s)', entry, strjoin(shapeArgs, ', '));
+    shape = sprintf('%s(%s)', entry, strjoin(cellfun(@mc_argument_text, shapeArgs, ...
+        'UniformOutput', false), ', '));
     if any(strcmp(tried, shape))
         continue;
     end

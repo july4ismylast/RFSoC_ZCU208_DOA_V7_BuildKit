@@ -46,6 +46,23 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## Guards, because two runs were lost to bugs in the glue
+
+The model work was right long before the export worked; the failures were in the
+small helpers around it (`strjoin` on a numeric argument, a Hub field left
+empty). Those cannot be exercised without Model Composer, but the helpers can:
+
+`mc_gui_build` now runs `mc_selftest` first -- one second, no toolbox:
+
+```
+MC_SELFTEST_OK
+```
+
+It checks the part parser (`xczu48dr-fsvg1517-2-e` → device/package/speed/family),
+the argument formatter used for log lines, and that the generate-entry discovery
+returns a usable name and list. On failure it prints `MC_SELFTEST_FAILED` and the
+failing check, so a helper bug no longer waits for a full rebuild to appear.
+
 ## Root cause found: `SubsystemName` and `IpName` were empty
 
 `help xmcGenerate` (protected `.p`, but its help is readable) settled the

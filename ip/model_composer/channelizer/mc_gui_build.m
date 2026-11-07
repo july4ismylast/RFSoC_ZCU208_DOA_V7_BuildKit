@@ -17,6 +17,8 @@ end
 
 here = fileparts(mfilename('fullpath'));
 addpath(here);
+% Cheap guards first: a helper bug then stops the run before the model is rebuilt.
+mc_selftest();
 if isempty(getenv('IP_REPO'))
     repoRoot = fileparts(fileparts(fileparts(here)));
     setenv('IP_REPO', fullfile(repoRoot, 'build', 'ip_repo'));

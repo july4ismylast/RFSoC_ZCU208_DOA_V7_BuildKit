@@ -126,7 +126,9 @@ started = tic;
 lastReport = 0;
 while true
     candidates = dir(fullfile(folder, '**', 'component.xml'));
-    preferred = candidates(contains({candidates.folder}, [filesep model '_ip']));
+    % Model Composer writes <subsystem>_ip/, where <subsystem> is the Hub's
+    % SubsystemName (channelizer_dut), not the model name -- so match the suffix.
+    preferred = candidates(contains({candidates.folder}, '_ip'));
     if ~isempty(preferred)
         component = preferred(1);
         break;

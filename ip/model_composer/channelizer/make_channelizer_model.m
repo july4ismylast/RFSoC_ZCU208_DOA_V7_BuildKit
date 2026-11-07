@@ -38,7 +38,7 @@ if isempty(modelDir)
 end
 
 settings = struct('channels', 4, 'bits', 16, 'binaryPoint', 14, ...
-    'sampleHz', 200e6, 'tapDelay', 4, 'part', partString());
+    'sampleHz', 200e6, 'tapDelay', 4, 'part', mc_part_string());
 
 fprintf('looking for the Model Composer libraries\n');
 mc_paths();
@@ -256,28 +256,6 @@ fprintf('  %d channels, %d.%d signed fixed point, %g MHz, %d-clock delay each\n'
     settings.channels, settings.bits - settings.binaryPoint, settings.binaryPoint, ...
     settings.sampleHz / 1e6, settings.tapDelay);
 fprintf('  device: %s\n', settings.part.full);
-end
-
-function part = partString()
-%PARTSTRING Device from MC_PART (the shell passes config.mk's PART), parsed.
-full = getenv('MC_PART');
-if isempty(full)
-    full = 'xczu48dr-fsvg1517-2-e';
-end
-pieces = strsplit(full, '-');
-part = struct('full', full, 'device', pieces{1}, 'package', '', 'speed', '', ...
-    'family', 'zynquplus');
-if numel(pieces) >= 2
-    part.package = pieces{2};
-end
-if numel(pieces) >= 4
-    part.speed = ['-' pieces{3} '-' pieces{4}];
-end
-if contains(part.device, 'ku')
-    part.family = 'kintexuplus';
-elseif contains(part.device, 'vu')
-    part.family = 'virtexuplus';
-end
 end
 
 function requireLibrary(name)
