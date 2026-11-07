@@ -46,6 +46,32 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## The generate block must be named `System Generator`
+
+A real run ended with two seemingly unrelated symptoms, and they are the same
+bug:
+
+| where | message |
+|---|---|
+| error dialog | *the System Generator block must be named "System Generator"* |
+| MATLAB | `xmcGenerate` → `vmcGenerate.p` → **Index exceeds the number of array elements** |
+
+`vmcGenerate` collects the generate blocks in the model **by that name** and takes
+element 1. A Hub dragged in from the library keeps its library name
+(`Vitis Model Composer Hub`) — which is fine in the GUI, because the GUI keeps its
+own reference — but a model built from code has nothing under the required name,
+so the list is empty and element 1 does not exist. Hence the dialog and the index
+error at the same time.
+
+Fix: the builder renames the block, keeping the library link:
+
+```matlab
+set_param(hub, 'Name', 'System Generator');    % block path: channelizer/System Generator
+```
+
+The from-scratch route creates it under that name directly. Every log line then
+shows `generate block: channelizer/System Generator`.
+
 ## Guards, because two runs were lost to bugs in the glue
 
 The model work was right long before the export worked; the failures were in the

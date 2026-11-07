@@ -97,6 +97,7 @@ if isempty(hubs)
 end
 hub = hubs{1};
 fprintf('template Hub: %s\n', hub);
+hub = renameToSystemGenerator(hub);
 
 % Remove everything except the Hub (and the annotations that go with it).
 blocks = find_system(templateName, 'SearchDepth', 1, 'Type', 'Block');
@@ -154,7 +155,7 @@ cleanup = onCleanup(@() closeQuietly(modelName)); %#ok<NASGU>
 set_param(modelName, 'Solver', 'FixedStepDiscrete', ...
     'FixedStep', '1', 'StopTime', '16', 'SaveTime', 'off', 'SaveOutput', 'off');
 
-hub = [modelName '/Vitis Model Composer Hub'];
+hub = [modelName '/System Generator'];
 addFromLibrary('vmcUtilities', 'Vitis Model Composer Hub', hub, [40, 60, 90, 110]);
 configureHub(hub, settings);
 addChannels(modelName, settings, true);
@@ -206,6 +207,26 @@ end
 end
 
 % ---------------------------------------------------------------------------
+function hub = renameToSystemGenerator(hub)
+%RENAMETOSYSTEMGENERATOR The engine looks the generate block up by that name.
+%   A real run failed with an error dialog saying the System Generator block must
+%   be named "System Generator", while xmcGenerate died inside vmcGenerate.p with
+%   "Index exceeds the number of array elements" -- the same lookup: it collects
+%   the blocks named "System Generator" and takes element 1 of an empty list.
+%   A Hub dragged in by the GUI keeps its library name, so models built from a
+%   template must be renamed here.  The block stays linked to vmcUtilities.
+parts = strsplit(hub, '/');
+parts{end} = 'System Generator';
+wanted = strjoin(parts, '/');
+try
+    set_param(hub, 'Name', 'System Generator');
+    fprintf('Hub renamed: %s -> %s\n', hub, wanted);
+    hub = wanted;
+catch problem
+    fprintf(2, '  could not rename %s to "%s": %s\n', hub, 'System Generator', problem.message);
+end
+end
+
 function name = destinationName(destination)
 [~, name] = fileparts(destination);
 end
