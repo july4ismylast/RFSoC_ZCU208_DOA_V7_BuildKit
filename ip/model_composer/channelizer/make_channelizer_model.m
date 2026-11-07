@@ -41,7 +41,16 @@ end
 
 settings = struct('channels', 4, 'bits', 16, 'binaryPoint', 14, ...
     'sampleHz', 200e6, 'tapDelay', 4, 'subsystemName', 'channelizer_dut', ...
-    'part', mc_part_string());
+    'modelDir', modelDir, 'part', mc_part_string());
+% Model Composer resolves the Hub's netlist and target directories against the
+% current working directory unless they are absolute.  A real run of AMD's own
+% example died with
+%     ERROR-XMC-1002: Failed to create and open file ./netlist/make.sh
+% so both directories are made absolute (model folder) and created here.
+settings.netlistDir = fullfile(modelDir, 'netlist');
+settings.codeDir = fullfile(modelDir, 'code');
+makeFolder(settings.netlistDir);
+makeFolder(settings.codeDir);
 
 fprintf('looking for the Model Composer libraries\n');
 mc_paths();
@@ -216,7 +225,8 @@ applyParam(hub, 'IpHWLanguage', 'Verilog');
 % A real Generate presses these first: the example Hub ships with
 % CodeGeneration off and a relative TargetDirectory, and xmcGenerate reads them.
 applyPopup(hub, 'CodeGeneration', 'on');
-applyParam(hub, 'TargetDirectory', './code');
+applyParam(hub, 'TargetDirectory', settings.codeDir);
+applyParam(hub, 'directory', settings.netlistDir);
 applyParam(hub, 'ProjDevice', settings.part.full);
 applyParam(hub, 'ProjDevicePart', settings.part.full);
 applyParam(hub, 'part', settings.part.device);
@@ -235,6 +245,17 @@ applyParam(hub, 'IPInfoJsonString', sprintf(['{"HDLSubsystem":{' ...
     '"SubsystemName":"%s","IPName":"%s",' ...
     '"IPLibrary":"model_composer","IPVendor":"doa.v7","IPVersion":"1.0"}}'], ...
     settings.subsystemName, settings.subsystemName));
+end
+
+function makeFolder(path)
+%MAKEFOLDER Create the netlist/target folder so the engine can write into it.
+if ~isfolder(path)
+    try
+        mkdir(path);
+    catch problem
+        fprintf('  note: could not create %s: %s\n', path, problem.message);
+    end
+end
 end
 
 function printSummary(settings)

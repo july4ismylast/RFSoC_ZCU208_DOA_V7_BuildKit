@@ -39,6 +39,7 @@ fprintf('generate block: %s\n', generator{1});
 fprintf('export target:  %s\n', target);
 
 checkSubsystemName(model, generator{1});
+makeDirParametersAbsolute(generator{1}, folder);
 
 [name, available] = mc_generate_function();
 fprintf('generate entry: %s\n', available{:});
@@ -180,4 +181,46 @@ if getSimulinkBlockHandle([model '/' wanted]) == -1
         wanted, model);
 end
 fprintf('exported subsystem: %s/%s\n', model, wanted);
+end
+
+function makeDirParametersAbsolute(hub, folder)
+%MAKEDIRPARAMETERSABSOLUTE Model Composer writes make.sh into ./netlist.
+%   The Hub stores its netlist and target directories, and a relative value is
+%   resolved against the MATLAB working directory.  AMD's own example failed with
+%       ERROR-XMC-1002: Failed to create and open file ./netlist/make.sh
+%   because that folder did not exist where it looked.  Both are pinned to the
+%   model folder here (absolute) and created.
+parameters = {'directory', 'TargetDirectory'};
+for index = 1:numel(parameters)
+    name = parameters{index};
+    try
+        value = get_param(hub, name);
+    catch problem
+        fprintf('  note: this Hub has no %s: %s\n', name, problem.message);
+        continue;
+    end
+    [~, ~, extension] = fileparts(char(value));
+    absolute = char(value);
+    if isempty(absolute) || ~isAbsolute(absolute)
+        absolute = fullfile(folder, 'netlist');
+        if strcmp(name, 'TargetDirectory')
+            absolute = fullfile(folder, 'code');
+        end
+    end
+    try
+        set_param(hub, name, absolute);
+    catch problem
+        fprintf('  note: could not set %s: %s\n', name, problem.message);
+        continue;
+    end
+    if ~isfolder(absolute)
+        mkdir(absolute);
+    end
+    fprintf('  Hub.%s = %s (created)\n', name, absolute);
+end
+end
+
+function yes = isAbsolute(path)
+%ISABSOLUTE True for a path that starts at the filesystem root.
+yes = ~isempty(path) && (path(1) == '/' || (numel(path) > 1 && path(2) == ':'));
 end

@@ -34,13 +34,40 @@ try
     if bdIsLoaded(probeName)
         close_system(probeName, 0);
     end
-    load_system(probeFile);
+    % open_system runs the model's PreLoadFcn; load_system does not, and the
+    % example's StopFcn (stop_time = toc(start_time)) needs it.
+    open_system(probeFile);
+    % Its Hub also points at ./netlist, which is why the first attempt died with
+    % ERROR-XMC-1002; pin both directories to the probe folder for a fair test.
+    hubs = mc_find_hub(probeName);
+    if ~isempty(hubs)
+        for parameter = {'directory', 'TargetDirectory'}
+            name = parameter{1};
+            folderFor = probeFolder;
+            if strcmp(name, 'TargetDirectory')
+                folderFor = fullfile(probeFolder, 'code');
+            else
+                folderFor = fullfile(probeFolder, 'netlist');
+            end
+            if ~isfolder(folderFor)
+                mkdir(folderFor);
+            end
+            try
+                set_param(hubs{1}, name, folderFor);
+                fprintf(2, '  Hub.%s = %s\n', name, folderFor);
+            catch problem
+                fprintf(2, '  note: cannot set %s on the example Hub: %s\n', ...
+                    name, problem.message);
+            end
+        end
+    end
     fprintf(2, '  calling xmcGenerate(%s)\n', probeName);
     xmcGenerate(probeName, 'closeProgressWindow', 1);
     fprintf(2, '  the example generated\n');
     verdict = 'example-works';
 catch problem
     fprintf(2, '  the example failed too: %s\n', problem.message);
+    mc_report_error(problem, 'example generation');
     mc_hdl_log_tail(probeFolder, 40);
     verdict = 'example-fails';
 end

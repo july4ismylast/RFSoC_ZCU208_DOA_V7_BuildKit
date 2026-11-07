@@ -46,6 +46,33 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## The actual generator error: `./netlist/make.sh`
+
+Running AMD's own example through the same call was decisive -- it changed the
+message from an index error to the engine's real complaint:
+
+```
+ERROR-XMC-1002: Failed to create and open file ./netlist/make.sh
+ERROR-XMC-5001: Compilation HDL failed during code generation.
+```
+
+The Hub's netlist and target directories are **resolved against the MATLAB working
+directory**, and both were relative (`./netlist`, `./code`). Where the engine looked
+there was no such folder, so it could not write `make.sh`; nothing was generated,
+and the empty intermediate it expected to read afterwards is what `vmcGenerate.p`
+indexed as `element 1 of 0`.
+
+So the fix, applied in both places:
+
+| where | what |
+|---|---|
+| `make_channelizer_model` | the Hub's `directory` and `TargetDirectory` are set to `<model folder>/netlist` and `<model folder>/code`, and those folders are created before generation |
+| `export_model_composer_ip` | before generating, a relative `directory` / `TargetDirectory` is rewritten to the model folder and created -- this also repairs a model built by an earlier version |
+| `mc_diagnose` | the same for AMD's example, so the comparison run is fair |
+
+`MC_SELFTEST_OK` and the model build are unchanged; only where the engine writes
+has changed.
+
 ## Stop guessing: read the engine's log and cross-check AMD's example
 
 Six rounds produced one repeated sentence from a protected `.p` file, and each
