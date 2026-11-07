@@ -39,7 +39,9 @@ fi
 vivado_root="${XILINX_VIVADO:-}"
 if [[ -z "$vivado_root" ]]; then
     resolved="$(readlink -f "$(command -v vivado 2>/dev/null || true)" || true)"
-    [[ -n "$resolved" ]] && vivado_root="$(cd "$(dirname "$resolved")/.." && pwd)"
+    if [[ -n "$resolved" ]]; then
+        vivado_root="$(cd "$(dirname "$resolved")/.." && pwd)"
+    fi
 fi
 [[ -n "$vivado_root" ]] || mc_die "cannot find Vivado: set XILINX_VIVADO (System Generator scripts live there)"
 [[ -d "$vivado_root/scripts/sysgen/matlab" ]] || mc_die "System Generator scripts not found under $vivado_root

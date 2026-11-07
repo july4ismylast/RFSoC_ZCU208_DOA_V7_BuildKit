@@ -1,16 +1,17 @@
 function info = mc_paths(verbose)
-%MC_PATHS Put the Model Composer and System Generator libraries on the path.
-%   A plain `matlab -batch` session knows nothing about Model Composer: the
-%   block libraries (vmcUtilities, hdlBasic, ...) are .slx files inside the Model
-%   Composer installation, and only the GUI launcher adds their folders.  This
-%   function finds them from MC_ROOT / MC_VIVADO_ROOT (set by scripts/mc_env.sh)
-%   and adds the folders, so that
-%       add_block('vmcUtilities/Vitis Model Composer Hub', ...)
-%   resolves in a batch session.
+%MC_PATHS Make the Model Composer and System Generator paths available.
+%   Works in two very different sessions:
 %
-%   A recursive scan of a Model Composer install takes a minute, so the folder
-%   list is cached in $MC_LIBS_CACHE (build/mc_libs.txt) and reused while
-%   MC_ROOT stays the same.
+%     - a Model Composer GUI, where the launcher has already added everything
+%       and the environment variables are usually EMPTY (that is not an error);
+%     - a `matlab -batch` session, where nothing is set up and the installation
+%       roots must be found.
+%
+%   So the roots come from, in order: the environment (MC_ROOT,
+%   MC_VIVADO_ROOT, XILINX_VIVADO), then from what is already on the MATLAB
+%   path (a segment containing Model_Composer/<version> or Vivado/<version>),
+%   then from `which('xlGenerateButton')`.  An unknown root is a warning, never
+%   a failure: in the GUI the paths are already there and nothing needs adding.
 %
 %   Returns a struct with mcRoot, vivadoRoot, found (name/file/folder),
 %   libraries (cellstr) and xlGenerateButton (logical).
@@ -19,19 +20,25 @@ arguments
 end
 
 info = struct();
-info.mcRoot = getenv('MC_ROOT');
-info.vivadoRoot = getenv('MC_VIVADO_ROOT');
 info.found = struct('name', {}, 'file', {}, 'folder', {});
 info.libraries = {};
 info.xlGenerateButton = false;
 
-if isempty(info.vivadoRoot) || ~isfolder(info.vivadoRoot)
-    error('mc_paths:vivado', ...
-        ['MC_VIVADO_ROOT is not a directory: "%s". Run this through ' ...
-         'make mc / make mc-scratch / make mc-libs.'], info.vivadoRoot);
+info.mcRoot = firstNonEmpty({getenv('MC_ROOT'), rootOnPath('Model_Composer')});
+info.vivadoRoot = firstNonEmpty({getenv('MC_VIVADO_ROOT'), getenv('XILINX_VIVADO'), ...
+    rootOnPath('Vivado'), rootFromFunction('xlGenerateButton')});
+if isempty(info.vivadoRoot) && ~isempty(info.mcRoot)
+    info.vivadoRoot = siblingVivado(info.mcRoot);
 end
 
-info = addVivadoPaths(info, verbose);
+if verbose
+    fprintf('Model Composer root:  %s\n', printable(info.mcRoot));
+    fprintf('Vivado root:          %s\n', printable(info.vivadoRoot));
+end
+
+if ~isempty(info.vivadoRoot) && isfolder(info.vivadoRoot)
+    info = addVivadoPaths(info, verbose);
+end
 if ~isempty(info.mcRoot) && isfolder(info.mcRoot)
     info = addModelComposerPaths(info, verbose);
 end
@@ -43,8 +50,6 @@ for index = 1:numel(info.found)
     end
 end
 
-% Model Composer's own initialiser registers the libraries and defines
-% xlGenerateButton.  In batch it may refuse, so never let it abort the run.
 if exist('xmcStart', 'file') == 2 && exist('xlGenerateButton', 'file') ~= 2
     try
         xmcStart;
@@ -57,15 +62,90 @@ end
 info.xlGenerateButton = exist('xlGenerateButton', 'file') == 2;
 if verbose
     fprintf('xlGenerateButton: %s\n', ternary(info.xlGenerateButton, 'yes', 'no'));
+    if isempty(info.mcRoot) && isempty(info.vivadoRoot)
+        fprintf(['note: no Model Composer / Vivado root found from the environment ' ...
+                 'or the path; assuming this session is already set up\n']);
+    end
 end
 end
 
 % ---------------------------------------------------------------------------
+function text = printable(value)
+if isempty(value)
+    text = '(not found -- using the paths this session already has)';
+else
+    text = value;
+end
+end
+
 function text = ternary(condition, yesText, noText)
 if condition
     text = yesText;
 else
     text = noText;
+end
+end
+
+function value = firstNonEmpty(candidates)
+value = '';
+for index = 1:numel(candidates)
+    if ~isempty(candidates{index})
+        value = candidates{index};
+        return;
+    end
+end
+end
+
+function root = rootOnPath(name)
+%ROOTONPATH Find <prefix>/<name>/<version> among the folders already on the path.
+root = '';
+segments = strsplit(path, pathsep);
+for index = 1:numel(segments)
+    parts = strsplit(segments{index}, filesep);
+    hit = find(strcmp(parts, name), 1);
+    if isempty(hit) || numel(parts) <= hit + 1
+        continue;
+    end
+    candidate = strjoin(parts(1:hit + 1), filesep);
+    if isfolder(candidate)
+        root = candidate;
+        return;
+    end
+end
+end
+
+function root = rootFromFunction(functionName)
+%ROOTFROMFUNCTION Derive the install root from where a function lives.
+%   .../Vivado/2023.2/scripts/sysgen/matlab/xlGenerateButton.p -> .../Vivado/2023.2
+root = '';
+location = which(functionName);
+if isempty(location)
+    return;
+end
+folder = fileparts(location);
+for levels = 3:4
+    candidate = folder;
+    for step = 1:levels
+        candidate = fileparts(candidate);
+    end
+    if isfolder(fullfile(candidate, 'scripts', 'sysgen'))
+        root = candidate;
+        return;
+    end
+end
+end
+
+function root = siblingVivado(mcRoot)
+%SIBLINGVIVADO .../X20232/Model_Composer/2023.2 -> .../X20232/Vivado/2023.2
+root = '';
+version = regexp(mcRoot, '([^/\\]+)[/\\]?$', 'tokens', 'once');
+if isempty(version)
+    return;
+end
+base = fileparts(fileparts(mcRoot));
+candidate = fullfile(base, 'Vivado', version{1});
+if isfolder(candidate)
+    root = candidate;
 end
 end
 
@@ -77,7 +157,7 @@ vivadoPaths = { ...
     fullfile(info.vivadoRoot, 'scripts', 'sysgen', 'matlab', 'plugins', 'compilation')};
 added = addFolders(vivadoPaths);
 if verbose
-    fprintf('Vivado paths added: %d\n', numel(added));
+    fprintf('Vivado paths added:   %d\n', numel(added));
 end
 jar = fullfile(info.vivadoRoot, 'lib', 'classes', 'sysgen.jar');
 if isfile(jar)
@@ -99,16 +179,18 @@ mcPaths = { ...
 addFolders(mcPaths);
 
 info = readCache(info, verbose);
-missing = setdiff(wantedLibraries(), info.libraries, 'stable');
-for index = 1:numel(missing)
-    hit = guessLibrary(info.mcRoot, missing{index});
+for name = wantedLibraries()
+    if any(strcmp(info.libraries, name{1}))
+        continue;
+    end
+    hit = guessLibrary(info.mcRoot, name{1});
     if isempty(hit)
         continue;
     end
     addpath(hit.folder);
-    info.found(end + 1) = struct('name', missing{index}, 'file', hit.file, ...
+    info.found(end + 1) = struct('name', name{1}, 'file', hit.file, ...
         'folder', hit.folder); %#ok<AGROW>
-    info.libraries{end + 1} = missing{index}; %#ok<AGROW>
+    info.libraries{end + 1} = name{1}; %#ok<AGROW>
 end
 
 missing = setdiff(wantedLibraries(), info.libraries, 'stable');
@@ -118,15 +200,13 @@ end
 if verbose
     fprintf('scanning %s for %d libraries (one pass)\n', info.mcRoot, numel(missing));
 end
-% Model Composer keeps some libraries as .slx and older ones as .mdl, so look
-% for both rather than assuming which this release uses.
+% Model Composer keeps some libraries as .slx and older ones as .mdl.
 listing = [dir(fullfile(info.mcRoot, '**', '*.slx')); ...
            dir(fullfile(info.mcRoot, '**', '*.mdl'))];
 for index = 1:numel(missing)
     match = [];
     for extension = {'.slx', '.mdl'}
-        fileName = [missing{index} extension{1}];
-        hit = find(strcmp({listing.name}, fileName), 1);
+        hit = find(strcmp({listing.name}, [missing{index} extension{1}]), 1);
         if ~isempty(hit)
             match = hit;
             break;
@@ -135,11 +215,10 @@ for index = 1:numel(missing)
     if isempty(match)
         continue;
     end
-    fileName = listing(match).name;
     folder = listing(match).folder;
     addpath(folder);
     info.found(end + 1) = struct('name', missing{index}, ...
-        'file', fullfile(folder, fileName), 'folder', folder); %#ok<AGROW>
+        'file', fullfile(folder, listing(match).name), 'folder', folder); %#ok<AGROW>
     info.libraries{end + 1} = missing{index}; %#ok<AGROW>
 end
 writeCache(info);
@@ -150,7 +229,6 @@ function wanted = wantedLibraries()
 wanted = {'vmcUtilities', 'hdlBasic', 'hdlSSR', 'hdlUtilities'};
 end
 
-% ---------------------------------------------------------------------------
 function hit = guessLibrary(root, name)
 %GUESSLIBRARY The few places a Model Composer library actually lives.
 hit = struct('file', '', 'folder', '');
@@ -169,7 +247,6 @@ for index = 1:numel(candidates)
 end
 end
 
-% ---------------------------------------------------------------------------
 function added = addFolders(candidates)
 added = {};
 for index = 1:numel(candidates)
@@ -180,7 +257,6 @@ for index = 1:numel(candidates)
 end
 end
 
-% ---------------------------------------------------------------------------
 function info = readCache(info, verbose)
 %READCACHE Reuse the folder list from the previous run.
 cacheFile = getenv('MC_LIBS_CACHE');
@@ -195,9 +271,6 @@ for index = 1:numel(lines)
         continue;
     end
     folders{end + 1} = parts(2); %#ok<AGROW>
-end
-if isempty(folders)
-    return;
 end
 for index = 1:numel(folders)
     addpath(folders{index});
@@ -214,7 +287,6 @@ if verbose && ~isempty(info.found)
 end
 end
 
-% ---------------------------------------------------------------------------
 function writeCache(info)
 %WRITECACHE Remember the folders so the next run does not rescan.
 cacheFile = getenv('MC_LIBS_CACHE');

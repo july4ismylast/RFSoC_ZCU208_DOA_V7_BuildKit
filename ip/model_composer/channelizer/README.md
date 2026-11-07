@@ -39,6 +39,14 @@ therefore calls `mc_paths.m` **first**, which:
    library files it did find, plus the list of blocks in a library when
    `add_block` rejects a name.
 
+The environment variables are a convenience, not a requirement: in a Model
+Composer GUI they are usually empty, and `mc_paths` then derives the roots from
+what is already on the MATLAB path (`.../Model_Composer/2023.2`,
+`.../Vivado/2023.2`) or from `which('xlGenerateButton')`. Only a library that is
+missing *and* cannot be located is an error. `make mc-gui` also writes
+`MC_ROOT`, `MC_VIVADO_ROOT`, `IP_REPO` and `MC_LIBS_CACHE` into the session's
+`startup.m`, so a GUI started by hand still has them.
+
 Diagnose with:
 
 ```bash

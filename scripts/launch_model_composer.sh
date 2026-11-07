@@ -45,17 +45,38 @@ if [[ -z "$m2" ]]; then
     echo "If that is not R2022b the export step fails with 'xlGenerateButton unavailable'." >&2
 fi
 
-# The GUI session needs IP_REPO too: start.m / mc_gui_build write the exported IP.
+# The GUI session needs the roots and IP_REPO: mc_gui_build writes the exported IP
+# and mc_paths uses these instead of guessing.
 export IP_REPO="${IP_REPO:-$root/build/ip_repo}"
+export MC_VIVADO_ROOT="${XILINX_VIVADO:-$(cd "$(dirname "$(command -v vivado 2>/dev/null || echo /nonexistent/x)")/.." 2>/dev/null && pwd || true)}"
+export MC_ROOT="$(cd "$(dirname "$mc")/.." && pwd)"
+export MC_LIBS_CACHE="${MC_LIBS_CACHE:-$root/build/mc_libs.txt}"
 
 # The MATLAB path a batch session does not have, handed to the GUI at startup.
 helper_dir="$root/ip/model_composer/channelizer"
+mc_root_dir="$(cd "$(dirname "$mc")/.." && pwd)"
+vivado_root_dir="${XILINX_VIVADO:-}"
+if [[ -z "$vivado_root_dir" ]]; then
+    resolved_vivado="$(readlink -f "$(command -v vivado 2>/dev/null || true)" || true)"
+    if [[ -n "$resolved_vivado" ]]; then
+        vivado_root_dir="$(cd "$(dirname "$resolved_vivado")/.." && pwd)"
+    fi
+fi
+if [[ -z "$vivado_root_dir" ]]; then
+    echo "WARNING: cannot find Vivado; set XILINX_VIVADO so the System Generator paths are known" >&2
+fi
 startup_dir="$root/build/mc_startup"
 mkdir -p "$startup_dir"
 {
     echo "addpath('$helper_dir');"
+    # The GUI may be started by hand later; give the session the same variables
+    # the shell passes, so mc_paths() never has to guess.
+    echo "if isempty(getenv('MC_ROOT')), setenv('MC_ROOT', '$mc_root_dir'); end"
+    echo "if isempty(getenv('MC_VIVADO_ROOT')), setenv('MC_VIVADO_ROOT', '$vivado_root_dir'); end"
+    echo "if isempty(getenv('IP_REPO')), setenv('IP_REPO', '$root/build/ip_repo'); end"
+    echo "setenv('MC_LIBS_CACHE', '$root/build/mc_libs.txt');"
     echo "fprintf('Model Composer helpers ready: mc_gui_build, make_channelizer_model, export_model_composer_ip\\n');"
-    echo "fprintf('repo: %s\\n', '$root');"
+    echo "fprintf('repo: %s  MC_VIVADO_ROOT: %s\\n', '$root', getenv('MC_VIVADO_ROOT'));"
     if [[ "$mode" == "build" ]]; then
         echo "try"
         echo "    mc_gui_build;"
