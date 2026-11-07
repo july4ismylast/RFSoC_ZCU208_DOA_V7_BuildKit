@@ -201,15 +201,17 @@ MODEL_COMPOSER ?= /path/Model_Composer/2023.2/bin/model_composer
 `make tools MATLAB=1` prints both installs and an explicit `[ok]`/`[MISS]` for
 every toolbox the code generator needs.
 
-`make mc` **builds** the channelizer IP (it does not open a GUI): the 2023.2
-launcher, which carries R2022b, runs in batch mode, compiles the model's System
-Generator token to IP Catalog, installs `component.xml` in the IP repository and
-checks that the file really is there. `make mc-gui` is only for creating or
-editing the `.slx` itself.
+`make mc` **builds** the channelizer IP (it does not open a GUI): MATLAB R2022b
+runs in `-batch` with Model Composer's System Generator paths added, compiles the
+model's token to IP Catalog, installs `component.xml` in the IP repository, and
+fails the stage if no IP came out. It deliberately does **not** go through the
+Model Composer launcher, which evals its arguments and appends its own `-r`; a
+real run died there ([evidence](docs/evidence/2026-11-07-host-probe/model_composer_launcher_eval_bug.txt)).
 
 ```bash
 make mc MODEL_COMPOSER_MODEL=/abs/path/channelizer.slx   # builds the IP
-make mc-gui                                              # edits the model
+make mc-gui                                              # creates/edits the .slx
+make mc-verify MODEL_COMPOSER_MODEL=/abs/x.slx           # after a GUI compile
 ```
 
 ## Progress that survives a push

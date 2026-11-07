@@ -109,11 +109,13 @@ Commit `docs/progress/` after a run on the board host; that is what makes
 If Model Composer is installed, it pins its own MATLAB (2023.2 → R2022b) while
 the command line runs a newer release. Only the channelizer's Model Composer
 route needs the old one, and it **builds**: `make mc
-MODEL_COMPOSER_MODEL=/abs/x.slx` runs the launcher in batch mode, compiles the
-System Generator token to IP Catalog, installs the IP and verifies the
-`component.xml` exists — the same stage as `step05_channelizer
-CHANNELIZER_FLOW=model_composer`, so it lands in the progress table. `make
-mc-gui` opens the GUI, which you need only to create or edit the `.slx`.
+MODEL_COMPOSER_MODEL=/abs/x.slx` runs R2022b in `-batch` with the Model Composer
+and System Generator paths added, compiles the token to IP Catalog, installs the
+IP and verifies the `component.xml` exists — the same stage as
+`step05_channelizer CHANNELIZER_FLOW=model_composer`, so it lands in the progress
+table. It does **not** use the Model Composer launcher (it evals its arguments
+and appends its own `-r`). `make mc-gui` opens that GUI, which you need only to
+create or edit the `.slx`; `make mc-verify` collects the IP after a GUI compile.
 [`docs/TWO_MATLABS.md`](docs/TWO_MATLABS.md) has the table and the
 `config.local.mk` snippet, and `make tools MATLAB=1` prints an `[ok]`/`[MISS]`
 verdict for every toolbox the code generator needs.

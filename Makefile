@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-gui graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-gui mc-verify graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -71,6 +71,7 @@ help:
 	@echo "What is installed:   make tools   (or: make tools MATLAB=1)"
 	@echo "Model Composer IP:   make mc  MODEL_COMPOSER_MODEL=/abs/x.slx   (builds, R2022b)"
 	@echo "Model Composer GUI:  make mc-gui  (only to create/edit that .slx)"
+	@echo "After a GUI compile: make mc-verify MODEL_COMPOSER_MODEL=/abs/x.slx"
 	@echo "Progress pages:      make progress  -> docs/progress/PROGRESS.md"
 	@echo "Every step bench:    make steps"
 	@echo "Bring-up checklist:  bash step7_board_bringup/checklist.sh"
@@ -169,16 +170,31 @@ mc:
 	    echo "To create or edit that model first, open the GUI: make mc-gui"; \
 	    exit 2; fi
 	@if [ ! -e "$(MC_MODEL)" ]; then \
-	    echo "ERROR: model not found: $(MC_MODEL)"; exit 2; fi
+	    echo "ERROR: model not found: $(MC_MODEL)"; \
+	    echo "A path like /absolute/path/channelizer.slx is a placeholder:"; \
+	    echo "create the real model with make mc-gui, or point at the .slx you have."; \
+	    exit 2; fi
 	@echo "Model Composer build: $(MC_MODEL)"
 	@echo "launcher: $(MODEL_COMPOSER)   (MATLAB R2022b from $(MATLAB_2022B))"
 	@$(MAKE) --no-print-directory step05_channelizer \
 	    CHANNELIZER_FLOW=model_composer MODEL_COMPOSER_MODEL="$(MC_MODEL)"
 
 # The GUI, only for creating or editing the .slx itself: R2022b first on PATH,
-# launch logged, docs/progress/model_composer_launch.md written.
+# launch logged, docs/progress/model_composer_launch.md written.  The launcher
+# cannot run a headless build -- it evals its own arguments and appends its own
+# -r -- so `make mc` never goes through it.
 mc-gui:
 	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log"
+
+# Fallback after a GUI compile: install the component.xml the token left next to
+# the model, then run the same artifact check the headless build runs.
+mc-verify:
+	@if [ -z "$(MC_MODEL)" ]; then \
+	    echo "mc-verify needs the model: make mc-verify MODEL_COMPOSER_MODEL=/abs/path/x.slx"; \
+	    exit 2; fi
+	@./scripts/mc_collect_ip.sh "$(MC_MODEL)" "$(IP_REPO)"
+	@$(MAKE) --no-print-directory -C ip/model_composer/channelizer verify \
+	    MODEL_COMPOSER_MODEL="$(MC_MODEL)" IP_REPO="$(IP_REPO)"
 
 graph:
 	@cat docs/build-stages.mmd

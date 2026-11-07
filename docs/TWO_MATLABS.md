@@ -15,7 +15,7 @@ uses which install, and where to put the paths.
 | `matlab_v7/build_amc_r5.m` (G8b) | 2024a | `coder.config('lib')` + `GenCodeOnly`; the ARM build is `armr5-none-eabi-gcc` |
 | `matlab_v7/verify_amc_vectors.m` | 2024a | pure MATLAB, no toolbox beyond Embedded Coder's tables |
 | `make step05_channelizer CHANNELIZER_FLOW=matlab_hdl` | 2024a | HDL Coder (`dsphdl.Channelizer`) |
-| **`make step05_channelizer CHANNELIZER_FLOW=model_composer`** | **2022b, through the Model Composer launcher** | `xlGenerateButton` only exists inside Model Composer |
+| **`make mc`, `CHANNELIZER_FLOW=model_composer`** | **2022b, run directly in `-batch`** (not the launcher) | `xlGenerateButton` only exists once Model Composer's paths are added |
 
 The channelizer is the **only** stage that needs 2022b. Everything else — the
 whole G2 chain, G3, G4, the codegen, the studies — uses the command-line 2024a.
@@ -44,37 +44,75 @@ start if `matlab` still resolves to another release, and writes
 
 ## The build (what `make mc` does)
 
-The GUI is not the deliverable — the IP is. To build:
+The GUI is not the deliverable — the IP is.
 
 ```bash
 make mc MODEL_COMPOSER_MODEL=/absolute/path/channelizer.slx
 ```
 
-which is the same stage as:
+which is the same stage as `make step05_channelizer
+CHANNELIZER_FLOW=model_composer MODEL_COMPOSER_MODEL=...`.
 
-```bash
-make step05_channelizer CHANNELIZER_FLOW=model_composer \
-     MODEL_COMPOSER_MODEL=/absolute/path/channelizer.slx
+**It does not go through the Model Composer launcher**, and a real run on this
+machine is why ([evidence](evidence/2026-11-07-host-probe/model_composer_launcher_eval_bug.txt)):
+
+```text
+modelcomposerArgs.sh: eval: line 856: syntax error near unexpected token `('
+...`exec matlab -batch addpath(pwd); export_model_composer_ip('...') -r "...;;xmcStart;"`
 ```
 
-Steps inside:
+The launcher evals `exec matlab <your args> -r "<its startup>"`. Two
+consequences:
+
+1. a MATLAB statement passed after `-batch` loses its quotes before the eval, so
+   the first space splits it and the first `(` is a shell syntax error;
+2. the launcher always appends `-r`, and MATLAB refuses `-batch` with `-r`.
+
+So the build runs **R2022b directly, in batch**, adding the directories the
+launcher's own banner lists:
+
+| from the banner | added to the MATLAB path |
+|---|---|
+| Model Composer Bin Dir `.../Model_Composer/2023.2` | `simulink`, `simulink/aie`, `simulink/hls`, `lib/lnx64.o[+/Ubuntu[/22]]`, `data/examples` |
+| System Generator Bin Dir `.../Vivado/2023.2` | `scripts/sysgen/matlab`, `.../plugins/compilation`, `lib/lnx64.o/matlab`, `lib/classes/sysgen.jar` |
+
+Steps inside `make mc`:
 
 1. `MC_MODEL` = `MODEL_COMPOSER_MODEL`, or the single `.slx` in
-   `ip/model_composer/channelizer/`; it must exist, otherwise the target stops.
-2. `ip/model_composer/channelizer/Makefile` puts the R2022b `bin/` first on
-   `PATH` and runs `model_composer -batch "addpath(pwd);
-   export_model_composer_ip('<model>')"` — **batch**, no GUI.
-3. `export_model_composer_ip.m` loads the model, asserts a *Xilinx System
-   Generator* token exists and that `xlGenerateButton` is available, runs the
-   token (System Generator compiles the design to IP Catalog with Vivado), then
-   copies the newest `component.xml` to `$(IP_REPO)/model_composer_channelizer`.
-4. A `verify` step fails the stage if that `component.xml` is missing or older
-   than the model — a launcher that exits 0 without producing IP is still a
-   failure.
+   `ip/model_composer/channelizer/`; it must be a real file, so a placeholder
+   path stops immediately.
+2. `scripts/build_model_composer_ip.sh` checks `MATLAB_2022B` really is R2022b
+   (from `VersionInfo.xml`, no licence), finds the Model Composer and Vivado
+   roots, checks `scripts/sysgen/matlab` exists, then runs
+   `matlab -batch "mc_batch_export('<model>')"`.
+3. `mc_batch_export.m` adds the paths and `sysgen.jar`, calls `xmcStart` **only
+   if** `xlGenerateButton` is still missing, then calls
+   `export_model_composer_ip.m`: load the model, assert a *Xilinx System
+   Generator* token exists, run the token (compile to IP Catalog), copy the
+   newest `component.xml` to `$(IP_REPO)/model_composer_channelizer`.
+4. The `verify` step fails the stage if that `component.xml` is missing or older
+   than the model — a run that exits 0 without producing IP is still a failure.
 
-The build therefore produces, exactly like the other stages: `build/logs/`
-`step05_channelizer.log`, a stamp, and the tracked page
-`docs/progress/step05_channelizer.md`.
+Output is the same as any other stage: `build/logs/step05_channelizer.log`, a
+stamp, and the tracked page `docs/progress/step05_channelizer.md`.
+
+**Unproven until you run it:** whether `xlGenerateButton` is available in a
+plain `-batch` session after those paths, or whether only `xmcStart` can
+initialise Model Composer. The success line is `MC_EXPORT_OK`. If the log says
+`xlGenerateButton is still unavailable`, no stamp is written and nothing
+downstream moves — use the fallback below.
+
+## Fallback: compile in the GUI once, then collect
+
+```bash
+make mc-gui                    # R2022b GUI, logged, launch page written
+#   in the GUI: open the token, target IP Catalog, Generate
+#   (or in the Command Window: export_model_composer_ip('/abs/path/model.slx'))
+make mc-verify MODEL_COMPOSER_MODEL=/abs/path/model.slx
+```
+
+`make mc-verify` copies the `component.xml` the token left next to the model
+(preferring `<model>_ip/`) into `$(IP_REPO)` and runs the same artifact check.
 
 ## How to set the paths
 
@@ -172,8 +210,7 @@ make steps                                # 2. 43 host checks, no licence
 make step14_hil_vectors                   # 3. 2024a, HIL vectors
 matlab -batch "cd matlab_v7; build_amc_r5"   # 4. 2024a, G8b
 make hls-all                              # 5. 2023.2 HLS, all seven kernels
-make step05_channelizer CHANNELIZER_FLOW=model_composer \
-     MODEL_COMPOSER=... MODEL_COMPOSER_MODEL=...   # 6. 2022b, the only 2022b step
+make mc MODEL_COMPOSER_MODEL=/abs/x.slx      # 6. 2022b, builds the IP (batch)
 ```
 
 The `run_matlab_clean.sh` wrapper (used for the 2024a calls inside the stages)
