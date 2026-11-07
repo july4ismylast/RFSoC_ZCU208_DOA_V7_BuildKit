@@ -137,9 +137,9 @@ if bdIsLoaded(destinationName(destination))
 end
 save_system(templateName, destination);
 fprintf('saved %s\n', destination);
-printHubSetting(hub, 'ExportType');
-printHubSetting(hub, 'ProjDevice');
-printHubSetting(hub, 'part');
+% save_system renames the model, so the Hub's old path no longer resolves; look
+% it up again before reporting what it holds.
+reportHub(destination);
 printSummary(settings);
 end
 
@@ -161,9 +161,7 @@ addChannels(modelName, settings, true);
 
 save_system(modelName, destination);
 fprintf('saved %s\n', destination);
-printHubSetting(hub, 'ExportType');
-printHubSetting(hub, 'ProjDevice');
-printHubSetting(hub, 'part');
+reportHub(destination);
 printSummary(settings);
 end
 
@@ -330,6 +328,20 @@ end
 if numel(blocks) > 40
     fprintf('    ... %d more\n', numel(blocks) - 40);
 end
+end
+
+function reportHub(destination)
+%REPORTHUB Print the device settings of the Hub in the saved model.
+[~, savedName] = fileparts(destination);
+hubs = mc_find_hub(savedName);
+if isempty(hubs)
+    fprintf('  (no Hub found in %s)\n', savedName);
+    return;
+end
+fprintf('  Hub in %s: %s\n', savedName, hubs{1});
+printHubSetting(hubs{1}, 'ExportType');
+printHubSetting(hubs{1}, 'ProjDevice');
+printHubSetting(hubs{1}, 'part');
 end
 
 function printHubSetting(hub, parameter)

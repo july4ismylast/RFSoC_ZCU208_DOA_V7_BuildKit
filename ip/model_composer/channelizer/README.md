@@ -46,6 +46,34 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## The template route works, and the API is `xmcGenerate`
+
+With the Hub taken from AMD's example the model builds cleanly and the update
+passes -- no more "Target hardware is not selected".  What the run then showed:
+
+```
+generate block: channelizer/Vitis Model Composer Hub
+export target:  IP Catalog
+generate entry: xmcGenerate: yes        <- the supported API
+Warning: the System Generator block and xlGenerateButton API are deprecated
+         and no longer supported. Use the Vitis Model Composer hub block and
+         xmcGenerate API.
+ERROR: No block diagram name specified.   (from xlGenerateButton, via xlFindSgFig)
+```
+
+Two mistakes of mine, both fixed:
+
+| mistake | fix |
+|---|---|
+| I tried `xlGenerateButton` first (it existed, so it won) | `mc_generate_function` now prefers **`xmcGenerate`** → `xmcGenerateIP` → `xmcGenerateCode` → `xmcHubGenerate` → `xlGenerate` → `xlGenerateButton` |
+| I passed the **Hub's block path** as the argument | `mc_call_generator` passes the **block diagram name**, and tries the argument shapes the entry point declares (`nargin`), printing each failure |
+
+Also: `save_system` renames the model, so the Hub's old path stopped resolving
+(`Invalid Simulink object name: 'SSRDDC/...'` in the log) -- the device settings
+are now reported by looking the Hub up again in the saved model.  And the export
+waits for `component.xml` instead of assuming generation finished when the call
+returned, ignoring copies left by earlier runs.
+
 ## Two routes, and why the template one is preferred
 
 A Hub created with `add_block` on a fresh model is *not* the same object as a Hub

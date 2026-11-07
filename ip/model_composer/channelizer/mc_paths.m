@@ -66,6 +66,8 @@ if verbose
     if isempty(name)
         fprintf(['note: no scripted generate function here; the Hub''s Generate ' ...
                  'button is the only way to build in this session\n']);
+    else
+        fprintf('generate entry: %s (%s)\n', name, describeArguments(name));
     end
     if isempty(info.mcRoot) && isempty(info.vivadoRoot)
         fprintf(['note: no Model Composer / Vivado root found from the environment ' ...
@@ -311,5 +313,26 @@ try
     fclose(handle);
 catch problem
     fprintf('note: could not write %s: %s\n', cacheFile, problem.message);
+end
+end
+
+function text = describeArguments(name)
+%DESCRIBEARGUMENTS How many arguments the generate entry point declares.
+%   xmcGenerate is documented with the block diagram name; xlGenerateButton
+%   wants the figure instead, which is why it is not the first choice.
+try
+    count = nargin(str2func(name));
+catch problem
+    text = problem.message;
+    return;
+end
+if isnan(count)
+    text = 'argument count unknown (varargin)';
+elseif count == 0
+    text = 'takes no arguments';
+elseif count == 1
+    text = 'takes 1 argument: the model name';
+else
+    text = sprintf('takes %d arguments', count);
 end
 end

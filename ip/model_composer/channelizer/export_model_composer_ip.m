@@ -48,16 +48,22 @@ if isempty(name)
          'then run `make mc-verify`.  Checked: %s.  Run mc_probe_generate() ' ...
          'to list what this installation does provide.'], strjoin(available, ', '));
 end
-feval(name, generator{1});
+baseline = now;
+mc_call_generator(name, model);
+
+% Generation may be asynchronous in the GUI; wait for the artefact rather than
+% assuming the call returned after the work.
+started = tic;
+component = waitForComponent(folder, model, baseline, 900);
 
 ipRepo = getenv('IP_REPO');
 assert(~isempty(ipRepo), 'IP_REPO is not set; run this through make mc');
 destination = fullfile(ipRepo, 'model_composer_channelizer');
-components = dir(fullfile(folder, '**', 'component.xml'));
-assert(~isempty(components), ...
-    'Model Composer completed but no component.xml was found under %s', folder);
-[~, newest] = max([components.datenum]);
-source = components(newest).folder;
+assert(~isempty(component), ...
+    ['Model Composer completed but wrote no new component.xml under %s. ' ...
+     'The Hub log next to the model says why: %s'], folder, ...
+    fullfile(folder, 'model_composer_hdl.log'));
+source = component.folder;
 if isfolder(destination)
     rmdir(destination, 's');
 end
@@ -108,4 +114,38 @@ end
 if isempty(hubs)
     fprintf(2, 'No Vitis Model Composer Hub block in %s.\n', model);
 end
+end
+
+function component = waitForComponent(folder, model, baseline, timeoutSeconds)
+%WAITFORCOMPONENT Poll for a component.xml this run wrote.
+%   Model Composer writes <model>_ip/component.xml.  A copy left by an earlier
+%   run must not be mistaken for the new IP: <model>_ip wins, otherwise only a
+%   file modified after baseline counts.
+component = [];
+started = tic;
+lastReport = 0;
+while true
+    candidates = dir(fullfile(folder, '**', 'component.xml'));
+    preferred = candidates(contains({candidates.folder}, [filesep model '_ip']));
+    if ~isempty(preferred)
+        component = preferred(1);
+        break;
+    end
+    fresh = candidates([candidates.datenum] > baseline);
+    if ~isempty(fresh)
+        component = fresh(1);
+        break;
+    end
+    elapsed = toc(started);
+    if elapsed > timeoutSeconds
+        fprintf(2, 'no new component.xml after %d s under %s\n', round(elapsed), folder);
+        return;
+    end
+    if elapsed - lastReport > 30
+        fprintf('  waiting for component.xml (%d s)\n', round(elapsed));
+        lastReport = elapsed;
+    end
+    pause(5);
+end
+fprintf('found %s\n', fullfile(component.folder, component.name));
 end
