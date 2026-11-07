@@ -6,7 +6,7 @@ Written by `make progress` (and by every `make stepNN_...` through
 `scripts/run_stage.sh`). The raw logs stay in `build/logs/`, which is not
 tracked; these pages are, so a pushed branch shows what actually ran.
 
-Generated: 2026-11-07T16:45:25Z
+Generated: 2026-11-07T16:50:44Z
 
 | | count |
 |---|---|

@@ -46,6 +46,31 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## Stop guessing: read the engine's log and cross-check AMD's example
+
+Six rounds produced one repeated sentence from a protected `.p` file, and each
+round answered it with a guess.  The builder now measures instead:
+
+1. **The GUI's own entry points.** `xmcGenerateButtonPressed`, `xmcGenerateCallback`,
+   `xmcHubInit`, `xmcApplyButtonClick` all exist in this install. A model built from
+   code has never had the Hub's dialog opened, and the dialog is where the Hub
+   builds the state the engine reads -- so the dialog is opened (`open_system(hub)`)
+   and those callbacks are tried, with the generate call retried after each.
+2. **Model Composer's own log.** `model_composer_hdl.log` sits next to the model and
+   says why a run stopped. Every earlier round printed its path and never read it;
+   `mc_hdl_log_tail` now prints its last 60 lines.
+3. **AMD's unmodified example, through the same call.** `mc_diagnose` copies
+   `build/mc_examples/SSRDDC.slx` and runs `xmcGenerate` on it. The verdict is one
+   line:
+
+   | result | meaning |
+   |---|---|
+   | `example-fails` | the toolchain, licence or session is at fault, not this model |
+   | `example-works` | the difference is in our model, and both Hub dumps are on screen |
+
+No more single-hypothesis rounds: one run now produces evidence that separates
+the two possibilities.
+
 ## The real cause: the Hub exports a *named subsystem*, and ours did not exist
 
 The platform attempts failed too (`Not Specified` and `Specify Platform`, with and

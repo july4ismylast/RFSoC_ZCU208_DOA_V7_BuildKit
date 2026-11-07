@@ -1,41 +1,62 @@
-function mc_call_generator(name, model, hub)
-%MC_CALL_GENERATOR Start generation, with the arguments xmcGenerate documents.
-%   `help xmcGenerate` on the real install says:
+function mc_call_generator(name, model, hub, folder)
+%MC_CALL_GENERATOR Start generation, using the GUI's own code paths as well.
+%   `help xmcGenerate` documents xmcGenerate('MyModel'), and that call dies inside
+%   the protected vmcGenerate.p with
 %
-%       xmcGenerate('MyModel')                     uses the Hub block settings
-%       status = xmcGenerate('MyModel', 'MyModel_hubInfo.json')
-%       status = xmcGenerate('MyModel', 'closeProgressWindow', 1)
+%       Index exceeds the number of array elements. Index must not exceed 0.
 %
-%   so the shape is the model name plus optional name-value pairs.  A run without
-%   them died inside the protected xmcGenerate.p with
-%   "Index exceeds the number of array elements", while the Hub dump showed
-%   SubsystemName and IpName EMPTY -- that is what is fixed in configureHub.
+%   whatever the device, platform, block name or arguments.  The install does
+%   ship the GUI's own entry points -- xmcGenerateButtonPressed, xmcGenerateCallback,
+%   xmcHubInit, xmcApplyButtonClick -- so those are tried too; a model built from
+%   code has never had its Hub dialog opened, and the dialog is where the Hub
+%   builds the state the engine reads.
 %
-%   'closeProgressWindow', 1 is used first because a failed call left a wait box
-%   open ("Close Wait Box due to exception"), which blocks the next attempt.
+%   When everything fails it reads Model Composer's own log (which previous rounds
+%   printed the path of but never opened) and then runs AMD's unmodified example
+%   through the same call, which separates a toolchain fault from a model fault.
 arguments
     name (1, :) char
     model (1, :) char
     hub (1, :) char = ''
+    folder (1, :) char = ''
 end
 
 open_system(model);
-
-attempts = { ...
-    {name, {model, 'closeProgressWindow', 1}};
-    {name, {model}};
-    {'xlGenerateButton', {model}}};
+% A model built from code has never had the Hub's dialog opened, and the dialog is
+% where the Hub builds the state the engine reads.  Open it (its mask OpenFcn runs
+% xmcHubGUI) before the first attempt.
+if ~isempty(hub)
+    try
+        open_system(hub);
+        fprintf('opened the Hub dialog: %s\n', hub);
+    catch problem
+        fprintf('  note: could not open the Hub dialog: %s\n', problem.message);
+    end
+end
 
 firstFailure = [];
 tried = {};
-for index = 1:size(attempts, 1)
-    entry = attempts{index}{1};
-    shapeArgs = attempts{index}{2};
+calls = { ...
+    {name, {model, 'closeProgressWindow', 1}};
+    {name, {model}};
+    {'xmcGenerateButtonPressed', {hub}};
+    {'xmcGenerateCallback', {hub}};
+    {'xmcHubInit', {hub}};
+    {name, {model, 'closeProgressWindow', 1}};
+    {'xmcApplyButtonClick', {hub}};
+    {name, {model, 'closeProgressWindow', 1}}};
+
+for index = 1:size(calls, 1)
+    entry = calls{index}{1};
+    shapeArgs = calls{index}{2};
+    if isempty(entry) || any(cellfun(@isempty, shapeArgs))
+        continue;
+    end
     if exist(entry, 'file') == 0 %#ok<EXIST>
         continue;
     end
-    shape = sprintf('%s(%s)', entry, strjoin(cellfun(@mc_argument_text, shapeArgs, ...
-        'UniformOutput', false), ', '));
+    shape = sprintf('%s(%s)', entry, strjoin(cellfun(@mc_argument_text, ...
+        shapeArgs, 'UniformOutput', false), ', '));
     if any(strcmp(tried, shape))
         continue;
     end
@@ -43,9 +64,13 @@ for index = 1:size(attempts, 1)
     fprintf('calling %s\n', shape);
     try
         status = feval(entry, shapeArgs{:});
-        fprintf('%s returned\n', entry);
         printStatus(status);
-        return;
+        if strcmp(entry, name)
+            fprintf('%s returned\n', entry);
+            return;
+        end
+        % A GUI helper ran; the generate call that follows it decides the outcome.
+        fprintf('  %s ran\n', entry);
     catch problem
         fprintf(2, '  %s failed: %s\n', shape, problem.message);
         closeWaitBox();
@@ -55,31 +80,27 @@ for index = 1:size(attempts, 1)
     end
 end
 
-% Before giving up: the Hub's hardware selection.  Its Platform parameter is
-% empty, and a Zynq UltraScale+ RFSoC design is the case where Model Composer
-% wants a board rather than a bare part.
-hubOptions = struct();
-if ~isempty(hub)
-    hubOptions = mc_hub_options(hub);
-    if mc_platform_attempts(hub, model, hubOptions)
-        return;
-    end
-end
-
 fprintf(2, '\nno entry point started generation.  Tried:\n');
 fprintf(2, '  %s\n', tried{:});
+
+if ~isempty(folder)
+    mc_hdl_log_tail(folder, 60);
+end
 if ~isempty(hub)
     mc_dump_hub_params(hub);
 end
+mc_api_listing();
 if ~isempty(firstFailure)
     fprintf(2, 'first failure, %s:\n', firstFailure.message);
     mc_source_context(firstFailure);
 end
-mc_api_listing();
 printHelp(name);
+if ~isempty(folder)
+    mc_diagnose(folder);
+end
 error('mc_call_generator:failed', ...
-    ['generation did not start.  The Hub parameters and the failing source ' ...
-     'line are printed above; paste that block and it can be fixed.']);
+    ['generation did not start.  Model Composer''s own log, the Hub parameters ' ...
+     'and the toolchain-versus-model verdict are printed above; paste that block.']);
 end
 
 % ---------------------------------------------------------------------------
@@ -100,8 +121,8 @@ end
 
 function closeWaitBox()
 %CLOSEWAITBOX Close a progress window a failed call left behind.
-%   A real run printed "ERROR: Close Wait Box due to exception" after the first
-%   failure and then blocked the following attempts.
+%   A real run printed "ERROR: Close Wait Box due to exception" and the next
+%   attempt did nothing useful.
 try
     windows = findall(0, 'Type', 'figure', 'Name', 'Wait Box');
     for index = 1:numel(windows)
