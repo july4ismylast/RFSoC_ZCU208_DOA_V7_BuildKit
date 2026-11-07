@@ -58,10 +58,18 @@ that window without you typing an `addpath`. `make mc-gui-build` goes further an
 runs the build on startup. To run a `.m` file from the shell instead:
 
 ```bash
-matlab -batch "addpath('/abs/dir'); mc_gui_build"    # function, exits when done
-matlab -batch "run('/abs/dir/script.m')"             # script file
-matlab -r      "addpath('/abs/dir'); mc_gui_build"   # stays open
+make mc-eval CODE="mc_gui_build"                     # path filled in for you
+make mc-shell-help                                   # every command, literal paths
+
+/abs/path/R2022b/bin/matlab -batch "addpath('/abs/dir'); mc_gui_build"
+/abs/path/R2022b/bin/matlab -batch "run('/abs/dir/script.m')"
+/abs/path/R2022b/bin/matlab -r      "addpath('/abs/dir'); mc_gui_build"
 ```
+
+A `…` inside a path is documentation shorthand, never a real directory: paste
+only paths printed by `make mc-shell-help` or `make mc-path`. And the
+`MESA-LOADER` / `libva` / `qt.qpa.plugin` lines are graphics-driver noise —
+software rendering — not failures.
 
 If MATLAB reports `There is no block named 'vmcUtilities/...'`, that is a
 missing path, not a wrong name: a batch session has none of Model Composer's

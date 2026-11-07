@@ -60,6 +60,37 @@ plain path argument, so the launcher's `eval` cannot mangle it. MATLAB runs
 `startup.m` when the session opens, so `mc_gui_build` is defined before you type
 anything.
 
+### A path with `…` in it is not a path
+
+Documentation in chat or in a tutorial may abbreviate a directory as
+`/media/.../RFSoC_ZCU208_DOA_V7_BuildKit`. Pasted into a shell that is a literal
+directory named `…`, and MATLAB says:
+
+```
+Warning: Name is nonexistent or not a directory: /media/.../…/.../channelizer
+Unrecognized function or variable 'mc_gui_build'.
+```
+
+Never edit a path — print it:
+
+```bash
+make mc-shell-help     # every command for THIS checkout, paths filled in
+make mc-eval CODE="mc_gui_build"
+```
+
+### Lines that look like errors but are not
+
+```
+libva error: vaGetDriverNameByIndex() failed
+MESA-LOADER: failed to open iris_dri.so / swrast_dri.so
+qt.qpa.plugin: Could not find the Qt platform plugin "wayland" in ""
+MATLAB is selecting SOFTWARE rendering.
+```
+
+These are graphics-driver messages: no hardware GL in the session, so MATLAB
+renders in software. They appear on a run that works. The real result is the
+last line (`MC_GUI_BUILD_DONE …`) or an `Error using …`.
+
 ### `Unrecognized function or variable 'mc_gui_build'`
 
 That means the helper folder is not on the path in the session you are typing

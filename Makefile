@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-libs graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-libs mc-eval mc-shell-help graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -73,6 +73,8 @@ help:
 	@echo "Create that .slx:    make mc-scratch   (from scratch, no GUI)"
 	@echo "AMD 2023.2 example:  make mc-example   (reference only, not committed)"
 	@echo "Blocks not found:    make mc-libs      (where the libraries are)"
+	@echo "Run MATLAB code:     make mc-eval CODE=\"mc_gui_build\""
+	@echo "Exact commands:      make mc-shell-help   (paths filled in)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
 	@echo "GUI that builds:     make mc-gui-build   (opens, builds, exports)"
@@ -212,6 +214,29 @@ mc-gui:
 # (startup.m calls mc_gui_build), then leaves the session open to look at it.
 mc-gui-build:
 	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_gui_build.log" build
+
+# Run Model Composer MATLAB code from the shell without typing any path:
+#   make mc-eval CODE="mc_gui_build"
+mc-eval:
+	@./scripts/mc_eval.sh "$(CODE)"
+
+# The literal commands for THIS checkout -- no placeholders, nothing to edit.
+mc-shell-help:
+	@echo "Copy-paste commands for this checkout (paths already filled in):"
+	@echo
+	@echo "  Model Composer GUI, helpers already on the MATLAB path:"
+	@echo "    $(MODEL_COMPOSER) -sd $(CURDIR)/build/mc_startup"
+	@echo "    (make mc-gui does exactly this; make mc-gui-build also runs the build)"
+	@echo
+	@echo "  Batch, no GUI, same helpers (R2022b, not the matlab on PATH):"
+	@echo "    $(MATLAB_2022B) -batch \"addpath('$(CURDIR)/ip/model_composer/channelizer'); mc_gui_build\""
+	@echo "    make mc-eval CODE=\"mc_gui_build\"          (same thing, path filled in)"
+	@echo
+	@echo "  A script file (a .m that is not a function):"
+	@echo "    $(MATLAB_2022B) -batch \"run('/abs/path/to/your_script.m')\""
+	@echo
+	@echo "  Just the path, if you are already in a MATLAB window:"
+	@echo "    addpath('$(CURDIR)/ip/model_composer/channelizer')"
 
 # Why is a Model Composer block missing?  Report where the libraries are.
 mc-libs:
