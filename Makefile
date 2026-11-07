@@ -62,6 +62,7 @@ help:
 	@echo "Moving targets:      make moving-targets"
 	@echo "Feature models:      make feature-models"
 	@echo "Modulation (AMC):    make modulation-clusters"
+	@echo "Association policy:  make policy"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -242,7 +243,7 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters policy
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
@@ -307,6 +308,11 @@ feature-models:
 modulation-clusters:
 	@python3 scripts/modulation_clustering.py
 
+# Section 19 of V07: one general policy -- an ordered ladder of indices, from
+# modulation down to a verification index, selectable with --policy.
+policy:
+	@python3 scripts/cluster_policy.py
+
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
@@ -321,6 +327,7 @@ verify-phase-interf:
 	@python3 scripts/moving_targets.py --quick
 	@python3 scripts/feature_models.py --quick
 	@python3 scripts/modulation_clustering.py --quick
+	@python3 scripts/cluster_policy.py --quick
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
 

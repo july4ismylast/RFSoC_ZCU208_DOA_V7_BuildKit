@@ -36,6 +36,7 @@ by a script in this repository, or explicitly marked unproven.
 | A **hopping** emitter, 1–100 MHz, 2.7–3.5 GHz | **ADOPT track-and-combine, not fingerprint-first** — the hop range is alias-free (measured 0.06° at 3.5 GHz / 70°, first failure 6 GHz); one 1 MHz hop gives 0.29° at 64 snapshots; combining 64 hops through-origin gives 0.078° (8.5×); association by prediction gate plus the bandwidth invariant is worth 28 → 0 wrong hops, and the invariant itself is quantised by the bin width (1 and 2 MHz are identical) | §14 |
 | **Clustering** several emitters in one cube | **ADOPT label, do not mask** — clusters form on (direction, bandwidth) and are linked over frames; a carrier-only link recovers 1 of 3 emitters and fragments the hopper into 20.7 tracks, the pair recovers 3 of 3 at purity 1.00, and cadence separates two emitters that share both (2.3 → 3.0 of 3, purity 0.70 → 1.00). Masking is measured to be unavailable: the notch deletes the co-channel emitter (kept 0 %), the null keeps it but destroys its direction (82–120°, because a 2×2 at elevation 0 has two channels), and predicting the next hop is worth 0.20 % | §15 |
 | **What you cluster on**, when bandwidth and direction both change | **ADOPT one model per feature, chosen by the ratio of per-frame change to measurement error** — a smoothly drifting bandwidth breaks a fixed cost (38–50 % kept) and a rate restores 100 %; a bandwidth that *jumps* cannot be a position key (a ±1.5 bin gate keeps a newcomer but shreds the hopper 50 %, ±4 bins does the reverse) so it is either dropped or replaced by its cadence, which separates 100 % of the time and only after a few frames; a direction that jumps is not fast motion (the track splits 50/50 at every gate, by design) and a gate wide enough to admit it costs 0–25 % confusion with a neighbour at the landing point; with both features drifting, only modelling both keeps the track (100 % against 38–50 %) | §17 |
+| **One general policy** for the whole scene family | **ADOPT an ordered ladder of indices, user-selectable** — `mod → direction → bandwidth → cadence → [cepstrum]`. Each separating rung solves exactly one scene and is necessary (removing it loses that scene): different modulation 100 % on the label alone, same modulation/different direction 100 % on direction alone, a bandwidth-only pair and a cadence-only pair likewise. A pair with the same modulation and direction **must not** be split — one cell is the correct answer — and when one of the two is a repeater the cell is flagged by a verification index that never partitions it (97 % found, 0 % false alarms, delay estimated to 16 ns). `--policy` replaces the ladder and the report shows what that choice costs | §19 |
 | **Modulation** as the one constant feature (AMC) | **ADOPT as a mode term, never as a key** — a label is constant within a burst and jumps at a reconfiguration, so its error is a probability, not a degree: 100 % accuracy at 10 dB with 64 symbols, chance at 0 dB (every burst decided as 16QAM), 0 % for BPSK/QPSK once a 1e-3/sample carrier remains, and a 3-frame vote that buys stickiness (0.26 → 0.18 flips) rather than truth. As a cost term it separates emitters that differ only in modulation (covered 1.42 → 3.00 of 3, purity 0.75 → 1.00) and does nothing for emitters that share it | §18 |
 | A **moving** target | **ADOPT predict, don't hold** — direction stops being a key and becomes a state: holding the last direction keeps 98 % of a 0.5°/frame mover and 73 % at 1°/frame but shatters at 8–16°/frame (6.6–7.0 pieces), prediction with an acquisition gate holds 89–100 % to 16°/frame, and after a 10°/frame manoeuvre breaks the track (2.1 pieces) identity is re-established from bandwidth and cadence with 100 % of detections staying put | §16 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
@@ -2359,7 +2360,204 @@ claim.
 
 ---
 
-## 19. Files
+## 19. One general policy: a ladder of indices, chosen by the user
+
+§17 said how one feature behaves, §18 what a modulation label is worth. This
+section puts them together as **one policy** — a ladder applied to whatever the
+previous rung left, in an order the user chooses:
+
+1. sources with a **different modulation** → the label separates them;
+2. sources with the **same modulation but a different direction** → direction;
+3. the **same modulation and the same direction** → they are *not required to be
+   separated*: for clustering they are one object, and splitting them is an
+   error, not a success;
+4. … unless one of them is a **decoy**, which then has to be *found*. That is not
+   a separation index at all but a **verification** one, and it adjudicates the
+   cell without splitting it.
+
+So every index has one of two kinds:
+
+| index | kind | what it does | from |
+|---|---|---|---|
+| `mod` | separate | gives each detection a class; different classes cannot be the same object | §18 |
+| `direction` | separate | 4° gate, the width the measurement error justifies | §16 |
+| `bandwidth` | separate | 1.5 bins, the width the measurement error justifies | §17 |
+| `cadence` | separate | how often this carrier has been occupied so far | §15.2 |
+| `cepstrum` | **verify** | does this cell hold two arrivals? decides nothing about membership | §13 |
+
+```
+ detections of one frame
+        │
+        ▼
+ ┌─────────────┐   splits    ┌─────────────┐   splits   ┌─────────────┐
+ │ mod         │────────────▶│ direction   │───────────▶│ bandwidth   │──▶ …
+ │ (label)     │             │ (4° gate)   │            │ (1.5 bins)  │
+ └─────────────┘             └─────────────┘            └─────────────┘
+        │                            │                         │
+        └──────────── cells left ────┴─────────────────────────┘
+                                     │
+                       ┌─────────────▼──────────────┐
+                       │ a cell with two members:   │
+                       │  same mod, same direction  │
+                       │  → leave it ONE cell       │
+                       │  └─ verify: cepstrum ripple│
+                       │     → flag it as a decoy   │
+                       └────────────────────────────┘
+```
+
+`scripts/cluster_policy.py` →
+[`cluster_policy.txt`](docs/evidence/2026-11-06-phase-interf/cluster_policy.txt)
+(`make policy`, 2 s, seed 20261112). Every policy is scored on **the same
+detections**, so a column differs from another only by its ladder.
+
+### 19.1 The verification index, on its own
+
+One cell of 32 bins, either one path or two (a repeater 0.7 in gain, delayed).
+The statistic is the peak-to-median ratio of the ripple spectrum across the band;
+it fires above 4.0:
+
+| delay | 20 dB: ratio, found, estimate | 10 dB: ratio, found |
+|---|---|---|
+| 0 ns (clean) | 2.6, **0 %**, — | 3.7, **0 %** |
+| 20 ns | 20.9, 100 %, 20 ns | 15.9, 100 % |
+| 50 ns | 11.5, 100 %, 51 ns | 12.6, 100 % |
+| 100 ns | 9.5, 100 %, 100 ns | 9.9, 100 % |
+
+Thirty-two bins of 1.953 MHz set the delay resolution at 16 ns, and the estimate
+lands inside it. A clean cell stays below the threshold at both SNRs — the
+verification index does not invent decoys.
+
+### 19.2 Every scene against every ladder
+
+Six scenes, six ladders, 20 dB, 1° and one bin of measurement noise. A scene asks
+for one of three things: **split** (two pure cells), **join** (one cell — the pair
+is not required to be separated), or **flag** (one cell that is identified as
+holding a repeater):
+
+| scene | mod | dir | mod+dir | +bw | +cad | +ceps |
+|---|---|---|---|---|---|---|
+| different mod | **100 %** | 0 % | 100 % | 100 % | 100 % | 100 % |
+| same mod, different direction | 0 % | **100 %** | 100 % | 100 % | 100 % | 100 % |
+| same mod, same direction | 100 % | 100 % | 100 % | 100 % | 100 % | 100 % |
+| same mod, same direction, **decoy** | 0 % | 0 % | 0 % | 0 % | 0 % | **97 %** |
+| same mod, direction, different bandwidth | 0 % | 0 % | 0 % | **100 %** | 100 % | 100 % |
+| same mod, direction, different cadence | 0 % | 0 % | 0 % | 0 % | **100 %** | 100 % |
+
+That table *is* the answer to "which index do we put where": each rung is the only
+one that solves its own scene, and the decoy row is solved by nothing but the
+verification index.
+
+And the ladder does not over-split what should stay together — cells per frame:
+
+| scene | mod | dir | full separation |
+|---|---|---|---|
+| different mod | 2.00 | 1.00 | 2.00 |
+| same mod, different direction | 1.00 | 2.00 | 2.00 |
+| same mod, same direction | 1.03 | 1.00 | 1.03 |
+| same mod, same direction, decoy | 1.00 | 1.00 | 1.00 |
+| same mod, direction, different bandwidth | 1.00 | 1.00 | 2.00 |
+| same mod, direction, different cadence | 1.03 | 1.03 | 2.00 |
+
+The 1.03 is the honest cost of putting the label first: at 99 % per-frame AMC
+accuracy a label occasionally flips, and that pair fragments in ~3 % of frames.
+Direction first does not fragment it at all.
+
+### 19.3 Who did the work
+
+With the full ladder, the index that actually split each cell:
+
+| scene | who split it |
+|---|---|
+| different mod | **mod**, every frame |
+| same mod, different direction | **direction**, every frame |
+| same mod, same direction | *no index split it* — correct |
+| same mod, same direction, decoy | *no index split it* — correct (1 spurious label split in 36 frames) |
+| same mod, direction, different bandwidth | **bandwidth**, every frame |
+| same mod, direction, different cadence | **cadence**, every frame |
+
+A split in a "join" or "flag" scene is damage, not work: the ladder must leave
+those cells alone, and it does.
+
+### 19.4 Does each index earn its place?
+
+Remove one rung from the full ladder and the scene that needed it is the one that
+collapses:
+
+| removed | scene lost |
+|---|---|
+| mod | different mod |
+| direction | same mod, different direction |
+| bandwidth | same mod, direction, different bandwidth |
+| cadence | same mod, direction, different cadence |
+| cepstrum | same mod, same direction, decoy |
+
+Every rung is necessary and none is redundant — which is the same test §17 applied
+to a feature: an index earns its gate only if removing it costs a scene.
+
+### 19.5 Order matters where the label is wrong
+
+The same six scenes at 0 dB, where §18 measured the label to be chance:
+
+| scene | mod | dir | mod+dir | +bw | +cad |
+|---|---|---|---|---|---|
+| different mod | 0 % | 0 % | 0 % | 0 % | 0 % |
+| same mod, different direction | 0 % | **100 %** | 100 % | 100 % | 100 % |
+| same mod, same direction | 100 % | 100 % | 100 % | 100 % | 100 % |
+| same mod, direction, different bandwidth | 0 % | 0 % | 0 % | **100 %** | 100 % |
+| same mod, direction, different cadence | 0 % | 0 % | 0 % | 0 % | **100 %** |
+
+A mod-first ladder cannot separate anything at 0 dB — including the pair that
+*differs only in modulation*, which is the one case the label exists for. The
+label must be trained over an SNR range and voted (§18) before it takes the first
+rung; below its floor, direction and bandwidth carry the ladder and the label is
+removed from the policy rather than left in it to guess.
+
+### 19.6 The user chooses the ladder
+
+`--policy` replaces the rungs and the order, and the same tables are recomputed
+for that choice. Asking for `direction,mod,cepstrum`:
+
+| scene | result |
+|---|---|
+| different mod | 100 % right, 2.00 cells |
+| same mod, different direction | 100 % right, 2.00 cells |
+| same mod, same direction | 100 % right, 1.00 cells |
+| same mod, same direction, decoy | 100 % right, decoy flagged 100 % |
+| same mod, direction, different bandwidth | **3 %** right — the rung that would have split it is gone |
+| same mod, direction, different cadence | **0 %** right — likewise |
+
+The policy is not a fixed algorithm with knobs: it is a rung list, and the table
+says what each list can and cannot do before it is deployed.
+
+### 19.7 The verdict
+
+One policy covers the whole scene family, and it is the ladder the question
+implies:
+
+> **mod → direction → bandwidth → cadence → [cepstrum]**
+
+The four separating rungs partition the detections in that order, each with the
+gate its measurement error justifies. A cell that survives all four holds
+detections that *cannot* be separated — and in a scene with no decoy that is the
+correct answer, not a failure. When a decoy is possible, the same cell is
+adjudicated by the verification index, which reports "two arrivals, 100 ns
+apart" and never invents a partition. The user may reorder or shorten the ladder;
+the measured cost of doing so is in the same report.
+
+**Caveats.** Host simulation. The separation half uses measured error scales
+(1°, one bin) and a real AMC label on a 128-symbol burst per detection, six frames
+per draw, two emitters per scene — not a full tracker and not a dense scene. The
+verification half is a real two-path simulation of 32 bins and 64 snapshots on the
+shipped 2×2, with a repeater that is a *coherent* copy at the *same* direction;
+that is the hardest decoy case and also the one where the ripple is the only
+discriminator. It does not model a decoy that is incoherent, or noise-like, or
+that jitters its delay between frames. The "which is the source" question is not
+answered here: the ripple says a cell holds two arrivals and their separation, not
+which arrival is the protected one. No gate, bitstream or hardware claim.
+
+---
+
+## 20. Files
 
 | File | Role |
 |---|---|
@@ -2371,6 +2569,7 @@ claim.
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
 | `docs/DECOY_DISCRIMINATION.md` | §13 in one place: every algorithm with its block diagram, pseudocode, measured table and failure case, plus the G7 acceptance numbers |
 | `docs/decoy-flow.mmd` | the master runtime flow as a Mermaid diagram |
+| `scripts/cluster_policy.py` | §19: one general policy — an ordered ladder of indices (mod, direction, bandwidth, cadence, then the verifying cepstrum), every scene against every ladder, who split what, drop-one-out, the same ladders at 0 dB, and a user-supplied ladder via `--policy` |
 | `scripts/modulation_clustering.py` | §18: what you cluster on when the modulation is the constant — AMC accuracy against SNR, training set and burst length, the carrier recovery it needs, the 0 dB failure where the label vanishes, label stability and the vote, two emitters that differ only in modulation, and the same-modulation limit |
 | `scripts/feature_models.py` | §17: what you cluster on — one model per feature, chosen by how it changes: a drifting bandwidth (rate vs fixed vs dropped), a hopping dipper against a newcomer (gate width vs cadence), a direction that jumps (not motion), and both features drifting at once |
 | `scripts/moving_targets.py` | §16: a moving emitter — how far a static-direction association carries it, acquisition-gate width, a manoeuvre that breaks the track, two movers crossing, and the azimuth-vs-frame map |
@@ -2399,6 +2598,7 @@ make target-clusters                  # section 15, ~6 s
 make moving-targets                   # section 16, ~14 s
 make feature-models                   # section 17, ~22 s
 make modulation-clusters              # section 18, ~6 s
+make policy                           # section 19, ~2 s
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md

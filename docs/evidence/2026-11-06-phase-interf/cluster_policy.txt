@@ -1,0 +1,107 @@
+V07 section 19 -- one general policy: a ladder of indices
+==========================================================================
+scripts/cluster_policy.py  seed 20261112  draws 6  6 frames per draw
+indices:
+  mod        separate  AMC label, per frame (§18)
+  direction  separate  direction to 4 deg (§16)
+  bandwidth  separate  bandwidth to 1.5 bins (§17)
+  cadence    separate  occupancy pattern, in thirds (§15.2)
+  cepstrum   verify    two-path ripple of the cell (§13)
+
+V1  the verification index on its own: one path against two
+    (peak-to-median of the ripple spectrum; threshold 4.0)
+  delay     20 dB: ratio, found, estimate   10 dB: ratio, found
+      0 ns        2.6,    0%,   105 ns         2.7,    0%
+     20 ns       18.8,  100%,    20 ns        20.4,  100%
+     50 ns       11.9,  100%,    51 ns        14.1,  100%
+    100 ns        9.7,  100%,   100 ns        10.8,  100%
+  The 32 bins here set the delay resolution at 16 ns.
+  The 0 ns row is a clean cell: its number is the false-alarm rate.
+
+V2  every scene against every ladder -- % of frames that came out right
+    20 dB, 1 deg and 1 bin of measurement noise, 6 frames per draw
+  scene                                                 mod      dir  mod+dir      +bw     +cad    +ceps
+  different mod                                        100%       0%     100%     100%     100%     100%
+  same mod, different direction                          0%     100%     100%     100%     100%     100%
+  same mod, same direction                             100%     100%     100%     100%     100%     100%
+  same mod, same direction, decoy                        0%       0%       0%       0%       0%      97%
+  same mod, direction, different bandwidth               0%       0%       0%     100%     100%     100%
+  same mod, direction, different cadence                 0%       0%       0%       0%     100%     100%
+  What each scene asks for: 'split' = two pure cells, 'join' = ONE cell
+  (the pair is not required to be separated), 'flag' = one cell that is
+  flagged as holding a repeater.
+
+V3  cells per frame -- does a ladder over-split a pair that should stay
+    together?
+  scene                                                 mod      dir     +cad
+  different mod                                       2.00     1.00     2.00 
+  same mod, different direction                       1.00     2.00     2.00 
+  same mod, same direction                            1.03     1.00     1.03 
+  same mod, same direction, decoy                     1.00     1.00     1.00 
+  same mod, direction, different bandwidth            1.00     1.00     2.00 
+  same mod, direction, different cadence              1.03     1.03     2.00 
+
+V4  who did the work: how often each index split a cell (full ladder).
+    A split in a 'join' or 'flag' scene is damage, not work.
+  different mod                                    mod 36
+  same mod, different direction                    direction 36
+  same mod, same direction                         no index split it
+  same mod, same direction, decoy                  mod 1
+  same mod, direction, different bandwidth         bandwidth 36
+  same mod, direction, different cadence           cadence 36
+
+V5  does each index earn its place?  drop one, at 20 dB
+  without mod        different mod
+  without direction  same mod, different direction
+  without bandwidth  same mod, direction, different bandwidth
+  without cadence    same mod, direction, different cadence
+  without cepstrum   same mod, same direction, decoy
+
+V6  the same ladders at 0 dB, where the label is chance (§18)
+  scene                                                 mod      dir  mod+dir      +bw     +cad
+  different mod                                          0%       0%       0%       0%       0%
+  same mod, different direction                          0%     100%     100%     100%     100%
+  same mod, same direction                             100%     100%     100%     100%     100%
+  same mod, same direction, decoy                        0%       0%       0%       0%       0%
+  same mod, direction, different bandwidth               0%       0%       0%     100%     100%
+  same mod, direction, different cadence                 0%       0%       0%       0%     100%
+
+VERDICT
+  The ladder is not a setting on one algorithm, it is the algorithm.
+  Each index is applied to the cells the previous one left, and the
+  first index that splits a cell is the one that decided it:
+   1. different modulation -> the label splits the cell (100% of frames
+      with the label alone, 0% with direction alone).
+   2. same modulation, different direction -> direction splits it (100%
+      with direction alone, 0% with the label alone).
+   3. same modulation, same direction -> nothing may split it: one cell is
+      the correct answer (1.00 cells per frame, 100% of frames right).
+   4. ... unless one of them is a repeater: the cell stays one cell and
+      the ripple flags it -- 97% with the verification index, 0%
+      without it. A verification index adjudicates a cell; it never
+      splits one.
+  The general policy is that ladder in that order, verification last:
+  mod -> direction -> bandwidth -> cadence -> cepstrum. It is also a CLI
+  argument: --policy replaces the ladder and V7 shows what it costs.
+
+  Order matters where the label is wrong: at 0 dB 'mod' is chance, so a
+  mod-first ladder cannot split anything (V6, first column) while a
+  direction-first ladder still can. That is why the label is trained and
+  voted (§18) before it is trusted in the first position.
+
+  [PASS] the ripple finds a 100 ns repeater at 20 dB
+  [PASS] and does not fire on a clean cell
+  [PASS] the delay estimate lands within one resolution cell of 100 ns
+  [PASS] the label alone separates a modulation-only pair
+  [PASS] direction alone does not
+  [PASS] direction alone separates a direction-only pair
+  [PASS] the label alone does not
+  [PASS] a pair that shares both stays one cell
+  [PASS] and is not 'resolved' by splitting it
+  [PASS] the decoy scene is not solved by separation
+  [PASS] and is solved by the verification index
+  [PASS] bandwidth alone separates a bandwidth-only pair
+  [PASS] cadence alone separates a cadence-only pair
+  [PASS] the label in first position is worthless at 0 dB
+
+RESULT=PASS
