@@ -49,7 +49,7 @@ if isempty(name)
          'to list what this installation does provide.'], strjoin(available, ', '));
 end
 baseline = now;
-mc_call_generator(name, model);
+mc_call_generator(name, model, generator{1});
 
 % Generation may be asynchronous in the GUI; wait for the artefact rather than
 % assuming the call returned after the work.

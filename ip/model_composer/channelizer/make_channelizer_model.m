@@ -227,6 +227,10 @@ applyParam(hub, 'IpVendor', 'doa.v7');
 applyParam(hub, 'IpLibrary', 'model_composer');
 applyParam(hub, 'IpVersion', '1.0');
 applyParam(hub, 'IpHWLanguage', 'Verilog');
+% A real Generate presses these two first: the example Hub ships with
+% CodeGeneration off and a relative TargetDirectory, and xmcGenerate reads them.
+applyPopup(hub, 'CodeGeneration', 'on');
+applyParam(hub, 'TargetDirectory', './code');
 applyParam(hub, 'ProjDevice', settings.part.full);
 applyParam(hub, 'ProjDevicePart', settings.part.full);
 applyParam(hub, 'part', settings.part.device);

@@ -46,6 +46,39 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## `xmcGenerate('channelizer')` is the documented call, and it went inside AMD's code
+
+UG1259 shows exactly the call this builder makes:
+
+```matlab
+open_system('MoC_design');
+xmcGenerate('MoC_design');
+```
+
+On the real install it failed with:
+
+```
+calling xmcGenerate(channelizer)
+  xmcGenerate failed: Index exceeds the number of array elements. Index must not exceed 0.
+calling xmcGenerate(channelizer, ExportType, IP Catalog)
+  xmcGenerate failed: 'ExportType' is not a recognized parameter.
+```
+
+Nothing in that message names a parameter, so the builder now does three things
+instead of guessing:
+
+1. **Sets what a real Generate sets first.** The example Hub ships with
+   `CodeGeneration = off` and `TargetDirectory = ./code`; both are written before
+   generating (`CodeGeneration = on`).
+2. **Focuses the model** (`open_system` + `set(0,'CurrentFigure',handle)`), then
+   tries the entry points in order: the model-named API call, then
+   `xlGenerateButton()` with **no arguments** (that is how the GUI button behaves:
+   it acts on the current figure), then the rest.
+3. **Reports, when all fail**: every Hub parameter with the empty ones flagged, the
+   source window around the line that raised the index error
+   (`mc_source_context`), and the entry point's own `help` text. One run then
+   answers "which field is empty" instead of producing another symptom.
+
 ## The template route works, and the API is `xmcGenerate`
 
 With the Hub taken from AMD's example the model builds cleanly and the update
