@@ -46,6 +46,29 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## `make ip-from-hdl` was run and it produced the IP
+
+Measured on the build machine, not expected:
+
+```
+INFO: [Ipptcl 7-1486] check_integrity: Integrity check passed.
+IP_PACKAGE_OK …/build/ip_repo/channelizer_ip/component.xml
+```
+
+That is the deliverable: a Vivado IP Catalog core for the same datapath the model
+describes. Changes after that first run, all from its warnings:
+
+| warning in that log | change |
+|---|---|
+| `CRITICAL WARNING: [Ipptcl 7-1601] ipx::package_project in non project mode is not supported` | the script now creates a real project (`build/ip_repo/_ipbuild_channelizer`), packages inside it, and removes it afterwards |
+| `WARNING: [IP_Flow 19-11770] Clock interface 'clk' has no FREQ_HZ parameter` | `FREQ_HZ` is set to 200 000 000 on the `clk` interface |
+| `WARNING: [Ipptcl 7-1467] compile order set manually` | `-force_update_compile_order` |
+| nothing verified the output | `scripts/check_ip_component.py` prints the VLNV and every port and fails if `clk`, `din` or `dout` is missing |
+
+`make step06_collect_ip` now accepts either route: `model_composer_channelizer`
+from Model Composer, or `channelizer_ip` with the pinned VLNV
+`doa.v7:model_composer:channelizer:1.0`.
+
 ## A path that does not depend on Model Composer: `make ip-from-hdl`
 
 Model Composer's scripted call (`xmcGenerate`) works on AMD's own model in this

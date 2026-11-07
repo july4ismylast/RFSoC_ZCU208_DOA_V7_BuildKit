@@ -242,8 +242,9 @@ ip-from-hdl:
 		-log $(LOG_DIR)/package_channelizer_ip.log \
 		-journal $(LOG_DIR)/package_channelizer_ip.jou
 	@test -f $(IP_REPO)/channelizer_ip/component.xml \
-		&& echo "IP_PACKAGE_OK $(IP_REPO)/channelizer_ip/component.xml" \
 		|| (echo "packaging failed; see $(LOG_DIR)/package_channelizer_ip.log"; exit 1)
+	@python3 scripts/check_ip_component.py $(IP_REPO)/channelizer_ip/component.xml
+	@echo "IP_PACKAGE_OK $(IP_REPO)/channelizer_ip/component.xml"
 
 mc-probe:
 	@./scripts/mc_eval.sh "mc_probe_generate"
