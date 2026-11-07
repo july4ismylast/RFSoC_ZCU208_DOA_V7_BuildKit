@@ -55,6 +55,17 @@ for index = 1:size(attempts, 1)
     end
 end
 
+% Before giving up: the Hub's hardware selection.  Its Platform parameter is
+% empty, and a Zynq UltraScale+ RFSoC design is the case where Model Composer
+% wants a board rather than a bare part.
+hubOptions = struct();
+if ~isempty(hub)
+    hubOptions = mc_hub_options(hub);
+    if mc_platform_attempts(hub, model, hubOptions)
+        return;
+    end
+end
+
 fprintf(2, '\nno entry point started generation.  Tried:\n');
 fprintf(2, '  %s\n', tried{:});
 if ~isempty(hub)
@@ -64,6 +75,7 @@ if ~isempty(firstFailure)
     fprintf(2, 'first failure, %s:\n', firstFailure.message);
     mc_source_context(firstFailure);
 end
+mc_api_listing();
 printHelp(name);
 error('mc_call_generator:failed', ...
     ['generation did not start.  The Hub parameters and the failing source ' ...

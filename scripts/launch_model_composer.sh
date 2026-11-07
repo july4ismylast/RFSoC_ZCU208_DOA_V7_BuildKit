@@ -73,6 +73,7 @@ mkdir -p "$startup_dir"
     # the shell passes, so mc_paths() never has to guess.
     echo "if isempty(getenv('MC_ROOT')), setenv('MC_ROOT', '$mc_root_dir'); end"
     echo "if isempty(getenv('MC_PART')), setenv('MC_PART', '${MC_PART:-xczu48dr-fsvg1517-2-e}'); end"
+    echo "if isempty(getenv('MC_BOARD')), setenv('MC_BOARD', '${MC_BOARD:-xilinx.com:zcu208:part0:2.0}'); end"
     echo "if isempty(getenv('MC_VIVADO_ROOT')), setenv('MC_VIVADO_ROOT', '$vivado_root_dir'); end"
     echo "if isempty(getenv('IP_REPO')), setenv('IP_REPO', '$root/build/ip_repo'); end"
     echo "setenv('MC_LIBS_CACHE', '$root/build/mc_libs.txt');"

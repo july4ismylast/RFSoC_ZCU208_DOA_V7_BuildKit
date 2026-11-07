@@ -200,7 +200,7 @@ mc:
 # creates the Hub + 4 gateway pairs + delays and saves channelizer.slx.  A .slx
 # cannot be reviewed in a diff, so the builder script is the committed artifact.
 mc-scratch:
-	@MC_PART="$(PART)" ./scripts/create_model_composer_model.sh "$(if $(strip $(MODEL_COMPOSER_MODEL)),$(MODEL_COMPOSER_MODEL),ip/model_composer/channelizer/channelizer.slx)"
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/create_model_composer_model.sh "$(if $(strip $(MODEL_COMPOSER_MODEL)),$(MODEL_COMPOSER_MODEL),ip/model_composer/channelizer/channelizer.slx)"
 	@echo "now: make mc"
 
 # The GUI, only for creating or editing the .slx itself: R2022b first on PATH,
@@ -208,12 +208,12 @@ mc-scratch:
 # cannot run a headless build -- it evals its own arguments and appends its own
 # -r -- so `make mc` never goes through it.
 mc-gui:
-	@MC_PART="$(PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log" interactive
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log" interactive
 
 # Same GUI, but it builds the model and exports the IP as soon as it opens
 # (startup.m calls mc_gui_build), then leaves the session open to look at it.
 mc-gui-build:
-	@MC_PART="$(PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_gui_build.log" build
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_gui_build.log" build
 
 # Run Model Composer MATLAB code from the shell without typing any path:
 #   make mc-eval CODE="mc_gui_build"

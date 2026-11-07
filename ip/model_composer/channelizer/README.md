@@ -46,6 +46,35 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## Next hypothesis, and the evidence for it
+
+Renaming the block to `System Generator` did not change the index error, so the
+name was not the whole story. What the same run left as evidence:
+
+```
+EMPTY  Platform
+PlatformType = Not Specified
+ProjDevice   = xczu48dr-fsvg1517-2-e     (Zynq UltraScale+ RFSoC)
+```
+
+The Hub example that works is a bare Kintex part (`xcku11p-ffva1156-1-e`) with
+`PlatformType = Not Specified` -- no board, no PS. A ZU+ RFSoC design is the case
+where Model Composer needs a **board** (platform) to know what the RFSoC is
+attached to, and `Platform` is the parameter that is empty.
+
+`mc_platform_attempts` therefore tries the selection variants the Hub itself
+allows (read from the mask, never guessed): every `PlatformType` option, with and
+without the board from `config.mk` (`BOARD_PART = xilinx.com:zcu208:part0:2.0`,
+passed as `MC_BOARD`). The first combination that makes `xmcGenerate` return is
+reported and saved into the model.
+
+Whatever the outcome, the same run prints:
+
+- `mc_hub_options` -- every popup parameter with its allowed strings;
+- `mc_api_listing` -- the `xmc*` / `xl*` entry points that exist in this install,
+  which is where a JSON-based variant (`xmcGenerate(model, 'model_hubInfo.json')`,
+  documented in its own help) would come from.
+
 ## The generate block must be named `System Generator`
 
 A real run ended with two seemingly unrelated symptoms, and they are the same
