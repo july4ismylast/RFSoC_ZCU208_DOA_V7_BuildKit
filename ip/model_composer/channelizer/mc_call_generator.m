@@ -62,6 +62,9 @@ for index = 1:size(calls, 1)
     end
     tried{end + 1} = shape; %#ok<AGROW>
     fprintf('calling %s\n', shape);
+    if strcmp(entry, name)
+        reassertHub(hub);
+    end
     try
         status = feval(entry, shapeArgs{:});
         printStatus(status);
@@ -104,6 +107,27 @@ error('mc_call_generator:failed', ...
 end
 
 % ---------------------------------------------------------------------------
+function reassertHub(hub)
+%REASSERTHUB Put the settings back that generation needs.
+%   A real run's Hub dump reported CodeGeneration = off although the model had
+%   been saved with on: opening the dialog and the failed attempts can reset it,
+%   and a generation with code generation off does nothing useful.
+if isempty(hub)
+    return;
+end
+try
+    set_param(hub, 'CodeGeneration', 'on');
+    fprintf('  Hub.CodeGeneration = on (re-asserted)\n');
+catch problem
+    fprintf('  note: could not re-assert CodeGeneration: %s\n', problem.message);
+end
+try
+    fprintf('  Hub.ExportType = %s\n', get_param(hub, 'ExportType'));
+catch problem
+    fprintf('  note: could not read ExportType: %s\n', problem.message);
+end
+end
+
 function printStatus(status)
 %PRINTSTATUS xmcGenerate returns the result of the run; do not guess its type.
 if isempty(status)

@@ -46,6 +46,27 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## AMD's example generates; ours does not -- so the difference is ours
+
+The last run finally reached a verdict that can be acted on:
+
+```
+the example generated
+--- verdict ---
+  AMD's example generates and ours does not, so the difference is in our model.
+```
+
+and Model Composer's own log named two differences:
+
+| log line | meaning | fix |
+|---|---|---|
+| `CodeGeneration = off` in the Hub dump although the model was saved with `on` | opening the dialog / failed attempts reset it | re-asserted before every generate attempt |
+| *The "Simulink system period" setting ... is smaller than required* (`1/5e+08`, "a more efficient setting would be 1") | the grafted model inherited the example's `(1e+9)/clk` / `1/clk` expressions while our gateways run at period 1 and 200 MHz | `sysclk_period = 5`, `simulink_period = 1` written explicitly |
+| the exported subsystem had **no Inport/Outport blocks** | AMD's `DDC_DUT` has three Inports and two Outports; a subsystem made only of gateways has none, and the engine walks that port list -- an **empty list is the index error** every round reported | each channel is now `Inport -> Gateway In -> Delay -> Gateway Out -> Outport` |
+
+The subsystem keeps the example's name `DDC_DUT`, because that is the name its Hub's
+`SubsystemName` refers to; the design inside it is ours.
+
 ## Two facts from AMD's example, and a change of base model
 
 Running the example produced two facts that settled the design of this builder:

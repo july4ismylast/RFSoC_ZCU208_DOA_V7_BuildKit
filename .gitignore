@@ -17,3 +17,6 @@ step*/data/
 
 # Per-machine tool paths and licences (see config.mk)
 config.local.mk
+# Simulink backups made when saving an older-format model
+*.slx.r20*
+*.slx.autosave

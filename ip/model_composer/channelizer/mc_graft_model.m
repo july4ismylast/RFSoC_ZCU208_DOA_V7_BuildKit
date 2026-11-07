@@ -136,15 +136,23 @@ end
 
 function addChannels(subsys, settings)
 %ADDCHANNELS Four gateway/delay/gateway paths inside the exported subsystem.
+% The exported subsystem needs real Inport and Outport blocks.  AMD's DDC_DUT
+% has three Inports and two Outports; a subsystem made only of gateways has none,
+% and the engine walks that port list -- an empty list is the index error this
+% builder has been chasing.
 for channel = 1:settings.channels
     row = 30 + 60 * (channel - 1);
+    inPort = sprintf('%s/InPort%d', subsys, channel);
     inBlock = sprintf('%s/In%d', subsys, channel);
     delayBlock = sprintf('%s/Delay%d', subsys, channel);
     outBlock = sprintf('%s/Out%d', subsys, channel);
+    outPort = sprintf('%s/OutPort%d', subsys, channel);
 
-    addOrReplace('hdlBasic/Gateway In', inBlock, [40, row, 90, row + 20]);
-    addOrReplace('hdlBasic/Delay', delayBlock, [160, row, 190, row + 20]);
-    addOrReplace('hdlBasic/Gateway Out', outBlock, [250, row, 300, row + 20]);
+    addOrReplace('built-in/Inport', inPort, [10, row + 3, 30, row + 17]);
+    addOrReplace('hdlBasic/Gateway In', inBlock, [45, row, 95, row + 20]);
+    addOrReplace('hdlBasic/Delay', delayBlock, [130, row, 160, row + 20]);
+    addOrReplace('hdlBasic/Gateway Out', outBlock, [195, row, 245, row + 20]);
+    addOrReplace('built-in/Outport', outPort, [275, row + 3, 295, row + 17]);
 
     setParam(inBlock, 'gui_display_data_type', 'Fixed-point');
     setParam(inBlock, 'arith_type', 'Signed  (2''s comp)');
@@ -155,16 +163,22 @@ for channel = 1:settings.channels
     setParam(inBlock, 'period', '1');
     setParam(delayBlock, 'latency', num2str(settings.tapDelay));
 
-    try
-        add_line(subsys, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel), ...
-            'autorouting', 'on');
-        add_line(subsys, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel), ...
-            'autorouting', 'on');
-    catch problem
-        fprintf('  note: could not wire channel %d: %s\n', channel, problem.message);
-    end
+    wire(subsys, sprintf('InPort%d/1', channel), sprintf('In%d/1', channel), channel);
+    wire(subsys, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel), channel);
+    wire(subsys, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel), channel);
+    wire(subsys, sprintf('Out%d/1', channel), sprintf('OutPort%d/1', channel), channel);
 end
 fprintf('design: %d channels inside %s\n', settings.channels, subsys);
+end
+
+function wire(subsys, source, destination, channel)
+%WIRE One connection inside the subsystem, reported by channel.
+try
+    add_line(subsys, source, destination, 'autorouting', 'on');
+catch problem
+    fprintf('  note: could not wire %s -> %s (channel %d): %s\n', ...
+        source, destination, channel, problem.message);
+end
 end
 
 function addOrReplace(source, path, position)
@@ -214,6 +228,12 @@ setParam(hub, 'speed', settings.part.speed);
 setParam(hub, 'xilinxfamily', settings.part.family);
 setParam(hub, 'ClockFrequency', num2str(settings.sampleHz / 1e6));
 setParam(hub, 'SamplePeriod', '-1');
+% Our gateways run at Simulink period 1 and a 200 MHz clock.  Inheriting the
+% example's expressions ((1e+9)/clk, 1/clk) produced
+%   'Simulink system period' ... smaller than required for the rates in the design
+% in the engine's own log, so both are written explicitly.
+setParam(hub, 'sysclk_period', num2str(1e9 / settings.sampleHz));
+setParam(hub, 'simulink_period', '1');
 setParam(hub, 'SubsystemName', subsystemName);
 setParam(hub, 'IpName', subsystemName);
 setParam(hub, 'IPInfoJsonString', sprintf(['{"HDLSubsystem":{' ...
