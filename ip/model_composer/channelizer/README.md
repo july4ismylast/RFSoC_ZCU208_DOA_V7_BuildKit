@@ -46,6 +46,42 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## Is the hand-written IP the same as the model? Same datapath, different interface
+
+`make ip-equivalence` answers it with numbers instead of opinion
+(`testbench/compare_hdl_vs_model.py`):
+
+```
+bit-exact: 16384 samples, 4 channels, depth 4: MATCH
+latency measured from an impulse: 4 clocks (declared 4)
+gateway quantisation: worst error 6.103e-05 = 1.000 LSB (LSB = 0.000061)
+RESULT=PASS
+```
+
+| property | `channelizer.slx` | `channelizer_dut.v` | equal |
+|---|---|---|---|
+| channels | 4 | 4 | yes |
+| sample format | `sfix16_En14`, Truncate, Wrap | 16-bit two's complement, LSB 2^-14 | yes (gateway error measured: 1.000 LSB) |
+| delay per channel | `Delay` latency 4 | four pipeline registers | yes, measured 4 clocks |
+| rate | one sample per clock, 200 MHz | one sample per clock | yes |
+| reset / enable | none in the design | none | yes |
+| data ports | `In1..In4`, `Out1..Out4`, 16 bits each | `din[63:0]`, `dout[63:0]` | **no** -- same data, different packing |
+| clock | `clk` | `clk` | yes |
+| clock enable | `ce` (Hub `clock_wrapper = Clock Enables`) | absent | **no** |
+| exported files | Model Composer wrapper, `component.xml`, Verilog per `IpHWLanguage` | one Verilog module, `component.xml` from `ipx::package_project` | different tools, same interface class |
+
+So: the **arithmetic is the same** -- verified bit-exact on 16 384 samples per
+channel, with the latency measured rather than assumed -- and the **interfaces are
+not identical**: port packing and the optional clock enable differ, as the table
+says.
+
+Unproven, and stated as such: no Model Composer export of this design exists to
+diff against, because its scripted generation is blocked here. The comparison is
+between the behaviour the `.slx` describes and the Verilog in this repository, not
+between two `component.xml` files. If generation ever succeeds, the check to run is
+the port list: `diff` the `<spirit:ports>` sections, and expect exactly the `ce`
+and the packing differences above.
+
 ## `make ip-from-hdl` was run and it produced the IP
 
 Measured on the build machine, not expected:
