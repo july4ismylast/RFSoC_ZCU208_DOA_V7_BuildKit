@@ -137,6 +137,21 @@ Barker-13 codes alike (0.12–0.39° against 7.8–12.7° for the whole-pulse me
 and with the ±0.5 dB / ±5° calibration residual of §11.3 it lands at 1.6–2.3° —
 so calibration, not the decoy, is what stands between it and the 0.5° class.
 
+A **hopping** emitter (1–100 MHz of instantaneous bandwidth, hopping over
+2.7–3.5 GHz) is the case where hopping is an advantage rather than a problem
+(V07 §14, `make hopping-target`). The hop range is alias-free on the shipped
+30 mm 2×2: measured 0.03–0.09° at 3.5 GHz even at 70°, with the first failure at
+6 GHz. One 1 MHz hop is a single bin and gives 2.15° at 2 snapshots, 0.29° at 64
+(an 8 µs dwell per hop at 512 ns frames). But hops accumulate: a through-origin
+phase fit over the hops of one track turns 800 MHz of hop frequencies into a
+synthetic aperture and takes a 1 MHz hopper from 0.740° to **0.078° after 64
+hops**. Identity is then a job for a prediction gate plus the invariants a hop
+cannot change — bandwidth, dwell, cadence: trusting the strongest hop is wrong
+28 times in 60, the gate plus the bandwidth invariant is wrong 0 times, and the
+bandwidth invariant is quantised by the bin width (1 and 2 MHz are the same
+fingerprint). A decoy that copies the invariants and *crosses* the track is not
+separable by identity at all: 15 % of crossings still end on the wrong track.
+
 ## Accuracy statement
 
 V7 demonstrated a 3-D Monte-Carlo RMSE below 0.1° in its stated simulated

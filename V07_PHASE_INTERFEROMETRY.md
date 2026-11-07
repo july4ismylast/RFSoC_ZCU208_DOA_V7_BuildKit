@@ -33,6 +33,7 @@ by a script in this repository, or explicitly marked unproven.
 | MUSIC / CSSM | **DEFER for one emitter; needed only for co-channel sources** — eight *co-channel* emitters need 36 elements (2×2 finds 1.2 of 8), but eight 1–50 MHz emitters at different carriers are separated by the channelizer and the shipped 2×2 detects 8.0 of 8 | §9, §12.1, §12.4 |
 | One protected emitter behind decoys | **ADOPT a ladder, cheapest rung first, and state the rung that fails** — off-carrier decoys cost 0.00° (the channelizer counts them, 1/2/4/7 clusters); independent co-channel decoys need more than four elements (0.4 of 2 found); a coherent repeater is *detected* by a DOA wobble of 43.8° rms against 0.31° clean and a cepstrum peak of 101 ns from a true 100 ns, then *resolved* by a joint delay+angle ML that recovers both directions 100 % at 20–50 MHz and 0 % at 1 MHz; a co-located zero-delay decoy is indistinguishable and is reported as such | §13 |
 | The protected emitter is a **radar** (transmit + receive) | **ADOPT time ordering ahead of every spectral rung** — a decoy must hear the pulse before repeating it, so the repeat is always later by at least its turnaround: the leading edge gives the radar's direction to 0.09–0.79° where the whole-pulse method is 12–16° wrong, the tail gives the decoy's direction (39.6° for 40°) plus the delay, a Doppler pull-off changes neither, and the half-sample delay from the edge makes the two-path ML exact at 5–50 MHz without a search | §13.7 |
+| A **hopping** emitter, 1–100 MHz, 2.7–3.5 GHz | **ADOPT track-and-combine, not fingerprint-first** — the hop range is alias-free (measured 0.06° at 3.5 GHz / 70°, first failure 6 GHz); one 1 MHz hop gives 0.29° at 64 snapshots; combining 64 hops through-origin gives 0.078° (8.5×); association by prediction gate plus the bandwidth invariant is worth 28 → 0 wrong hops, and the invariant itself is quantised by the bin width (1 and 2 MHz are identical) | §14 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
 
@@ -1455,7 +1456,211 @@ captured record.
 
 ---
 
-## 14. Files
+## 14. A hopping emitter at 2.7–3.5 GHz: fingerprint it, or track it?
+
+The requirement: one emitter with 1–100 MHz of instantaneous bandwidth hopping
+somewhere inside 2.7–3.5 GHz. Two questions that look like one:
+
+1. *which hop belongs to the protected emitter* — the identity problem;
+2. *where is it* — the direction problem, which now has to be answered from a
+   dwell instead of from a continuous signal.
+
+The intuition that a **fingerprint** is the answer is half right. What survives a
+hop is not the RF fingerprint (transient, I/Q imbalance, per-hop phase law) but
+the things a hop cannot change: **instantaneous bandwidth, dwell time and cadence,
+and the continuity of the direction itself.** The numbers below say which of them
+does the work, measured in this repository
+(`scripts/hopping_target.py` →
+[`hopping_target.txt`](docs/evidence/2026-11-06-phase-interf/hopping_target.txt)).
+2×2 at 30 mm, 1024 bins of 1.953 MHz over 2.0–4.0 GHz, 20 dB per bin.
+
+```
+ 2 GS/s, 1024 bins, 512 ns per frame
+        |
+        v
+ per-frame power -> cluster -> (carrier, bandwidth, power)     hop detector
+        |
+        v
+ per-bin DOA of that cluster -> (azimuth, coherence)           one measurement
+        |
+        v
+ +--------------------------+      +---------------------------------------+
+ | prediction: az + rate    |----->| gate: |az - prediction| <= 8 deg     |
+ +--------------------------+      +---------------------------------------+
+        |                                        |
+        |                                        v
+        |                          +-------------------------------------+
+        |                          | invariants: occupied bins, cadence  |
+        |                          +-------------------------------------+
+        v                                        |
+ +-------------------------------------------------------+
+ | association -> Kalman update -> one track per emitter  |
+ +-------------------------------------------------------+
+        |
+        v
+ sparse through-origin fit over every hop of the track   (800 MHz aperture)
+        |
+        v
+ azimuth, rate, hop table, bandwidth fingerprint
+```
+
+### 14.1 What one hop can buy
+
+The whole hop is all the receiver gets; there is no second look (16 trials):
+
+| bandwidth | bins | 2 snaps | 4 | 16 | 64 | 256 |
+|---|---|---|---|---|---|---|
+| 1 MHz | 1 | 2.146° | 1.959° | 0.648° | **0.292°** | 0.174° |
+| 10 MHz | 5 | 1.090° | 0.792° | 0.270° | 0.123° | 0.050° |
+| 100 MHz | 51 | 0.344° | 0.276° | 0.076° | 0.046° | 0.027° |
+
+A 1 MHz hop is **one bin**: six phases per snapshot and nothing else. A 100 MHz
+hop spreads over 51 bins and is 8.5× better at 16 snapshots. At 512 ns per frame,
+16 snapshots is an 8 µs dwell — that is the dwell the 0.5° class costs for a
+1 MHz hopper, and 64 snapshots (33 µs) reaches 0.29°.
+
+### 14.2 The hop range is inside the alias-free band
+
+| frequency | axis-pair rule | diagonal rule (§11.1) | measured 50° | measured 70° |
+|---|---|---|---|---|
+| 2.7 GHz | none | none | 0.04° | 0.09° |
+| 3.1 GHz | none | none | 0.03° | 0.08° |
+| 3.5 GHz | none | none | 0.03° | 0.06° |
+| 4.0 GHz | none | 62° | 0.03° | 0.07° |
+| 5.0 GHz | 87.9° | 45° | 0.03° | 0.05° |
+| 6.0 GHz | 56.4° | 36° | 0.02° | **116.6°** |
+
+This corrects a conservative reading of §11.1. The diagonal pairs wrap at
+3.5 GHz, but the six-baseline fit is over-determined and the axis-aligned pairs
+hold it: 4.0 GHz at 70° is still measured to 0.07°. The first measured failure is
+**6 GHz at 70°** — the axis-pair limit, `sin θ ≤ c/(2·f·d)`. The whole 2.7–3.5 GHz
+hop range is comfortably inside it, in fact so is everything up to 5 GHz.
+
+### 14.3 Hopping is an advantage, not a problem
+
+Every hop is a fresh frequency, and the phase slope across baselines is
+proportional to frequency. A through-origin fit over the hops of one track
+therefore accumulates aperture across the whole hop range — 800 MHz of it — and
+it needs nothing but inter-element phase (the source's own hop-to-hop phase
+cancels):
+
+| hops combined | 1-hop RMSE | combined | gain |
+|---|---|---|---|
+| 1 | 0.740° | 0.740° | 1.0× |
+| 4 | 0.704° | 0.288° | 2.4× |
+| 16 | 0.688° | 0.142° | 4.9× |
+| 64 | 0.658° | **0.078°** | 8.5× |
+
+A 1 MHz hopper is easier to locate *over time* than a 1 MHz continuous emitter,
+because its hops are a synthetic aperture. This is the single most useful result
+in this section.
+
+### 14.4 Identity: what actually separates two hoppers
+
+Protected 1 MHz, decoy 6 MHz, equal mean power, 4 dB rms per-hop fading, 60 hops.
+Four association rules, from naive to careful:
+
+| separation | snaps | rule | track error | wrong hops |
+|---|---|---|---|---|
+| 40° | 16 | A strongest hop, no memory | 4.69° | 28.3 of 60 |
+| 40° | 16 | B strongest inside the gate | 0.47° | 0.0 |
+| 40° | 16 | C nearest inside the gate | 0.50° | 0.0 |
+| 40° | 16 | D C + bandwidth invariant | 0.31° | 0.0 |
+| 40° | 2 | A | 22.58° | 31.5 |
+| 40° | 2 | B | 5.69° | 6.5 |
+| 40° | 2 | C | 7.97° | 5.4 |
+| 40° | 2 | D | 5.76° | 4.9 |
+| 6° | 16 | A | 3.86° | 28.2 |
+| 6° | 16 | B | 4.39° | 27.8 |
+| 6° | 16 | C | 1.03° | 3.6 |
+| 6° | 16 | D | 0.69° | **0.0** |
+| 6° | 2 | A | 4.17° | 24.0 |
+| 6° | 2 | B | 6.12° | 23.3 |
+| 6° | 2 | C | 6.24° | 25.2 |
+| 6° | 2 | D | 16.86° | 15.0 |
+
+Three things are visible and none of them is "fingerprint first":
+
+* **Trusting the strongest hop is wrong about half the time** (28 of 60 at both
+  separations), because fading decides it, not geometry.
+* **At 0.3° per hop the track itself is the discriminator**: a decoy 6° away
+  never wins a nearest-neighbour test (3.6 wrong), and the bandwidth invariant
+  only confirms it (0.0).
+* **The invariant earns its place when accuracy degrades**: at 2° per hop and a
+  6° separation, nearest-neighbour is a coin flip and the bandwidth invariant
+  cuts the wrong hops from 25.2 to 15.0 of 60.
+
+### 14.5 How good is the invariant itself?
+
+The invariant "this emitter is 1 MHz wide" can only be measured in multiples of
+the bin width:
+
+| true bandwidth | bins occupied | measured | correct at 20/10/0 dB |
+|---|---|---|---|
+| 1 MHz | 1 | 1.95 MHz | 100/100/100 % |
+| 2 MHz | 1 | 1.95 MHz | 100/100/100 % |
+| 3 MHz | 2 | 3.91 MHz | 100/100/100 % |
+| 6 MHz | 3 | 5.86 MHz | 100/100/100 % |
+| 10 MHz | 5 | 9.76 MHz | 100/100/100 % |
+
+So 1 MHz and 2 MHz are **the same fingerprint** on the shipped channelizer,
+while 1 versus 6 MHz is unambiguous at every SNR measured. A 4096-point
+transform (488 kHz bins) is what a 1-versus-2 MHz fingerprint would need — the
+same lever as the delay resolution in §13.3.
+
+Hop-to-hop **phase coherence is not needed for any of this**: the estimator uses
+inter-element phase only, so a coherent hopper and an independent one measure
+identically. Coherence would add a fingerprint (the phase law across hops), never
+accuracy.
+
+### 14.6 The limit: a decoy that crosses the track
+
+Same bandwidth, same cadence, equal power, closing at 0.65°/hop and crossing
+after about 38 hops. Nothing distinguishes the two by identity, so only
+association accuracy matters:
+
+| snapshots per hop | association | crossed cleanly | ended on the decoy |
+|---|---|---|---|
+| 2 | nearest in angle | 52 % | 48 % |
+| 2 | nearest in angle and rate | 50 % | 50 % |
+| 16 | nearest in angle | 70 % | 30 % |
+| 16 | nearest in angle and rate | **85 %** | **15 %** |
+
+At 0.29° per hop, a velocity gate halves the swap rate; at 2.15° per hop neither
+rule helps. A crossing needs a multi-hypothesis tracker (not built here) or an
+invariant the two emitters do not share. This is the honest answer to "can we
+just fingerprint it and follow": **no** — a clone that copies the invariants at a
+crossing is separated by accuracy and association, not by identity.
+
+### 14.7 What to run
+
+```bash
+make hopping-target        # this section, ~10 s
+python3 scripts/hopping_target.py --quick   # ~2 s smoke run
+```
+
+Order of work for the operator, and why:
+
+1. **detect the hop** (per-frame power, §3 of
+   [`DECOY_DISCRIMINATION.md`](docs/DECOY_DISCRIMINATION.md)) and take the
+   per-hop DOA (14.1);
+2. **hold a track**: prediction, 8° gate, and the invariants as the tie-break
+   (14.4) — never "the strongest hop";
+3. **refine over the track**: the sparse through-origin fit over all hops of the
+   track (14.3), which is worth 8.5× after 64 hops;
+4. **spend dwell where it matters**: 16 snapshots (8 µs) for the 3° class on a
+   1 MHz hopper, 64 snapshots (33 µs) for 0.5°.
+
+**Caveats.** Host simulation of per-bin cross-spectra: constant velocity, no
+multipath, no calibration error, per-hop SNR fixed at 20 dB/bin except the faded
+association study, and the array is the shipped 2×2 at 30 mm. The through-origin
+fit across hops assumes a per-bin calibration (§11.3) — without one the hops do
+not add coherently in *frequency*, only in *angle*. No hardware claim; gates
+G2–G7 are unchanged by this section.
+
+---
+
+## 15. Files
 
 | File | Role |
 |---|---|
@@ -1467,6 +1672,7 @@ captured record.
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
 | `docs/DECOY_DISCRIMINATION.md` | §13 in one place: every algorithm with its block diagram, pseudocode, measured table and failure case, plus the G7 acceptance numbers |
 | `docs/decoy-flow.mmd` | the master runtime flow as a Mermaid diagram |
+| `scripts/hopping_target.py` | §14: a hopping emitter — per-hop accuracy, the alias-free limit, the 800 MHz synthetic aperture across hops, association rules with and without the bandwidth invariant, and the crossing limit |
 | `scripts/radar_decoys.py` | §13.7: the radar case — leading-edge gate vs whole-pulse DOA, window length vs SNR, the decoy's tail, Doppler pull-off, and the delay the edge hands the two-path ML |
 | `scripts/decoy_discrimination.py` | §13: one protected emitter behind decoys — carrier/angle/coherence discriminators, the cepstrum delay alarm, and the joint delay+angle ML that recovers both directions |
 | `scripts/narrowband_targets.py` | §12.4: eight 1–50 MHz targets at different carriers on the shipped 2×2 — detection, accuracy vs bandwidth and dwell, the co-channel failure, and the dwell the two accuracy classes need |
@@ -1485,6 +1691,7 @@ make multisource-df                   # section 12.1-12.4, ~4 min
 make narrowband-targets               # section 12.4, ~10 s
 make decoy-df                         # section 13, ~1 min
 make radar-decoy                      # section 13.7, ~3 min
+make hopping-target                   # section 14, ~10 s
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md

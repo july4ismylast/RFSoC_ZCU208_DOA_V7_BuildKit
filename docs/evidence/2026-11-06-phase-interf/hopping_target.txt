@@ -1,0 +1,144 @@
+# a hopping emitter in 2.7-3.5 GHz: fingerprint or track?
+# generated 2026-11-07T09:58:29Z
+# script: scripts/hopping_target.py (python3 + numpy only)
+# array: 2x2 at 30 mm; hop range 2.70-3.50 GHz; 410 bins of 1.953 MHz
+# per-bin SNR 20 dB, seed=20261107, trials=20
+
+Study A: what one hop can buy -- DOA accuracy per hop
+  the whole hop is what the receiver has; there is no second look
+  bandwidth   bins   snaps=2   4    16    64   256     (az RMSE, deg)
+  1 MHz          1    2.146   1.959   0.648   0.292   0.174
+  10 MHz         5    1.090   0.792   0.270   0.123   0.050
+  100 MHz       51    0.344   0.276   0.076   0.046   0.027
+  A 1 MHz hop occupies a single 1.953 MHz bin: its whole angular
+  information is six phases, once per snapshot. 100 MHz spreads over
+  51 bins and is a factor 8.5 better at 16 snapshots.
+
+Study B: how far up in frequency is the 30 mm 2x2 still unambiguous?
+  The square grid has two rules. The axis-aligned pairs wrap when
+  sin(theta) > c/(2*f*d); the diagonal pairs wrap much earlier, at
+  c/(2*sqrt(2)*f*d), which is the conservative rule V07 11.1 adopted.
+  Measured (100 MHz hops, 64 snapshots, azimuth error in degrees):
+  frequency    axis rule  diag rule  measured 50  measured 70
+  2.7 GHz        90.0 deg    90.0 deg      0.04 deg      0.09 deg
+  3.1 GHz        90.0 deg    90.0 deg      0.03 deg      0.08 deg
+  3.5 GHz        90.0 deg    90.0 deg      0.03 deg      0.06 deg
+  4.0 GHz        90.0 deg    62.0 deg      0.03 deg      0.07 deg
+  5.0 GHz        87.9 deg    45.0 deg      0.03 deg      0.05 deg
+  6.0 GHz        56.4 deg    36.1 deg      0.02 deg    116.55 deg
+  The whole hop range 2.7-3.5 GHz is clean at every angle measured, and
+  the estimate is still correct at 4.0 GHz / 70 deg (0.07 deg) even
+  though the diagonal pairs have wrapped there: the six-baseline fit is
+  over-determined and the axis-aligned pairs hold it. What actually
+  breaks it is the axis rule -- measured at 6.0 GHz, where 70 deg
+  fails. So V07 11.1's diagonal rule is *conservative* for a 2x2 that
+  uses all six baselines, and the hop range has margin above 3.5 GHz.
+
+Study C: hops add up -- a sparse through-origin fit over 800 MHz
+  1 MHz hops, 16 snapshots each, hop carrier uniform in 2.7-3.5 GHz
+  hops         1-hop RMSE     combined           gain
+  1              0.740 deg     0.740 deg         1.0x
+  4              0.704 deg     0.288 deg         2.4x
+  16             0.688 deg     0.142 deg         4.9x
+  64             0.658 deg     0.078 deg         8.5x
+  This is the part that makes a hopper easier than a continuous
+  narrowband emitter: 800 MHz of hop frequencies are 800 MHz of
+  synthetic aperture for the phase slope, and it needs nothing but
+  inter-element phase -- the source's own hop-to-hop phase cancels.
+
+Study D: two hoppers, one protected -- what association is worth
+  protected 1 MHz, decoy 6 MHz, equal mean power, per-hop fading 4 dB
+  rms, 60 hops. Rules, from a naive tracker to a careful one:
+    A  strongest hop, no memory
+    B  strongest hop inside an 8 deg gate
+    C  nearest hop inside the gate (a prediction gate)
+    D  C, plus the bandwidth invariant (1 MHz, not 6 MHz)
+  separation snaps  rule    track error     wrong hops
+  40 deg   16     A           4.69 deg       28.3 of 60
+  40 deg   16     B           0.47 deg        0.0 of 60
+  40 deg   16     C           0.50 deg        0.0 of 60
+  40 deg   16     D           0.31 deg        0.0 of 60
+  40 deg   2      A          22.58 deg       31.5 of 60
+  40 deg   2      B           5.69 deg        6.5 of 60
+  40 deg   2      C           7.97 deg        5.4 of 60
+  40 deg   2      D           5.76 deg        4.9 of 60
+  6 deg    16     A           3.86 deg       28.2 of 60
+  6 deg    16     B           4.39 deg       27.8 of 60
+  6 deg    16     C           1.03 deg        3.6 of 60
+  6 deg    16     D           0.69 deg        0.0 of 60
+  6 deg    2      A           4.17 deg       24.0 of 60
+  6 deg    2      B           6.12 deg       23.3 of 60
+  6 deg    2      C           6.24 deg       25.2 of 60
+  6 deg    2      D          16.86 deg       15.0 of 60
+  Read the columns by accuracy, not by rule. At 16 snapshots a 1 MHz
+  hop is measured to about 0.3 deg, so a decoy 6 deg away never wins a
+  nearest-neighbour test (3.6 wrong) -- the track is the discriminator
+  and the bandwidth invariant only confirms it (0.0). At 2 snapshots
+  the per-hop error grows to about 2 deg, comparable with the
+  separation, and then the invariant is what stops the swap: 15.0
+  wrong hops with it against 25.2 without.
+  Rule A -- trust the strongest hop -- is wrong about half the time at
+  every separation, because fading, not geometry, decides it.
+
+Study E: the invariant itself -- how well can the bandwidth be measured?
+  the fingerprint in study D is 'this emitter is 1 MHz wide'. With
+  1.953 MHz bins the answer can only ever be a multiple of 1.953 MHz,
+  so the question is whether 1 MHz can be told from 3 or 6 MHz at all
+  true BW        bins estimated BW correct at 20/10/0 dB
+  1 MHz             1      1.95 MHz    100/100/100 %
+  2 MHz             1      1.95 MHz    100/100/100 %
+  3 MHz             2      3.91 MHz    100/100/100 %
+  6 MHz             3      5.86 MHz    100/100/100 %
+  10 MHz            5      9.76 MHz    100/100/100 %
+  The invariant is quantised by the bin width: 1, 2, 3, 6 and 10 MHz land
+  on 1, 1, 2, 3 and 5 bins -- so 1 and 2 MHz are *the same fingerprint*
+  on the shipped channelizer, while 1 versus 6 MHz is unambiguous at
+  every SNR measured. A finer
+  transform (4096-point, 488 kHz bins) is what a 1-versus-2 MHz
+  fingerprint would need -- the same lever as the delay resolution in
+  V07 section 13.3.
+  Hop-to-hop phase coherence is *not* needed for any of this: the
+  estimator uses inter-element phase only, so a coherent hopper and an
+  independent one are measured identically. Coherence would add a
+  fingerprint (the phase law across hops), never accuracy.
+
+Study F: the limit -- a decoy that crosses the track
+  same bandwidth, same cadence, equal mean power, closing at 0.65 deg
+  per hop and crossing after about 38 hops. Only accuracy decides
+  whether the two tracks are kept apart.
+  two association rules are compared: nearest in angle, and nearest
+  in (angle, angle rate) -- a Kalman gate uses the velocity to keep the
+  two tracks apart while they cross
+  snapshots  association               crossed cleanly ended on the decoy
+  2          nearest in angle                      52%              48%
+  2          nearest in angle and rate              50%              50%
+  16         nearest in angle                      70%              30%
+  16         nearest in angle and rate              85%              15%
+  With 16 snapshots a 1 MHz hop is measured to 0.29 deg: 70% of
+  crossings are resolved cleanly and 30% end on the decoy; adding the
+  angle rate halves that to 15%. At 2 snapshots (2.15 deg per hop)
+  both rules fail about half the time (48% and 50%). A crossing
+  puts both emitters inside the same gate, so identity cannot help:
+  the invariants are identical by construction. Accuracy and a velocity
+  gate reduce the swap rate; a multi-hypothesis tracker would be the
+  standard remedy and is not built here.
+  the emitters do not share. Fingerprints do not: both look identical
+  by construction.
+  Alias-free range: 2.7-3.5 GHz is clean at 50 and 70 deg, and the
+  first failure appears at 6.0 GHz (study B).
+  [PASS] a 1 MHz hop at 64 snapshots reaches 0.29 deg, inside the
+         3 deg class without any tracking.
+  [PASS] 3.5 GHz is clean at 50 and 70 deg (0.03 / 0.06 deg) and
+         the first failure is at 6 GHz / 70 deg (117 deg).
+  [PASS] combining 64 hops halves the error or better: 0.078 deg
+         against 0.740 deg for one hop.
+  [PASS] at 2 snapshots the bandwidth invariant cuts the wrong hops
+         from 25.2 to 15.0 of 60 inside the gate, and trusting the
+         strongest hop alone is wrong 28 times.
+  [PASS] the crossing is reported as a measured limit, not solved:
+         30% wrong with angle gating, 15% with angle+rate.
+         Single-hypothesis association does not fix it; a
+         multi-hypothesis tracker is the standard remedy and is not
+         built here.
+
+RESULT=PASS
