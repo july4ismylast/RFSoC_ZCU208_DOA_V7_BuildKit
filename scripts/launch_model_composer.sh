@@ -10,11 +10,17 @@
 # PATH still resolves "matlab" to another release, and leaves a tracked page in
 # docs/progress/model_composer_launch.md so a push shows the launch happened.
 #
-# Usage: launch_model_composer.sh [log-file]
+# It also writes build/mc_startup/startup.m and passes that folder as MATLAB's
+# startup directory (-sd), so the helper functions are on the path the moment the
+# GUI opens: typing `mc_gui_build` in the Command Window then works.  The -sd
+# argument is a single plain path, which the launcher's own eval cannot mangle.
+#
+# Usage: launch_model_composer.sh [log-file] [interactive|build]
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 log="${1:-build/logs/model_composer_launch.log}"
+mode="${2:-interactive}"
 mc="${MODEL_COMPOSER:-}"
 m2="${MATLAB_2022B:-}"
 
@@ -39,16 +45,37 @@ if [[ -z "$m2" ]]; then
     echo "If that is not R2022b the export step fails with 'xlGenerateButton unavailable'." >&2
 fi
 
+# The GUI session needs IP_REPO too: start.m / mc_gui_build write the exported IP.
+export IP_REPO="${IP_REPO:-$root/build/ip_repo}"
+
+# The MATLAB path a batch session does not have, handed to the GUI at startup.
+helper_dir="$root/ip/model_composer/channelizer"
+startup_dir="$root/build/mc_startup"
+mkdir -p "$startup_dir"
+{
+    echo "addpath('$helper_dir');"
+    echo "fprintf('Model Composer helpers ready: mc_gui_build, make_channelizer_model, export_model_composer_ip\\n');"
+    echo "fprintf('repo: %s\\n', '$root');"
+    if [[ "$mode" == "build" ]]; then
+        echo "try"
+        echo "    mc_gui_build;"
+        echo "catch problem"
+        echo "    fprintf(2, 'mc_gui_build failed: %s\\n', problem.message);"
+        echo "end"
+    fi
+} > "$startup_dir/startup.m"
+
 mkdir -p "$(dirname "$log")"
 started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 {
     echo "stage=model_composer_launch"
     echo "started_utc=$started"
-    printf 'command='; printf '%q ' "$mc"; echo
+    printf 'command='; printf '%q ' "$mc" -sd "$startup_dir"; echo
+    echo "startup=$startup_dir/startup.m ($mode)"
 } | tee "$log"
 
 set +e
-"$mc" 2>&1 | tee -a "$log"
+"$mc" -sd "$startup_dir" 2>&1 | tee -a "$log"
 rc=${PIPESTATUS[0]}
 set -e
 finished="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -63,7 +90,15 @@ if ((rc != 0)); then result=FAIL; echo "result=FAIL exit_code=$rc" | tee -a "$lo
 
 echo
 echo "Model Composer closed (result $result, MATLAB on PATH: ${matlab_now:-unset})."
-echo "In the GUI's Command Window, build the model and export the IP in one go:"
+echo "The helper functions are already on the MATLAB path in that session, so"
+echo "in its Command Window just type:"
+echo
 echo "     mc_gui_build"
+echo
+echo "and it builds ip/model_composer/channelizer/channelizer.slx and exports the"
+echo "IP Catalog IP.  From an Ubuntu shell, without the GUI:"
+echo
+echo "     matlab -batch \"addpath('$helper_dir'); mc_gui_build\""
+echo
 echo "or, for a model you already have: make mc MODEL_COMPOSER_MODEL=/abs/path/to/channelizer.slx"
 exit "$rc"

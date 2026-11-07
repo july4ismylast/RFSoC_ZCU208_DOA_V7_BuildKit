@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-verify mc-find mc-path mc-example mc-libs graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-libs graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -74,7 +74,8 @@ help:
 	@echo "AMD 2023.2 example:  make mc-example   (reference only, not committed)"
 	@echo "Blocks not found:    make mc-libs      (where the libraries are)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
-	@echo "Model Composer GUI:  make mc-gui  (only to create/edit that .slx)"
+	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
+	@echo "GUI that builds:     make mc-gui-build   (opens, builds, exports)"
 	@echo "After a GUI compile: make mc-verify MODEL_COMPOSER_MODEL=/abs/x.slx"
 	@echo "Progress pages:      make progress  -> docs/progress/PROGRESS.md"
 	@echo "Every step bench:    make steps"
@@ -205,7 +206,12 @@ mc-scratch:
 # cannot run a headless build -- it evals its own arguments and appends its own
 # -r -- so `make mc` never goes through it.
 mc-gui:
-	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log"
+	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log" interactive
+
+# Same GUI, but it builds the model and exports the IP as soon as it opens
+# (startup.m calls mc_gui_build), then leaves the session open to look at it.
+mc-gui-build:
+	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_gui_build.log" build
 
 # Why is a Model Composer block missing?  Report where the libraries are.
 mc-libs:

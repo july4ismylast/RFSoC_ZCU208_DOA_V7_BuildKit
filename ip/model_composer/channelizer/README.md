@@ -49,10 +49,45 @@ If the batch session still cannot see the libraries, the GUI can — and the sam
 code runs there, so the two routes cannot drift apart:
 
 ```bash
-make mc-gui      # Model Composer 2023.2 on MATLAB R2022b
-# in its Command Window:
-mc_gui_build     # builds channelizer.slx and exports the IP in one line
+make mc-gui         # GUI, with the helpers already on the MATLAB path
+make mc-gui-build   # GUI, and it runs the build + export itself on startup
 ```
+
+How the path gets there: `scripts/launch_model_composer.sh` writes
+`build/mc_startup/startup.m` containing `addpath('<repo>/ip/model_composer/channelizer')`
+and passes that folder as MATLAB's startup directory (`-sd`), which is a single
+plain path argument, so the launcher's `eval` cannot mangle it. MATLAB runs
+`startup.m` when the session opens, so `mc_gui_build` is defined before you type
+anything.
+
+### `Unrecognized function or variable 'mc_gui_build'`
+
+That means the helper folder is not on the path in the session you are typing
+in — the GUI was started without `-sd`, or it is a plain `matlab` window. Paste
+one line, with the absolute path:
+
+```matlab
+addpath('/media/joshua/Linux/Vivado_prj/.../RFSoC_ZCU208_DOA_V7_BuildKit/ip/model_composer/channelizer'); mc_gui_build
+```
+
+`make mc-gui` prints that exact line for your checkout when it exits.
+
+### Running a `.m` file from the Ubuntu shell
+
+```bash
+# a function that needs no arguments, batch, exits when done
+matlab -batch "addpath('/abs/dir'); mc_gui_build"
+
+# a script file
+matlab -batch "run('/abs/dir/my_script.m')"
+
+# keep MATLAB open afterwards (GUI-less), e.g. to look around
+matlab -r "addpath('/abs/dir'); mc_gui_build"
+```
+
+The two `make` targets above do the same thing through the Model Composer
+launcher, which is the only way to get the Model Composer libraries loaded by
+the GUI.
 
 ## Three ways to get a model
 

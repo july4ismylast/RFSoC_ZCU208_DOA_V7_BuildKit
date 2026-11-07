@@ -52,6 +52,17 @@ make mc-path     # the exact absolute path this checkout uses, and whether it ex
 make mc          # 2. build the IP from it -- no argument needed
 ```
 
+`make mc-gui` starts the GUI with `-sd build/mc_startup`, whose `startup.m` does
+`addpath('<repo>/ip/model_composer/channelizer')` — so `mc_gui_build` exists in
+that window without you typing an `addpath`. `make mc-gui-build` goes further and
+runs the build on startup. To run a `.m` file from the shell instead:
+
+```bash
+matlab -batch "addpath('/abs/dir'); mc_gui_build"    # function, exits when done
+matlab -batch "run('/abs/dir/script.m')"             # script file
+matlab -r      "addpath('/abs/dir'); mc_gui_build"   # stays open
+```
+
 If MATLAB reports `There is no block named 'vmcUtilities/...'`, that is a
 missing path, not a wrong name: a batch session has none of Model Composer's
 library folders. `mc_paths.m` finds and adds them (cached in `build/mc_libs.txt`),

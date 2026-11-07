@@ -14,6 +14,13 @@ end
 
 here = fileparts(mfilename('fullpath'));
 addpath(here);
+% A GUI session started by `make mc-gui` may not have IP_REPO; the exporter
+% writes into it, so give it the repository default rather than failing late.
+if isempty(getenv('IP_REPO'))
+    repoRoot = fileparts(fileparts(fileparts(here)));
+    setenv('IP_REPO', fullfile(repoRoot, 'build', 'ip_repo'));
+    fprintf('IP_REPO was unset; using %s\n', getenv('IP_REPO'));
+end
 if isempty(destination)
     destination = fullfile(here, 'channelizer.slx');
 end
