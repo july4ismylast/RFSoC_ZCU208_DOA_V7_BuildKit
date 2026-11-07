@@ -31,6 +31,7 @@ by a script in this repository, or explicitly marked unproven.
 | Array spacing **d = 50 mm** | **REJECT** — unambiguous only to 3 GHz; measured 106° error at 3.75 GHz / az 55° where 25 mm gives 0.27°, and 33.9°/104.2° off over the full band where 30 mm holds 1.6°/1.1° | §4.4, §11.1 |
 | Amplitude-assisted "face selection" | **ADOPT, restated** — amplitude resolves only the ±45° quadrant; it cannot resolve an interferometer ambiguity | §5.5 |
 | MUSIC / CSSM | **DEFER for one emitter; needed only for co-channel sources** — eight *co-channel* emitters need 36 elements (2×2 finds 1.2 of 8), but eight 1–50 MHz emitters at different carriers are separated by the channelizer and the shipped 2×2 detects 8.0 of 8 | §9, §12.1, §12.4 |
+| One protected emitter behind decoys | **ADOPT a ladder, cheapest rung first, and state the rung that fails** — off-carrier decoys cost 0.00° (the channelizer counts them, 1/2/4/7 clusters); independent co-channel decoys need more than four elements (0.4 of 2 found); a coherent repeater is *detected* by a DOA wobble of 43.8° rms against 0.31° clean and a cepstrum peak of 101 ns from a true 100 ns, then *resolved* by a joint delay+angle ML that recovers both directions 100 % at 20–50 MHz and 0 % at 1 MHz; a co-located zero-delay decoy is indistinguishable and is reported as such | §13 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
 
@@ -1069,7 +1070,199 @@ scalloping loss this model does not include (up to ~2 dB at worst alignment).
 
 ---
 
-## 13. Files
+## 13. One protected emitter behind decoys at 2.5 GHz
+
+The requirement is not "find the strongest signal". It is: **one** emitter at
+2.5 GHz is the one that matters, the rest of the scene is there to waste the
+receiver's time, and the operator still has to be told where the real one is.
+So two questions have to be answered separately:
+
+1. **which** of the received signals is the source and which are decoys;
+2. how to get the **direction** of the source once the decoys are in the band.
+
+The answer is a ladder of discriminators, cheapest first. Each rung below has a
+number measured in this repository
+(`scripts/decoy_discrimination.py` →
+[`decoy_discrimination.txt`](docs/evidence/2026-11-06-phase-interf/decoy_discrimination.txt))
+and an explicit statement of the case where it stops working. Scene for all
+runs: 2×2 at 30 mm, 2.500 GHz, az +10° (the protected emitter), 20 dB/bin,
+64 snapshots per bin, 16 trials per row unless stated.
+
+| # | Discriminator | What it needs | Measured here | Fails when |
+|---|---|---|---|---|
+| 1 | **carrier** — the 1024-band channelizer | nothing new | 0/1/3/6 off-carrier decoys → 1/2/4/7 clusters, source error ≤ 0.07° | the decoy sits inside the source's own 1–50 MHz |
+| 2 | **angle** — per-bin interferometry or MUSIC | angular separation, and > M elements for co-channel | independent co-channel decoy: 0.4 of 2 found on 2×2, 2.0 on 3×3 | the decoy is coherent with the source (rank 1) |
+| 3 | **coherence** — wobble across the band + cepstrum ripple | a *wideband* emitter (several bins) | wobble 43.8° rms vs 0.31° clean; delay 101 ns from 100 ns, peak/median 11 vs 2 | the emitter fills ≤ 1 bin, or the delay is zero |
+| 4 | **joint delay + angle ML** — recover *both* paths | ≥ 10 bins and the 2×2 is enough | both directions correct in 100 % at 20 and 50 MHz, 0 % at 1 MHz | narrowband, > 2 paths, co-located zero-delay decoy |
+| 5 | **kinematics** — tracks that diverge | a tracker (this kit has none in evidence) | **not simulated — unproven** | decoy manoeuvres with the source |
+
+### 13.1 Rung 1: the carrier costs nothing
+
+Decoys that use their own carriers are removed by the channelizer before any
+spatial processing, which is the same mechanism as §12.4. Scene spanning
+2.30–2.70 GHz, the source at 2.500 GHz with 20 MHz:
+
+| decoys on other carriers | clusters found | source azimuth | error |
+|---|---|---|---|
+| 0 | 1.0 | 9.976° | −0.024° |
+| 1 | 2.0 | 9.988° | −0.012° |
+| 3 | 4.0 | 9.991° | −0.009° |
+| 6 | 7.0 | 10.020° | +0.020° |
+
+Every decoy costs exactly one cluster entry and **nothing** in accuracy. This is
+the only rung that is free, and it is free only because the emitter bandwidths
+(1–50 MHz) are far below the tunable range (2–4 GHz).
+
+### 13.2 Rung 2: angle, and the co-channel failure
+
+Two *independent* signals at the same carrier cannot be separated by the
+channelizer and have to be separated spatially. Two 50 MHz signals at 2.500 GHz,
+az 10° and 25°, per-bin 2D MUSIC, matched-of-2 scoring:
+
+| array | of 2 recovered | false peaks |
+|---|---|---|
+| 2×2 @ 30 mm | **0.4** | 1.6 |
+| 3×3 @ 30 mm | 2.0 | 0.0 |
+| 4×4 @ 30 mm | 2.0 | 0.0 |
+
+This is the M−1 rule of §10.2/§12.1 again: four elements cannot hold two
+co-channel signals. If the decoy is independent and inside the source's band,
+the shipped 2×2 has no answer — that is a hardware limit, not an algorithm gap.
+
+### 13.3 Rung 3: the signature a repeater cannot hide
+
+The decoy that *does* appear in practice is a repeater: a delayed copy of the
+source waveform (DRFM) radiated from elsewhere. Being a copy, it is coherent
+with the source, so the two paths are **rank 1** in every bin and rung 2 fails
+even for a 36-element array. But the delay leaves three measurable marks.
+50 MHz emitter at 2.500 GHz, az +10°, repeater at az 40°, equal power:
+
+| delay | fused azimuth | bias | wobble rms | cepstrum peak |
+|---|---|---|---|---|
+| none | 10.01° | +0.01° | **0.31°** | none (ratio 2) |
+| 20 ns | 6.53° | −3.47° | 41.2° | 21 ns (ratio 7) |
+| 50 ns | 15.83° | +5.83° | 31.5° | 49 ns (ratio 10) |
+| 100 ns | 5.72° | −4.28° | **43.8°** | 101 ns (ratio 11) |
+| 200 ns | 6.57° | −3.43° | 41.2° | 201 ns (ratio 9) |
+
+1. **The DOA is wrong**, by −4.3° to +5.8° here: the vector sum of two equal
+   amplitudes is between 0 and 2, so the fused peak is not the source. Reporting
+   the fused number without checking is how a decoy wins.
+2. **The DOA wobbles across the band.** A single emitter's phase slope is exactly
+   linear in frequency, so any residual from a straight line is a second path:
+   **43.8° rms against 0.31°** for a clean emitter. This is a free alarm, computed
+   from the per-bin curve the estimator already produces.
+3. **The ripple period is the delay.** The cepstrum of the per-bin power gives
+   **101 ns from a true 100 ns**, peak/median 11, while a clean emitter produces
+   a noise peak of ratio 2. The alarm threshold is peak/median ≥ 5.
+
+**The limit of this rung is the bin width**, because the ripple is sampled once
+per bin and the unambiguous delay is 1/(2·bin):
+
+| front end | bin width | unambiguous delay |
+|---|---|---|
+| 1024-band channelizer (shipped) | 1.953 MHz | 256 ns |
+| 4096-point transform | 488 kHz | 1024 ns |
+| 16384-point transform | 122 kHz | 4097 ns |
+
+A typical 1 µs DRFM delay wraps in the shipped channelizer and needs a
+4096-point transform in the DSP path — the finer-bin option that §4.2 already
+flagged as the reason not to throw bins away.
+
+### 13.4 Rung 4: getting the direction back
+
+Detecting the repeater is not the same as measuring the source. Since the two
+paths are rank 1 per bin, no per-bin estimator separates them; but the *delay*
+is known from rung 3, and that is the extra dimension four elements lack. In bin
+*k* the spatial vector is
+
+```
+v_k  ∝  a(θ_src) + g·exp(−j2π f_k τ)·a(θ_decoy)   ×  unknown complex amplitude
+```
+
+so a two-path ML over (θ_src, θ_decoy, g) with τ known resolves both. Emitter at
+az 8°, repeater at az 37°, equal power, 100 ns, 1° search grid:
+
+| array | path 1 | path 2 | simultaneous hits (< 3° each) |
+|---|---|---|---|
+| 2×2 @ 30 mm | 8.0° | 37.0° | **100 %** |
+| 3×3 @ 30 mm | 8.0° | 37.0° | 100 % |
+
+The shipped four elements are enough — because 26 bins of frequency diversity
+substitute for elements. Two caveats, both measured:
+
+* **The delay must be right to about 1 ns.** Handing the search a delay scaled
+  by 1.01 (i.e. 1 ns of the 100 ns) drops it to 0 %: the relative phase across
+  the band fixes the topology, and 1 ns of the 20 ns delay resolution of a
+  50 MHz band is already too much. The cepstrum peak is a confirmatory alarm,
+  not a precise enough seed.
+* **So the delay must be estimated jointly.** Searching 42 delay hypotheses
+  (0–300 ns coarse at 10 ns, then ±10 ns at 2 ns) together with both angles
+  needs no prior at all:
+
+| emitter bandwidth | bins | delay found | path 1 / path 2 | simultaneous hits |
+|---|---|---|---|---|
+| 1 MHz | 1 | 152 ns (wrong) | 8.2° / 36.8° | **0 %** |
+| 5 MHz | 3 | 117 ns | 9.8° / 35.0° | 25 % |
+| 20 MHz | 10 | 100 ns | 8.0° / 37.0° | **100 %** |
+| 50 MHz | 26 | 100 ns | 8.0° / 37.0° | **100 %** |
+
+That is the honest boundary of the whole method: **it is a wideband method.**
+A 1 MHz emitter lands in one 1.953 MHz bin, the ripple disappears, and four
+elements have no other handle on a coherent decoy. For a narrowband source the
+answer stays at rung 3's alarm ("a second path is present") without a recovered
+direction, or moves to more elements.
+
+### 13.5 The case that cannot be solved on this hardware
+
+Co-located, same carrier, zero delay, equal power: the decoy *is* the source as
+far as the receiver can tell. No spatial, spectral or temporal signature
+remains — the two signals add into one manifold vector in every bin, and the
+measured estimators in this repository all return one direction (rung 2 finds
+0.4 of 2, rung 3 shows no ripple because there is no delay, rung 4 sees a
+single path). Rejecting that decoy needs information this hardware does not
+collect:
+
+* **polarisation** — a second co-located orthogonal pair, or a dual-pol element;
+* **waveform/PRF fingerprinting** — the emitter's own modulated structure, which
+  is a wideband-sampling problem, not a DOA one;
+* **a second platform** — triangulation or TDOA against a baseline long enough
+  to separate the two emitters in range, not in angle.
+
+Claiming otherwise would be exactly the kind of unproven claim this document
+refuses to make.
+
+### 13.6 What to run, and what it costs
+
+Runtime order for the operator (all of it is a runtime choice, no hardware
+change):
+
+1. cluster the channelizer bins by power — one cluster per carrier (rung 1);
+2. for the cluster the operator designates as priority, fit the per-bin DOA
+   curve; a residual above ~5° rms from a straight line raises the repeater flag
+   (§13.3), otherwise report the fit and stop;
+3. if flagged, run the joint delay + angle search over 42 delay hypotheses and
+   report **two** directions, with the delay that explains the ripple;
+4. if the search returns one path only, say so — that is the §13.5 case.
+
+Cost, measured on the host: ≈ 5 s per scene per numpy core for 42 delay
+hypotheses × 61 angles × 3 gains × 26 bins (≈ 7 700 model evaluations). The
+per-bin cross-spectrum and curve fit of steps 1–2 are already in
+`ip/custom/phase_interf_4ch`; steps 3–4 are **host models only** — no PL
+implementation, no resource estimate, and gate G2/G4 untouched by this section.
+
+**Caveats for the whole section.** Everything is a host simulation of per-bin
+cross-spectra: two paths only, equal power, identical bandwidth, no mutual
+coupling, no calibration error, no multipath beyond the modelled repeater, and
+the same 20 dB/bin SNR in every bin. Real calibration error (±0.5 dB / ±5° per
+§11.3) adds a bias the two-path ML will absorb into the gain estimates. Detection
+thresholds (4× median-power cluster, peak/median ≥ 5 cepstrum) are rules of
+thumb, not CFAR with a measured false-alarm rate. Nothing here has been run on
+an RFSoC.
+
+---
+
+## 14. Files
 
 | File | Role |
 |---|---|
@@ -1079,6 +1272,7 @@ scalloping loss this model does not include (up to ~2 dB at worst alignment).
 | `scripts/compare_wpi_vs_music.py` | §10: interferometry vs wideband 2D MUSIC/ISSM, manifold-rank result, calibration and geometry sensitivity |
 | `scripts/compare_wideband_estimators.py` | §11: spacing rule for a square 2×2, five estimators over the full 2–4 GHz band, ambiguity/geometry/wrap studies |
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
+| `scripts/decoy_discrimination.py` | §13: one protected emitter behind decoys — carrier/angle/coherence discriminators, the cepstrum delay alarm, and the joint delay+angle ML that recovers both directions |
 | `scripts/narrowband_targets.py` | §12.4: eight 1–50 MHz targets at different carriers on the shipped 2×2 — detection, accuracy vs bandwidth and dwell, the co-channel failure, and the dwell the two accuracy classes need |
 | `ip/custom/phase_interf_4ch/` | per-bin cross-spectrum + CORDIC phase block, host test, HLS build |
 | `matlab_v7/PhaseInterferometryEstimator.m` | MATLAB reference of the PS-side estimator selection |
@@ -1093,6 +1287,7 @@ make compare-estimators               # sections 10 and 11: both studies, full
 make wideband-df                      # section 11 only, ~6 min
 make multisource-df                   # section 12.1-12.4, ~4 min
 make narrowband-targets               # section 12.4, ~10 s
+make decoy-df                         # section 13, ~1 min
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md

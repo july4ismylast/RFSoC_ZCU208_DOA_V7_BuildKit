@@ -55,6 +55,7 @@ help:
 	@echo "V07 estimator study: make compare-estimators  (or: make wideband-df)"
 	@echo "Multi-source study:  make multisource-df"
 	@echo "1-50 MHz 8-target:   make narrowband-targets"
+	@echo "Decoy discrimination:make decoy-df"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -235,12 +236,13 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df multisource-df narrowband-targets
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
 	@python3 scripts/multisource_capacity.py
 	@python3 scripts/narrowband_targets.py
+	@python3 scripts/decoy_discrimination.py
 
 wideband-df:
 	@python3 scripts/compare_wideband_estimators.py
@@ -255,6 +257,11 @@ multisource-df:
 narrowband-targets:
 	@python3 scripts/narrowband_targets.py
 
+# Section 13 of V07: one protected 2.5 GHz emitter behind decoys -- the
+# carrier/angle/coherence/joint-ML ladder and the case that cannot be solved.
+decoy-df:
+	@python3 scripts/decoy_discrimination.py
+
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
@@ -262,6 +269,7 @@ verify-phase-interf:
 	@python3 scripts/compare_wideband_estimators.py --quick
 	@python3 scripts/multisource_capacity.py --quick
 	@python3 scripts/narrowband_targets.py --quick
+	@python3 scripts/decoy_discrimination.py --quick
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
 

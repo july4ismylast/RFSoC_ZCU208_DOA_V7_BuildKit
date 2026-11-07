@@ -97,6 +97,20 @@ and the shipped 2×2 detects **8.0 of 8**, at 0.59°→0.12° for a 1 MHz target
 dwell grows from 16 to 256 snapshots, and 1.42° at 4 snapshots for the targets
 that are allowed 3° (`make narrowband-targets`, §12.4).
 
+When **one** of those signals is the target and the rest are decoys (V07 §13,
+`make decoy-df`), the discriminator is a ladder, cheapest rung first. Decoys on
+other carriers cost nothing: the channelizer counts them (1/2/4/7 clusters for
+0/1/3/6 decoys) and the source azimuth moves by ≤ 0.07°. An *independent* decoy
+inside the same band is a hardware problem — the 2×2 recovers 0.4 of 2 while a
+3×3 recovers 2 of 2. A *repeater* (DRFM copy) is coherent and therefore rank 1
+in every bin, so no per-bin estimator separates it; it is instead flagged by a
+DOA that wobbles across the band (43.8° rms against 0.31° for a clean emitter)
+and a cepstrum ripple whose period is the delay (101 ns recovered from 100 ns),
+and then *resolved* by a two-path ML with the delay searched jointly: both
+directions correct in 100% of trials at 20–50 MHz bandwidth on the shipped 2×2,
+0% at 1 MHz. A decoy that is co-located, co-carrier and zero-delay is not
+distinguishable on this hardware, and the document says so.
+
 ## Accuracy statement
 
 V7 demonstrated a 3-D Monte-Carlo RMSE below 0.1° in its stated simulated
