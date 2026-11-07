@@ -152,6 +152,20 @@ bandwidth invariant is quantised by the bin width (1 and 2 MHz are the same
 fingerprint). A decoy that copies the invariants and *crosses* the track is not
 separable by identity at all: 15 % of crossings still end on the wrong track.
 
+Several emitters in one picture are **clustered, not masked** (V07 §15,
+`make target-clusters`). Clustering happens on the coordinates a hop cannot
+change — direction and bandwidth — and is then linked over frames with cadence as
+the tie-break: a carrier-only link, the frequency-hopping-network way, leaves
+20.7 tracks for three emitters and recovers one, while direction plus bandwidth
+recovers three of three at purity 1.00, and cadence separates two emitters that
+share both (2.3 → 3.0 of 3). Masking the known emitter out of the spectrum was
+measured and rejected: replaying the last hop predicts 0.20 % of the next one, a
+band mask takes every other emitter with it (0 % kept), a notch deletes whoever
+shares the bin (0 % kept), and a spatial null keeps that emitter's power but
+destroys its direction (82–120° of error) because a 2×2 seen at elevation 0 is a
+two-channel array. The deliverable is a labelled map: one row per emitter, the
+hopper as scattered blocks along it, the static emitter as a fixed column.
+
 ## Accuracy statement
 
 V7 demonstrated a 3-D Monte-Carlo RMSE below 0.1° in its stated simulated

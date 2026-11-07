@@ -34,6 +34,7 @@ by a script in this repository, or explicitly marked unproven.
 | One protected emitter behind decoys | **ADOPT a ladder, cheapest rung first, and state the rung that fails** — off-carrier decoys cost 0.00° (the channelizer counts them, 1/2/4/7 clusters); independent co-channel decoys need more than four elements (0.4 of 2 found); a coherent repeater is *detected* by a DOA wobble of 43.8° rms against 0.31° clean and a cepstrum peak of 101 ns from a true 100 ns, then *resolved* by a joint delay+angle ML that recovers both directions 100 % at 20–50 MHz and 0 % at 1 MHz; a co-located zero-delay decoy is indistinguishable and is reported as such | §13 |
 | The protected emitter is a **radar** (transmit + receive) | **ADOPT time ordering ahead of every spectral rung** — a decoy must hear the pulse before repeating it, so the repeat is always later by at least its turnaround: the leading edge gives the radar's direction to 0.09–0.79° where the whole-pulse method is 12–16° wrong, the tail gives the decoy's direction (39.6° for 40°) plus the delay, a Doppler pull-off changes neither, and the half-sample delay from the edge makes the two-path ML exact at 5–50 MHz without a search | §13.7 |
 | A **hopping** emitter, 1–100 MHz, 2.7–3.5 GHz | **ADOPT track-and-combine, not fingerprint-first** — the hop range is alias-free (measured 0.06° at 3.5 GHz / 70°, first failure 6 GHz); one 1 MHz hop gives 0.29° at 64 snapshots; combining 64 hops through-origin gives 0.078° (8.5×); association by prediction gate plus the bandwidth invariant is worth 28 → 0 wrong hops, and the invariant itself is quantised by the bin width (1 and 2 MHz are identical) | §14 |
+| **Clustering** several emitters in one cube | **ADOPT label, do not mask** — clusters form on (direction, bandwidth) and are linked over frames; a carrier-only link recovers 1 of 3 emitters and fragments the hopper into 20.7 tracks, the pair recovers 3 of 3 at purity 1.00, and cadence separates two emitters that share both (2.3 → 3.0 of 3, purity 0.70 → 1.00). Masking is measured to be unavailable: the notch deletes the co-channel emitter (kept 0 %), the null keeps it but destroys its direction (82–120°, because a 2×2 at elevation 0 has two channels), and predicting the next hop is worth 0.20 % | §15 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
 
@@ -1660,7 +1661,200 @@ G2–G7 are unchanged by this section.
 
 ---
 
-## 15. Files
+## 15. Clustering the emitters: label the cube, do not mask it
+
+The scene an operator describes is: *source 1 hops between f1 and f2, has this
+bandwidth and this direction; target 2 sits still, with its own direction.* The
+question that follows is always the same — do we have to extract source 1's
+fingerprint and **mask it out of the spectrum** before we can cluster?
+
+Measured answer: **no, and on this aperture a mask cannot work.** A mask is a
+destructive edit of the cube you are trying to cluster, and it needs exactly the
+position you were about to measure. What clusters an emitter is the set of
+coordinates a hop cannot change: **direction, bandwidth, cadence.** Frequency is
+the coordinate that moves.
+
+```
+ 410 bins over 2.7-3.5 GHz, one frame = 16 snapshots of 512 ns
+        |
+        v
+ detections      (bin, level, coherence, direction)          per frame
+        |
+        v
+ clusters        (direction, bandwidth) in one frame         3.2 per frame
+        |
+        v
+ tracks          cost assignment over frames, + cadence       1 track per emitter
+        |
+        v
+ the map         azimuth x frequency x time, every cell labelled,
+                 nothing erased
+```
+
+Everything below is measured by
+`scripts/target_clustering.py` →
+[`target_clustering.txt`](docs/evidence/2026-11-06-phase-interf/target_clustering.txt)
+(`make target-clusters`, 5.7 s, seed 20261108, 6 draws per cell).
+
+### 15.1 One frame, three feature sets
+
+Three emitters: a 1 MHz hopper over the band at 10°, a 1 MHz CW at 3.05 GHz, a
+5 MHz hopper at −15°. Clusters found per frame:
+
+| scene | frequency only | direction only | both |
+|---|---|---|---|
+| distinct angles | 3.0 | 3.0 | 3.2 |
+| shared angle | 3.0 | **2.0** | 3.2 |
+
+Frequency finds the three blocks but cannot say who owns one when two emitters
+share bins. Direction cannot tell apart two emitters that share an angle — that
+is the whole of §14.4's "gating + bandwidth" discussion, seen from the detection
+side.
+
+### 15.2 Over frames: what may close a link
+
+The per-frame clusters have to be joined into emitters. Four rules, 10 frames:
+
+| link on | tracks | mature | emitters recovered | purity |
+|---|---|---|---|---|
+| *distinct angles* | | | | |
+| carrier only | 20.7 | 1.0 | **1 of 3** | 1.00 |
+| direction | 4.7 | 3.5 | 3 of 3 | 1.00 |
+| direction + bandwidth | 5.8 | 3.3 | 3 of 3 | 1.00 |
+| + cadence | 5.8 | 3.2 | 3 of 3 | 1.00 |
+| *shared angle* | | | | |
+| carrier only | 21.2 | 1.0 | 1 of 3 | 1.00 |
+| direction | 4.3 | 3.2 | **2.3 of 3** | 0.71 |
+| direction + bandwidth | 5.0 | 3.0 | **2.3 of 3** | 0.70 |
+| + cadence | 5.0 | 3.0 | **3 of 3** | **1.00** |
+
+*Tracks* counts every group including fragments — a frame whose per-bin
+direction falls outside the 4° gate starts a new one — so *mature* is the column
+that matters.
+
+A carrier-only link is what a frequency-hopping-network tracker does: it
+associates on the channel plan. It leaves **20.7 groups for three emitters and
+recovers one**, because for a hopper every hop is a new frequency. Direction and
+bandwidth hold — a hop cannot change either — and recover all three. When two
+emitters share both, the pair is not enough (2.3 of 3, purity 0.70) and **cadence
+finishes it**: one carrier is occupied in every frame, the other never repeats
+(purity 1.00).
+
+### 15.3 What masking would have to do, and what it costs
+
+Five ways to take the hopper out of one frame of the display, scored on the
+frame you are looking at, the next hop, and what survives:
+
+| strategy | removes it now | removes its next hop | other emitters kept |
+|---|---|---|---|
+| replay the last hop | 100 % | 0.20 % | 100 % |
+| extrapolate the hop plan | 100 % | 0.20 % | 100 % |
+| same, a sequential plan | 100 % | **100 %** | 100 % |
+| mask the whole band | 100 % | 100 % | **0 %** |
+| null its direction | 100 % | 100 % | study C |
+
+Every strategy removes the emitter from the frame you are looking at. That is a
+*detection*, not a fingerprint, and it is free. Predicting the **next** hop is the
+only thing a fingerprint could add, and for random hopping over 410 positions it
+is worth 0.20 %; for a sequential plan it is 100 %.
+
+The two removal strategies that need no prediction are the band mask and the
+null. The band mask takes every other emitter with it. The null is the only one
+left, so it was measured (2×2 vs a 3×3 at the same 30 mm pitch, T2 alone in its
+own bin, so nothing collides):
+
+| separation | 2×2: power | 2×2: direction | 3×3: power | 3×3: direction |
+|---|---|---|---|---|
+| 2° | −20.9 dB | 82.0° | −19.5 dB | 67.0° |
+| 5° | −18.8 dB | 85.0° | −16.6 dB | 63.3° |
+| 10° | −15.6 dB | 90.0° | −12.1 dB | 50.0° |
+| 20° | −10.8 dB | 100.0° | −7.1 dB | 40.0° |
+| 40° | −6.3 dB | 120.0° | −2.8 dB | 20.0° |
+
+The direction errors of 82–120° are not noise. At elevation 0 the phase across
+this array depends on the y coordinate alone, so the 2×2 is a **two-channel**
+array: nulling one direction removes one of the two channels, and every remaining
+direction maps onto the same residual. The neighbour keeps its power at 40° and
+loses the ability to be measured. A null is not a notch on this aperture — and a
+3×3 is better (−7.1 dB at 20°) but its direction error is still 40°.
+
+That is why the collision case is not fixable by removal either:
+
+| on a shared bin, 20° apart | kept | T2 direction | T1 residual |
+|---|---|---|---|
+| nothing removed | 100 % | 9.75° (between the two) | – |
+| spectral notch | **0 %** | – | removed |
+| spatial null | 100 % | 100.0° | −1.2 dB |
+| cancellation, 0 dB gain error | 100 % | 100.0° | −1.4 dB (noise floor) |
+| cancellation, 6 dB / 30° error | 100 % | 25.4° | 23.1 dB |
+
+Cancellation *does* remove T1 — at 0 dB of gain error the residual is the noise
+floor — but what is left of T2 is no longer a plane wave on this array. The
+objection to masking is not that the emitter survives; it is that removing it
+costs whoever shares the bin the ability to be measured at all. The collision is
+a property of the data (V07 §14.6), not of the display.
+
+### 15.4 When the pair cannot separate them
+
+Two CW emitters, joint (direction, frequency) clustering in one frame, solved
+when the two clusters match exactly:
+
+| angle \ Δf | 0 bin | 1 bin | 4 bins | 20 bins |
+|---|---|---|---|---|
+| 1° | 0 % | 17 % | 100 % | 100 % |
+| 3° | 0 % | 83 % | 100 % | 100 % |
+| 6° | 0 % | 100 % | 100 % | 100 % |
+| 12° | 0 % | 100 % | 100 % | 100 % |
+| 25° | 0 % | 100 % | 100 % | 100 % |
+
+The column at Δf = 0 is zero for a reason that is not about clustering: one bin,
+two emitters, one detection. That is the two-source problem of §11.2, and it is
+solved by an estimator, not by a feature vector. Everywhere else the pair works
+as soon as one coordinate separates them — 1° needs a frequency offset, 6°
+needs nothing.
+
+### 15.5 The map
+
+Ten frames of the three-emitter scene, printed as azimuth rows against frequency
+columns (14 MHz per column, 10° per row). This is the picture to hand to an
+operator — it is the same cube, with every cell labelled and nothing erased:
+
+```
+  freq  2.7                                             3.5 GHz
+    -30 deg  ..........................................................
+    -20 deg  ...33...3....33.3...33.................33...33.......3....
+    -10 deg  ..........................................................
+      0 deg  ..........................................................
+     10 deg  1........1.....1.........1..1..1.1.......1.............1..
+     20 deg  ................#.........................................
+     30 deg  ................22........................................
+     40 deg  ..........................................................
+```
+
+`1` is the 10° hopper, `2` the CW at 30°, `3` the −20° hopper, `#` a cell where
+two emitters were present at once. Emitter 2 is a fixed column; the hoppers are
+scattered blocks along one row. Frequency says *when*, the row says *who*. The
+shared cell is the collision of §15.3 appearing as an intermediate row — the
+direction estimate lands between the two emitters, which is exactly what the
+mixture does to a single-source estimator. Of 25 occupied cells, 1 is shared.
+
+### 15.6 What to run
+
+```bash
+make target-clusters                        # this section, ~6 s
+python3 scripts/target_clustering.py --quick  # ~4 s smoke run
+```
+
+**Caveats.** Host simulation of per-bin cross-spectra: elevation 0, constant
+directions, no multipath, no calibration error, 20 dB per bin, 16 snapshots per
+frame. The tracks are a cost assignment, not a Kalman filter with a motion model;
+the *cadence* feature is the carrier's occupancy rate over frames, not a hop-plan
+estimator. `make target-clusters` is a host study; no gate, bitstream or hardware
+claim is implied.
+
+---
+
+## 16. Files
 
 | File | Role |
 |---|---|
@@ -1672,6 +1866,7 @@ G2–G7 are unchanged by this section.
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
 | `docs/DECOY_DISCRIMINATION.md` | §13 in one place: every algorithm with its block diagram, pseudocode, measured table and failure case, plus the G7 acceptance numbers |
 | `docs/decoy-flow.mmd` | the master runtime flow as a Mermaid diagram |
+| `scripts/target_clustering.py` | §15: clustering in the (frequency, azimuth, time) cube — per-frame features, linking rules, what masking would cost (band mask, notch, null, cancellation, cancellation with gain error), when two emitters are separable at all, and the map itself as text |
 | `scripts/hopping_target.py` | §14: a hopping emitter — per-hop accuracy, the alias-free limit, the 800 MHz synthetic aperture across hops, association rules with and without the bandwidth invariant, and the crossing limit |
 | `scripts/radar_decoys.py` | §13.7: the radar case — leading-edge gate vs whole-pulse DOA, window length vs SNR, the decoy's tail, Doppler pull-off, and the delay the edge hands the two-path ML |
 | `scripts/decoy_discrimination.py` | §13: one protected emitter behind decoys — carrier/angle/coherence discriminators, the cepstrum delay alarm, and the joint delay+angle ML that recovers both directions |
@@ -1692,6 +1887,7 @@ make narrowband-targets               # section 12.4, ~10 s
 make decoy-df                         # section 13, ~1 min
 make radar-decoy                      # section 13.7, ~3 min
 make hopping-target                   # section 14, ~10 s
+make target-clusters                  # section 15, ~6 s
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md

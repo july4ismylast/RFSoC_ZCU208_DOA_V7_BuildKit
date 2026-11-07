@@ -58,6 +58,7 @@ help:
 	@echo "Decoy discrimination:make decoy-df"
 	@echo "Radar + decoy:       make radar-decoy   (gate G7a: make g7-selftest)"
 	@echo "Hopping emitter:     make hopping-target"
+	@echo "Clustering:          make target-clusters"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -238,7 +239,7 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
@@ -247,6 +248,7 @@ compare-estimators:
 	@python3 scripts/decoy_discrimination.py
 	@python3 scripts/radar_decoys.py
 	@python3 scripts/hopping_target.py
+	@python3 scripts/target_clustering.py
 
 wideband-df:
 	@python3 scripts/compare_wideband_estimators.py
@@ -281,6 +283,11 @@ g7-selftest:
 hopping-target:
 	@python3 scripts/hopping_target.py
 
+# Section 15 of V07: clustering emitters in the (frequency, azimuth, time) cube
+# -- label the cells, do not mask them, and what masking would cost.
+target-clusters:
+	@python3 scripts/target_clustering.py
+
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
@@ -291,6 +298,7 @@ verify-phase-interf:
 	@python3 scripts/decoy_discrimination.py --quick
 	@python3 scripts/radar_decoys.py --selftest
 	@python3 scripts/hopping_target.py --quick
+	@python3 scripts/target_clustering.py --quick
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
 
