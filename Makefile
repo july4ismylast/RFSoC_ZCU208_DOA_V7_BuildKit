@@ -64,6 +64,7 @@ help:
 	@echo "Modulation (AMC):    make modulation-clusters"
 	@echo "Association policy:  make policy"
 	@echo "AMC on the R5 (G8a): make amc-port"
+	@echo "What is installed:   make tools   (or: make tools MATLAB=1)"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -247,7 +248,7 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters policy amc-port amc-export
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters policy amc-port amc-export tools diagram
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
@@ -324,6 +325,15 @@ amc-export:
 
 amc-port:
 	@python3 scripts/amc_port_check.py
+
+# Which vendor tools exist on this machine, and which gate each one unlocks.
+# MATLAB=1 also starts MATLAB and lists its toolboxes (takes a licence).
+tools:
+	@bash scripts/check_tools.sh $(if $(MATLAB),--matlab,)
+
+# The diagram of record: docs/diagrams/system_block.png and .svg
+diagram:
+	@python3 scripts/draw_system.py
 
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py

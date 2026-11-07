@@ -7,6 +7,12 @@ operator sheet (commands, logs to publish); this page is the engineering view:
 what the gate *is*, what blocks it, what it would take, and where it sits in
 [`SYSTEM_BLOCK_DIAGRAM.md`](SYSTEM_BLOCK_DIAGRAM.md).
 
+Run `make tools` (`bash scripts/check_tools.sh`, add `MATLAB=1` to also list the
+MATLAB toolboxes) to print where every tool lives on the machine you are on, and
+which gate each one unlocks. The status below is what the authoring container
+could prove: it has no Vitis, no Vivado, no MATLAB and no board, which is exactly
+why the middle of the chain is open.
+
 Status as of this commit:
 
 | Gate | Question | Status |

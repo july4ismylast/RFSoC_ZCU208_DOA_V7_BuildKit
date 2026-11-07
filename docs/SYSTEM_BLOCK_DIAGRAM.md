@@ -5,9 +5,19 @@ This is the map. Every algorithm document in this repository — V07's sections,
 page, and every gate in `GATES_RUNBOOK.md` is an arrow that has not been proved
 yet.
 
-Two diagrams follow: the machine (where the code runs) and the decision path
-(what the numbers mean). Both are Mermaid so they render in the repository view;
-an ASCII copy of the first one is below it for terminals and for diffing.
+## The figure
+
+![The whole system: RF, programmable logic, RPU, APU, host, and every gate](diagrams/system_block.png)
+
+Generated — never hand-drawn — by `python3 scripts/draw_system.py` (`make diagram`),
+which writes both [`system_block.png`](diagrams/system_block.png) and
+[`system_block.svg`](diagrams/system_block.svg). Every box is a directory, a
+source file or a gate that exists in this repository; the badges are the gates,
+green when a script in this repository closes them and amber when they are
+written but never run.
+
+Below are the same three views in text, for diffing and for terminals that cannot
+show the figure: the machine, the decision path, and the block table.
 
 ---
 
