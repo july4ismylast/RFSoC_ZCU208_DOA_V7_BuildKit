@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-example-ip mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -76,6 +76,7 @@ help:
 	@echo "What can this run:   make mc-probe     (Hub parameters, generate entry)"
 	@echo "IP without Model Composer: make ip-from-hdl (packages channelizer_dut.v)"
 	@echo "Same datapath as the model?  make ip-equivalence"
+	@echo "Build AMD's example to IP: make mc-example-ip"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
@@ -209,6 +210,13 @@ mc-scratch:
 # launch logged, docs/progress/model_composer_launch.md written.  The launcher
 # cannot run a headless build -- it evals its own arguments and appends its own
 # -r -- so `make mc` never goes through it.
+# Build AMD's own example to an IP Catalog component and write down everything
+# about that model (Hub parameters, blocks, callbacks) into a tracked report.  Not
+# our design: the point is to learn what a model that generates looks like here.
+mc-example-ip:
+	@mkdir -p "$(LOG_DIR)"
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_example_ip.log" example
+
 mc-gui:
 	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log" interactive
 

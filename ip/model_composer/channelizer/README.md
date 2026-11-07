@@ -46,6 +46,29 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## Building AMD's example to IP: what it answers, what it does not
+
+`make mc-example-ip` copies `build/mc_examples/SSRDDC.slx`, sets
+`ExportType = IP Catalog`, generates it twice -- once with the example's own part,
+once retargeted to `$(PART)` -- and writes
+`docs/progress/model_composer_example_report.md`: every Hub parameter, every block
+with its mask type and source block, the model callbacks, the workspace variables.
+
+Two questions, two answers:
+
+| question | how the run answers it |
+|---|---|
+| Does Model Composer produce an **IP Catalog component for our part** in this install? | the second generation is retargeted to `xczu48dr-fsvg1517-2-e`; its verdict line says `generated` or `failed` |
+| What does a model that **does** generate look like? | the report, written by the tool, committed to `docs/progress/` |
+
+What it does **not** answer: why our assembled model is refused. Copying the
+example's parameters has already been tried (the graft route sets the same 53
+parameters), and the refusal comes from a protected `.p` file. If the retargeted
+example does generate, the next step is to rebuild around the example's **exact
+block topology** instead of recreating its subsystem; if it does not, Model
+Composer's IP Catalog export is unusable for this part here and the Verilog route
+(`make ip-from-hdl`) remains the deliverable.
+
 ## Is the hand-written IP the same as the model? Same datapath, different interface
 
 `make ip-equivalence` answers it with numbers instead of opinion
