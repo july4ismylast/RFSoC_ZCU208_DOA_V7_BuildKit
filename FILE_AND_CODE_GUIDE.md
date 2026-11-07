@@ -66,6 +66,7 @@ testbench, `build_hls.tcl`, local Makefile, and block README.
 | `scripts/stage_report.sh` | Turns one stage log into the tracked page `docs/progress/<stage>.md`: result, times, duration, command, the 40 lines that matter. Called by `run_stage.sh` on PASS and on FAIL. |
 | `scripts/progress_report.sh` | Rebuilds `docs/progress/PROGRESS.md`, one table over all 20 stages, from the stamps, the logs and the pages. `make progress`. |
 | `ip/model_composer/channelizer/mc_paths.m` | Finds the Model Composer block libraries (`vmcUtilities`, `hdlBasic`, ...) inside the install and adds their folders in a batch session, caches them in `build/mc_libs.txt`, and calls `xmcStart` only if `xlGenerateButton` is missing. |
+| `ip/model_composer/channelizer/mc_report_error.m` | Prints an exception with every entry of `err.cause` and `getReport`, because MATLAB collapses Model Composer block errors into "Error due to multiple causes". |
 | `ip/model_composer/channelizer/mc_gui_build.m` | One line in the Model Composer Command Window: build the model (if absent) then export the IP, using the same functions as the batch path. |
 | `scripts/mc_eval.sh` | Runs Model Composer MATLAB code from the shell with the helper folder already added, so no path is ever typed. `make mc-eval CODE="mc_gui_build"`. |
 | `scripts/mc_libs.sh` | Diagnostic: prints the Model Composer and Vivado roots, every library file found, and whether `xlGenerateButton` is visible. `make mc-libs`. |

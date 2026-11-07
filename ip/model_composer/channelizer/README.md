@@ -46,6 +46,34 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## A stale `.slx` is a trap: `mc_gui_build` rebuilds it
+
+`make mc-gui-build` used to reuse whatever `channelizer.slx` was on disk. After
+the device-selection fix the copy left by the previous run was still the old,
+half-configured model, so the next run failed inside the model update with
+
+```
+mc_gui_build failed: Error due to multiple causes.
+```
+
+The model is generated from `make_channelizer_model.m`, so a copy on disk is
+stale by definition: **`mc_gui_build` now deletes and regenerates it** (pass
+`mc_gui_build(path, false)` to export an existing model untouched).
+
+MATLAB hides the real reason behind "multiple causes"; every failure is now
+printed with `mc_report_error`, which walks `err.cause` and prints the block and
+the parameter, then dumps what the Hub believes the device is:
+
+```
+model update failed: Error due to multiple causes.
+  - Target hardware is not selected ...
+Hub channelizer/Vitis Model Composer Hub:
+  ExportType     = IP Catalog
+  ProjDevice     = xczu48dr-fsvg1517-2-e
+  part           = xczu48dr
+  ...
+```
+
 ## Starting a build without the Generate button
 
 The old scripted entry point `xlGenerateButton` may not exist in a 2023.2

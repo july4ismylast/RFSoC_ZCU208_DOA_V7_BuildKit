@@ -16,7 +16,16 @@ assert(isfile(modelPath), 'Model Composer model not found: %s', modelPath);
 [folder, model] = fileparts(modelPath);
 addpath(folder);
 load_system(model);
-set_param(model, 'SimulationCommand', 'update');
+% The Hub rejects the update until a device is selected, and MATLAB then reports
+% only "Error due to multiple causes"; print the causes and the Hub's device
+% settings so the log says which block and which parameter.
+try
+    set_param(model, 'SimulationCommand', 'update');
+catch problem
+    mc_report_error(problem, 'model update');
+    printHubDevice(model);
+    rethrow(problem);
+end
 
 generator = findGenerator(model);
 assert(~isempty(generator), ...
@@ -97,5 +106,26 @@ try
     end
 catch problem
     fprintf('could not read ExportType back: %s\n', problem.message);
+end
+end
+
+function printHubDevice(model)
+%PRINTHUBDEVICE Show what the Hub believes the target device is.
+hubs = find_system(model, 'LookUnderMasks', 'all', 'FollowLinks', 'on', ...
+    'SourceBlock', 'vmcUtilities/Vitis Model Composer Hub');
+parameters = {'ExportType', 'ProjDevice', 'ProjDevicePart', 'part', 'package', ...
+    'speed', 'xilinxfamily', 'ClockFrequency'};
+for index = 1:numel(hubs)
+    fprintf(2, 'Hub %s:\n', hubs{index});
+    for one = 1:numel(parameters)
+        try
+            fprintf(2, '  %-14s = %s\n', parameters{one}, get_param(hubs{index}, parameters{one}));
+        catch problem
+            fprintf(2, '  %-14s = <%s>\n', parameters{one}, problem.message);
+        end
+    end
+end
+if isempty(hubs)
+    fprintf(2, 'No Vitis Model Composer Hub block in %s.\n', model);
 end
 end
