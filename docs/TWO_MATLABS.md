@@ -47,9 +47,15 @@ start if `matlab` still resolves to another release, and writes
 The GUI is not the deliverable — the IP is.
 
 ```bash
+make mc-scratch  # 1. create the model from scratch (no GUI, R2022b, from text)
 make mc-path     # the exact absolute path this checkout uses, and whether it exists
-make mc          # builds it -- no argument needed once the file is there
+make mc          # 2. build the IP from it -- no argument needed
 ```
+
+The model is generated from `ip/model_composer/channelizer/make_channelizer_model.m`
+(a `.slx` cannot be reviewed in a diff, so the builder script is what lives in
+git). `make mc-example` downloads AMD's 2023.2 RFSoC SSR-DDC model into `build/`
+for reference — never committed, that repository has no LICENSE file.
 
 Which file? The one place `make mc` looks by itself:
 

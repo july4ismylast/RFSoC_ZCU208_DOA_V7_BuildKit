@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-gui mc-verify mc-find mc-path graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-verify mc-find mc-path mc-example graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -70,6 +70,8 @@ help:
 	@echo "AMC on the R5 (G8a): make amc-port"
 	@echo "What is installed:   make tools   (or: make tools MATLAB=1)"
 	@echo "Model Composer IP:   make mc   (builds the .slx in ip/model_composer/; R2022b)"
+	@echo "Create that .slx:    make mc-scratch   (from scratch, no GUI)"
+	@echo "AMD 2023.2 example:  make mc-example   (reference only, not committed)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (only to create/edit that .slx)"
 	@echo "After a GUI compile: make mc-verify MODEL_COMPOSER_MODEL=/abs/x.slx"
@@ -175,9 +177,9 @@ mc:
 	    else \
 	        echo "The model goes here, and then \`make mc\` needs no path:"; \
 	        echo "  $(CURDIR)/ip/model_composer/channelizer/channelizer.slx"; \
-	        echo "Create it: make mc-gui   (File > New > Blank Model, build it,"; \
-	        echo "           one System Generator token, target IP Catalog, save there)"; \
-	        echo "Already have one somewhere?  make mc-find"; \
+	        echo "Create it with no GUI at all:  make mc-scratch"; \
+	        echo "Or edit it by hand:            make mc-gui"; \
+	        echo "Already have one somewhere?    make mc-find"; \
 	    fi; \
 	    exit 2; fi
 	@if [ ! -e "$(MC_MODEL)" ]; then \
@@ -190,12 +192,24 @@ mc:
 	@$(MAKE) --no-print-directory step05_channelizer \
 	    CHANNELIZER_FLOW=model_composer MODEL_COMPOSER_MODEL="$(MC_MODEL)"
 
+# Build the model from scratch, from text, with no GUI: make_channelizer_model.m
+# creates the Hub + 4 gateway pairs + delays and saves channelizer.slx.  A .slx
+# cannot be reviewed in a diff, so the builder script is the committed artifact.
+mc-scratch:
+	@./scripts/create_model_composer_model.sh "$(if $(strip $(MODEL_COMPOSER_MODEL)),$(MODEL_COMPOSER_MODEL),ip/model_composer/channelizer/channelizer.slx)"
+	@echo "now: make mc"
+
 # The GUI, only for creating or editing the .slx itself: R2022b first on PATH,
 # launch logged, docs/progress/model_composer_launch.md written.  The launcher
 # cannot run a headless build -- it evals its own arguments and appends its own
 # -r -- so `make mc` never goes through it.
 mc-gui:
 	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log"
+
+# A release-matched AMD example to compare against (branch 2023.2).  Downloaded
+# into build/, never committed: that repository has no LICENSE file.
+mc-example:
+	@./scripts/fetch_mc_example.sh $(EXAMPLE)
 
 # Where is the .slx?  Nothing is guessed: every candidate is listed with its date.
 mc-find:

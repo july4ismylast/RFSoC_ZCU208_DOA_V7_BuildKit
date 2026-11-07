@@ -110,8 +110,10 @@ If Model Composer is installed, it pins its own MATLAB (2023.2 → R2022b) while
 the command line runs a newer release. Only the channelizer's Model Composer
 route needs the old one, and it **builds**. The model is
 `<repo>/ip/model_composer/channelizer/channelizer.slx` (no `.slx` is committed);
+`make mc-scratch` generates it from `make_channelizer_model.m` with no GUI,
 `make mc-path` prints that exact path, `make mc-find` finds an existing one, and
-`make mc` then needs no argument. `make mc` runs R2022b in `-batch` with the Model Composer
+`make mc` then needs no argument. `make mc-example` downloads AMD's 2023.2
+example into `build/` for reference only. `make mc` runs R2022b in `-batch` with the Model Composer
 and System Generator paths added, compiles the token to IP Catalog, installs the
 IP and verifies the `component.xml` exists — the same stage as
 `step05_channelizer CHANNELIZER_FLOW=model_composer`, so it lands in the progress
