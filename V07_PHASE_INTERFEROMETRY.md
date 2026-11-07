@@ -35,6 +35,7 @@ by a script in this repository, or explicitly marked unproven.
 | The protected emitter is a **radar** (transmit + receive) | **ADOPT time ordering ahead of every spectral rung** — a decoy must hear the pulse before repeating it, so the repeat is always later by at least its turnaround: the leading edge gives the radar's direction to 0.09–0.79° where the whole-pulse method is 12–16° wrong, the tail gives the decoy's direction (39.6° for 40°) plus the delay, a Doppler pull-off changes neither, and the half-sample delay from the edge makes the two-path ML exact at 5–50 MHz without a search | §13.7 |
 | A **hopping** emitter, 1–100 MHz, 2.7–3.5 GHz | **ADOPT track-and-combine, not fingerprint-first** — the hop range is alias-free (measured 0.06° at 3.5 GHz / 70°, first failure 6 GHz); one 1 MHz hop gives 0.29° at 64 snapshots; combining 64 hops through-origin gives 0.078° (8.5×); association by prediction gate plus the bandwidth invariant is worth 28 → 0 wrong hops, and the invariant itself is quantised by the bin width (1 and 2 MHz are identical) | §14 |
 | **Clustering** several emitters in one cube | **ADOPT label, do not mask** — clusters form on (direction, bandwidth) and are linked over frames; a carrier-only link recovers 1 of 3 emitters and fragments the hopper into 20.7 tracks, the pair recovers 3 of 3 at purity 1.00, and cadence separates two emitters that share both (2.3 → 3.0 of 3, purity 0.70 → 1.00). Masking is measured to be unavailable: the notch deletes the co-channel emitter (kept 0 %), the null keeps it but destroys its direction (82–120°, because a 2×2 at elevation 0 has two channels), and predicting the next hop is worth 0.20 % | §15 |
+| **What you cluster on**, when bandwidth and direction both change | **ADOPT one model per feature, chosen by the ratio of per-frame change to measurement error** — a smoothly drifting bandwidth breaks a fixed cost (38–50 % kept) and a rate restores 100 %; a bandwidth that *jumps* cannot be a position key (a ±1.5 bin gate keeps a newcomer but shreds the hopper 50 %, ±4 bins does the reverse) so it is either dropped or replaced by its cadence, which separates 100 % of the time and only after a few frames; a direction that jumps is not fast motion (the track splits 50/50 at every gate, by design) and a gate wide enough to admit it costs 0–25 % confusion with a neighbour at the landing point; with both features drifting, only modelling both keeps the track (100 % against 38–50 %) | §17 |
 | A **moving** target | **ADOPT predict, don't hold** — direction stops being a key and becomes a state: holding the last direction keeps 98 % of a 0.5°/frame mover and 73 % at 1°/frame but shatters at 8–16°/frame (6.6–7.0 pieces), prediction with an acquisition gate holds 89–100 % to 16°/frame, and after a 10°/frame manoeuvre breaks the track (2.1 pieces) identity is re-established from bandwidth and cadence with 100 % of detections staying put | §16 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
@@ -2017,7 +2018,156 @@ bitstream or hardware claim.
 
 ---
 
-## 17. Files
+## 17. What you cluster on: one model per feature, chosen by how it changes
+
+§15 clustered on (direction, bandwidth), §16 replaced the fixed direction with a
+prediction. The general rule behind both is a single ratio, and it decides
+everything else:
+
+> **A feature is usable for association when, over one frame, it changes by much
+> less than the error with which it is measured.** If it does not, the feature
+> needs a model — a rate, a mode, or nothing at all.
+
+Measured here at about **1° and one bin** of per-frame error. That gives four
+kinds of feature, and each demands a different treatment:
+
+| feature | how it changes | model | measured |
+---|---|----|----|
+| direction | 0–16°/frame | rate: predict `az + rate` | §16, §17.2 |
+| bandwidth | 0–2 bins/frame, or jumps between modes | rate, or out |
+| carrier | up to 800 MHz per hop | **pattern only** (cadence) | §15.2 |
+| level / coherence | several dB per hop | **never used** |
+
+`scripts/feature_models.py` →
+[`feature_models.txt`](docs/evidence/2026-11-06-phase-interf/feature_models.txt)
+(`make feature-models`, 22 s, seed 20261110).
+
+### 17.1 The decision the ratio makes
+
+```
+ how does the feature change from frame to frame?
+        |
+        +-- slowly, smoothly ........ model the rate, predict, keep the gate
+        |                             (a mover, a widening chirp)   F1, F4
+        |
+        +-- by a jump ............... it cannot be a position key
+        |      (a hop, a mode change) |
+        |                             +-- widen the gate -> tolerance, but the
+        |                             |   feature stops discriminating   F2
+        |                             +-- or use its PATTERN over a window
+        |                                 (occupancy, cadence) and keep a
+        |                                 tight gate                      F2
+        |
+        +-- fast and random ......... never enters the cost
+               (level, coherence)
+```
+
+### 17.2 Continuous change: model the rate
+
+A bandwidth that widens by *d* bins per frame, against a fixed 5-bin neighbour.
+Both rules get the same widened gate for a track's first two frames, so the only
+difference is the drift model. `kept` is the share of the emitter's detections in
+one track:
+
+| drift bins/frame | fixed bandwidth | bandwidth with a rate | bandwidth ignored |
+|---|---|---|---|
+| 0.0 | 100 % | 100 % | 100 % |
+| 0.5 | 50 % | 100 % | 100 % |
+| 1.0 | 38 % | 100 % | 100 % |
+| 2.0 | 38 % | **100 %** | 100 % |
+
+A fixed value breaks the moment the drift leaves the ±1.5 bin gate. The rate model
+does not, and neither does dropping the term — because the *direction* still
+separates these two emitters. That third column is the reason every gate has to
+earn its place: **a feature is only worth a gate when it is needed to separate
+somebody.**
+
+Both at once — +2°/frame and +0.5 bins/frame — and neither model alone is enough:
+
+| rule | kept | tracks for two emitters |
+|---|---|---|
+| direction only | 50 % | 3.7 |
+| direction + bandwidth, both fixed | 38 % | 4.3 |
+| direction + bandwidth, **both with a rate** | **100 %** | **2.0** |
+
+### 17.3 Discontinuous change: the value stops being a key
+
+An emitter that hops every frame *and* alternates 1 and 4 bins, with a static
+6-bin newcomer appearing at the same direction:
+
+| rule | dipper kept | newcomer absorbed |
+|---|---|---|
+| bandwidth gate ±1.5 bins | 50 % | 0 % |
+| bandwidth gate ±2.5 bins | 50 % | 12 % |
+| bandwidth gate ±4 bins | **100 %** | 0 % |
+| ±4 bins **+ cadence** | 92 % | 4 % |
+
+A tight gate shreds the dipper; a wide gate keeps it whole, because the track's
+bandwidth state becomes the *mean* of two modes. That mean is why the wide gate
+is dangerous — it swallows anything near it. A newcomer's fate, measured as
+"does it end the run in a track of its own":
+
+| newcomer | gate ±1.5 | gate ±4 | gate ±4 + cadence |
+|---|---|---|---|
+| 2 bins | **100 %** | 42 % | **100 %** |
+| 4 bins | 100 % | 75 % | 100 % |
+| 6 bins | 100 % | 100 % | 100 % |
+| 8 bins | 100 % | 100 % | 100 % |
+
+Tolerance and discrimination are the same knob. Cadence breaks the tie, and the
+price is latency: the newcomer is swallowed at arrival like any other cluster,
+and only once its carrier has repeated a few times does it stop matching a
+hopping track. **A pattern needs frames to become a pattern; a value needs none.**
+
+### 17.4 A jump in direction is not fast motion
+
+A direction that steps by one jump at mid-run, with a neighbour 40° away:
+
+| jump | gate 4° | gate 8° | gate 16° |
+|---|---|---|---|
+| 5° | 50 % | 100 % | 100 % |
+| 10° | 50 % | 50 % | 100 % |
+| 20° | 50 % | 50 % | 50 % |
+| 40° | 50 % | 50 % | 50 % |
+
+50 % means the track splits into two equal halves: the jump is *not* absorbed,
+which is the correct behaviour — a track must not follow a jump, or it will
+follow whatever else is at the landing point. When a neighbour sits at that
+landing point, 0–25 % of the detections end up in the other emitter's track once
+the gate is wide enough to admit the jump, and widening it further does not
+help, because after the jump the two emitters occupy the same direction with the
+same bandwidth. This is §14.6's crossing limit arriving by jump instead of by
+walk. **The gate is a speed limit taken from the physics, not a tuning knob.**
+
+### 17.5 The answer in one paragraph
+
+You cluster on a *vector of states with a model each*, not on a set of constant
+values. Direction carries a rate and is predicted; bandwidth carries a rate when
+it drifts, and when it jumps it is either dropped from the cost or replaced by
+its occupancy pattern; the carrier never enters the cost at all, only its
+cadence; level never enters. Any feature whose per-frame change approaches its
+measurement error either gets a model or leaves the cost. A jump is a new track,
+never a fast target — and when two emitters end up with the same direction and
+the same bandwidth, no association rule separates them, whatever the model says.
+
+### 17.6 What to run
+
+```bash
+make feature-models                        # this section, ~22 s
+python3 scripts/feature_models.py --quick  # ~6 s smoke run
+```
+
+**Caveats.** Host simulation, elevation 0, 64 bins of 1.953 MHz, 16 snapshots per
+frame (about 1° and one bin of measurement error), no multipath, no calibration
+error, 20 dB per bin. Two emitters per study, association by greedy cost
+assignment — no Kalman filter, no IMM, no multi-hypothesis. The absorption and
+confusion numbers are means over 6–18 draws and the confusion column is not
+monotone in the gate: once two emitters share both direction and bandwidth, which
+track wins is decided by noise. No gate, bitstream or hardware claim.
+
+---
+
+## 18. Files
 
 | File | Role |
 |---|---|
@@ -2029,6 +2179,7 @@ bitstream or hardware claim.
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
 | `docs/DECOY_DISCRIMINATION.md` | §13 in one place: every algorithm with its block diagram, pseudocode, measured table and failure case, plus the G7 acceptance numbers |
 | `docs/decoy-flow.mmd` | the master runtime flow as a Mermaid diagram |
+| `scripts/feature_models.py` | §17: what you cluster on — one model per feature, chosen by how it changes: a drifting bandwidth (rate vs fixed vs dropped), a hopping dipper against a newcomer (gate width vs cadence), a direction that jumps (not motion), and both features drifting at once |
 | `scripts/moving_targets.py` | §16: a moving emitter — how far a static-direction association carries it, acquisition-gate width, a manoeuvre that breaks the track, two movers crossing, and the azimuth-vs-frame map |
 | `scripts/target_clustering.py` | §15: clustering in the (frequency, azimuth, time) cube — per-frame features, linking rules, what masking would cost (band mask, notch, null, cancellation, cancellation with gain error), when two emitters are separable at all, and the map itself as text |
 | `scripts/hopping_target.py` | §14: a hopping emitter — per-hop accuracy, the alias-free limit, the 800 MHz synthetic aperture across hops, association rules with and without the bandwidth invariant, and the crossing limit |
@@ -2053,6 +2204,7 @@ make radar-decoy                      # section 13.7, ~3 min
 make hopping-target                   # section 14, ~10 s
 make target-clusters                  # section 15, ~6 s
 make moving-targets                   # section 16, ~14 s
+make feature-models                   # section 17, ~22 s
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md

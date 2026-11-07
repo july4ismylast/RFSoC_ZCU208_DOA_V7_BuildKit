@@ -65,7 +65,7 @@ def block(start_bin, count, freqs=FREQS):
     """
     start_bin = int(np.clip(start_bin, 0, len(freqs) - count))
     index = np.arange(start_bin, start_bin + count)
-    return float(freqs[index].mean()), float(count * BIN_HZ * 0.9), index
+    return float(freqs[index].mean()), float(count * BIN_HZ * 0.98), index
 
 
 def frame(rng, emitters, snapshots=16, snr_db=20.0, freqs=FREQS,
@@ -179,7 +179,7 @@ def persistence(bin_index, upto, frame_bins):
 
 def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
          bin_scale=1.5, persistence_scale=0.4, gate=1.0, motion=False,
-         az_scale_first=None):
+         az_scale_first=None, bin_motion=False, bin_scale_first=None):
     """Join per-frame clusters into tracks. `rule` says what may close a link.
 
     carrier           frequency only -- what a channel-plan tracker does, and it
@@ -190,8 +190,10 @@ def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
     +cadence          and how often that carrier has been occupied so far
 
     motion=True associates against the *predicted* direction (last direction plus
-    the rate the track has measured). az_oscale_first widens the gate for the
-    first two frames of a track, which is what acquisition of a mover needs.
+    the rate the track has measured). bin_motion=True does the same for the
+    measured bandwidth, for an emitter whose bandwidth is drifting rather than
+    fixed. az_scale_first widens the gate for the first two frames of a track,
+    which is what acquisition of a mover needs.
 
     Association is a cost assignment, not a chain of ifs: every (cluster, track)
     pair gets a distance, the cheapest pairs are taken first, and a pair scores
@@ -215,8 +217,16 @@ def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
                         expected = track["last_az"] + track.get("rate", 0.0)
                     cost = (abs(cluster["az"] - expected) / scale) ** 2
                     if "bandwidth" in rule:
-                        cost += (abs(cluster["bins"] - track["bins"])
-                                 / bin_scale) ** 2
+                        scale_bins = bin_scale
+                        if (bin_scale_first is not None
+                                and len(track["members"]) < 3):
+                            scale_bins = bin_scale_first
+                        expected_bins = track["bins"]
+                        if bin_motion:
+                            expected_bins = (track["last_bins"]
+                                             + track.get("bins_rate", 0.0))
+                        cost += (abs(cluster["bins"] - expected_bins)
+                                 / scale_bins) ** 2
                     if "cadence" in rule:
                         past = float(np.mean([
                             persistence(member["bin"], frame_index, frame_bins)
@@ -243,6 +253,14 @@ def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
                 track["rate"] = 0.6 * track["rate"] + 0.4 * step
             track["last_az"] = clusters[index]["az"]
             track["az"] = (track["az"] * count + clusters[index]["az"]) / (count + 1)
+            bin_step = clusters[index]["bins"] - track["last_bins"]
+            if count == 0:
+                track["bins_rate"] = 0.0
+            elif count == 1:
+                track["bins_rate"] = bin_step
+            else:
+                track["bins_rate"] = 0.6 * track.get("bins_rate", 0.0) + 0.4 * bin_step
+            track["last_bins"] = clusters[index]["bins"]
             track["bins"] = int(round(
                 (track["bins"] * count + clusters[index]["bins"]) / (count + 1)))
             track["last_f"] = clusters[index]["f_hz"]
@@ -251,7 +269,8 @@ def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
             if index not in used_cluster:
                 tracks.append({"members": [cluster], "az": cluster["az"],
                                "bins": cluster["bins"], "rate": 0.0,
-                               "last_az": cluster["az"],
+                               "bins_rate": 0.0, "last_az": cluster["az"],
+                               "last_bins": cluster["bins"],
                                "last_f": cluster["f_hz"]})
     return tracks
 

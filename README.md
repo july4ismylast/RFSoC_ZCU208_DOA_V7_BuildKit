@@ -178,6 +178,8 @@ constant-velocity movers crossing pass through each other with 0 % swaps, which 
 a different result from §14.6's 15–30 %, where the decoy manoeuvred while staying
 close. What is constant along a track is its slope, not its position.
 
+With both bandwidth and direction changing, the question is not *what* to cluster on but *which model* each feature needs (V07 §17, `make feature-models`). The rule is one ratio: how far a feature moves in one frame against how well it is measured — about 1° and one bin here. A smooth drift gets a rate (a fixed bandwidth keeps 38–50 % of a widening emitter, a rate 100 %); a feature that *jumps* — a carrier hop, a mode change — cannot be a position key, so it is dropped from the cost or replaced by its cadence, which separates 100 % of the time and only after a few frames; a jump in direction is a new track, never a fast target; and level never enters the cost at all.
+
 ## Accuracy statement
 
 V7 demonstrated a 3-D Monte-Carlo RMSE below 0.1° in its stated simulated
