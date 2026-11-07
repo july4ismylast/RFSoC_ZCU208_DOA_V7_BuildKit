@@ -88,10 +88,14 @@ on a 2 GHz emitter and 0.25° on a 50 MHz one, while the review's
 unwrap-plus-intercept variant reaches 0.235° and loses every narrowband frame.
 Estimator: `make compare-estimators`. Geometry, not the estimator, sets 0.5°.
 
-For **multiple emitters** the same script's sibling, `make multisource-df`, shows
-the boundary (V07 §12): the 2×2 finds 1.2 of 8 emitters over 2 GHz, a 4×4 at
-60 mm finds 7, and a 6×6 at 75 mm finds all eight at 0.295°. Doubling the aperture
-doubles detection; tripling the bandwidth does not move it.
+For **multiple emitters** the answer depends on whether they share the band
+(V07 §12). Eight *co-channel* emitters over 2 GHz need 36 elements: the 2×2 finds
+1.2 of 8, a 4×4 at 60 mm finds 7, a 6×6 at 75 mm finds all eight at 0.295°
+(`make multisource-df`). Eight *frequency-separated* emitters of 1–50 MHz — the
+realistic reading of a 2–4 GHz tuning range — are separated by the channelizer
+and the shipped 2×2 detects **8.0 of 8**, at 0.59°→0.12° for a 1 MHz target as
+dwell grows from 16 to 256 snapshots, and 1.42° at 4 snapshots for the targets
+that are allowed 3° (`make narrowband-targets`, §12.4).
 
 ## Accuracy statement
 

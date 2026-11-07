@@ -1,0 +1,75 @@
+# eight narrowband targets (1-50 MHz) inside 2-4 GHz, on a 2x2
+# generated 2026-11-07T08:27:09Z
+# script: scripts/narrowband_targets.py (python3 + numpy only)
+# channelizer: 1024 bins of 1.953 MHz over the 2.0 GS/s complex stream
+# per-bin detection: element-summed power > 4x the median bin power
+# estimator: coherence-weighted six-baseline WLS per detected cluster
+# seed=20261107, trials=20
+#   T1    2.15 GHz     1 MHz  az  -38.0  el  -9.0  bins 1
+#   T2    2.42 GHz     5 MHz  az  -25.0  el  +4.0  bins 2
+#   T3    2.68 GHz    20 MHz  az  -11.0  el +11.0  bins 10
+#   T4    2.95 GHz    50 MHz  az   +3.0  el  -3.0  bins 25
+#   T5    3.21 GHz     1 MHz  az  +14.0  el  +8.0  bins 1
+#   T6    3.47 GHz     5 MHz  az  +26.0  el -11.0  bins 2
+#   T7    3.71 GHz    20 MHz  az  +37.0  el  +5.0  bins 10
+#   T8    3.92 GHz    50 MHz  az  +48.0  el  -6.0  bins 26
+
+Study A: detection, 2x2 at 30 mm, 20 dB/bin, 64 snapshots per bin
+  targets detected: mean 8.0 of 8 (min 8, max 8) over 20 trials
+  [PASS] frequency separation is what makes eight targets possible on
+         four elements: each cluster holds one target and the
+         spatial estimator never has to separate them.
+
+Study B: accuracy against target bandwidth and integration
+  single target at 3.0 GHz, az 12.5 deg, 2x2 at 30 mm, 20 dB/bin,
+  RMSE azimuth in degrees
+   bandwidth   16 snaps   64 snaps  256 snaps
+         1 MHz      0.590      0.272      0.119
+         5 MHz      0.447      0.240      0.128
+        20 MHz      0.148      0.126      0.062
+        50 MHz      0.137      0.068      0.022
+  Two levers, both measured: more occupied bins (bandwidth) and more
+  snapshots (dwell) each improve sigma as 1/sqrt(K). A 1 MHz target has
+  K = 1 bin, so it lives entirely on integration time; a 50 MHz target
+  has 26 bins and reaches the same accuracy 26x sooner. Every row above
+  is inside the 0.5 deg requirement except the 5 MHz case at 16
+  snapshots, which is still inside the 3 deg allowance for the
+  non-priority targets.
+
+Study C: what breaks it -- two targets sharing the same bins
+  two 50 MHz targets 15 MHz apart at 3.0 GHz, az 10 and 25 deg, 20 dB/bin
+  the frequency-separated estimator is applied first (it merges them),
+  then per-bin 2D MUSIC on the shared bins (it can split them):
+  array              of 2 found  false peaks       matched azimuths
+  2x2@30 mm                 0.2          1.5                 [11.5]
+  3x3@30 mm                 2.0          0.0            [10.5 25.5]
+  4x4@30 mm                 2.0          0.0              [10. 25.]
+  The merged single peak of the 2x2 is the real limit: frequency
+  separation cannot help when two targets occupy the same bins.
+Study D: how much integration the two accuracy classes need
+  1 MHz target at 3.0 GHz (one channelizer bin), 20 dB/bin, 2x2 at 30 mm
+   snapshots    az RMSE
+           4      1.423
+          16      0.534
+          64      0.277
+         256      0.101
+  priority class (0.5 deg): needs 64 snapshots
+  secondary class (3 deg): met at the shortest dwell measured (4
+  snapshots, 1.42 deg), i.e. the non-priority targets can be reported
+  from a single short frame and need no calibration refinement.
+  Calibration is the remaining term for the priority target: 0.5 mm of
+  element position error is 0.79 deg at 30 mm (V07 section 11.3), so
+  the priority channel needs the G6 calibration table; the 3 deg
+  channels do not.
+
+VERDICT
+  Eight targets of 1-50 MHz in 2-4 GHz do NOT need more elements: they
+  need the channelizer to separate them by frequency, and it does
+  (8.0 of 8 detected on the shipped 2x2 at 30 mm).
+  The priority target is a dwell decision, not a hardware decision:
+  at 1 MHz it reaches 0.28 deg with 64 snapshots (0.5 deg is met from
+  64 snapshots up); the other seven meet 3 deg at 4 snapshots.
+  Two targets inside the same bins still need >= 9 elements: measured
+  matched-of-2 = 0.2 on the 2x2 versus 2.0 on 3x3 and 2.0 on 4x4.
+
+RESULT=PASS

@@ -30,7 +30,7 @@ by a script in this repository, or explicitly marked unproven.
 | FFT **16K at 2.048 GSPS** | **REJECT** — not an instantiable IP configuration; 4-channel BRAM 26 %…165 % of the device; buys no accuracy | §4 |
 | Array spacing **d = 50 mm** | **REJECT** — unambiguous only to 3 GHz; measured 106° error at 3.75 GHz / az 55° where 25 mm gives 0.27°, and 33.9°/104.2° off over the full band where 30 mm holds 1.6°/1.1° | §4.4, §11.1 |
 | Amplitude-assisted "face selection" | **ADOPT, restated** — amplitude resolves only the ±45° quadrant; it cannot resolve an interferometer ambiguity | §5.5 |
-| MUSIC / CSSM | **DEFER for one emitter, ADOPT for multi-emitter** — not needed for the demonstrated single-emitter accuracy, and the 2×2 cannot carry it; for eight emitters the 2×2 finds 1.2 of 8 while a 6×6 at 75 mm finds all eight at 0.295° | §9, §12 |
+| MUSIC / CSSM | **DEFER for one emitter; needed only for co-channel sources** — eight *co-channel* emitters need 36 elements (2×2 finds 1.2 of 8), but eight 1–50 MHz emitters at different carriers are separated by the channelizer and the shipped 2×2 detects 8.0 of 8 | §9, §12.1, §12.4 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
 
@@ -905,9 +905,15 @@ it. What does *not* work is 150 mm with the current estimator.
 
 §11 answers "one emitter, 0.5°, 2–4 GHz" with 30 mm and per-bin phase
 interferometry. A requirement of *eight simultaneous emitters* inside the same
-2 GHz band is not a firmware question: it changes how many elements are needed,
-how the block has to be built, and which estimator runs. This section measures
-where the boundary is. `scripts/multisource_capacity.py`
+2 GHz band splits in two, and the split is the whole answer:
+
+* **co-channel** — eight emitters occupying the same bins: not a firmware
+  question, it changes the element count, the block and the estimator (§12.1–12.4);
+* **frequency-separated** — eight emitters of 1–50 MHz at different carriers,
+  which is what a 2–4 GHz tuning range with narrowband targets actually means:
+  the shipped 2×2 detects all eight and meets the accuracy requirement with
+  dwell, not with elements (**§12.4** — read that first if the targets are
+  narrowband). `scripts/multisource_capacity.py`
 → [`multisource_capacity.txt`](docs/evidence/2026-11-06-phase-interf/multisource_capacity.txt).
 
 Model: eight emitters at az −40…+40°, el −14…+12° (6–15° apart), 20 dB per bin
@@ -981,7 +987,74 @@ channels. It is a channel-count and device-size decision (the ZCU208 has 8 ADC
 and 8 DAC tiles per ZU48DR — 16 elements is at the edge of one device, 36 is
 not), i.e. V08, not a patch to V07.
 
-### 12.4 Honest limits of these numbers
+### 12.4 The case that actually matches the requirement: 1–50 MHz targets
+
+The 2–4 GHz figure in the requirement is the **tuning range of the receiver**,
+not the instantaneous bandwidth of any one emitter: each target occupies
+1–50 MHz, i.e. 1 to 26 bins of the 1024-band channelizer. That inverts two
+conclusions of §11 and §12, so it was measured separately
+(`scripts/narrowband_targets.py` →
+[`narrowband_targets.txt`](docs/evidence/2026-11-06-phase-interf/narrowband_targets.txt)).
+
+Eight targets at carriers spread over 2.15–3.92 GHz, bandwidths 1/5/20/50 MHz,
+az −38…+48°, 20 dB/bin, 64 snapshots per bin, **2×2 at 30 mm**:
+
+| Measurement | Result |
+|---|---|
+| targets detected (per-bin detection, clustered by frequency, matched to truth) | **8.0 of 8, every one of 20 trials** |
+| accuracy vs bandwidth and dwell | see below |
+
+RMSE azimuth in degrees, single target at 3.0 GHz, 2×2 at 30 mm, 20 dB/bin:
+
+| target bandwidth | 16 snapshots | 64 snapshots | 256 snapshots |
+|---|---|---|---|
+| 1 MHz (1 bin) | 0.590 | 0.272 | 0.119 |
+| 5 MHz (3 bins) | 0.447 | 0.240 | 0.128 |
+| 20 MHz (10 bins) | 0.148 | 0.126 | 0.062 |
+| 50 MHz (26 bins) | 0.137 | 0.068 | 0.022 |
+
+**Why four elements are enough here and not in §12.1.** The channelizer separates
+the targets by frequency *before* any spatial processing, so each cluster holds
+one target and the spatial estimator never has to resolve two sources. The eight
+co-channel emitters of §12.1 did need 36 elements; eight narrowband emitters at
+different carriers need four. The cost moved from the array to the channelizer,
+which this kit already has.
+
+**Two accuracy classes, both reachable with the same hardware.**
+A 1 MHz target (one bin) lives entirely on dwell time:
+
+| snapshots | 4 | 16 | 64 | 256 |
+|---|---|---|---|---|
+| az RMSE, 1 MHz at 30 mm | 1.42° | 0.53° | 0.28° | 0.10° |
+
+So the operator-designated priority target reaches the 0.5° class with ~64
+snapshots of coherent integration (≈ 33 µs of the 2 GS/s stream per bin), and
+the remaining seven meet their 3° allowance at **4 snapshots** — one short frame,
+no calibration refinement, no extra hardware. That is the cheapest way to satisfy
+the stated requirement: spend dwell on the one target that matters, and report
+the rest coarsely.
+
+**What still breaks it** — two targets inside the *same* bins (co-channel), two
+50 MHz targets 15 MHz apart at az 10° and 25°:
+
+| array | of 2 recovered | false peaks |
+|---|---|---|
+| 2×2 @ 30 mm | **0.2** | 1.5 |
+| 3×3 @ 30 mm | 2.0 | 0.0 |
+| 4×4 @ 30 mm | 2.0 | 0.0 |
+
+That is the measured form of the M−1 rule: co-channel sources need ≥ 9 elements,
+frequency-separated ones do not. If the eight targets are guaranteed to occupy
+different bins — 1–50 MHz emitters inside 2 GHz almost always do — the shipped
+2×2 is sufficient.
+
+**Caveats.** Simulated per-bin cross-spectra: no calibration error, no coupling,
+equal per-bin SNR, and detection is a 4× median-power threshold rather than a
+CFAR with a measured Pfa. A 1 MHz target is narrower than one 1.953 MHz bin, so
+its real SNR per bin depends on where it lands relative to the bin edges — a
+scalloping loss this model does not include (up to ~2 dB at worst alignment).
+
+### 12.5 Honest limits of these numbers
 
 * Equal-power emitters, no mutual coupling, no calibration error, no
   correlated sources. Real arrays with 8 emitters fail on calibration and
@@ -1006,6 +1079,7 @@ not), i.e. V08, not a patch to V07.
 | `scripts/compare_wpi_vs_music.py` | §10: interferometry vs wideband 2D MUSIC/ISSM, manifold-rank result, calibration and geometry sensitivity |
 | `scripts/compare_wideband_estimators.py` | §11: spacing rule for a square 2×2, five estimators over the full 2–4 GHz band, ambiguity/geometry/wrap studies |
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
+| `scripts/narrowband_targets.py` | §12.4: eight 1–50 MHz targets at different carriers on the shipped 2×2 — detection, accuracy vs bandwidth and dwell, the co-channel failure, and the dwell the two accuracy classes need |
 | `ip/custom/phase_interf_4ch/` | per-bin cross-spectrum + CORDIC phase block, host test, HLS build |
 | `matlab_v7/PhaseInterferometryEstimator.m` | MATLAB reference of the PS-side estimator selection |
 | `matlab_v7/verify_phase_interferometry_2x2.m` | time-domain (windowed FFT + quantised) verification |
@@ -1017,7 +1091,8 @@ Run:
 make verify-phase-interf              # reports + host core test + shimmed kernel test
 make compare-estimators               # sections 10 and 11: both studies, full
 make wideband-df                      # section 11 only, ~6 min
-make multisource-df                   # section 12, ~4 min
+make multisource-df                   # section 12.1-12.4, ~4 min
+make narrowband-targets               # section 12.4, ~10 s
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md
