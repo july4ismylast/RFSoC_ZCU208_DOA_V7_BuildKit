@@ -31,7 +31,7 @@ fprintf('base Hub:   %s\n', hub);
 
 dut = findDut(modelName, hub);
 fprintf('base DUT:   %s\n', dut);
-clearContents(dut);
+dut = emptySubsystem(dut);
 addChannels(dut, settings);
 
 % Everything else at the top level belonged to AMD's design.
@@ -89,15 +89,48 @@ end
 error('mc_graft_model:dut', 'no subsystem to fill in %s', modelName);
 end
 
-function clearContents(block)
-%CLEARCONTENTS Delete every block inside a subsystem, keeping the subsystem.
-inner = find_system(block, 'SearchDepth', 1, 'Type', 'Block');
-for index = 1:numel(inner)
-    try
-        delete_block(inner{index});
-    catch problem
-        fprintf('  note: could not delete %s: %s\n', inner{index}, problem.message);
-    end
+function block = emptySubsystem(block)
+%EMPTYSUBSYSTEM Keep the name, remove everything inside, keep it editable.
+%   A real run could not delete the example's blocks one by one
+%   ("Invalid Simulink object name") and then could not add ours either: the
+%   subsystem is a library-linked instance, whose contents cannot be edited or
+%   extended in place.  So: detach the link, empty it with the supported API, and
+%   if anything is still there, recreate the subsystem under the same name -- the
+%   name is what the Hub's SubsystemName refers to.
+detachLink(block);
+try
+    Simulink.SubSystem.deleteContents(block);
+catch problem
+    fprintf('  note: deleteContents failed: %s\n', problem.message);
+end
+remaining = find_system(block, 'SearchDepth', 1, 'Type', 'Block');
+if isempty(remaining)
+    fprintf('  emptied %s\n', block);
+    return;
+end
+fprintf('  %d block(s) left in %s; recreating the subsystem\n', numel(remaining), block);
+position = [320, 60, 660, 100 + 60 * 4];
+delete_block(block);
+add_block('built-in/Subsystem', block, 'Position', position);
+fprintf('  recreated %s\n', block);
+end
+
+function detachLink(block)
+%DETACHLINK Library-linked subsystems refuse block deletion and addition.
+try
+    status = get_param(block, 'LinkStatus');
+catch problem
+    fprintf('  note: no link status on %s: %s\n', block, problem.message);
+    return;
+end
+if strcmp(status, 'none')
+    return;
+end
+try
+    set_param(block, 'LinkStatus', 'none');
+    fprintf('  detached library link from %s (was %s)\n', block, status);
+catch problem
+    fprintf('  note: could not detach the link (%s): %s\n', status, problem.message);
 end
 end
 
@@ -109,9 +142,9 @@ for channel = 1:settings.channels
     delayBlock = sprintf('%s/Delay%d', subsys, channel);
     outBlock = sprintf('%s/Out%d', subsys, channel);
 
-    add_block(['hdlBasic/Gateway In'], inBlock, 'Position', [40, row, 90, row + 20]);
-    add_block(['hdlBasic/Delay'], delayBlock, 'Position', [160, row, 190, row + 20]);
-    add_block(['hdlBasic/Gateway Out'], outBlock, 'Position', [250, row, 300, row + 20]);
+    addOrReplace('hdlBasic/Gateway In', inBlock, [40, row, 90, row + 20]);
+    addOrReplace('hdlBasic/Delay', delayBlock, [160, row, 190, row + 20]);
+    addOrReplace('hdlBasic/Gateway Out', outBlock, [250, row, 300, row + 20]);
 
     setParam(inBlock, 'gui_display_data_type', 'Fixed-point');
     setParam(inBlock, 'arith_type', 'Signed  (2''s comp)');
@@ -132,6 +165,19 @@ for channel = 1:settings.channels
     end
 end
 fprintf('design: %d channels inside %s\n', settings.channels, subsys);
+end
+
+function addOrReplace(source, path, position)
+%ADDORREPLACE Add a block, replacing one that is already at that path.
+try
+    add_block(source, path, 'Position', position);
+catch problem
+    if getSimulinkBlockHandle(path) == -1
+        rethrow(problem);
+    end
+    delete_block(path);
+    add_block(source, path, 'Position', position);
+end
 end
 
 function setParam(block, parameter, value)
