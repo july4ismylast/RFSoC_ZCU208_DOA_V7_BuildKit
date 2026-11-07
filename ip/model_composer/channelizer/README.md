@@ -46,6 +46,35 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## Two facts from AMD's example, and a change of base model
+
+Running the example produced two facts that settled the design of this builder:
+
+1. **The engine writes into `./netlist` relative to the working directory.** Even
+   with `Hub.directory` set to an absolute path, the compiler reported
+   `ERROR-XMC-1002: Failed to create and open file ./netlist/ip/Makefile`. So the
+   generation must run **from the model's folder**, with `netlist/ip` and `code`
+   created -- both `export_model_composer_ip` and `mc_diagnose` now do that.
+2. **The example reaches the HDL compiler** (`vmcGenerateCode/generateHDLCode` ->
+   `XilinxCompiler`), while a model assembled around a *copied* Hub dies earlier
+   inside `vmcGenerate.p`. A copied Hub is therefore not equivalent to the one AMD
+   ships.
+
+Because of (2) the model is no longer assembled around a copied block: the
+**example itself is the base model**, and only its design is replaced.
+
+| step | what happens |
+|---|---|
+| base | copy `build/mc_examples/SSRDDC.slx` to `channelizer.slx`, open it (its `PreLoadFcn` defines `clk`) |
+| keep | the Hub instance and the exported subsystem (`DDC_DUT`) |
+| replace | the subsystem's contents: four `Gateway In -> Delay -> Gateway Out` channels |
+| delete | every other top-level block of AMD's design |
+| retarget | device `xczu48dr-fsvg1517-2-e`, `ExportType = IP Catalog`, absolute netlist/code dirs, `SubsystemName`/`IpName` = the subsystem name |
+
+Nothing of AMD's signal chain survives; what is reused is the model machinery the
+engine expects. `make_channelizer_model` reports `route: graft onto …` when this
+path runs, and falls back to building from scratch when no example is present.
+
 ## The actual generator error: `./netlist/make.sh`
 
 Running AMD's own example through the same call was decisive -- it changed the

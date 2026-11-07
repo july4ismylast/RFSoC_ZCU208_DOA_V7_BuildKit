@@ -15,6 +15,19 @@ end
 assert(isfile(modelPath), 'Model Composer model not found: %s', modelPath);
 [folder, model] = fileparts(modelPath);
 addpath(folder);
+% Run generation from the model's own folder.  Model Composer resolves its netlist
+% directory against the working directory, and a real run of AMD's own example died
+% with "ERROR-XMC-1002: Failed to create and open file ./netlist/ip/Makefile".
+originalFolder = pwd;
+cd(folder);
+restoreFolder = onCleanup(@() cd(originalFolder)); %#ok<NASGU>
+for created = {fullfile(folder, 'netlist'), fullfile(folder, 'netlist', 'ip'), ...
+        fullfile(folder, 'code')}
+    if ~isfolder(created{1})
+        mkdir(created{1});
+    end
+end
+fprintf('working folder: %s\n', pwd);
 load_system(model);
 % The Hub rejects the update until a device is selected, and MATLAB then reports
 % only "Error due to multiple causes"; print the causes and the Hub's device

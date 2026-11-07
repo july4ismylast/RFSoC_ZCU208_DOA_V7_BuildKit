@@ -63,11 +63,11 @@ end
 
 template = findTemplate();
 if isempty(template)
-    fprintf('route: from scratch (no template model found)\n');
+    fprintf('route: from scratch (no example model found)\n');
     buildFromScratch(modelName, destination, settings);
 else
-    fprintf('route: template %s\n', template);
-    buildFromTemplate(template, destination, settings);
+    fprintf('route: graft onto %s\n', template);
+    mc_graft_model(template, destination, settings);
 end
 
 if ~isfile(destination)
@@ -91,64 +91,6 @@ candidates = dir(fullfile(repoRoot, 'build', 'mc_examples', '*.slx'));
 if ~isempty(candidates)
     template = fullfile(candidates(1).folder, candidates(1).name);
 end
-end
-
-% ---------------------------------------------------------------------------
-function buildFromTemplate(template, destination, settings)
-%BUILDFROMTEMPLATE Keep the template's Hub, replace everything else.
-[~, templateName] = fileparts(template);
-if bdIsLoaded(templateName)
-    close_system(templateName, 0);
-end
-load_system(template);
-cleanup = onCleanup(@() closeQuietly(templateName)); %#ok<NASGU>
-
-hubs = mc_find_hub(templateName);
-if isempty(hubs)
-    error('make_channelizer_model:hub', 'no Hub block in the template %s', template);
-end
-hub = hubs{1};
-fprintf('template Hub: %s\n', hub);
-hub = renameToSystemGenerator(hub);
-
-% Remove everything except the Hub (and the annotations that go with it).
-blocks = find_system(templateName, 'SearchDepth', 1, 'Type', 'Block');
-for index = 1:numel(blocks)
-    if strcmp(blocks{index}, hub)
-        continue;
-    end
-    try
-        delete_block(blocks{index});
-    catch problem
-        fprintf('  note: could not delete %s: %s\n', blocks{index}, problem.message);
-    end
-end
-try
-    annotations = find_system(templateName, 'SearchDepth', 1, ...
-        'FindAll', 'on', 'Type', 'annotation');
-    for index = 1:numel(annotations)
-        delete(annotations(index));
-    end
-catch problem
-    fprintf('  note: annotations left in place: %s\n', problem.message);
-end
-
-% The template's callbacks define variables its own design needed (clk, Tclk,
-% filter coefficients); ours does not, and a missing variable would abort the
-% update.
-clearCallbacks(templateName);
-setSolver(templateName);
-
-addDut(templateName, settings);
-configureHub(hub, settings);
-
-if bdIsLoaded(destinationName(destination))
-    close_system(destinationName(destination), 0);
-end
-save_system(templateName, destination);
-fprintf('saved %s\n', destination);
-reportHub(destination);
-printSummary(settings);
 end
 
 % ---------------------------------------------------------------------------
@@ -264,30 +206,6 @@ fprintf('  %d channels, %d.%d signed fixed point, %g MHz, %d-clock delay each\n'
     settings.sampleHz / 1e6, settings.tapDelay);
 fprintf('  device: %s, exported subsystem: %s\n', settings.part.full, ...
     settings.subsystemName);
-end
-
-function hub = renameToSystemGenerator(hub)
-%RENAMETOSYSTEMGENERATOR The engine looks the generate block up by that name.
-%   A real run produced an error dialog saying the System Generator block must be
-%   named "System Generator".  The block stays linked to vmcUtilities.
-parts = strsplit(hub, '/');
-parts{end} = 'System Generator';
-wanted = strjoin(parts, '/');
-try
-    set_param(hub, 'Name', 'System Generator');
-    fprintf('Hub renamed: %s -> %s\n', hub, wanted);
-    hub = wanted;
-catch problem
-    fprintf(2, '  could not rename %s to "%s": %s\n', hub, 'System Generator', problem.message);
-end
-end
-
-function clearCallbacks(modelName)
-try
-    set_param(modelName, 'PreLoadFcn', '', 'InitFcn', '', 'StartFcn', '');
-catch problem
-    fprintf('  note: could not clear the model callbacks: %s\n', problem.message);
-end
 end
 
 function setSolver(modelName)

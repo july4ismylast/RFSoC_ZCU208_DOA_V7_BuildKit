@@ -61,6 +61,19 @@ try
             end
         end
     end
+    % Model Composer resolves ./netlist against the working directory, so run
+    % from the probe folder and create the folders it writes into.  Without this
+    % the example dies with ERROR-XMC-1002 before any compare is possible.
+    originalFolder = pwd;
+    cd(probeFolder);
+    folderCleanup = onCleanup(@() cd(originalFolder)); %#ok<NASGU>
+    for created = {fullfile(probeFolder, 'netlist'), ...
+            fullfile(probeFolder, 'netlist', 'ip'), fullfile(probeFolder, 'code')}
+        if ~isfolder(created{1})
+            mkdir(created{1});
+        end
+    end
+    fprintf(2, '  working folder: %s\n', pwd);
     fprintf(2, '  calling xmcGenerate(%s)\n', probeName);
     xmcGenerate(probeName, 'closeProgressWindow', 1);
     fprintf(2, '  the example generated\n');
