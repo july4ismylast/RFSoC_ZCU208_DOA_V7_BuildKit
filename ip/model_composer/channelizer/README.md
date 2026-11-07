@@ -14,6 +14,54 @@ merged. So the model for this kit is **code**:
 | `mc_batch_export.m` | runs inside MATLAB R2022b, adds the Model Composer paths, exports the IP |
 | `export_model_composer_ip.m` | finds the generate block, asks for IP Catalog, copies `component.xml` |
 
+## What a real run taught this builder (2026-11-07, ZCU208 host)
+
+The first run in a live Model Composer GUI got as far as saving the model, then
+stopped with:
+
+```
+Target hardware is not selected.  Please select the target hardware in the
+'Hardware Selection' tab of the Vitis Model Composer Hub block.
+```
+
+Setting `part` alone is not enough — the Hub needs the whole device identity, the
+same set a working 2023.2 model carries:
+
+| Hub parameter | value here | where it comes from |
+|---|---|---|
+| `ProjDevice`, `ProjDevicePart` | `xczu48dr-fsvg1517-2-e` | `PART` in `config.mk` |
+| `part` / `package` / `speed` | `xczu48dr` / `fsvg1517` / `-2-e` | parsed from `PART` |
+| `xilinxfamily` | `zynquplus` | derived from the device |
+| `ExportType` | `IP Catalog` | chosen from the popup's own options |
+| `IpVendor` / `IpLibrary` / `IpVersion` | `doa.v7` / `model_composer` / `1.0` | fixed |
+| `IPInfoJsonString` | `{"HDLSubsystem":{...}}` | names the generated IP |
+
+`MC_PART` is how the device gets in: the Makefile passes `$(PART)` to
+`make mc-scratch` and to the GUI launcher, which writes it into `startup.m`.
+
+Two smaller things the same run exposed, both fixed:
+
+* `arith_type = Signed (2's comp)` was rejected.  Popup values are not guessed
+  any more: `applyPopup` reads the block's mask options and picks the entry that
+  matches `Signed`, printing the full option list when nothing does.
+* `Gateway Out` has no `period` parameter — that call is gone.
+
+## Starting a build without the Generate button
+
+The old scripted entry point `xlGenerateButton` may not exist in a 2023.2
+install (the run printed `xlGenerateButton: no`). `mc_generate_function` checks
+`xlGenerateButton`, `xmcGenerateButton`, `xmcGenerate`, `xmcHubGenerate`,
+`xmcGenerateIP`, `xmcGenerateCode`, `xlGenerate` and reports which are present;
+the exporter calls the first that exists. When none exists the message is
+explicit: click **Generate** in the Hub, then `make mc-verify` — that collects
+the `component.xml` the Hub wrote and installs it in `$(IP_REPO)`.
+
+To see exactly what an installation offers:
+
+```bash
+make mc-probe     # libraries, generate entry points, every Hub mask parameter
+```
+
 ## If a block library is not found
 
 A batch `matlab -batch` session does **not** know Model Composer: the libraries

@@ -4,21 +4,17 @@ function make_channelizer_model(destination)
 %   this function creates the model with new_system/add_block/add_line and saves
 %   it as destination (default: channelizer.slx next to this file).
 %
-%   A batch MATLAB session does not know Model Composer: the block libraries are
-%   files inside the installation and only the GUI launcher adds their folders.
-%   mc_paths() finds them from MC_ROOT / MC_VIVADO_ROOT and adds them; if a
-%   library still cannot be loaded, this function says which folder it searched
-%   and which blocks it did find, instead of dying with "no block named".
+%   Two facts drove this file, both from real runs on the ZCU208 host:
+%     - a batch session has none of the Model Composer library folders, so
+%       mc_paths() finds and adds them first;
+%     - the Hub refuses to run until a target device is selected, so the device
+%       parameters (ProjDevice, part, package, speed, xilinxfamily) and the
+%       IPInfoJsonString are set here, from MC_PART (the same PART the rest of
+%       the build uses).
 %
-%   Structure follows UG1483: the Vitis Model Composer Hub at the top level,
-%   Gateway In blocks for the inputs, Gateway Out blocks for the outputs, the
-%   datapath between them.  Four channels, Q2.14, 200 MHz, exported as an IP
-%   Catalog IP.
-%
-%   Block library paths are the 2023.2 ones, read out of a real 2023.2 model
-%   (Examples/HDL/RFSoC/SSR_Digital_Down_Conversion/SSRDDC.slx on branch 2023.2
-%   of Xilinx/Vitis_Model_Composer): hdlBasic/Gateway In, hdlBasic/Gateway Out,
-%   hdlBasic/Delay, vmcUtilities/Vitis Model Composer Hub.
+%   Popup parameters are not guessed: applyPopup reads the block's own mask
+%   definition and picks the option that matches, printing the allowed list when
+%   nothing matches.  A parameter that does not exist is reported and skipped.
 arguments
     destination (1, :) char = ''
 end
@@ -38,11 +34,12 @@ bits = 16;
 binaryPoint = 14;
 sampleHz = 200e6;
 tapDelay = 4;
+part = partString();
 
 fprintf('looking for the Model Composer libraries\n');
-info = mc_paths();
-requireLibrary('vmcUtilities', info);
-requireLibrary('hdlBasic', info);
+info = mc_paths(); %#ok<NASGU>
+requireLibrary('vmcUtilities');
+requireLibrary('hdlBasic');
 
 if bdIsLoaded(modelName)
     close_system(modelName, 0);
@@ -52,24 +49,14 @@ if isfile(destination)
 end
 
 new_system(modelName);
-cleanup = onCleanup(@() discardIfOpen(modelName));
+cleanup = onCleanup(@() discardIfOpen(modelName)); %#ok<NASGU>
 set_param(modelName, 'Solver', 'FixedStepDiscrete', ...
     'FixedStep', '1', 'StopTime', '16', 'SaveTime', 'off', 'SaveOutput', 'off');
 
 % ---------------------------------------------------------------- the Hub ---
 hub = [modelName '/Vitis Model Composer Hub'];
 addFromLibrary('vmcUtilities', 'Vitis Model Composer Hub', hub, [40, 60, 90, 110]);
-applyParam(hub, 'ExportType', 'IP Catalog');
-applyParam(hub, 'IpVendor', 'doa.v7');
-applyParam(hub, 'IpLibrary', 'model_composer');
-applyParam(hub, 'IpVersion', '1.0');
-applyParam(hub, 'IpHWLanguage', 'Verilog');
-applyParam(hub, 'part', 'xczu208');
-applyParam(hub, 'xilinxfamily', 'zynquplus');
-applyParam(hub, 'Part', 'xczu208-ffvb1156-2-e');
-applyParam(hub, 'ProjDevicePart', 'xczu208-ffvb1156-2-e');
-applyParam(hub, 'sysclk_period', num2str(1e9 / sampleHz));
-applyParam(hub, 'simulink_period', '1');
+configureHub(hub, part, sampleHz);
 
 % ------------------------------------------------------------ the channels ---
 for channel = 1:channels
@@ -80,18 +67,18 @@ for channel = 1:channels
 
     addFromLibrary('hdlBasic', 'Gateway In', inBlock, [40, row, 90, row + 20]);
     applyParam(inBlock, 'gui_display_data_type', 'Fixed-point');
-    applyParam(inBlock, 'arith_type', 'Signed (2''s comp)');
+    applyPopup(inBlock, 'arith_type', 'Signed');
     applyParam(inBlock, 'n_bits', num2str(bits));
     applyParam(inBlock, 'bin_pt', num2str(binaryPoint));
-    applyParam(inBlock, 'quantization', 'Truncate');
-    applyParam(inBlock, 'overflow', 'Wrap');
+    applyPopup(inBlock, 'quantization', 'Truncate');
+    applyPopup(inBlock, 'overflow', 'Wrap');
     applyParam(inBlock, 'period', '1');
 
     addFromLibrary('hdlBasic', 'Delay', delayBlock, [160, row, 190, row + 20]);
     applyParam(delayBlock, 'latency', num2str(tapDelay));
 
     addFromLibrary('hdlBasic', 'Gateway Out', outBlock, [270, row, 320, row + 20]);
-    applyParam(outBlock, 'period', '1');
+    applyPopup(outBlock, 'gui_display_data_type', 'Inherit');
 
     add_line(modelName, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel), ...
         'autorouting', 'on');
@@ -101,16 +88,73 @@ end
 
 % ------------------------------------------------------------------- save ----
 save_system(modelName, destination);
-close_system(modelName, 0);
-
 fprintf('\nmodel created: %s\n', destination);
 fprintf('  %d channels, %d.%d signed fixed point, %g MHz, %d-clock delay each\n', ...
     channels, bits - binaryPoint, binaryPoint, sampleHz / 1e6, tapDelay);
-fprintf('  Hub export target: %s\n', readable(hub, 'ExportType'));
+fprintf('  device: %s\n', part.full);
+printHubSetting(hub, 'ExportType');
+printHubSetting(hub, 'ProjDevice');
+printHubSetting(hub, 'part');
+close_system(modelName, 0);
 fprintf('MC_MODEL_CREATED %s\n', destination);
 end
 
-function requireLibrary(name, info)
+% ---------------------------------------------------------------------------
+function configureHub(hub, part, sampleHz)
+%CONFIGUREHUB Everything the Hub needs before it will generate anything.
+%   Parameter names and the need for a selected device come from a real 2023.2
+%   model (Xilinx/Vitis_Model_Composer, branch 2023.2, SSRDDC.slx): ExportType,
+%   IpVendor, IpLibrary, IpVersion, IpHWLanguage, ProjDevice, ProjDevicePart,
+%   part, package, speed, xilinxfamily, ClockFrequency, SamplePeriod and
+%   IPInfoJsonString.
+applyPopup(hub, 'ExportType', 'IP Catalog');
+applyParam(hub, 'IpVendor', 'doa.v7');
+applyParam(hub, 'IpLibrary', 'model_composer');
+applyParam(hub, 'IpVersion', '1.0');
+applyParam(hub, 'IpHWLanguage', 'Verilog');
+applyParam(hub, 'ProjDevice', part.full);
+applyParam(hub, 'ProjDevicePart', part.full);
+applyParam(hub, 'part', part.device);
+applyParam(hub, 'package', part.package);
+applyParam(hub, 'speed', part.speed);
+applyParam(hub, 'xilinxfamily', part.family);
+applyParam(hub, 'ClockFrequency', num2str(sampleHz / 1e6));
+applyParam(hub, 'SamplePeriod', '-1');
+applyParam(hub, 'sysclk_period', num2str(1e9 / sampleHz));
+applyParam(hub, 'simulink_period', '1');
+ipInfo = sprintf(['{"HDLSubsystem":{"SubsystemName":"channelizer_dut",' ...
+    '"IPName":"channelizer_dut","IPLibrary":"model_composer",' ...
+    '"IPVendor":"doa.v7","IPVersion":"1.0"}}']);
+applyParam(hub, 'IPInfoJsonString', ipInfo);
+end
+
+% ---------------------------------------------------------------------------
+function part = partString()
+%PARTSTRING Device from MC_PART (the shell passes config.mk's PART), parsed.
+full = getenv('MC_PART');
+if isempty(full)
+    full = 'xczu48dr-fsvg1517-2-e';
+end
+pieces = strsplit(full, '-');
+part = struct('full', full, 'device', pieces{1}, 'package', '', 'speed', '', ...
+    'family', 'zynquplus');
+if numel(pieces) >= 2
+    part.package = pieces{2};
+end
+if numel(pieces) >= 4
+    part.speed = ['-' pieces{3} '-' pieces{4}];
+end
+if contains(part.device, 'zu')
+    part.family = 'zynquplus';
+elseif contains(part.device, 'ku')
+    part.family = 'kintexuplus';
+elseif contains(part.device, 'vu')
+    part.family = 'virtexuplus';
+end
+end
+
+% ---------------------------------------------------------------------------
+function requireLibrary(name)
 %REQUIRELIBRARY Load one Model Composer library, or explain what is missing.
 try
     load_system(name);
@@ -121,29 +165,21 @@ catch problem
 end
 fprintf('\nERROR: the Model Composer library "%s" could not be loaded.\n', name);
 fprintf('  loaded error: %s\n', reason);
-fprintf('  MC_ROOT:      %s\n', info.mcRoot);
-fprintf('  MC_VIVADO_ROOT: %s\n', info.vivadoRoot);
-if isempty(info.mcRoot)
-    fprintf('  MC_ROOT is empty: set MODEL_COMPOSER in config.local.mk so it can be derived.\n');
-else
-    fprintf('  searched %s recursively for %s.slx\n', info.mcRoot, name);
-end
-if isempty(info.found)
-    fprintf('  no Model Composer library file was found at all.\n');
-else
-    fprintf('  library files that WERE found:\n');
-    for index = 1:numel(info.found)
-        fprintf('    %-12s %s\n', info.found(index).name, info.found(index).file);
-    end
-end
-helperDir = fileparts(mfilename('fullpath'));
-fprintf(['  Diagnose with: make mc-libs   (prints the same search, no model built)\n' ...
-         '  The GUI sets this up itself, so the same builder works there:\n' ...
-         '      make mc-gui            (helpers already on the MATLAB path)\n' ...
-         '      make mc-gui-build      (same, and it runs the build for you)\n' ...
-         '  In an already-open MATLAB, paste:\n' ...
-         '      addpath(''%s''); mc_gui_build\n'], helperDir);
+fprintf('  MC_ROOT:   %s\n', printablePath(getenv('MC_ROOT')));
+fprintf('  MC_VIVADO_ROOT: %s\n', printablePath(getenv('MC_VIVADO_ROOT')));
+fprintf(['  Diagnose with: make mc-libs, or run mc_paths() here and read the\n' ...
+         '  library list it prints.  In a Model Composer GUI the libraries are\n' ...
+         '  already loaded, so this failure means the model was built in a bare\n' ...
+         '  MATLAB session without Model Composer on the path.\n']);
 error('make_channelizer_model:library', 'library %s is not loadable', name);
+end
+
+function text = printablePath(value)
+if isempty(value)
+    text = '(unset)';
+else
+    text = value;
+end
 end
 
 function addFromLibrary(library, blockName, path, position)
@@ -186,13 +222,12 @@ catch problem
 end
 end
 
-function readable = readable(block, parameter)
-%READABLE Read a block parameter without failing the build.
-readable = '<not readable>';
+function printHubSetting(hub, parameter)
+%PRINTHUBSETTING Show what the Hub actually holds now, not what we tried to set.
 try
-    readable = get_param(block, parameter);
+    fprintf('  Hub.%s = %s\n', parameter, get_param(hub, parameter));
 catch problem
-    readable = sprintf('<%s>', problem.message);
+    fprintf('  Hub.%s = <%s>\n', parameter, problem.message);
 end
 end
 
@@ -204,6 +239,41 @@ try
 catch problem
     fprintf('  skipped %s.%s = %s (%s)\n', shortName(block), parameter, value, ...
         problem.message);
+end
+end
+
+function applyPopup(block, parameter, wanted)
+%APPLYPOPUP Choose a popup value from the block's own mask definition.
+%   "Invalid setting ... for parameter 'arith_type'" means the string is not one
+%   of the options this release offers; the options are readable, so read them.
+options = popupOptions(block, parameter);
+if isempty(options)
+    applyParam(block, parameter, wanted);
+    return;
+end
+match = find(contains(lower(options), lower(wanted)), 1);
+if isempty(match)
+    fprintf('  skipped %s.%s: no option matching "%s" (options: %s)\n', ...
+        shortName(block), parameter, wanted, strjoin(options, ' | '));
+    return;
+end
+applyParam(block, parameter, options{match});
+end
+
+function options = popupOptions(block, parameter)
+%POPUPOPTIONS The allowed strings of a mask popup parameter.
+options = {};
+try
+    mask = get_param(block, 'MaskObject');
+    parameters = mask.Parameters;
+    for index = 1:numel(parameters)
+        if strcmp(parameters(index).Name, parameter)
+            options = parameters(index).TypeOptions;
+            return;
+        end
+    end
+catch problem
+    fprintf('  note: cannot read the mask of %s: %s\n', shortName(block), problem.message);
 end
 end
 

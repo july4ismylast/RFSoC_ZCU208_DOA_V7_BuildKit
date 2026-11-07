@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-libs mc-eval mc-shell-help graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-libs mc-probe mc-eval mc-shell-help graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -73,6 +73,7 @@ help:
 	@echo "Create that .slx:    make mc-scratch   (from scratch, no GUI)"
 	@echo "AMD 2023.2 example:  make mc-example   (reference only, not committed)"
 	@echo "Blocks not found:    make mc-libs      (where the libraries are)"
+	@echo "What can this run:   make mc-probe     (Hub parameters, generate entry)"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
@@ -199,7 +200,7 @@ mc:
 # creates the Hub + 4 gateway pairs + delays and saves channelizer.slx.  A .slx
 # cannot be reviewed in a diff, so the builder script is the committed artifact.
 mc-scratch:
-	@./scripts/create_model_composer_model.sh "$(if $(strip $(MODEL_COMPOSER_MODEL)),$(MODEL_COMPOSER_MODEL),ip/model_composer/channelizer/channelizer.slx)"
+	@MC_PART="$(PART)" ./scripts/create_model_composer_model.sh "$(if $(strip $(MODEL_COMPOSER_MODEL)),$(MODEL_COMPOSER_MODEL),ip/model_composer/channelizer/channelizer.slx)"
 	@echo "now: make mc"
 
 # The GUI, only for creating or editing the .slx itself: R2022b first on PATH,
@@ -207,12 +208,12 @@ mc-scratch:
 # cannot run a headless build -- it evals its own arguments and appends its own
 # -r -- so `make mc` never goes through it.
 mc-gui:
-	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log" interactive
+	@MC_PART="$(PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log" interactive
 
 # Same GUI, but it builds the model and exports the IP as soon as it opens
 # (startup.m calls mc_gui_build), then leaves the session open to look at it.
 mc-gui-build:
-	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_gui_build.log" build
+	@MC_PART="$(PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_gui_build.log" build
 
 # Run Model Composer MATLAB code from the shell without typing any path:
 #   make mc-eval CODE="mc_gui_build"
@@ -228,6 +229,11 @@ mc-shell-help:
 	@echo "2. If a MATLAB window is already open, paste this one line:"
 	@echo
 	@echo "     addpath('$(CURDIR)/ip/model_composer/channelizer'); mc_gui_build"
+
+# What can this installation actually run?  Libraries, generate entry points,
+# every Hub mask parameter and its value.
+mc-probe:
+	@./scripts/mc_eval.sh "mc_probe_generate"
 
 # Why is a Model Composer block missing?  Report where the libraries are.
 mc-libs:

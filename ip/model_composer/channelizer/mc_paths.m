@@ -61,7 +61,12 @@ if exist('xmcStart', 'file') == 2 && exist('xlGenerateButton', 'file') ~= 2
 end
 info.xlGenerateButton = exist('xlGenerateButton', 'file') == 2;
 if verbose
-    fprintf('xlGenerateButton: %s\n', ternary(info.xlGenerateButton, 'yes', 'no'));
+    [name, available] = mc_generate_function();
+    fprintf('generate entries: %s\n', strjoin(available, ', '));
+    if isempty(name)
+        fprintf(['note: no scripted generate function here; the Hub''s Generate ' ...
+                 'button is the only way to build in this session\n']);
+    end
     if isempty(info.mcRoot) && isempty(info.vivadoRoot)
         fprintf(['note: no Model Composer / Vivado root found from the environment ' ...
                  'or the path; assuming this session is already set up\n']);
