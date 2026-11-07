@@ -46,6 +46,32 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## Two routes, and why the template one is preferred
+
+A Hub created with `add_block` on a fresh model is *not* the same object as a Hub
+dragged into a model by the GUI: on a real run, with `ProjDevice`, `part`,
+`package`, `speed`, `xilinxfamily`, `ExportType` and `IPInfoJsonString` all
+confirmed set, every `sysgen` block still reported
+
+```
+Target hardware is not selected.  Please select the target hardware in the
+'Hardware Selection' tab of the Vitis Model Composer Hub block.
+```
+
+So the builder now has two routes and prefers the second:
+
+| route | when | how |
+|---|---|---|
+| from scratch | no template available | Hub from `vmcUtilities`, channels added |
+| **template** | `build/mc_examples/*.slx` exists (`make mc-example`) or `MC_TEMPLATE` is set | Hub **taken from AMD's example** (already initialised: its S-function knows the hardware machinery), everything else deleted, our four channels added, device re-pointed at `MC_PART` |
+
+The generated model contains only library blocks and our wiring — no AMD design
+survives the deletion — so what is committed is this repository's own model.
+
+`make mc-example` downloads AMD's 2023.2 example into `build/` (ignored by git;
+that repository has no LICENSE file, so it is reference material, never
+committed). `make mc-scratch` tells you when no template is present.
+
 ## A stale `.slx` is a trap: `mc_gui_build` rebuilds it
 
 `make mc-gui-build` used to reuse whatever `channelizer.slx` was on disk. After

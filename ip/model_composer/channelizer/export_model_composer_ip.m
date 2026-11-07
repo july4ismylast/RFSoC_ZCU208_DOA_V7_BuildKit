@@ -27,7 +27,7 @@ catch problem
     rethrow(problem);
 end
 
-generator = findGenerator(model);
+generator = mc_find_hub(model);
 assert(~isempty(generator), ...
     ['No Vitis Model Composer Hub / System Generator token in %s. Add one at ' ...
      'the top level: Library Browser > AMD Toolbox > Utilities > Code ' ...
@@ -65,25 +65,6 @@ copyfile(source, destination);
 fprintf('Installed Model Composer IP at %s\n', destination);
 end
 
-function found = findGenerator(model)
-%FINDGENERATOR Locate the Hub or the legacy System Generator token.
-found = {};
-hub = find_system(model, 'LookUnderMasks', 'all', 'FollowLinks', 'on', ...
-    'SourceBlock', 'vmcUtilities/Vitis Model Composer Hub');
-if ~isempty(hub)
-    found = hub;
-    return;
-end
-hub = find_system(model, 'LookUnderMasks', 'all', 'FollowLinks', 'on', ...
-    'SourceType', 'VMC Hub');
-if ~isempty(hub)
-    found = hub;
-    return;
-end
-found = find_system(model, 'LookUnderMasks', 'all', 'FollowLinks', 'on', ...
-    'MaskType', 'Xilinx System Generator');
-end
-
 function target = setExportTarget(block)
 %SETEXPORTTARGET Ask the Hub for an IP Catalog export.
 %   The popup strings have changed between releases ("IP Catalog", "IP catalog",
@@ -111,8 +92,7 @@ end
 
 function printHubDevice(model)
 %PRINTHUBDEVICE Show what the Hub believes the target device is.
-hubs = find_system(model, 'LookUnderMasks', 'all', 'FollowLinks', 'on', ...
-    'SourceBlock', 'vmcUtilities/Vitis Model Composer Hub');
+hubs = mc_find_hub(model);
 parameters = {'ExportType', 'ProjDevice', 'ProjDevicePart', 'part', 'package', ...
     'speed', 'xilinxfamily', 'ClockFrequency'};
 for index = 1:numel(hubs)

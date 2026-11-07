@@ -17,8 +17,7 @@ end
 fprintf('\n=== mask parameters of the Hub (this release)\n');
 models = find_system('SearchDepth', 1, 'Type', 'BlockDiagram');
 for index = 1:numel(models)
-    hubs = find_system(models{index}, 'LookUnderMasks', 'all', 'FollowLinks', 'on', ...
-        'SourceBlock', 'vmcUtilities/Vitis Model Composer Hub');
+    hubs = mc_find_hub(models{index});
     if isempty(hubs)
         continue;
     end

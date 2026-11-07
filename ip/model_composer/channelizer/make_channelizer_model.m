@@ -1,20 +1,28 @@
 function make_channelizer_model(destination)
 %MAKE_CHANNELIZER_MODEL Build the channelizer model from scratch, without a GUI.
 %   A .slx is a binary that nobody can review, so the model lives here as code:
-%   this function creates the model with new_system/add_block/add_line and saves
-%   it as destination (default: channelizer.slx next to this file).
+%   this function creates the model and saves it as destination (default:
+%   channelizer.slx next to this file).
 %
-%   Two facts drove this file, both from real runs on the ZCU208 host:
-%     - a batch session has none of the Model Composer library folders, so
-%       mc_paths() finds and adds them first;
-%     - the Hub refuses to run until a target device is selected, so the device
-%       parameters (ProjDevice, part, package, speed, xilinxfamily) and the
-%       IPInfoJsonString are set here, from MC_PART (the same PART the rest of
-%       the build uses).
+%   Two routes, chosen automatically:
 %
-%   Popup parameters are not guessed: applyPopup reads the block's own mask
-%   definition and picks the option that matches, printing the allowed list when
-%   nothing matches.  A parameter that does not exist is reported and skipped.
+%   1. TEMPLATE (preferred).  If a Model Composer example is available
+%      (build/mc_examples/*.slx, fetched by `make mc-example`, or MC_TEMPLATE),
+%      the Hub block is taken from that model: a Hub created by AMD's own
+%      example is initialised -- its S-function already knows the hardware
+%      selection machinery -- whereas a Hub made with add_block on a fresh model
+%      reported "Target hardware is not selected" for every sysgen block even
+%      with ProjDevice, part, package and speed all set.  Everything except the
+%      Hub is deleted, our four channels are added, and the device is re-pointed
+%      at this board.
+%
+%   2. FROM SCRATCH.  With no template, the Hub is added from the library and
+%      configured the same way.  That route is kept because it needs no
+%      download, but it is the one that hit the hardware error.
+%
+%   In both routes the device comes from MC_PART (config.mk's PART), popup
+%   parameters are read from the block's own mask definition, and a parameter
+%   that does not exist is reported and skipped instead of aborting.
 arguments
     destination (1, :) char = ''
 end
@@ -29,106 +37,220 @@ if isempty(modelDir)
     destination = fullfile(modelDir, [modelName '.slx']);
 end
 
-channels = 4;
-bits = 16;
-binaryPoint = 14;
-sampleHz = 200e6;
-tapDelay = 4;
-part = partString();
+settings = struct('channels', 4, 'bits', 16, 'binaryPoint', 14, ...
+    'sampleHz', 200e6, 'tapDelay', 4, 'part', partString());
 
 fprintf('looking for the Model Composer libraries\n');
-info = mc_paths(); %#ok<NASGU>
+mc_paths();
 requireLibrary('vmcUtilities');
 requireLibrary('hdlBasic');
 
-if bdIsLoaded(modelName)
-    close_system(modelName, 0);
-end
 if isfile(destination)
     delete(destination);
 end
 
+template = findTemplate();
+if isempty(template)
+    fprintf('route: from scratch (no template model found)\n');
+    buildFromScratch(modelName, destination, settings);
+else
+    fprintf('route: template %s\n', template);
+    buildFromTemplate(template, destination, settings);
+end
+
+if ~isfile(destination)
+    error('make_channelizer_model:save', 'the model was not written to %s', destination);
+end
+fprintf('MC_MODEL_CREATED %s\n', destination);
+end
+
+% ---------------------------------------------------------------------------
+function template = findTemplate()
+%FINDTEMPLATE A Model Composer example to take the Hub block from.
+template = '';
+fromEnv = getenv('MC_TEMPLATE');
+if ~isempty(fromEnv) && isfile(fromEnv)
+    template = fromEnv;
+    return;
+end
+here = fileparts(mfilename('fullpath'));
+repoRoot = fileparts(fileparts(fileparts(here)));
+candidates = dir(fullfile(repoRoot, 'build', 'mc_examples', '*.slx'));
+if ~isempty(candidates)
+    template = fullfile(candidates(1).folder, candidates(1).name);
+end
+end
+
+% ---------------------------------------------------------------------------
+function buildFromTemplate(template, destination, settings)
+%BUILDFROMTEMPLATE Keep the template's Hub, replace everything else.
+[~, templateName] = fileparts(template);
+if bdIsLoaded(templateName)
+    close_system(templateName, 0);
+end
+load_system(template);
+cleanup = onCleanup(@() closeQuietly(templateName)); %#ok<NASGU>
+
+hubs = mc_find_hub(templateName);
+if isempty(hubs)
+    error('make_channelizer_model:hub', 'no Hub block in the template %s', template);
+end
+hub = hubs{1};
+fprintf('template Hub: %s\n', hub);
+
+% Remove everything except the Hub (and the annotations that go with it).
+blocks = find_system(templateName, 'SearchDepth', 1, 'Type', 'Block');
+for index = 1:numel(blocks)
+    if strcmp(blocks{index}, hub)
+        continue;
+    end
+    try
+        delete_block(blocks{index});
+    catch problem
+        fprintf('  note: could not delete %s: %s\n', blocks{index}, problem.message);
+    end
+end
+try
+    annotations = find_system(templateName, 'SearchDepth', 1, ...
+        'FindAll', 'on', 'Type', 'annotation');
+    for index = 1:numel(annotations)
+        delete(annotations(index));
+    end
+catch problem
+    fprintf('  note: annotations left in place: %s\n', problem.message);
+end
+
+% The template's PreLoadFcn defines variables its own design needed (clk, Tclk,
+% filter coefficients); ours does not, and a missing variable would abort the
+% update.
+try
+    set_param(templateName, 'PreLoadFcn', '', 'InitFcn', '', 'StartFcn', '');
+catch problem
+    fprintf('  note: could not clear the model callbacks: %s\n', problem.message);
+end
+
+addChannels(templateName, settings, false);
+configureHub(hub, settings);
+
+if bdIsLoaded(destinationName(destination))
+    close_system(destinationName(destination), 0);
+end
+save_system(templateName, destination);
+fprintf('saved %s\n', destination);
+printHubSetting(hub, 'ExportType');
+printHubSetting(hub, 'ProjDevice');
+printHubSetting(hub, 'part');
+printSummary(settings);
+end
+
+% ---------------------------------------------------------------------------
+function buildFromScratch(modelName, destination, settings)
+%BUILDFROMSCRATCH Hub from the library, channels, save.
+if bdIsLoaded(modelName)
+    close_system(modelName, 0);
+end
 new_system(modelName);
-cleanup = onCleanup(@() discardIfOpen(modelName)); %#ok<NASGU>
+cleanup = onCleanup(@() closeQuietly(modelName)); %#ok<NASGU>
 set_param(modelName, 'Solver', 'FixedStepDiscrete', ...
     'FixedStep', '1', 'StopTime', '16', 'SaveTime', 'off', 'SaveOutput', 'off');
 
-% ---------------------------------------------------------------- the Hub ---
 hub = [modelName '/Vitis Model Composer Hub'];
 addFromLibrary('vmcUtilities', 'Vitis Model Composer Hub', hub, [40, 60, 90, 110]);
-configureHub(hub, part, sampleHz);
+configureHub(hub, settings);
+addChannels(modelName, settings, true);
 
-% ------------------------------------------------------------ the channels ---
-for channel = 1:channels
+save_system(modelName, destination);
+fprintf('saved %s\n', destination);
+printHubSetting(hub, 'ExportType');
+printHubSetting(hub, 'ProjDevice');
+printHubSetting(hub, 'part');
+printSummary(settings);
+end
+
+% ---------------------------------------------------------------------------
+function addChannels(modelName, settings, addToExisting)
+%ADDCHANNELS Four gateway/delay/gateway paths: the part the Hub turns into IP.
+for channel = 1:settings.channels
     row = 150 + 60 * (channel - 1);
     inBlock = sprintf('%s/In%d', modelName, channel);
     delayBlock = sprintf('%s/Delay%d', modelName, channel);
     outBlock = sprintf('%s/Out%d', modelName, channel);
 
-    addFromLibrary('hdlBasic', 'Gateway In', inBlock, [40, row, 90, row + 20]);
+    if addToExisting
+        addFromLibrary('hdlBasic', 'Gateway In', inBlock, [40, row, 90, row + 20]);
+        addFromLibrary('hdlBasic', 'Delay', delayBlock, [160, row, 190, row + 20]);
+        addFromLibrary('hdlBasic', 'Gateway Out', outBlock, [270, row, 320, row + 20]);
+    else
+        copyFromLibrary('hdlBasic', 'Gateway In', inBlock, [40, row, 90, row + 20]);
+        copyFromLibrary('hdlBasic', 'Delay', delayBlock, [160, row, 190, row + 20]);
+        copyFromLibrary('hdlBasic', 'Gateway Out', outBlock, [270, row, 320, row + 20]);
+    end
+
     applyParam(inBlock, 'gui_display_data_type', 'Fixed-point');
     applyPopup(inBlock, 'arith_type', 'Signed');
-    applyParam(inBlock, 'n_bits', num2str(bits));
-    applyParam(inBlock, 'bin_pt', num2str(binaryPoint));
+    applyParam(inBlock, 'n_bits', num2str(settings.bits));
+    applyParam(inBlock, 'bin_pt', num2str(settings.binaryPoint));
     applyPopup(inBlock, 'quantization', 'Truncate');
     applyPopup(inBlock, 'overflow', 'Wrap');
     applyParam(inBlock, 'period', '1');
 
-    addFromLibrary('hdlBasic', 'Delay', delayBlock, [160, row, 190, row + 20]);
-    applyParam(delayBlock, 'latency', num2str(tapDelay));
+    applyParam(delayBlock, 'latency', num2str(settings.tapDelay));
 
-    addFromLibrary('hdlBasic', 'Gateway Out', outBlock, [270, row, 320, row + 20]);
-    applyPopup(outBlock, 'gui_display_data_type', 'Inherit');
-
-    add_line(modelName, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel), ...
-        'autorouting', 'on');
-    add_line(modelName, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel), ...
-        'autorouting', 'on');
+    try
+        add_line(modelName, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel), ...
+            'autorouting', 'on');
+        add_line(modelName, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel), ...
+            'autorouting', 'on');
+    catch problem
+        fprintf('  note: could not wire channel %d: %s\n', channel, problem.message);
+    end
 end
-
-% ------------------------------------------------------------------- save ----
-save_system(modelName, destination);
-fprintf('\nmodel created: %s\n', destination);
-fprintf('  %d channels, %d.%d signed fixed point, %g MHz, %d-clock delay each\n', ...
-    channels, bits - binaryPoint, binaryPoint, sampleHz / 1e6, tapDelay);
-fprintf('  device: %s\n', part.full);
-printHubSetting(hub, 'ExportType');
-printHubSetting(hub, 'ProjDevice');
-printHubSetting(hub, 'part');
-close_system(modelName, 0);
-fprintf('MC_MODEL_CREATED %s\n', destination);
 end
 
 % ---------------------------------------------------------------------------
-function configureHub(hub, part, sampleHz)
+function name = destinationName(destination)
+[~, name] = fileparts(destination);
+end
+
+function closeQuietly(modelName)
+try
+    if bdIsLoaded(modelName)
+        close_system(modelName, 0);
+    end
+catch problem
+    fprintf('note: could not close %s: %s\n', modelName, problem.message);
+end
+end
+
+function configureHub(hub, settings)
 %CONFIGUREHUB Everything the Hub needs before it will generate anything.
-%   Parameter names and the need for a selected device come from a real 2023.2
-%   model (Xilinx/Vitis_Model_Composer, branch 2023.2, SSRDDC.slx): ExportType,
-%   IpVendor, IpLibrary, IpVersion, IpHWLanguage, ProjDevice, ProjDevicePart,
-%   part, package, speed, xilinxfamily, ClockFrequency, SamplePeriod and
-%   IPInfoJsonString.
 applyPopup(hub, 'ExportType', 'IP Catalog');
 applyParam(hub, 'IpVendor', 'doa.v7');
 applyParam(hub, 'IpLibrary', 'model_composer');
 applyParam(hub, 'IpVersion', '1.0');
 applyParam(hub, 'IpHWLanguage', 'Verilog');
-applyParam(hub, 'ProjDevice', part.full);
-applyParam(hub, 'ProjDevicePart', part.full);
-applyParam(hub, 'part', part.device);
-applyParam(hub, 'package', part.package);
-applyParam(hub, 'speed', part.speed);
-applyParam(hub, 'xilinxfamily', part.family);
-applyParam(hub, 'ClockFrequency', num2str(sampleHz / 1e6));
+applyParam(hub, 'ProjDevice', settings.part.full);
+applyParam(hub, 'ProjDevicePart', settings.part.full);
+applyParam(hub, 'part', settings.part.device);
+applyParam(hub, 'package', settings.part.package);
+applyParam(hub, 'speed', settings.part.speed);
+applyParam(hub, 'xilinxfamily', settings.part.family);
+applyParam(hub, 'ClockFrequency', num2str(settings.sampleHz / 1e6));
 applyParam(hub, 'SamplePeriod', '-1');
-applyParam(hub, 'sysclk_period', num2str(1e9 / sampleHz));
+applyParam(hub, 'sysclk_period', num2str(1e9 / settings.sampleHz));
 applyParam(hub, 'simulink_period', '1');
-ipInfo = sprintf(['{"HDLSubsystem":{"SubsystemName":"channelizer_dut",' ...
-    '"IPName":"channelizer_dut","IPLibrary":"model_composer",' ...
-    '"IPVendor":"doa.v7","IPVersion":"1.0"}}']);
-applyParam(hub, 'IPInfoJsonString', ipInfo);
+applyParam(hub, 'IPInfoJsonString', sprintf(['{"HDLSubsystem":{' ...
+    '"SubsystemName":"channelizer_dut","IPName":"channelizer_dut",' ...
+    '"IPLibrary":"model_composer","IPVendor":"doa.v7","IPVersion":"1.0"}}']));
 end
 
-% ---------------------------------------------------------------------------
+function printSummary(settings)
+fprintf('  %d channels, %d.%d signed fixed point, %g MHz, %d-clock delay each\n', ...
+    settings.channels, settings.bits - settings.binaryPoint, settings.binaryPoint, ...
+    settings.sampleHz / 1e6, settings.tapDelay);
+fprintf('  device: %s\n', settings.part.full);
+end
+
 function part = partString()
 %PARTSTRING Device from MC_PART (the shell passes config.mk's PART), parsed.
 full = getenv('MC_PART');
@@ -144,16 +266,13 @@ end
 if numel(pieces) >= 4
     part.speed = ['-' pieces{3} '-' pieces{4}];
 end
-if contains(part.device, 'zu')
-    part.family = 'zynquplus';
-elseif contains(part.device, 'ku')
+if contains(part.device, 'ku')
     part.family = 'kintexuplus';
 elseif contains(part.device, 'vu')
     part.family = 'virtexuplus';
 end
 end
 
-% ---------------------------------------------------------------------------
 function requireLibrary(name)
 %REQUIRELIBRARY Load one Model Composer library, or explain what is missing.
 try
@@ -165,12 +284,9 @@ catch problem
 end
 fprintf('\nERROR: the Model Composer library "%s" could not be loaded.\n', name);
 fprintf('  loaded error: %s\n', reason);
-fprintf('  MC_ROOT:   %s\n', printablePath(getenv('MC_ROOT')));
+fprintf('  MC_ROOT:        %s\n', printablePath(getenv('MC_ROOT')));
 fprintf('  MC_VIVADO_ROOT: %s\n', printablePath(getenv('MC_VIVADO_ROOT')));
-fprintf(['  Diagnose with: make mc-libs, or run mc_paths() here and read the\n' ...
-         '  library list it prints.  In a Model Composer GUI the libraries are\n' ...
-         '  already loaded, so this failure means the model was built in a bare\n' ...
-         '  MATLAB session without Model Composer on the path.\n']);
+fprintf('  Diagnose with: make mc-libs\n');
 error('make_channelizer_model:library', 'library %s is not loadable', name);
 end
 
@@ -193,6 +309,11 @@ catch problem
 end
 end
 
+function copyFromLibrary(library, blockName, path, position)
+%COPYFROMLIBRARY Same as addFromLibrary, used when the model already exists.
+addFromLibrary(library, blockName, path, position);
+end
+
 function listLibrary(library)
 %LISTLIBRARY Print the top-level blocks of a library, so the right name is visible.
 try
@@ -208,17 +329,6 @@ for index = 1:min(numel(blocks), 40)
 end
 if numel(blocks) > 40
     fprintf('    ... %d more\n', numel(blocks) - 40);
-end
-end
-
-function discardIfOpen(modelName)
-%DISCARDIFOPEN Leave no half-built model behind when this function fails.
-try
-    if bdIsLoaded(modelName)
-        close_system(modelName, 0);
-    end
-catch problem
-    fprintf('note: could not close %s: %s\n', modelName, problem.message);
 end
 end
 
@@ -244,8 +354,6 @@ end
 
 function applyPopup(block, parameter, wanted)
 %APPLYPOPUP Choose a popup value from the block's own mask definition.
-%   "Invalid setting ... for parameter 'arith_type'" means the string is not one
-%   of the options this release offers; the options are readable, so read them.
 options = popupOptions(block, parameter);
 if isempty(options)
     applyParam(block, parameter, wanted);

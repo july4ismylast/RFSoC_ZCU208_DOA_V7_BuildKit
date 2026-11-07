@@ -16,6 +16,17 @@ dest="${1:-ip/model_composer/channelizer/channelizer.slx}"
 mkdir -p "$(dirname "$dest")"
 dest_ml="${dest//\'/\'\'}"
 echo "building model:       $dest"
+if ! ls "$mc_root_repo"/build/mc_examples/*.slx >/dev/null 2>&1; then
+    echo
+    echo "note: no template model in build/mc_examples, so the Hub comes straight"
+    echo "      from the library.  That route reported 'Target hardware is not"
+    echo "      selected' on a real run; the template route takes the Hub from an"
+    echo "      AMD example that is already initialised:"
+    echo
+    echo "        make mc-example      # downloads it into build/ (not committed)"
+    echo "        make mc-scratch      # rebuilds using it"
+    echo
+fi
 echo
 
 "$MATLAB_2022B" -batch "addpath('$mc_root_repo/ip/model_composer/channelizer'); make_channelizer_model('$dest_ml')"
