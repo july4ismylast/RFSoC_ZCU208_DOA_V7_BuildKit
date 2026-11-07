@@ -19,13 +19,24 @@ produces (2 GS/s), and what it fixes in the section 13 estimator.
      DOA from the whole pulse, with a coherent repeater 30 deg away.
   G2 window length against per-sample SNR, including the case where the window
      is allowed to run past the repeater's arrival.
-  H  a DRFM that also applies a Doppler shift (the usual range/velocity pull-off)
-     -- the gate is immune and the beat frequency still measures the offset.
+  H  a DRFM that also applies a Doppler shift (the usual range/velocity pull-off),
+     and the tail the decoy leaves after the radar stops: the tail gives the
+     decoy's own direction and the delay, with no model at all.
+  J  the same gate over four waveforms (LFM, soft-edged LFM, tan-FM, Barker-13):
+     it must not depend on the modulation, only on the arrival ordering.
+  K  residual calibration error (+/-0.5 dB, +/-5 deg) against window length.
   I  the delay measured by the leading edge fed into the section 13 two-path ML:
-     with a delay known to half a sample, a *single* 1 MHz bin resolves two
-     coherent directions on four elements.
+     a half-sample delay makes 5-50 MHz emitters separable without a search, and
+     does not rescue a single 1 MHz bin (no frequency diversity at all).
+
+  K  the same gate with residual calibration error (+/-0.5 dB, +/-5 deg) against
+     window length: the residual is a bias floor, the window trades noise for time.
+  L  the numbers a hardware gate (G7) has to reproduce.
+  G0 the arrival ordering itself, from the triangle inequality.
 
 Run:  python3 scripts/radar_decoys.py [--quick]
+      python3 scripts/radar_decoys.py --replay capture.npy --pulse-ns 1000 \
+          --delay-ns 100 --truth-az 10 --decoy-az 40      # gate G7 on hardware
 """
 
 from __future__ import annotations
@@ -51,6 +62,71 @@ AZ_DECOY = 40.0
 PITCH_M = 0.030
 
 
+BARKER13 = np.array([1, 1, 1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1])
+
+
+def make_waveform(kind="lfm", pulse_s=PULSE_S, bw_hz=BW_HZ, fs=FS, edge_s=20e-9):
+    """One pulse of a radar waveform, plus its instantaneous-frequency law.
+
+    The point of the variety is that the leading-edge gate must not depend on
+    *which* waveform the radar uses -- only on the arrival ordering. LFM is the
+    easy case; a soft-edged LFM, a tan-FM (non-linear) chirp and a Barker-13
+    phase code are the interesting ones, because a phase code has no
+    instantaneous-frequency sweep at all.
+    """
+    count = int(round(pulse_s * fs))
+    time = np.arange(count) / fs
+    if kind == "barker13":
+        chips = int(round(pulse_s / (pulse_s / 13.0)))
+        index = np.minimum((time / pulse_s * 13.0).astype(int), 12)
+        envelope = BARKER13[index].astype(float)
+
+        def inst_freq(_centre):
+            return 0.0
+
+        phase = np.zeros(count)
+    else:
+        if kind == "nlfm":
+            shape = np.tanh(3.0 * (2.0 * time / pulse_s - 1.0)) / np.tanh(3.0)
+            freq = (bw_hz / 2.0) * shape
+
+            def inst_freq(centre, freq_law=freq):
+                index = min(max(int(round(centre * fs)), 0), freq_law.size - 1)
+                return float(freq_law[index])
+        else:
+            rate = bw_hz / pulse_s
+            freq = -bw_hz / 2.0 + rate * time
+
+            def inst_freq(centre, rate_law=rate):
+                return -bw_hz / 2.0 + rate_law * centre
+
+        phase = 2.0 * np.pi * np.cumsum(freq) / fs
+        envelope = np.ones(count)
+        if kind == "lfm_soft":
+            edges = max(int(round(edge_s * fs)), 1)
+            ramp = 0.5 * (1.0 - np.cos(np.pi * np.arange(edges) / edges))
+            envelope[:edges] = ramp
+            envelope[-edges:] = ramp[::-1]
+    samples = envelope * np.exp(1j * phase)
+    return samples, count, inst_freq
+
+
+def edge_sample(kind="lfm", pulse_s=PULSE_S):
+    """Where a 50 %-of-peak edge detector fires, so soft edges are not cheated."""
+    samples, _, _ = make_waveform(kind, pulse_s=pulse_s)
+    envelope = np.abs(samples)
+    above = np.where(envelope > 0.5 * envelope.max())[0]
+    return int(above[0]) if above.size else 0
+
+
+def channel_error(rng, elements, amp_db=0.5, phase_deg=5.0):
+    """Residual per-channel error after calibration: amplitude and phase."""
+    amplitude = 10.0 ** (rng.uniform(-amp_db, amp_db, elements) / 20.0)
+    phase = np.radians(rng.uniform(-phase_deg, phase_deg, elements))
+    vector = amplitude * np.exp(1j * phase)
+    return vector    # applied as a per-element multiplier on the manifold
+
+
 def lfm_pulse(fs=FS, duration_s=PULSE_S, bw_hz=BW_HZ):
     """Complex-baseband LFM, -bw/2 to +bw/2 over the pulse."""
     count = int(round(duration_s * fs))
@@ -70,17 +146,22 @@ def delayed_copy(pulse, delay_s, fs=FS):
 
 def radar_scene(rng, positions, delay_s, doppler_hz=0.0, snr_db=0.0,
                 pulses=64, buffer_samples=None, incoherent_decoy=False,
-                pulse_s=PULSE_S):
+                pulse_s=PULSE_S, waveform="lfm", error_vector=None,
+                pad_samples=0):
     """One radar pulse train: direct path at 0 ns, repeater copy at delay_s.
 
     Returns an array (pulses, samples, elements). snr_db is per sample, so a
     longer window integrates more of it -- the trade the study is about.
     """
-    pulse, count = lfm_pulse(duration_s=pulse_s)
+    pulse, count, _ = make_waveform(waveform, pulse_s=pulse_s)
     if buffer_samples is None:
         buffer_samples = count + int(round(delay_s * FS)) + 8
+    buffer_samples += pad_samples
     source = dd.steering(dd.u_of(AZ_SOURCE), F_CARRIER, positions)
     decoy = dd.steering(dd.u_of(AZ_DECOY), F_CARRIER, positions)
+    if error_vector is not None:
+        source = source * error_vector
+        decoy = decoy * error_vector
     copy = delayed_copy(pulse, delay_s)
     if doppler_hz:
         copy = copy * np.exp(1j * 2.0 * np.pi * doppler_hz
@@ -93,9 +174,9 @@ def radar_scene(rng, positions, delay_s, doppler_hz=0.0, snr_db=0.0,
             # a non-coherent repeater restarts its phase every pulse
             copy = copy * np.exp(1j * rng.uniform(0, 2 * np.pi))
         direct = np.zeros(buffer_samples, dtype=complex)
-        direct[:count] = pulse
+        direct[pad_samples:pad_samples + count] = pulse
         repeat = np.zeros(buffer_samples, dtype=complex)
-        repeat[offset:offset + count] = copy
+        repeat[pad_samples + offset:pad_samples + offset + count] = copy
         data[index] = (np.outer(direct, source) + np.outer(repeat, decoy)
                        + noise_sigma * (rng.standard_normal((buffer_samples,
                                                              positions.shape[0]))
@@ -120,14 +201,14 @@ def doa_from_vector(vector, freq_hz, positions, grid_deg=0.05, az_max=60.0):
 
 
 def leading_window_doa(data, window_samples, positions, start_sample=0,
-                       center_time_s=None, pulse_s=PULSE_S):
+                       center_time_s=None, pulse_s=PULSE_S, inst_freq=None):
     """DOA from the first window_samples after the pulse edge."""
     window = data[:, start_sample:start_sample + window_samples, :]
     vector = dominant_vector(window.reshape(-1, window.shape[-1]))
     if center_time_s is None:
         center_time_s = (start_sample + window_samples / 2.0) / FS
-    rate = BW_HZ / pulse_s
-    freq = F_CARRIER - BW_HZ / 2.0 + rate * center_time_s   # RF, not baseband
+    freq = F_CARRIER + (inst_freq(center_time_s) if inst_freq is not None
+                        else -BW_HZ / 2.0 + BW_HZ / pulse_s * center_time_s)
     return doa_from_vector(vector, freq, positions)
 
 
@@ -181,12 +262,123 @@ def single_bin_pair(rng, positions, delay_s, n_snapshots=64, snr_db=20.0,
     return data, np.array([freq]), tau
 
 
+def replay_capture(path, positions, window_ns, pulse_ns, delay_ns,
+                   truth_az, decoy_az):
+    """Gate-style post-processing of one captured record (pulses, samples, M).
+
+    This is the function gate G7 runs on hardware data: everything here is what
+    the simulation studies above measure, applied to a real capture instead of a
+    synthetic one. No simulation, no assumptions beyond the array geometry.
+    """
+    data = np.load(path)
+    if data.ndim != 3:
+        raise ValueError("expected (pulses, samples, channels), got %s"
+                         % (data.shape,))
+    pulses, samples, elements = data.shape
+    if elements != positions.shape[0]:
+        raise ValueError("capture has %d channels, the array model %d"
+                         % (elements, positions.shape[0]))
+    envelope = np.mean(np.sum(np.abs(data) ** 2, axis=2), axis=0)
+    # Edge against the noise floor, not against the peak: where the repeat
+    # overlaps the direct path the power is up to 4x the single-path level, so
+    # any "50 % of peak" or "largest rise" rule fires at the repeat instead of
+    # the radar. A capture with a normal PRI gap has a median that is noise.
+    smooth = max(int(round(2e-9 * FS)), 2)
+    smoothed = np.convolve(envelope, np.ones(smooth) / smooth, mode="same")
+    floor = np.median(smoothed)
+    above = np.where(smoothed > 1.5 * floor)[0]
+    if above.size == 0:
+        raise ValueError("no pulse found: the envelope never exceeds 1.5x its "
+                         "median. The direct path must be visible per sample -- "
+                         "gate G7 requires about +10 dB per sample for this")
+    edge = max(int(above[0]) - smooth // 2, 0)
+    width = max(int(round(window_ns * 1e-9 * FS)), 8)
+    if edge + width > samples:
+        raise ValueError("window runs past the capture")
+    gate_az = leading_window_doa(data, width, positions, start_sample=edge,
+                                 pulse_s=pulse_ns * 1e-9)
+    pulse_samples = int(round(pulse_ns * 1e-9 * FS))
+    delay_samples = int(round(delay_ns * 1e-9 * FS))
+    # the tail starts after the pulse ends, with a margin for the edge estimate
+    margin = max(int(round(25e-9 * FS)), 4)
+    tail_start = edge + pulse_samples + margin
+    tail = data[:, tail_start:tail_start + max(delay_samples - margin, 4), :]
+    if tail.shape[1] >= 8:
+        vector = dominant_vector(tail.reshape(-1, tail.shape[-1]))
+        tail_az = doa_from_vector(vector, F_CARRIER, positions)
+        tail_ns = tail.shape[1] / FS * 1e9
+    else:
+        tail_az, tail_ns = float("nan"), 0.0
+    full_az = full_pulse_doa(data[:, edge:edge + pulse_samples, :], positions)
+
+    print("# replay of %s (%d pulses, %d samples, %d channels)"
+          % (path, pulses, samples, elements))
+    print("# edge at sample %d (%.1f ns), window %.0f ns, pulse %.0f ns"
+          % (edge, edge / FS * 1e9, window_ns, pulse_ns))
+    print("  leading-edge DOA    %8.2f deg %s"
+          % (gate_az, "" if truth_az is None
+             else " (truth %.2f, error %+.2f)" % (truth_az, gate_az - truth_az)))
+    print("  whole-pulse DOA     %8.2f deg %s"
+          % (full_az, "" if truth_az is None
+             else " (truth %.2f, error %+.2f)" % (truth_az, full_az - truth_az)))
+    print("  tail window         %8.0f ns of the %.0f ns delay"
+          % (tail.shape[1] / FS * 1e9, delay_ns))
+    print("  tail DOA            %8.2f deg %s"
+          % (tail_az, "" if decoy_az is None
+             else " (truth %.2f, error %+.2f)" % (decoy_az, tail_az - decoy_az)))
+    print("  tail length         %8.0f ns measured" % tail_ns)
+    verdict, failures = [], 0
+    if truth_az is not None:
+        for label, passed in (("gate", abs(gate_az - truth_az) < 1.5),
+                              ("whole-pulse-pull-off",
+                               abs(full_az - truth_az) > 5.0)):
+            verdict.append("%s %s" % (label, "PASS" if passed else "FAIL"))
+            failures += 0 if passed else 1
+    if decoy_az is not None:
+        passed = abs(tail_az - decoy_az) < 3.0
+        verdict.append("tail %s" % ("PASS" if passed else "FAIL"))
+        failures += 0 if passed else 1
+    print("  G7 criteria: %s" % (" ".join(verdict) if verdict else "no truth given"))
+    return 0 if failures == 0 else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--quick", action="store_true")
     parser.add_argument("--seed", type=int, default=20261107)
     parser.add_argument("--out", default=None)
+    parser.add_argument("--replay", default=None,
+                        help="process a captured (pulses, samples, 4) .npy file")
+    parser.add_argument("--window-ns", type=float, default=100.0)
+    parser.add_argument("--pulse-ns", type=float, default=1000.0)
+    parser.add_argument("--delay-ns", type=float, default=100.0)
+    parser.add_argument("--truth-az", type=float, default=None)
+    parser.add_argument("--decoy-az", type=float, default=None)
+    parser.add_argument("--selftest", action="store_true",
+                        help="synthesise a capture and run the G7 replay path")
     args = parser.parse_args()
+    if args.replay:
+        return replay_capture(args.replay, dd.square_grid(2, PITCH_M),
+                              args.window_ns, args.pulse_ns, args.delay_ns,
+                              args.truth_az, args.decoy_az)
+    if args.selftest:
+        # exercise the G7 post-processing without hardware: synthesise a capture,
+        # save it, and run exactly the code gate G7 will run on a real one.
+        positions = dd.square_grid(2, PITCH_M)
+        worst = 0
+        for snr_db in (10.0, 0.0):
+            rng_local = np.random.default_rng(args.seed)
+            data = radar_scene(rng_local, positions, 100e-9, snr_db=snr_db,
+                               pulses=16, pad_samples=4000)
+            path = os.path.join("build", "output",
+                                "g7_selftest_capture_%ddB.npy" % int(snr_db))
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            np.save(path, data)
+            print("# selftest at %.0f dB per sample" % snr_db)
+            worst = max(worst, replay_capture(path, positions, 100.0, 1000.0,
+                                              100.0, AZ_SOURCE, AZ_DECOY))
+        print("RESULT=%s" % ("PASS" if worst == 0 else "FAIL"))
+        return worst
     if args.out is None:
         args.out = (os.path.join("build", "output", "v07_radar_decoy_quick.txt")
                     if args.quick else
@@ -404,6 +596,113 @@ def main() -> int:
     emit("  cannot do is create frequency diversity: at 1 MHz the whole signal is")
     emit("  one bin and the pair stays unsolvable on four elements.")
 
+    # ------------------------------------------------- waveform and calibration
+    emit("")
+    emit("Study J: the gate does not care which waveform the radar uses")
+    emit("  delay 100 ns, W = 100 ns from a 50%-amplitude edge, 0 dB per sample")
+    emit("  %-14s %14s %14s %14s %12s"
+         % ("waveform", "whole pulse", "gate", "tail", "tail error"))
+    waveform_table = {}
+    for kind, label in (("lfm", "LFM 50 MHz"), ("lfm_soft", "LFM, 20 ns edge"),
+                        ("nlfm", "tan-FM 50 MHz"), ("barker13", "Barker-13")):
+        full_errors, gate_errors, tail_errors, tail_lengths = [], [], [], []
+        inst_freq = make_waveform(kind)[2]
+        start = edge_sample(kind)
+        for _ in range(trials):
+            data = radar_scene(rng, positions, 100e-9, waveform=kind)
+            full_errors.append(full_pulse_doa(data, positions) - AZ_SOURCE)
+            gate_errors.append(leading_window_doa(data, 100, positions,
+                                                  start_sample=start,
+                                                  inst_freq=inst_freq)
+                               - AZ_SOURCE)
+            pulse_count = data.shape[1] - int(round(100e-9 * FS)) - 8
+            segment = data[:, pulse_count:pulse_count + 200, :]
+            vector = dominant_vector(segment.reshape(-1, segment.shape[-1]))
+            tail_errors.append(doa_from_vector(vector, F_CARRIER, positions)
+                               - AZ_DECOY)
+            tail_lengths.append(segment.shape[1] / FS * 1e9)
+        waveform_table[kind] = (float(np.mean(np.abs(full_errors))),
+                                float(np.mean(np.abs(gate_errors))),
+                                float(np.mean(np.abs(tail_errors))),
+                                float(np.mean(tail_lengths)))
+        emit("  %-14s %11.2f deg %11.2f deg %13.1f deg %9.0f ns"
+             % (label, waveform_table[kind][0], waveform_table[kind][1],
+                AZ_DECOY + float(np.mean(tail_errors)), waveform_table[kind][3]))
+    emit("  A phase code has no instantaneous-frequency sweep at all and the")
+    emit("  gate still holds: it measures a direction inside a 100 ns slice, and")
+    emit("  the slice is decoy-free whatever the modulation is. The whole-pulse")
+    emit("  method is wrong for every waveform, because the failure is coherent")
+    emit("  interference, not a property of the modulation.")
+
+    emit("")
+    emit("Study K: residual calibration error, and how long the window must be")
+    emit("  +/-0.5 dB and +/-5 deg per channel (the section 11.3 residual),")
+    emit("  0 dB per sample, delay 100 ns, gate started at the detected edge")
+    emit("  %-12s %9s %14s %11s"
+         % ("waveform", "window", "no cal error", "+cal error"))
+    calibration = {}
+    for kind, label in (("lfm", "LFM 50 MHz"), ("barker13", "Barker-13")):
+        inst_freq = make_waveform(kind)[2]
+        start = edge_sample(kind)
+        for width_ns in (10.0, 20.0, 50.0, 100.0):
+            clean, dirty = [], []
+            width = max(int(round(width_ns * 1e-9 * FS)), 2)
+            for _ in range(max(2 * trials, 8)):
+                data = radar_scene(rng, positions, 100e-9, waveform=kind)
+                clean.append(leading_window_doa(data, width, positions,
+                                                start_sample=start,
+                                                inst_freq=inst_freq) - AZ_SOURCE)
+                errors = channel_error(rng, positions.shape[0])
+                data = radar_scene(rng, positions, 100e-9, waveform=kind,
+                                   error_vector=errors)
+                dirty.append(leading_window_doa(data, width, positions,
+                                                start_sample=start,
+                                                inst_freq=inst_freq) - AZ_SOURCE)
+            calibration[(kind, width_ns)] = (
+                float(np.sqrt(np.mean(np.square(clean)))),
+                float(np.sqrt(np.mean(np.square(dirty)))))
+            emit("  %-12s %7.0f ns %9.2f deg %11.2f deg"
+                 % (label, width_ns, calibration[(kind, width_ns)][0],
+                    calibration[(kind, width_ns)][1]))
+    cal_worst = max(calibration[(kind, w)][1] for kind in ("lfm", "barker13")
+                    for w in (50.0, 100.0))
+    floor = float(np.mean([calibration[(kind, w)][1]
+                           for kind in ("lfm", "barker13")
+                           for w in (50.0, 100.0)]))
+    emit("  Read the two columns together: without calibration the gate is a")
+    emit("  noise-limited estimate (0.1-0.9 deg here), and the +/-0.5 dB / +/-5 deg")
+    emit("  residual puts a bias floor of about %.1f deg on top -- the same order"
+         % floor)
+    emit("  as the 0.79 deg that 0.5 mm of geometry error costs in section 11.3.")
+    emit("  So the gate measures the radar correctly and calibration, not the")
+    emit("  decoy, is what remains between it and the 0.5 deg class.")
+
+    # ------------------------------------------------- proposed G7 criteria
+    emit("")
+    emit("Study L: the numbers a hardware gate (G7) would have to reproduce")
+    emit("  criterion                                        threshold    measured")
+    criteria = (
+        ("leading-edge DOA error", 1.5,
+         max(v["half"] for v in gate.values() if isinstance(v, dict)), "deg"),
+        ("whole-pulse DOA error (must be visible)", 5.0,
+         min(v["full"] for v in gate.values() if isinstance(v, dict)), "deg"),
+        ("edge jitter +/-2 ns", 1.5, gate["jitter"], "deg"),
+        ("Doppler pull-off 1 MHz", 1.5, doppler_table[1e6][1], "deg"),
+        ("tail DOA error", 3.0,
+         max(waveform_table[k][2] for k in waveform_table), "deg"),
+        ("gate under the worst waveform", 1.5,
+         max(waveform_table[k][1] for k in waveform_table), "deg"),
+        ("gate at 100 ns with cal residual", 3.0, cal_worst, "deg"),
+    )
+    for label, limit, value, unit in criteria:
+        passed = value < limit if "must be visible" not in label else value > limit
+        emit("  %-46s %6.1f %s  %6.2f %s  %s"
+             % (label, limit, "max" if "must be visible" not in label else "min",
+                value, unit, "PASS" if passed else "FAIL"))
+    emit("  These are the acceptance numbers for gate G7 in GATES_RUNBOOK.md;")
+    emit("  they are host measurements on this repository's models, and G7 is")
+    emit("  where they have to survive a board, a delay line and a rotator.")
+
     # ------------------------------------------------------------- verdict
     emit("")
     emit("VERDICT")
@@ -457,6 +756,31 @@ def main() -> int:
              % (AZ_DECOY, tail[100.0][0]))
     else:
         failures.append("tail does not give the decoy direction")
+    if all(waveform_table[k][1] < 1.5 for k in waveform_table):
+        emit("  [PASS] the gate holds under every waveform: worst %.2f deg"
+             % max(waveform_table[k][1] for k in waveform_table))
+        emit("         (LFM %.2f, soft-edged LFM %.2f, tan-FM %.2f, Barker %.2f)."
+             % (waveform_table["lfm"][1], waveform_table["lfm_soft"][1],
+                waveform_table["nlfm"][1], waveform_table["barker13"][1]))
+    else:
+        failures.append("gate error exceeds 1.5 deg for some waveform")
+    if all(waveform_table[k][2] < 3.0 for k in waveform_table):
+        emit("  [PASS] the tail gives the decoy direction under every waveform")
+        emit("         (worst %.1f deg)." % max(waveform_table[k][2]
+                                              for k in waveform_table))
+    else:
+        failures.append("tail direction is worse than 3 deg for some waveform")
+    cal_worst = max(calibration[(kind, w)][1] for kind in ("lfm", "barker13")
+                    for w in (50.0, 100.0))
+    if cal_worst < 3.0:
+        emit("  [PASS] with the +/-0.5 dB / +/-5 deg residual the gate stays under")
+        emit("         3 deg at 50 and 100 ns (worst %.2f deg); a 10 ns window is"
+             % cal_worst)
+        emit("         noise-limited at %.1f deg, which is a dwell choice, not a"
+             % max(calibration[(kind, 10.0)][1] for kind in ("lfm", "barker13")))
+        emit("         limit of the method.")
+    else:
+        failures.append("calibration residual breaks the gate")
     if delay_fed[(20e6, 0.5)] >= 0.75 and delay_fed[(1e6, 0.5)] < 0.5:
         emit("  [PASS] with the delay supplied, 10 bins resolve the pair (%.0f%%)"
              % (100.0 * delay_fed[(20e6, 0.5)]))

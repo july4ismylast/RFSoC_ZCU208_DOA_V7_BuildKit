@@ -575,6 +575,8 @@ Integration itself is G4: `step08` … `step11`, unrun.
 | G4 BD integration, validate, timing | `step08`…`step11` | **NOT RUN** |
 | G5 RF loopback: measured phase vs known delay, sign and offset | HIL | **NOT RUN** |
 | G6 calibrated array, chamber/field accuracy | HIL/chamber | **NOT RUN** |
+| G7a decoy discrimination, host criteria (§13.7) | `make radar-decoy` (study L table, `RESULT=PASS`) | **PASS** (models only) |
+| G7b decoy discrimination on hardware: radar + repeater + delay line | `scripts/radar_decoys.py --replay` on a captured record, [`GATES_RUNBOOK.md`](GATES_RUNBOOK.md) §G7 | **NOT RUN** |
 
 Until G4–G6 exist, the only accuracy numbers this project may quote are the
 simulated ones in §6, labelled as simulated.
@@ -1088,6 +1090,10 @@ table below, needs no coherence model, and even separates the co-located
 zero-delay decoy that §13.5 calls impossible on this hardware. The rungs below
 are what remains for a continuous emitter.
 
+The algorithms, their block diagrams and every result in one place:
+[`docs/DECOY_DISCRIMINATION.md`](docs/DECOY_DISCRIMINATION.md) (flow diagram in
+[`docs/decoy-flow.mmd`](docs/decoy-flow.mmd)).
+
 The answer is a ladder of discriminators, cheapest first. Each rung below has a
 number measured in this repository
 (`scripts/decoy_discrimination.py` →
@@ -1381,6 +1387,57 @@ makes the ML a deterministic evaluation instead of a search. It does not rescue
 already gives the correct direction for a 1 MHz radar too, because the gate uses
 time, not bandwidth.
 
+**It does not depend on the waveform.** The gate needs a decoy-free *time slice*,
+not a particular modulation (1 µs pulses, W = 100 ns, 0 dB per sample, 8 trials,
+azimuth error in degrees, tail against a decoy at 40°):
+
+| waveform | whole pulse | gate | tail DOA | tail length |
+|---|---|---|---|---|
+| LFM 50 MHz | 12.28 | 0.39 | 40.0° | 100 ns |
+| LFM with a 20 ns raised-cosine edge | 12.32 | 0.37 | 40.0° | 100 ns |
+| tan-FM (non-linear chirp) | 12.66 | 0.12 | 40.0° | 100 ns |
+| Barker-13 phase code | 7.80 | 0.24 | 40.0° | 100 ns |
+
+A phase code has no instantaneous-frequency sweep at all and the gate still
+holds; the whole-pulse method is wrong for every one of the four, because the
+failure is coherent interference, not a property of the modulation.
+
+**Calibration residual, and the window it allows.** With ±0.5 dB and ±5° per
+channel (the §11.3 residual), 0 dB per sample, 16 trials:
+
+| waveform | window | no calibration error | with residual |
+|---|---|---|---|
+| LFM | 10 ns | 0.91° | 3.20° |
+| LFM | 20 ns | 0.53° | 2.03° |
+| LFM | 50 ns | 0.34° | 1.84° |
+| LFM | 100 ns | 0.20° | 1.61° |
+| Barker-13 | 100 ns | 0.16° | 2.29° |
+
+The residual is a **bias floor of about 1.9°**, the same order as the 0.79° that
+0.5 mm of geometry error costs (§11.3). The gate measures the radar correctly;
+calibration, not the decoy, is what remains between it and the 0.5° class. A
+10 ns window is noise-limited at ~3°, which is a dwell choice, not a limit of the
+method.
+
+**The acceptance numbers for the hardware gate (G7).** These are studies L of
+[`radar_decoys.txt`](docs/evidence/2026-11-06-phase-interf/radar_decoys.txt) and
+they are repeated verbatim in [`GATES_RUNBOOK.md`](GATES_RUNBOOK.md) §G7:
+
+| criterion | threshold | measured here |
+|---|---|---|
+| leading-edge DOA error | < 1.5° | 0.09–0.79° |
+| whole-pulse DOA error (must be visible) | > 5° | 7.8–15.8° |
+| edge jitter ±2 ns | < 1.5° | 0.22° |
+| Doppler pull-off 1 MHz | < 1.5° | 0.32° |
+| tail DOA error | < 3° | 0.41–0.67° |
+| gate under the worst waveform | < 1.5° | 0.39° |
+| gate at 100 ns with the calibration residual | < 3° | 2.29° |
+
+G7a (this table, host) is **PASS**. G7b — the same numbers on a board with a
+radar emulator, a repeater and a switched delay line — is **NOT RUN**, and
+`scripts/radar_decoys.py --replay` is the post-processing it will use on the
+captured record.
+
 **Where this fails, stated plainly.**
 
 * A **continuous-wave** source has no leading edge and no tail. §13.1–13.5 are
@@ -1408,6 +1465,8 @@ time, not bandwidth.
 | `scripts/compare_wpi_vs_music.py` | §10: interferometry vs wideband 2D MUSIC/ISSM, manifold-rank result, calibration and geometry sensitivity |
 | `scripts/compare_wideband_estimators.py` | §11: spacing rule for a square 2×2, five estimators over the full 2–4 GHz band, ambiguity/geometry/wrap studies |
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
+| `docs/DECOY_DISCRIMINATION.md` | §13 in one place: every algorithm with its block diagram, pseudocode, measured table and failure case, plus the G7 acceptance numbers |
+| `docs/decoy-flow.mmd` | the master runtime flow as a Mermaid diagram |
 | `scripts/radar_decoys.py` | §13.7: the radar case — leading-edge gate vs whole-pulse DOA, window length vs SNR, the decoy's tail, Doppler pull-off, and the delay the edge hands the two-path ML |
 | `scripts/decoy_discrimination.py` | §13: one protected emitter behind decoys — carrier/angle/coherence discriminators, the cepstrum delay alarm, and the joint delay+angle ML that recovers both directions |
 | `scripts/narrowband_targets.py` | §12.4: eight 1–50 MHz targets at different carriers on the shipped 2×2 — detection, accuracy vs bandwidth and dwell, the co-channel failure, and the dwell the two accuracy classes need |

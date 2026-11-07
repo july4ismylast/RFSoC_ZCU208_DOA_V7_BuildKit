@@ -1,5 +1,5 @@
 # the protected source is a radar: the first arrival is the answer
-# generated 2026-11-07T08:54:31Z
+# generated 2026-11-07T09:32:00Z
 # script: scripts/radar_decoys.py (python3 + numpy only)
 # source: radar at 2.500 GHz, az +10 deg, LFM 50 MHz over 1 us, 2 GS/s
 # decoy: repeater copy at az +40 deg, equal power, 64 pulses per scene
@@ -22,10 +22,10 @@ Study G0: the ordering is geometry, not a signal property
 Study G: DOA from the leading edge versus DOA from the whole pulse
   coherent repeater, equal power, 30 deg away, 0 dB per-sample SNR
   delay       whole pulse   gate W=tau/2     gate W=tau   gate W=2*tau
-  20 ns            14.07 deg          0.79 deg          0.44 deg          9.15 deg
-  50 ns            15.78 deg          0.39 deg          0.22 deg          9.55 deg
-  100 ns           12.28 deg          0.46 deg          0.29 deg          9.23 deg
-  200 ns           15.48 deg          0.18 deg          0.09 deg          9.18 deg
+  20 ns            14.08 deg          0.79 deg          0.41 deg          9.14 deg
+  50 ns            15.76 deg          0.40 deg          0.22 deg          9.52 deg
+  100 ns           12.28 deg          0.47 deg          0.29 deg          9.22 deg
+  200 ns           15.49 deg          0.16 deg          0.09 deg          9.17 deg
   The whole-pulse number is the section 13 failure: two coherent paths
   in one bin pull the DOA several degrees off. The gate is correct to
   a fraction of a degree while it stays inside the dead time the decoy
@@ -37,9 +37,9 @@ Study G: DOA from the leading edge versus DOA from the whole pulse
 Study G2: how much window is enough?  delay 100 ns, so W <= 200 samples
   per-sample SNR, azimuth RMSE in degrees
   SNR                W=5 ns      10 ns      20 ns      50 ns     100 ns
-  -10 dB              6.61      4.45      2.89      2.20      2.46
-  0 dB                1.56      0.91      0.52      0.49      0.21
-  10 dB               0.47      0.37      0.21      0.20      0.12
+  -10 dB              6.55      4.40      2.89      2.19      2.44
+  0 dB                1.57      0.91      0.52      0.50      0.21
+  10 dB               0.46      0.36      0.21      0.20      0.11
   A 5 ns window is 10 samples: it needs a strong direct path, and it is
   the only window that survives a decoy that is very fast. At 0 dB per
   sample 20 ns is already enough, which is 5x shorter than the 100 ns
@@ -48,9 +48,9 @@ Study G2: how much window is enough?  delay 100 ns, so W <= 200 samples
 Study H: a DRFM that also shifts Doppler, and the tail it leaves
   a 10 us pulse; delay 100 ns; gate W = 100 ns; 0 dB per sample
   doppler       whole pulse  gate W=100 ns       gate error
-  0 kHz              13.08 deg          0.19 deg          0.19 deg
-  100 kHz            13.22 deg          0.36 deg          0.36 deg
-  1000 kHz           14.09 deg          0.33 deg          0.33 deg
+  0 kHz              13.09 deg          0.19 deg          0.19 deg
+  100 kHz            13.22 deg          0.35 deg          0.35 deg
+  1000 kHz           14.09 deg          0.32 deg          0.32 deg
   A velocity pull-off does not touch the leading edge; the whole-pulse
   method is already several degrees wrong and stays that way.
 
@@ -85,13 +85,58 @@ Study I: what the leading-edge delay is worth to the section 13 ML
   cannot do is create frequency diversity: at 1 MHz the whole signal is
   one bin and the pair stays unsolvable on four elements.
 
+Study J: the gate does not care which waveform the radar uses
+  delay 100 ns, W = 100 ns from a 50%-amplitude edge, 0 dB per sample
+  waveform          whole pulse           gate           tail   tail error
+  LFM 50 MHz           12.28 deg        0.39 deg          40.0 deg       100 ns
+  LFM, 20 ns edge       12.32 deg        0.37 deg          40.0 deg       100 ns
+  tan-FM 50 MHz        12.66 deg        0.12 deg          40.0 deg       100 ns
+  Barker-13             7.80 deg        0.24 deg          40.0 deg       100 ns
+  A phase code has no instantaneous-frequency sweep at all and the
+  gate still holds: it measures a direction inside a 100 ns slice, and
+  the slice is decoy-free whatever the modulation is. The whole-pulse
+  method is wrong for every waveform, because the failure is coherent
+  interference, not a property of the modulation.
+
+Study K: residual calibration error, and how long the window must be
+  +/-0.5 dB and +/-5 deg per channel (the section 11.3 residual),
+  0 dB per sample, delay 100 ns, gate started at the detected edge
+  waveform        window   no cal error  +cal error
+  LFM 50 MHz        10 ns      0.91 deg        3.20 deg
+  LFM 50 MHz        20 ns      0.53 deg        2.03 deg
+  LFM 50 MHz        50 ns      0.34 deg        1.84 deg
+  LFM 50 MHz       100 ns      0.20 deg        1.61 deg
+  Barker-13         10 ns      0.82 deg        2.06 deg
+  Barker-13         20 ns      0.77 deg        2.73 deg
+  Barker-13         50 ns      0.36 deg        1.87 deg
+  Barker-13        100 ns      0.16 deg        2.29 deg
+  Read the two columns together: without calibration the gate is a
+  noise-limited estimate (0.1-0.9 deg here), and the +/-0.5 dB / +/-5 deg
+  residual puts a bias floor of about 1.9 deg on top -- the same order
+  as the 0.79 deg that 0.5 mm of geometry error costs in section 11.3.
+  So the gate measures the radar correctly and calibration, not the
+  decoy, is what remains between it and the 0.5 deg class.
+
+Study L: the numbers a hardware gate (G7) would have to reproduce
+  criterion                                        threshold    measured
+  leading-edge DOA error                            1.5 max    0.79 deg  PASS
+  whole-pulse DOA error (must be visible)           5.0 min   12.28 deg  PASS
+  edge jitter +/-2 ns                               1.5 max    0.22 deg  PASS
+  Doppler pull-off 1 MHz                            1.5 max    0.32 deg  PASS
+  tail DOA error                                    3.0 max    0.48 deg  PASS
+  gate under the worst waveform                     1.5 max    0.39 deg  PASS
+  gate at 100 ns with cal residual                  3.0 max    2.29 deg  PASS
+  These are the acceptance numbers for gate G7 in GATES_RUNBOOK.md;
+  they are host measurements on this repository's models, and G7 is
+  where they have to survive a board, a delay line and a rotator.
+
 VERDICT
   A radar transmits, so the decoy must receive first: the repeat is
   always later than the direct path by at least its turnaround. That is
   a physics guarantee, not a heuristic, and it is what this scenario
   adds to section 13.
   The leading edge therefore holds the radar alone, and its DOA is the
-  answer -- 0.79 deg error at 20 ns of window against 14.07 deg for the
+  answer -- 0.79 deg error at 20 ns of window against 14.08 deg for the
   whole-pulse method.
   Shortening the window costs SNR, not truth: 20 ns at 0 dB per sample
   is enough, and the window only has to stay inside the decoy's dead
@@ -116,6 +161,14 @@ VERDICT
   [PASS] 20 ns at 0 dB per sample is enough (RMSE 0.52 deg).
   [PASS] the tail gives the decoy's own direction: 39.6 deg for a
          decoy at 40 deg, over a 100 ns tail.
+  [PASS] the gate holds under every waveform: worst 0.39 deg
+         (LFM 0.39, soft-edged LFM 0.37, tan-FM 0.12, Barker 0.24).
+  [PASS] the tail gives the decoy direction under every waveform
+         (worst 0.5 deg).
+  [PASS] with the +/-0.5 dB / +/-5 deg residual the gate stays under
+         3 deg at 50 and 100 ns (worst 2.29 deg); a 10 ns window is
+         noise-limited at 3.2 deg, which is a dwell choice, not a
+         limit of the method.
   [PASS] with the delay supplied, 10 bins resolve the pair (100%)
          and 1 bin does not (0%), as the flat ML surface predicts.
 

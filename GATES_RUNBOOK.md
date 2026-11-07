@@ -1,8 +1,8 @@
-# Gates G2–G6: what to run, what to look at, how to publish the logs
+# Gates G2–G7: what to run, what to look at, how to publish the logs
 
 Everything in this repository that can be proved without a licence has already
 been run (`make lint`, `make verify-phase-interf`). This page is the operator
-sheet for the rest: gates **G2 … G6** of
+sheet for the rest: gates **G2 … G7** of
 [`V07_PHASE_INTERFEROMETRY.md`](V07_PHASE_INTERFEROMETRY.md) §8, which need
 Vitis HLS 2023.2, Vivado 2023.2, MATLAB, or a board.
 
@@ -17,6 +17,7 @@ gate's, so skipping ahead costs licence hours rather than saving them.
 make lint                     # Tcl/XDC/SV syntax, shell, dry-runs, IP VLNV pins (~5 s)
 make verify-phase-interf      # estimator + resource studies, g++ core and kernel tests (~3 min)
 make compare-estimators       # V07 section 10 and 11 at full trial counts (~6 min)
+make radar-decoy              # V07 section 13.7 gate G7a, host criteria (~3.5 min)
 make status                   # which stages already have stamps
 ```
 
@@ -53,6 +54,9 @@ green in this environment.
 make lint                                  # static checks, ~5 s
 make verify-phase-interf                   # host estimator/kernel checks, ~3 min
 make compare-estimators                    # V07 section 10 + 11 studies, ~6 min
+make decoy-df                              # V07 section 13: decoy discriminators, ~1 min
+make radar-decoy                           # V07 section 13.7: G7a host criteria, ~3.5 min
+make g7-selftest                           # G7 replay path on a synthetic capture, ~2 s
 make matlab-lint                           # optional, needs MISS_HIT
 ```
 
@@ -266,6 +270,90 @@ What it must produce, from `V07` §6 and §10.3:
    angle and the residual against the §6 simulated 0.22°.
 4. **Nothing above may be reported as a 0.5° claim** until items 1–3 are in the
    evidence directory with the raw captures.
+
+
+---
+
+## G7 — decoy discrimination: is the emitter's direction separable from a repeater?
+
+Two halves. **G7a** is host-only and already green; **G7b** needs a board, two
+coherent RF paths and a delay line.
+
+The model, the block diagrams and every measured number behind this gate are in
+[`docs/DECOY_DISCRIMINATION.md`](docs/DECOY_DISCRIMINATION.md). The short version:
+if the protected emitter is a radar, a decoy has to *hear* the pulse before it can
+repeat it, so the repeat arrives at least its turnaround later than the direct
+path (triangle inequality, no signal property involved). The first tens of
+nanoseconds of the pulse therefore carry the radar alone, and the tail after the
+pulse carries the decoy alone.
+
+### G7a — host criteria (PASS)
+
+```bash
+make radar-decoy        # full study -> docs/evidence/.../radar_decoys.txt
+make g7-selftest        # the replay path G7b uses, on a synthetic capture (~2 s)
+```
+
+The run ends with `RESULT=PASS` and a criteria table (study L of that report):
+
+| criterion | threshold | measured |
+|---|---|---|
+| leading-edge DOA error | < 1.5° | 0.09–0.79° |
+| whole-pulse DOA error (must be *visible*) | > 5° | 7.8–15.8° |
+| edge jitter ±2 ns | < 1.5° | 0.22° |
+| Doppler pull-off 1 MHz | < 1.5° | 0.32° |
+| tail DOA error | < 3° | 0.41–0.67° |
+| gate under the worst waveform (LFM, soft edge, tan-FM, Barker-13) | < 1.5° | 0.39° |
+| gate at 100 ns with ±0.5 dB / ±5° calibration residual | < 3° | 2.29° |
+
+Passing G7a proves the *models and the post-processing*; it proves nothing about
+silicon. That is G7b.
+
+### G7b — on hardware (NOT RUN)
+
+**Prerequisites**
+
+| Item | Why |
+|---|---|
+| bitstream from G4 | the capture has to come from the real 2 GS/s path, not from a file |
+| two coherent RF paths | radar emulator + repeater antenna driven from the same source |
+| switched delay line, 100 ns and 500 ns | the decoy's turnaround is the quantity the gate measures |
+| calibrated array and rotator (G6) | otherwise the 1.5° criterion is a calibration measurement, not a decoy measurement |
+| direct path ≥ **+10 dB per sample** | the edge detector is the only stage that must see the radar inside a single sample; every other stage is measured down to 0 dB |
+
+**Steps**
+
+1. **Control, no decoy.** Radar emulator at boresight (or a known angle), 1 µs LFM
+   over 50 MHz, PRI 20 µs. Capture 64 pulses of all four channels at 2 GS/s into
+   `build/output/g7_capture_direct.npy` (shape `(pulses, samples, 4)`, complex
+   baseband). Run:
+   ```bash
+   python3 scripts/radar_decoys.py --replay build/output/g7_capture_direct.npy \
+       --pulse-ns 1000 --delay-ns 100 --truth-az <angle>
+   ```
+   Expect leading edge **and** whole pulse within 1.5° of truth: with one path
+   there is nothing to pull the answer.
+2. **Add the repeater.** Second antenna at a known angle (≥ 30° away), delay line
+   set to 100 ns, equal power. Capture `g7_capture_repeat_100ns.npy`. Run the same
+   replay with `--decoy-az <angle2> --delay-ns 100`.
+   * leading-edge DOA within **1.5°** of the radar's angle;
+   * whole-pulse DOA **more than 5°** off (this is the failure the gate must
+     reproduce — if it is not off, the repeater is not coherent with the radar and
+     the test is not testing anything);
+   * tail DOA within **3°** of the decoy's angle;
+   * tail length equal to the delay line within **±10 ns**.
+3. **Repeat with the 500 ns line**, then at three radar angles across ±40°.
+4. **Publish** the replay outputs, the four captures, the calibration file and the
+   delay-line setting with `make push-gate-logs`.
+
+**What fails, and what it means**
+
+| Symptom | Meaning |
+|---|---|
+| control capture already > 1.5° off | calibration (G6) is not done; the gate cannot separate decoy error from calibration error |
+| whole-pulse DOA *not* pulled off in step 2 | the repeater is not coherent (independent jammer, not DRFM) — answer stands, but it is the §4 case, not §7 |
+| tail DOA wrong while the gate is right | the pulse length or the edge time is off by more than the 25 ns margin the replay uses |
+| edge not found (`no pulse found`) | direct path below ~+10 dB per sample, or the capture has no PRI gap to estimate the noise floor from |
 
 ---
 

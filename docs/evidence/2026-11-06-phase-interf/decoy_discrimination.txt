@@ -1,5 +1,5 @@
 # one protected emitter at 2.5 GHz behind decoys
-# generated 2026-11-07T08:50:42Z
+# generated 2026-11-07T09:29:50Z
 # script: scripts/decoy_discrimination.py (python3 + numpy only)
 # source: 2.500 GHz, az +10 deg, el 0, 20 dB/bin, 64 snapshots per bin
 # array: 2x2 at 30 mm unless stated; seed=20261107, trials=16
@@ -72,15 +72,15 @@ Study E: can the pair be resolved anyway?  Yes -- using the delay
   1.02x                  0%  19/25 deg
   1.05x                  0%  14/31 deg
   1.10x                  0%  20/24 deg
-  The delay must be right to a small fraction of 1/bandwidth: the
-  relative phase across the band fixes the topology and even 1% of
-  delay error (1 ns) loses it, so a supplied delay has to be right to
-  about 1 ns -- 1/20 of the 20 ns delay resolution of a 50 MHz band.
-  That is why the usable form is Study F, which optimises the delay
-  itself instead of trusting a single cepstrum bin.
-  The delay is what makes it solvable: it fixes the relative phase
-  between the two spatial signatures in every bin, which is exactly
-  the information four elements are missing.
+  The tolerance is about 1/(10*bandwidth): 0.5 ns at 50 MHz, a few ns
+  at 20 MHz. A radar hands you exactly that from the leading edge of
+  its own pulse (V07 section 13.7); for a continuous emitter the blind
+  search of Study F is the weaker fallback.
+  What the delay supplies is not a phase but a slope: the relative
+  phase between the two paths changes by 2*pi*tau from one edge of the
+  band to the other, and that is the dimension four elements do not
+  have. The absolute phase is unknown (the decoy's own chain adds it)
+  and the fit leaves it free.
 
 Study F: the same search with NO delay supplied
   delay and both directions searched jointly -- 31 coarse + 11 fine

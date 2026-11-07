@@ -56,7 +56,7 @@ help:
 	@echo "Multi-source study:  make multisource-df"
 	@echo "1-50 MHz 8-target:   make narrowband-targets"
 	@echo "Decoy discrimination:make decoy-df"
-	@echo "Radar + decoy:       make radar-decoy"
+	@echo "Radar + decoy:       make radar-decoy   (gate G7a: make g7-selftest)"
 	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
@@ -237,7 +237,7 @@ matlab-lint:
 # result that decides how many emitters this array can represent at all.
 # Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
 # that decides ADOPT/REJECT for the review's frequency-domain chain.
-.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest
 compare-estimators:
 	@python3 scripts/compare_wpi_vs_music.py
 	@python3 scripts/compare_wideband_estimators.py
@@ -269,6 +269,11 @@ decoy-df:
 radar-decoy:
 	@python3 scripts/radar_decoys.py
 
+# Gate G7 post-processing, on a synthetic capture: proves the replay path that
+# G7b will run on hardware data, without hardware. ~2 s.
+g7-selftest:
+	@python3 scripts/radar_decoys.py --selftest
+
 verify-phase-interf:
 	@python3 scripts/phase_interf_verify.py
 	@python3 scripts/estimate_wideband_dsp_resources.py
@@ -277,6 +282,7 @@ verify-phase-interf:
 	@python3 scripts/multisource_capacity.py --quick
 	@python3 scripts/narrowband_targets.py --quick
 	@python3 scripts/decoy_discrimination.py --quick
+	@python3 scripts/radar_decoys.py --selftest
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
 	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
 

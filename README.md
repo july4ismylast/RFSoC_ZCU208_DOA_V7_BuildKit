@@ -88,6 +88,13 @@ on a 2 GHz emitter and 0.25° on a 50 MHz one, while the review's
 unwrap-plus-intercept variant reaches 0.235° and loses every narrowband frame.
 Estimator: `make compare-estimators`. Geometry, not the estimator, sets 0.5°.
 
+**Decoys.** One protected emitter behind a set of decoys is answered twice, for
+a continuous emitter and for a radar; every algorithm, block diagram, measured
+table and failure case is in
+[`docs/DECOY_DISCRIMINATION.md`](docs/DECOY_DISCRIMINATION.md), and the hardware
+acceptance criteria are gate **G7** in
+[`GATES_RUNBOOK.md`](GATES_RUNBOOK.md).
+
 For **multiple emitters** the answer depends on whether they share the band
 (V07 §12). Eight *co-channel* emitters over 2 GHz need 36 elements: the 2×2 finds
 1.2 of 8, a 4×4 at 60 mm finds 7, a 6×6 at 75 mm finds all eight at 0.295°
@@ -125,7 +132,10 @@ is also what the two-path ML needs: with it, 5–50 MHz emitters resolve both
 directions exactly, without the blind search that only works at 25–100%. A
 co-located, zero-delay decoy — unsolvable for a continuous emitter — is
 separated here in *time*; a continuous-wave source has no leading edge and falls
-back to the rungs above.
+back to the rungs above. The gate holds for LFM, soft-edged LFM, tan-FM and
+Barker-13 codes alike (0.12–0.39° against 7.8–12.7° for the whole-pulse method),
+and with the ±0.5 dB / ±5° calibration residual of §11.3 it lands at 1.6–2.3° —
+so calibration, not the decoy, is what stands between it and the 0.5° class.
 
 ## Accuracy statement
 
