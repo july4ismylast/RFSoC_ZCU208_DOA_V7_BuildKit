@@ -73,8 +73,7 @@ help:
 	@echo "Create that .slx:    make mc-scratch   (from scratch, no GUI)"
 	@echo "AMD 2023.2 example:  make mc-example   (reference only, not committed)"
 	@echo "Blocks not found:    make mc-libs      (where the libraries are)"
-	@echo "Run MATLAB code:     make mc-eval CODE=\"mc_gui_build\""
-	@echo "Exact commands:      make mc-shell-help   (paths filled in)"
+	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
 	@echo "GUI that builds:     make mc-gui-build   (opens, builds, exports)"
@@ -220,23 +219,15 @@ mc-gui-build:
 mc-eval:
 	@./scripts/mc_eval.sh "$(CODE)"
 
-# The literal commands for THIS checkout -- no placeholders, nothing to edit.
+# Two commands, literal paths, nothing to edit.
 mc-shell-help:
-	@echo "Copy-paste commands for this checkout (paths already filled in):"
+	@echo "1. Build the channelizer IP (opens Model Composer, builds, exports):"
 	@echo
-	@echo "  Model Composer GUI, helpers already on the MATLAB path:"
-	@echo "    $(MODEL_COMPOSER) -sd $(CURDIR)/build/mc_startup"
-	@echo "    (make mc-gui does exactly this; make mc-gui-build also runs the build)"
+	@echo "     make mc-gui-build"
 	@echo
-	@echo "  Batch, no GUI, same helpers (R2022b, not the matlab on PATH):"
-	@echo "    $(MATLAB_2022B) -batch \"addpath('$(CURDIR)/ip/model_composer/channelizer'); mc_gui_build\""
-	@echo "    make mc-eval CODE=\"mc_gui_build\"          (same thing, path filled in)"
+	@echo "2. If a MATLAB window is already open, paste this one line:"
 	@echo
-	@echo "  A script file (a .m that is not a function):"
-	@echo "    $(MATLAB_2022B) -batch \"run('/abs/path/to/your_script.m')\""
-	@echo
-	@echo "  Just the path, if you are already in a MATLAB window:"
-	@echo "    addpath('$(CURDIR)/ip/model_composer/channelizer')"
+	@echo "     addpath('$(CURDIR)/ip/model_composer/channelizer'); mc_gui_build"
 
 # Why is a Model Composer block missing?  Report where the libraries are.
 mc-libs:
