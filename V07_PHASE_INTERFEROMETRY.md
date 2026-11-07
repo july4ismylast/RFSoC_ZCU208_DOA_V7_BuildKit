@@ -36,6 +36,7 @@ by a script in this repository, or explicitly marked unproven.
 | A **hopping** emitter, 1–100 MHz, 2.7–3.5 GHz | **ADOPT track-and-combine, not fingerprint-first** — the hop range is alias-free (measured 0.06° at 3.5 GHz / 70°, first failure 6 GHz); one 1 MHz hop gives 0.29° at 64 snapshots; combining 64 hops through-origin gives 0.078° (8.5×); association by prediction gate plus the bandwidth invariant is worth 28 → 0 wrong hops, and the invariant itself is quantised by the bin width (1 and 2 MHz are identical) | §14 |
 | **Clustering** several emitters in one cube | **ADOPT label, do not mask** — clusters form on (direction, bandwidth) and are linked over frames; a carrier-only link recovers 1 of 3 emitters and fragments the hopper into 20.7 tracks, the pair recovers 3 of 3 at purity 1.00, and cadence separates two emitters that share both (2.3 → 3.0 of 3, purity 0.70 → 1.00). Masking is measured to be unavailable: the notch deletes the co-channel emitter (kept 0 %), the null keeps it but destroys its direction (82–120°, because a 2×2 at elevation 0 has two channels), and predicting the next hop is worth 0.20 % | §15 |
 | **What you cluster on**, when bandwidth and direction both change | **ADOPT one model per feature, chosen by the ratio of per-frame change to measurement error** — a smoothly drifting bandwidth breaks a fixed cost (38–50 % kept) and a rate restores 100 %; a bandwidth that *jumps* cannot be a position key (a ±1.5 bin gate keeps a newcomer but shreds the hopper 50 %, ±4 bins does the reverse) so it is either dropped or replaced by its cadence, which separates 100 % of the time and only after a few frames; a direction that jumps is not fast motion (the track splits 50/50 at every gate, by design) and a gate wide enough to admit it costs 0–25 % confusion with a neighbour at the landing point; with both features drifting, only modelling both keeps the track (100 % against 38–50 %) | §17 |
+| **Modulation** as the one constant feature (AMC) | **ADOPT as a mode term, never as a key** — a label is constant within a burst and jumps at a reconfiguration, so its error is a probability, not a degree: 100 % accuracy at 10 dB with 64 symbols, chance at 0 dB (every burst decided as 16QAM), 0 % for BPSK/QPSK once a 1e-3/sample carrier remains, and a 3-frame vote that buys stickiness (0.26 → 0.18 flips) rather than truth. As a cost term it separates emitters that differ only in modulation (covered 1.42 → 3.00 of 3, purity 0.75 → 1.00) and does nothing for emitters that share it | §18 |
 | A **moving** target | **ADOPT predict, don't hold** — direction stops being a key and becomes a state: holding the last direction keeps 98 % of a 0.5°/frame mover and 73 % at 1°/frame but shatters at 8–16°/frame (6.6–7.0 pieces), prediction with an acquisition gate holds 89–100 % to 16°/frame, and after a 10°/frame manoeuvre breaks the track (2.1 pieces) identity is re-established from bandwidth and cadence with 100 % of detections staying put | §16 |
 | 4.096 GSPS converters, 3.072 GHz NCO, 125 kHz bins | **CORRECT** — the pinned MTS base runs 4.000 GSPS with a 3.000 GHz centre; bins are 122.07 kHz at 16K, 1.953 MHz at 1024 bands | §3 |
 | "1× FFT TDM at 4× clock" | **REJECT** — needs a 1 GSPS fabric clock; the V06 timing gate is 4.0 ns (250 MHz) | §3.3 |
@@ -2036,6 +2037,7 @@ kinds of feature, and each demands a different treatment:
 | direction | 0–16°/frame | rate: predict `az + rate` | §16, §17.2 |
 | bandwidth | 0–2 bins/frame, or jumps between modes | rate, or out |
 | carrier | up to 800 MHz per hop | **pattern only** (cadence) | §15.2 |
+| modulation (AMC) | never, inside a burst; by a jump on reconfiguration | **mode: label + vote** | §18 |
 | level / coherence | several dB per hop | **never used** |
 
 `scripts/feature_models.py` →
@@ -2167,7 +2169,197 @@ track wins is decided by noise. No gate, bitstream or hardware claim.
 
 ---
 
-## 18. Files
+## 18. What you cluster on when the *modulation* is the constant
+
+§17 judged every feature by one ratio: how far it moves in a frame against how
+well it is measured. Modulation breaks the shape of that question. It does not
+drift and it does not jitter — inside a burst it is **constant**, and it changes
+only when the emitter reconfigures. So its "change per frame" is zero and its
+error is not in degrees at all: it is a **probability**, the accuracy of an
+automatic modulation classifier (AMC). That makes modulation a **mode**, and it
+is the one feature in this document whose measurement needs a carrier-recovered
+burst of its own.
+
+Measured by `scripts/modulation_clustering.py` →
+[`modulation_clusters.txt`](docs/evidence/2026-11-06-phase-interf/modulation_clusters.txt)
+(`make modulation-clusters`, 6 s, seed 20261111, 8 draws per cell).
+
+```
+ per detection                     per track
+ ┌──────────────┐   ┌───────────┐   ┌─────────────┐   ┌──────────────────┐
+ │ burst from   │──▶│ 6 features│──▶│ label +     │──▶│ 3-frame majority │
+ │ the bin      │   │ cumulants │   │ margin      │   │ vote (hysteresis)│
+ └──────────────┘   └───────────┘   └─────────────┘   └────────┬─────────┘
+                                                               │ label
+        ┌──────────────────────────────────────────────────────┘
+        ▼
+  cost = (direction/4°)² + (bandwidth/1.5)² + [label ≠ track's label] × 1.0
+                                              └── a flat penalty: a mode is not
+                                                  a distance, it is a match
+```
+
+The classifier is deliberately ordinary: six features (`|C40|`, `C42`,
+`σ_ap`, `γ_max`, phase-increment spread, phase-increment spike fraction) and a
+nearest class mean. Five classes: BPSK, QPSK, 8PSK, 16QAM, 4FSK. The point is
+what a label *is worth* to clustering, not the state of the art.
+
+### 18.1 The training set matters more than the feature set
+
+Training at one SNR and testing below it is the classic AMC mistake, and it is
+cheap to measure. Mean accuracy over the five classes:
+
+| trained on | 0 dB | 5 dB | 10 dB |
+|---|---|---|---|
+| 20 dB only | 20 % | 20 % | 80 % |
+| 0–25 dB | 20 % | **72 %** | **100 %** |
+
+At 5 dB a single-SNR training set collapses to chance. Everything below uses the
+0–25 dB training set.
+
+### 18.2 Accuracy against SNR, and the carrier it needs
+
+1024 samples (256 symbols), per-sample SNR:
+
+| mod | 0 dB | 5 dB | 10 dB | 20 dB |
+|---|---|---|---|---|
+| BPSK | 0 % | 0 % | 100 % | 100 % |
+| QPSK | 0 % | 75 % | 100 % | 100 % |
+| 8PSK | 0 % | 88 % | 100 % | 100 % |
+| 16QAM | 100 % | 100 % | 100 % | 100 % |
+| 4FSK | 0 % | 100 % | 100 % | 100 % |
+
+The 16QAM column at 0 dB is not success. At 0 dB **every** class is decided as
+16QAM, which is what the confusion matrix shows:
+
+| truth \ decided | BPSK | QPSK | 8PSK | 16QAM | 4FSK |
+|---|---|---|---|---|---|
+| BPSK | 0 % | 0 % | 0 % | **100 %** | 0 % |
+| QPSK | 0 % | 0 % | 0 % | **100 %** | 0 % |
+| 8PSK | 0 % | 0 % | 0 % | **100 %** | 0 % |
+| 16QAM | 0 % | 0 % | 0 % | **100 %** | 0 % |
+| 4FSK | 0 % | 0 % | 0 % | **100 %** | 0 % |
+
+One column means the label carries no information: the data are Gaussian and the
+Gaussian point in feature space is the 16QAM mean. At 0 dB the label is not a
+weak measurement, it is an *absent* one — and a cost term fed by it would be
+noise pretending to be a feature.
+
+A residual carrier is the failure modulation has and direction does not. The
+cumulants rotate with the carrier, so `|C40|` — the feature that separates BPSK
+from QPSK — vanishes:
+
+| mod | offset 0 | 1e-4 / sample | 1e-3 / sample |
+|---|---|---|---|
+| BPSK | 100 % | 100 % | **0 %** |
+| QPSK | 100 % | 100 % | **0 %** |
+| 8PSK | 100 % | 100 % | 100 % |
+| 16QAM | 100 % | 100 % | 88 % |
+| 4FSK | 100 % | 100 % | 100 % |
+
+So AMC needs carrier recovery to about 1e-4 of the sample rate. Direction and
+bandwidth need none: they are measured from the same cube, per bin.
+
+### 18.3 How long a burst?
+
+At 10 dB, accuracy against the number of symbols in the burst:
+
+| mod | 8 | 16 | 32 | 64 | 128 |
+|---|---|---|---|---|---|
+| BPSK | 62 % | 88 % | 100 % | 100 % | 100 % |
+| QPSK | 75 % | 88 % | 100 % | 100 % | 100 % |
+| 8PSK | 75 % | 100 % | 100 % | 100 % | 100 % |
+| 16QAM | 25 % | 62 % | 50 % | 100 % | 100 % |
+| 4FSK | 100 % | 100 % | 100 % | 100 % | 100 % |
+
+Sixty-four symbols (256 samples) is enough for all five at 10 dB. Eight symbols
+is not, and 16QAM is the one that needs the longest — it is the class with the
+closest neighbours.
+
+### 18.4 The label flickers: a vote buys stability, not truth
+
+A constant emitter over eight frames, at 5 dB. "flips" is the fraction of frames
+in which the emitted label changes:
+
+| SNR | one frame: accuracy, flips | 3-frame vote: accuracy, flips |
+|---|---|---|
+| 5 dB | 70 %, 0.26 | 77 %, **0.18** |
+| 10 dB | 100 %, 0.00 | 100 %, 0.00 |
+| 20 dB | 99 %, 0.01 | 100 %, 0.00 |
+
+The vote cannot repair a *biased* classifier — a class that is always decided as
+its neighbour stays there — but it removes the random flips, and a track needs a
+sticky label far more than a fresh one.
+
+### 18.5 What the label is worth to clustering
+
+Three emitters. Number 1 sits alone at +8° with 6 bins; numbers 2 and 3 sit at
+**the same direction (−12°) with the same bandwidth (5 bins)**, and differ only in
+modulation. §15's rule (direction + bandwidth) cannot separate 2 and 3 at all.
+`covered` counts emitters with a track that is ≥ 75 % pure; the detections are
+shuffled inside every frame, because their order is not a feature:
+
+| SNR | rule | tracks | covered of 3 | purity |
+|---|---|---|---|---|
+| 20 dB | direction + bandwidth | 3.08 | 1.42 | 0.75 |
+| 20 dB | + label | 3.00 | **3.00** | **1.00** |
+| 20 dB | + label, 3-frame vote | 3.00 | **3.00** | 1.00 |
+| 10 dB | direction + bandwidth | 3.00 | 1.42 | 0.75 |
+| 10 dB | + label | 3.04 | **3.00** | **1.00** |
+| 0 dB | direction + bandwidth | 3.00 | 1.67 | 0.77 |
+| 0 dB | + label | 3.00 | 1.92 | 0.79 |
+
+And the limit, which no classifier can escape. Same scene, but all three emitters
+are QPSK:
+
+| SNR | rule | covered of 3 | purity |
+|---|---|---|---|
+| 20 dB | direction + bandwidth | 1.58 | 0.74 |
+| 20 dB | + label | 1.42 | 0.75 |
+
+A perfect classifier gives the two coincident emitters the same label, and a
+match that is always true is not a test. **AMC separates emitters that differ in
+modulation; it does nothing for emitters that share it.**
+
+### 18.6 The verdict
+
+Modulation is a **mode**: constant within a burst, jumping at a reconfiguration,
+measured with a probability rather than a spread. Used as a clustering feature it
+behaves exactly as §17 predicts for a discontinuous feature — it is never a
+position key, it enters the cost as a flat match/no-match term, and it is voted
+over a few frames to make it sticky. Concretely:
+
+1. **Direction and bandwidth first.** They need no carrier recovery, no burst
+   isolation and no training data, and they resolved 3 of 3 emitters in §15.
+2. **Then the label, only where they fail** — two emitters that share both. It
+   adds what they cannot: at 20 dB, 1.42 → 3.00 covered and purity 0.75 → 1.00.
+3. **Never as the only key.** The label is chance at 0 dB (all bursts → one
+   class), it needs a residual carrier below 1e-4, and it needs ~64 symbols.
+4. **It is an identity aid, not an authenticator.** An emitter that switches
+   modulation switches its own label; a decoy that copies the waveform copies the
+   label with it. That is why §13's discrimination is coherence and geometry, not
+   waveform identity.
+
+### 18.7 What to run
+
+```bash
+make modulation-clusters                        # this section, ~6 s
+python3 scripts/modulation_clustering.py --quick  # ~3 s smoke run
+```
+
+**Caveats.** Synthetic I/Q, rectangular pulses, 4 samples/symbol, complex AWGN at
+a stated per-sample SNR, one emitter per burst (no overlap, no multipath, no
+fading, no IQ imbalance, no phase noise). Five modulations only; a real AMC also
+faces 32/64-QAM, APSK, OFDM and shaped pulses, and the confusions there are worse.
+Carrier recovery is *assumed* and its cost is measured only as a residual offset.
+Training and testing share the same generator — no channel mismatch is modelled.
+The feature extractor includes one FFT per burst; its cost in the fabric is not
+estimated here. The clustering study reuses §15's linker with a flat label term
+and 8 frames of 3 emitters, not a full tracker. No gate, bitstream or hardware
+claim.
+
+---
+
+## 19. Files
 
 | File | Role |
 |---|---|
@@ -2179,6 +2371,7 @@ track wins is decided by noise. No gate, bitstream or hardware claim.
 | `scripts/multisource_capacity.py` | §12: how many emitters each array can represent, eight-emitter detection vs elements/aperture/bandwidth, and what the algorithm has to become |
 | `docs/DECOY_DISCRIMINATION.md` | §13 in one place: every algorithm with its block diagram, pseudocode, measured table and failure case, plus the G7 acceptance numbers |
 | `docs/decoy-flow.mmd` | the master runtime flow as a Mermaid diagram |
+| `scripts/modulation_clustering.py` | §18: what you cluster on when the modulation is the constant — AMC accuracy against SNR, training set and burst length, the carrier recovery it needs, the 0 dB failure where the label vanishes, label stability and the vote, two emitters that differ only in modulation, and the same-modulation limit |
 | `scripts/feature_models.py` | §17: what you cluster on — one model per feature, chosen by how it changes: a drifting bandwidth (rate vs fixed vs dropped), a hopping dipper against a newcomer (gate width vs cadence), a direction that jumps (not motion), and both features drifting at once |
 | `scripts/moving_targets.py` | §16: a moving emitter — how far a static-direction association carries it, acquisition-gate width, a manoeuvre that breaks the track, two movers crossing, and the azimuth-vs-frame map |
 | `scripts/target_clustering.py` | §15: clustering in the (frequency, azimuth, time) cube — per-frame features, linking rules, what masking would cost (band mask, notch, null, cancellation, cancellation with gain error), when two emitters are separable at all, and the map itself as text |
@@ -2205,6 +2398,7 @@ make hopping-target                   # section 14, ~10 s
 make target-clusters                  # section 15, ~6 s
 make moving-targets                   # section 16, ~14 s
 make feature-models                   # section 17, ~22 s
+make modulation-clusters              # section 18, ~6 s
 python3 scripts/compare_wideband_estimators.py --quick   # ~1 min smoke run
 make matlab-lint                      # optional parse check, needs pip install miss_hit
 make step05_hls_phase_interf          # needs Vitis HLS 2023.2 (gate G2); see GATES_RUNBOOK.md

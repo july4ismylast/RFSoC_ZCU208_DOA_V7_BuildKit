@@ -1,0 +1,117 @@
+V07 section 18 -- what you cluster on when the modulation is the constant
+==========================================================================
+scripts/modulation_clustering.py  seed 20261111  draws 8
+AMC: 6 features, nearest class mean trained over 0-25 dB, 256 symbols
+(1024 samples); SNR is per sample, complex AWGN.
+
+M0  what does the TRAINING set cost?  (mean accuracy over the five mods)
+  training                    0 dB        5 dB       10 dB
+  trained at 20 dB           20%         20%         80%
+  trained 0-25 dB            20%         72%        100%
+
+M1  does the label survive noise?   (1024-sample burst, accuracy per mod)
+  mod              0 dB       5 dB      10 dB      20 dB
+  BPSK                0%          0%        100%        100%
+  QPSK                0%         75%        100%        100%
+  8PSK                0%         88%        100%        100%
+  16QAM             100%        100%        100%        100%
+  4FSK                0%        100%        100%        100%
+
+M1b is the carrier recovered?   (20 dB, residual offset per sample)
+  mod              0e+00       1e-04       1e-03
+  BPSK              100%        100%          0%
+  QPSK              100%        100%          0%
+  8PSK              100%        100%        100%
+  16QAM             100%        100%         88%
+  4FSK              100%        100%        100%
+
+M2  does a longer burst help?       (10 dB, accuracy against symbols)
+  mod               8       16       32       64      128   symbols
+  BPSK             62%       88%      100%      100%      100%
+  QPSK             75%       88%      100%      100%      100%
+  8PSK             75%      100%      100%      100%      100%
+  16QAM            25%       62%       50%      100%      100%
+  4FSK            100%      100%      100%      100%      100%
+
+M3  which pairs are hopeless?       (0 dB, % in the column's decision)
+  truth        BPSK   QPSK   8PSK  16QAM   4FSK
+  BPSK            0%      0%      0%    100%      0%
+  QPSK            0%      0%      0%    100%      0%
+  8PSK            0%      0%      0%    100%      0%
+  16QAM           0%      0%      0%    100%      0%
+  4FSK            0%      0%      0%    100%      0%
+
+M4  is the label stable over frames?  (constant emitter, k-frame vote)
+  SNR       one frame: accuracy, flips   3-vote: accuracy, flips
+      5 dB                70%,  0.26                 77%,  0.18
+     10 dB               100%,  0.00                100%,  0.00
+     20 dB                99%,  0.01                100%,  0.00
+
+M5  two emitters share direction AND bandwidth, differ only in modulation
+    az 8 and -12 deg, 6 and 5 bins; 8 frames; tracked with and without
+    the label.  covered = emitters with a >=75% pure track (of 3)
+    20 dB, different mod
+    off    tracks  3.08   covered 1.42   purity 0.75
+    mod    tracks  3.00   covered 3.00   purity 1.00
+    vote   tracks  3.00   covered 3.00   purity 1.00
+    20 dB, same mod     
+    off    tracks  3.08   covered 1.58   purity 0.74
+    mod    tracks  3.00   covered 1.42   purity 0.75
+    vote   tracks  3.00   covered 1.42   purity 0.75
+    10 dB, different mod
+    off    tracks  3.00   covered 1.42   purity 0.75
+    mod    tracks  3.04   covered 3.00   purity 1.00
+    vote   tracks  3.00   covered 3.00   purity 1.00
+    10 dB, same mod     
+    off    tracks  3.12   covered 1.92   purity 0.77
+    mod    tracks  3.00   covered 1.50   purity 0.76
+    vote   tracks  3.00   covered 1.58   purity 0.75
+     0 dB, different mod
+    off    tracks  3.00   covered 1.67   purity 0.77
+    mod    tracks  3.00   covered 1.92   purity 0.79
+    vote   tracks  3.04   covered 2.00   purity 0.79
+     0 dB, same mod     
+    off    tracks  3.00   covered 1.75   purity 0.76
+    mod    tracks  3.04   covered 1.58   purity 0.76
+    vote   tracks  3.04   covered 1.33   purity 0.74
+
+M6  the limit: with the SAME modulation a classifier says nothing
+    (the 'same mod' rows above: covered stays where it was, at every SNR,
+    because the label of two emitters is the same label).
+
+VERDICT
+  Modulation is a MODE, not a value. It does not drift, it does not
+  jitter: it *is* a class, and it changes only when the emitter
+  reconfigures. So the rule of V07 17 applies with a different error:
+  the error of a label is a probability, not a degree.
+   - the label is right 100% of frames at 20 dB, 100% at 10 dB and
+     20% at 0 dB -- which is chance for five classes.
+   - a vote cannot fix a biased classifier, only a random one: at 5 dB
+     it moves the accuracy 70% -> 77% and the flips 0.26 -> 0.18 per
+     frame. It buys stability, not truth.
+   - two emitters that share direction and bandwidth and differ only in
+     modulation are separated at 20 dB (covered 3.00 of 3 with the label,
+     1.42 without) and at 10 dB (3.00 against 1.42), and not at 0 dB
+     (1.92 with against 1.67 without).
+   - two emitters with the SAME modulation are never separated by AMC:
+     covered 1.42 of 3 with the label at 20 dB against 1.58 without.
+  So AMC enters the cost as a MODE term with a vote, after direction and
+  bandwidth, and only where they fail. It is an identity aid, not an
+  authenticator: an emitter that switches modulation switches its own
+  label, and a decoy that copies the waveform copies the label with it.
+
+  [PASS] training across SNR beats training at one point
+  [PASS] the four linear modulations are separable at 10 dB
+  [PASS] 4FSK is separable from the linear set at 10 dB
+  [PASS] at 0 dB the label is chance
+  [PASS] 128 symbols are enough at 10 dB
+  [PASS] 8 symbols are not
+  [PASS] the 3-frame vote reduces the label flips
+  [PASS] a residual carrier of 1e-3 rotates the 4th-order cumulant away
+  [PASS] the label separates two coincident emitters at 20 dB
+  [PASS] and at 10 dB
+  [PASS] and does nothing at 0 dB
+  [PASS] the same modulation buys nothing at 20 dB
+  [PASS] tracks stay pure when the label is right
+
+RESULT=PASS

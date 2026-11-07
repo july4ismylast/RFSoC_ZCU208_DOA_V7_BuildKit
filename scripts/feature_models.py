@@ -364,7 +364,7 @@ def main() -> int:
     path = args.out if not args.quick else os.path.join(
         "build", "output", "v07_features_quick.txt")
     rng = np.random.default_rng(args.seed)
-    draws = max(2, args.draws // 3) if args.quick else args.draws
+    draws = max(4, args.draws // 3) if args.quick else args.draws
     lines = []
 
     def emit(text=""):

@@ -179,7 +179,8 @@ def persistence(bin_index, upto, frame_bins):
 
 def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
          bin_scale=1.5, persistence_scale=0.4, gate=1.0, motion=False,
-         az_scale_first=None, bin_motion=False, bin_scale_first=None):
+         az_scale_first=None, bin_motion=False, bin_scale_first=None,
+         mod_weight=0.0, mod_vote=False):
     """Join per-frame clusters into tracks. `rule` says what may close a link.
 
     carrier           frequency only -- what a channel-plan tracker does, and it
@@ -193,7 +194,11 @@ def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
     the rate the track has measured). bin_motion=True does the same for the
     measured bandwidth, for an emitter whose bandwidth is drifting rather than
     fixed. az_scale_first widens the gate for the first two frames of a track,
-    which is what acquisition of a mover needs.
+    which is what acquisition of a mover needs. mod_weight adds a term for a
+    cluster's modulation label (V07 18): a label is a mode, so a mismatch is a
+    flat penalty rather than a distance, and 0.0 leaves the cost untouched.
+    mod_vote compares against the majority of the track's last three labels
+    instead of the last one, which is what makes a noisy label usable.
 
     Association is a cost assignment, not a chain of ifs: every (cluster, track)
     pair gets a distance, the cheapest pairs are taken first, and a pair scores
@@ -233,6 +238,17 @@ def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
                             for member in track["members"]]))
                         cost += ((here - past) / persistence_scale) ** 2
                 cost = float(np.sqrt(cost))
+                if mod_weight and cluster.get("mod") and track.get("mod"):
+                    reference = track["mod"]
+                    if mod_vote:
+                        recent = track.get("mod_history", [])[-3:]
+                        if recent:
+                            values, counts = np.unique(np.array(recent,
+                                                               dtype=object),
+                                                       return_counts=True)
+                            reference = values[int(np.argmax(counts))]
+                    if cluster["mod"] != reference:
+                        cost += mod_weight
                 if cost <= gate:
                     pairs.append((cost, index, track_index))
         pairs.sort(key=lambda item: item[0])
@@ -264,6 +280,8 @@ def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
             track["bins"] = int(round(
                 (track["bins"] * count + clusters[index]["bins"]) / (count + 1)))
             track["last_f"] = clusters[index]["f_hz"]
+            track["mod"] = clusters[index].get("mod", track.get("mod"))
+            track.setdefault("mod_history", []).append(clusters[index].get("mod"))
             track["members"].append(clusters[index])
         for index, cluster in enumerate(clusters):
             if index not in used_cluster:
@@ -271,7 +289,8 @@ def link(frames, frame_bins, rule="direction+bandwidth", az_scale=4.0,
                                "bins": cluster["bins"], "rate": 0.0,
                                "bins_rate": 0.0, "last_az": cluster["az"],
                                "last_bins": cluster["bins"],
-                               "last_f": cluster["f_hz"]})
+                               "last_f": cluster["f_hz"],
+                               "mod": cluster.get("mod")})
     return tracks
 
 
