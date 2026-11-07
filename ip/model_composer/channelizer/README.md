@@ -69,6 +69,48 @@ block topology** instead of recreating its subsystem; if it does not, Model
 Composer's IP Catalog export is unusable for this part here and the Verilog route
 (`make ip-from-hdl`) remains the deliverable.
 
+## Which change breaks it? `make mc-bisect`
+
+`make mc-example-ip` says whether the example survives at all. `make mc-bisect`
+answers the narrower question: **which of the changes that turn AMD's example into
+our design is the one the engine refuses?**
+
+`ip/model_composer/channelizer/mc_bisect.m` starts from a **fresh copy of
+`build/mc_examples/SSRDDC.slx` every time**, applies our changes in order
+(1..k), and generates:
+
+| step | change | what a pass proves |
+|---|---|---|
+| 1 | `ExportType = IP Catalog` | IP Catalog export works for this install at all |
+| 2 | device retargeted to `MC_PART` | the xczu208 part is not the blocker |
+| 3 | exported subsystem named `channelizer`, VLNV set to `doa.v7:model_composer:channelizer:1.0` | `SubsystemName`/`IpName` being empty was not the blocker |
+| 4 | every `Gateway In` set to sfix16_En14 | our **sample format** is not the blocker |
+| 5 | every `Delay` set to latency 4 | our **pipeline length** is not the blocker |
+| 6 | the design inside the exported subsystem replaced by our four channels | our **block topology** is not the blocker |
+
+The run stops at the first failing step and prints that step's Hub parameters, so
+the culprit is named by the output instead of guessed at. If all six generate, our
+topology was never the problem and the difference lies in the model that this
+builder *assembles* (the copy of the Hub, the callbacks, the workspace) -- which is
+what the earlier attempts already point at.
+
+Two limits, stated rather than hidden: this route needs a Model Composer install
+(so it says nothing on a machine that has none), and it mutates only a scratch copy
+under `build/mc_bisect/` -- the example in `build/mc_examples/` is never modified,
+because it is reference material that must stay pristine for the next comparison.
+Results land in `docs/progress/model_composer_bisect.md`; the console prints
+`MC_BISECT_DONE`. If all six steps generated, the last artifact **is** our design
+built by Model Composer: `make mc-adopt-bisect` copies
+`$(IP_REPO)/ssr_bisect_step6` to `$(IP_REPO)/model_composer_channelizer` (the name
+`make step06_collect_ip` expects) and runs the same component check as the Verilog
+route, so the two are compared by the same test, not by my word.
+
+```bash
+make mc-example       # once, if build/mc_examples/SSRDDC.slx is absent
+make mc-example-ip    # does the example generate at all here?
+make mc-bisect        # which of our six changes breaks it?
+```
+
 ## Is the hand-written IP the same as the model? Same datapath, different interface
 
 `make ip-equivalence` answers it with numbers instead of opinion

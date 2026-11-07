@@ -15,7 +15,7 @@
 # GUI opens: typing `mc_gui_build` in the Command Window then works.  The -sd
 # argument is a single plain path, which the launcher's own eval cannot mangle.
 #
-# Usage: launch_model_composer.sh [log-file] [interactive|build|example]
+# Usage: launch_model_composer.sh [log-file] [interactive|build|example|bisect]
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
@@ -90,6 +90,12 @@ mkdir -p "$startup_dir"
         echo "    mc_example_ip;"
         echo "catch problem"
         echo "    fprintf(2, 'mc_example_ip failed: %s\\n', problem.message);"
+        echo "end"
+    elif [[ "$mode" == "bisect" ]]; then
+        echo "try"
+        echo "    mc_bisect;"
+        echo "catch problem"
+        echo "    fprintf(2, 'mc_bisect failed: %s\\n', problem.message);"
         echo "end"
     fi
 } > "$startup_dir/startup.m"

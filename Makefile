@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-example-ip mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-example-ip mc-bisect mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -77,6 +77,8 @@ help:
 	@echo "IP without Model Composer: make ip-from-hdl (packages channelizer_dut.v)"
 	@echo "Same datapath as the model?  make ip-equivalence"
 	@echo "Build AMD's example to IP: make mc-example-ip"
+	@echo "Which change breaks it:  make mc-bisect"
+	@echo "Adopt its final IP:      make mc-adopt-bisect"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
@@ -213,6 +215,23 @@ mc-scratch:
 # Build AMD's own example to an IP Catalog component and write down everything
 # about that model (Hub parameters, blocks, callbacks) into a tracked report.  Not
 # our design: the point is to learn what a model that generates looks like here.
+# Which single change makes AMD's example stop generating?  Applies our changes to
+# a copy of the example one at a time, generating after each, and writes the table
+# to docs/progress/model_composer_bisect.md.  Stops at the first failure.
+mc-bisect:
+	@mkdir -p "$(LOG_DIR)"
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_bisect.log" bisect
+
+# If every bisect step generated, its last artifact is our design, produced by
+# Model Composer.  Adopt it under the name step06_collect_ip looks for and check it.
+mc-adopt-bisect:
+	@if [ ! -f "$(IP_REPO)/ssr_bisect_step6/component.xml" ]; then \
+		echo "no $(IP_REPO)/ssr_bisect_step6/component.xml -- run make mc-bisect first"; exit 1; \
+	fi
+	@rm -rf "$(IP_REPO)/model_composer_channelizer"
+	@cp -r "$(IP_REPO)/ssr_bisect_step6" "$(IP_REPO)/model_composer_channelizer"
+	@python3 scripts/check_ip_component.py "$(IP_REPO)/model_composer_channelizer/component.xml"
+
 mc-example-ip:
 	@mkdir -p "$(LOG_DIR)"
 	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_example_ip.log" example
