@@ -63,6 +63,7 @@ if ((rc != 0)); then result=FAIL; echo "result=FAIL exit_code=$rc" | tee -a "$lo
 
 echo
 echo "Model Composer closed (result $result, MATLAB on PATH: ${matlab_now:-unset})."
-echo "Export an IP from it with: make step05_channelizer CHANNELIZER_FLOW=model_composer \\"
-echo "     MODEL_COMPOSER_MODEL=/absolute/path/to/channelizer.slx"
+echo "In the GUI's Command Window, build the model and export the IP in one go:"
+echo "     mc_gui_build"
+echo "or, for a model you already have: make mc MODEL_COMPOSER_MODEL=/abs/path/to/channelizer.slx"
 exit "$rc"

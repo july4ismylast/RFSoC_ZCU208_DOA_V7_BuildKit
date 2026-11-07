@@ -14,6 +14,46 @@ merged. So the model for this kit is **code**:
 | `mc_batch_export.m` | runs inside MATLAB R2022b, adds the Model Composer paths, exports the IP |
 | `export_model_composer_ip.m` | finds the generate block, asks for IP Catalog, copies `component.xml` |
 
+## If a block library is not found
+
+A batch `matlab -batch` session does **not** know Model Composer: the libraries
+(`vmcUtilities`, `hdlBasic`, ...) are `.slx`/`.mdl` files inside the installation
+and only the GUI launcher adds their folders. So:
+
+```text
+Error using make_channelizer_model
+There is no block named 'vmcUtilities/Vitis Model Composer Hub'
+Caused by: Unable to load block diagram 'vmcUtilities'
+```
+
+is not a wrong block name — it is a missing path. `make_channelizer_model`
+therefore calls `mc_paths.m` **first**, which:
+
+1. adds the Vivado `scripts/sysgen/matlab` paths and `sysgen.jar`;
+2. adds the Model Composer `simulink` folders;
+3. looks for `vmcUtilities.slx`, `hdlBasic.slx`, `hdlSSR.slx`, `hdlUtilities.slx`
+   (`.slx` **or** `.mdl`) — cheap guesses first, one recursive scan only if
+   needed, with the answer cached in `build/mc_libs.txt` so later runs are fast;
+4. calls `xmcStart` only if `xlGenerateButton` is still missing;
+5. **fails before creating any model**, printing the roots it used and the
+   library files it did find, plus the list of blocks in a library when
+   `add_block` rejects a name.
+
+Diagnose with:
+
+```bash
+make mc-libs     # the same search, nothing built
+```
+
+If the batch session still cannot see the libraries, the GUI can — and the same
+code runs there, so the two routes cannot drift apart:
+
+```bash
+make mc-gui      # Model Composer 2023.2 on MATLAB R2022b
+# in its Command Window:
+mc_gui_build     # builds channelizer.slx and exports the IP in one line
+```
+
 ## Three ways to get a model
 
 ```bash

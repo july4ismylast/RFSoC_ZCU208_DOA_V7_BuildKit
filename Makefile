@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-verify mc-find mc-path mc-example graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-verify mc-find mc-path mc-example mc-libs graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -72,6 +72,7 @@ help:
 	@echo "Model Composer IP:   make mc   (builds the .slx in ip/model_composer/; R2022b)"
 	@echo "Create that .slx:    make mc-scratch   (from scratch, no GUI)"
 	@echo "AMD 2023.2 example:  make mc-example   (reference only, not committed)"
+	@echo "Blocks not found:    make mc-libs      (where the libraries are)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (only to create/edit that .slx)"
 	@echo "After a GUI compile: make mc-verify MODEL_COMPOSER_MODEL=/abs/x.slx"
@@ -205,6 +206,10 @@ mc-scratch:
 # -r -- so `make mc` never goes through it.
 mc-gui:
 	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log"
+
+# Why is a Model Composer block missing?  Report where the libraries are.
+mc-libs:
+	@./scripts/mc_libs.sh
 
 # A release-matched AMD example to compare against (branch 2023.2).  Downloaded
 # into build/, never committed: that repository has no LICENSE file.
@@ -351,7 +356,8 @@ matlab-lint:
 	        matlab_v7/verify_phase_interferometry_2x2.m \
 	        matlab_v7/classify_modulation.m matlab_v7/amc_features.m \
 	        matlab_v7/amc_model_params.m matlab_v7/build_amc_r5.m \
-	        matlab_v7/verify_amc_vectors.m; \
+	        matlab_v7/verify_amc_vectors.m \
+	        ip/model_composer/channelizer/*.m; \
 	else \
 	    echo "SKIP matlab-lint: mh_lint (pip install miss_hit) not installed"; \
 	fi

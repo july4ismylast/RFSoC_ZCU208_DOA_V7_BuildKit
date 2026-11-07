@@ -52,6 +52,13 @@ make mc-path     # the exact absolute path this checkout uses, and whether it ex
 make mc          # 2. build the IP from it -- no argument needed
 ```
 
+If MATLAB reports `There is no block named 'vmcUtilities/...'`, that is a
+missing path, not a wrong name: a batch session has none of Model Composer's
+library folders. `mc_paths.m` finds and adds them (cached in `build/mc_libs.txt`),
+`make mc-libs` reports what it found, and when only the GUI can see the
+libraries, `make mc-gui` followed by `mc_gui_build` in the Command Window runs
+the very same builder and exporter.
+
 The model is generated from `ip/model_composer/channelizer/make_channelizer_model.m`
 (a `.slx` cannot be reviewed in a diff, so the builder script is what lives in
 git). `make mc-example` downloads AMD's 2023.2 RFSoC SSR-DDC model into `build/`
