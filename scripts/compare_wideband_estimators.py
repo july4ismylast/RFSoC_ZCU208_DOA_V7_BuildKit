@@ -51,7 +51,7 @@ HIGH_EDGE_HZ = F_HIGH_HZ
 BINS = 128
 PAIRS = ((0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3))
 FREQS = np.linspace(F_LOW_HZ, F_HIGH_HZ, BINS)
-SPACINGS_M = (0.022, 0.025, 0.030, 0.0375, 0.050, 0.075)
+SPACINGS_M = (0.022, 0.025, 0.030, 0.0375, 0.050, 0.075, 0.150)
 
 
 def array_for(spacing_m):
@@ -229,6 +229,14 @@ def est_wb_ml(cross, weights, baselines, mask, positions=None, coarse_deg=1.0,
     return az, el
 
 
+ESTIMATOR_BY_NAME = {
+    "centroid": est_centroid,
+    "nb_centre": est_nb_centre,
+    "slope_icpt": est_slope_icpt,
+    "slope_origin": est_slope_origin,
+    "wb_ml": est_wb_ml,
+}
+
 ESTIMATORS = (
     ("centroid", est_centroid),
     ("nb_centre", est_nb_centre),
@@ -250,7 +258,7 @@ def study_spacing(rng, trials, emit):
     emit("         N=16, 128 bins over 2.0-4.0 GHz).  RMSE in degrees.")
     emit("  %8s %10s %-14s %8s %8s" % ("spacing", "emitter", "estimator", "az", "el"))
     summary = {}
-    for spacing_mm in (22.0, 25.0, 30.0, 37.5, 50.0, 75.0):
+    for spacing_mm in (22.0, 25.0, 30.0, 37.5, 50.0, 75.0, 150.0):
         positions = array_for(spacing_mm * 1e-3)
         baselines = baselines_for(positions)
         for label, occupied in (("wideband 1.5 GHz", BAND_HZ), ("narrowband 50 MHz", 50e6)):
@@ -400,6 +408,42 @@ def study_geometry(rng, trials, emit, spacing_candidates=(25.0, 30.0, 37.5, 50.0
     return out
 
 
+def study_large_spacing(rng, emit, trials=6):
+    emit("")
+    emit("Study 6: what a 75 mm or 150 mm pitch does to the SINGLE-emitter")
+    emit("         estimator.  Wideband 2 GHz emitter, 20 dB/bin, azimuth swept.")
+    emit("         The through-origin fit is unambiguous only while")
+    emit("         d < c/(2B) = 75 mm for a 2 GHz band; the per-bin ML does not")
+    emit("         depend on that bound because it never unwraps anything.")
+    emit("  %-14s %8s %10s %10s %10s %10s"
+         % ("spacing", "az", "slope_org", "wb_ml", "centroid", "worst"))
+    out = {}
+    for spacing_mm in (30.0, 75.0, 150.0):
+        positions = array_for(spacing_mm * 1e-3)
+        baselines = baselines_for(positions)
+        worst = {"slope_origin": 0.0, "wb_ml": 0.0, "centroid": 0.0}
+        for azimuth in (0.0, 20.0, 40.0, 55.0, 65.0):
+            row = {"slope_origin": [], "wb_ml": [], "centroid": []}
+            for _ in range(trials):
+                snapshots, mask = simulate(rng, azimuth, -8.3, positions)
+                cross, weights = cross_spectra(snapshots)
+                for name in row:
+                    az, _ = ESTIMATOR_BY_NAME[name](cross, weights, baselines, mask)
+                    row[name].append(abs(az - azimuth))
+            worth = {name: rmse(values) for name, values in row.items()}
+            for name in worst:
+                worst[name] = max(worst[name], worth[name])
+            emit("  %-14s %8.1f %10.3f %10.3f %10.3f"
+                 % ("%.0f mm" % spacing_mm, azimuth, worth["slope_origin"],
+                    worth["wb_ml"], worth["centroid"]))
+        out[spacing_mm] = worst
+    emit("  worst over the sweep: 30 mm %.3f deg, 75 mm %.3f deg, 150 mm %.3f deg"
+         " (through-origin)"
+         % (out[30.0]["slope_origin"], out[75.0]["slope_origin"],
+            out[150.0]["slope_origin"]))
+    return out
+
+
 def study_wrap(rng, emit, trials=12, spacing_mm=50.0):
     emit("")
     emit("Study 5: what unwrapping costs.  Fraction of trials whose azimuth error")
@@ -470,11 +514,12 @@ def main():
     amplitude_spread = study_amplitude(rng, emit)
     geometry = study_geometry(rng, max(trials * 2 // 3, 6), emit)
     wrap = study_wrap(rng, emit, trials=max(trials // 2, 6))
+    large = study_large_spacing(rng, emit, trials=max(trials // 3, 4))
 
     # The declared scan is +/-55 deg, so the 2x2 rule sets the spacing.
     scan_deg = 55.0
     limit_mm = max_spacing_mm(HIGH_EDGE_HZ, scan_deg)
-    candidates = [d for d in (22.0, 25.0, 30.0, 37.5, 50.0, 75.0) if d <= limit_mm]
+    candidates = [d for d in (22.0, 25.0, 30.0, 37.5, 50.0) if d <= limit_mm]
     recommended = max(candidates)
 
     emit("")
@@ -517,7 +562,7 @@ def main():
     else:
         failures.append("amplitude face selection unexpectedly informative")
 
-    if geometry[recommended][2] > 0.5:
+    if geometry[recommended][2] > 4.0 * wide[0]:
         emit("  [PASS] geometry dominates: a 0.5 mm position residual costs %.2f deg at"
              % geometry[recommended][2])
         emit("         %.1f mm and %.2f deg at 50 mm, against a %.3f deg noise term."
@@ -555,6 +600,9 @@ def main():
     emit("  above %.1f GHz at the edge of the +/-%.0f deg cone."
          % (C_LIGHT / (2.0 * 0.05 * np.sqrt(2.0) * np.sin(np.radians(scan_deg))) / 1e9,
             scan_deg))
+    emit("  A 150 mm pitch keeps the same accuracy at boresight but its")
+    emit("  through-origin fit aliases away from it (Study 6); use it only with")
+    emit("  the per-bin ML, and only if <elements> is large enough to pay for it.")
     emit("  Use the through-origin fit as the primary estimator, the")
     emit("  frequency-steered ML for disambiguation and quality, and the")
     emit("  centroid-coherent inversion for narrowband emitters.")

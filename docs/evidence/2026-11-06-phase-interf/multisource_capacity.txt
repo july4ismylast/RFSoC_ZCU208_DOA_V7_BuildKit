@@ -1,5 +1,5 @@
 # multi-source capacity over the 2-4 GHz captured band
-# generated 2026-11-06T16:41:03Z
+# generated 2026-11-07T08:17:50Z
 # script: scripts/multisource_capacity.py (python3 + numpy only)
 # estimator: per-bin incoherent 2D MUSIC (ISSM), spectra summed over 48 bins,
 #            strongest local maxima matched to truth within 6 deg
@@ -15,6 +15,9 @@ Study 0: what the geometry allows, before any estimator
   4x4@60         16        15         16        26 d      58.2 d
   5x5@60         25        24         25        26 d      43.7 d
   6x6@75         36        35         36        21 d      27.9 d
+  2x2@150         4         3          4        10 d      69.9 d
+  3x3@150         9         8          9        10 d      34.9 d
+  4x4@150        16        15         16        10 d      23.3 d
   M-1 is the hard identifiability bound, 'manifold' is the measured rank of
   span{a(az,el)} over the field (the number of emitters a subspace method
   can represent at 3 GHz), 'Rayleigh' is 1.22*lambda/D at the 2 GHz edge.
@@ -27,16 +30,19 @@ Study 1: eight emitters over the full 2-4 GHz band
   4x4@60        7.0           0         12      0.394 deg
   5x5@60        7.0           0         12      0.317 deg
   6x6@75        8.0          12         12      0.295 deg
+  2x2@150       1.5           0         12      1.051 deg
+  3x3@150       1.8           0         12      1.454 deg
+  4x4@150       6.0           0         12      0.326 deg
   'detected' is the mean number of the eight sources matched within 6 deg;
   'of 8' counts trials in which all eight were found; RMSE uses only
   peaks matched within 2 deg, so a near-miss cannot flatter it.
 
 Study 2: bandwidth or aperture?  Eight emitters, two arrays, two bands.
   array              band       detected of 8         RMSE
-  4x4@30 mm          600 MHz             4.9       0.947 d
-  4x4@30 mm          2 GHz               4.8       0.616 d
-  4x4@60 mm          600 MHz             7.0       0.390 d
-  4x4@60 mm          2 GHz               7.0       0.398 d
+  4x4@30 mm          600 MHz             4.8       1.007 d
+  4x4@30 mm          2 GHz               4.8       0.590 d
+  4x4@150 mm         600 MHz             2.0       0.408 d
+  4x4@150 mm         2 GHz               6.0       0.325 d
   Resolution is set by aperture and by the *low* edge of the band: a
   narrower band costs detection only through noise averaging (here 8x
   fewer bins). Bandwidth pays off through the frequency ramp that
@@ -48,6 +54,11 @@ VERDICT
   [INFO] 4x4 at 60 mm found 7.0 of 8 on average (0 of 12 trials full)
   [PASS] 6x6 at 75 mm found 8.0 of 8: 36 elements and a 375 mm
          aperture are enough for eight emitters over 2-4 GHz.
+
+  A 150 mm pitch does not rescue a small array: measured 2x2 1.5, 3x3
+  1.8 and 4x4 6.0 of 8 -- the 600 mm aperture of 4x4@150 loses to the
+  180 mm aperture of 4x4@60 because the 2 GHz edge grating lobes are
+  unresolvable. The useful pitch band for eight emitters is 60-75 mm.
 
   ANSWER: for one emitter the kit's per-bin phase interferometry is the
   right estimator and reaches the numbers in V07 section 11 (0.066 deg

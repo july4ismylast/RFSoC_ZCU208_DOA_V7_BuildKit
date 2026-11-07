@@ -1,5 +1,5 @@
 # 2x2 array over the 2-4 GHz captured band: spacing and estimator study
-# generated 2026-11-06T16:30:18Z
+# generated 2026-11-07T08:13:07Z
 # script: scripts/compare_wideband_estimators.py (python3 + numpy only)
 # array: 4 elements on a 2x2 grid, spacing swept
 # band: 2.00-4.00 GHz, 128 bins, 20 dB/bin per element, seed=20261107, trials=20
@@ -68,6 +68,16 @@ Study 1: accuracy vs element spacing (az 12.5 deg, el -8.3 deg, 20 dB/bin,
       75 mm narrowband slope_icpt       25.145   18.263
       75 mm narrowband slope_origin      0.142    0.109
       75 mm narrowband wb_ml             0.174    0.117
+     150 mm   wideband centroid          9.759    9.557
+     150 mm   wideband nb_centre         7.203    7.041
+     150 mm   wideband slope_icpt        0.061    0.047
+     150 mm   wideband slope_origin      6.553    6.369
+     150 mm   wideband wb_ml             0.014    0.011
+     150 mm narrowband centroid          9.774    9.568
+     150 mm narrowband nb_centre         9.784    9.564
+     150 mm narrowband slope_icpt       12.816    6.836
+     150 mm narrowband slope_origin      9.774    9.568
+     150 mm narrowband wb_ml            53.613   38.374
 
 Study 2: the ambiguity rule for a SQUARE 2x2, and where each spacing
          breaks.  Baselines are d on the axes and d*sqrt(2) on the
@@ -89,20 +99,20 @@ Study 2: the ambiguity rule for a SQUARE 2x2, and where each spacing
   measured: 50 MHz emitter at the top of the band (3.9 GHz), worst
   |az error| in deg over 6 trials, single-bin inversion
          az / el    22 mm    25 mm    30 mm     37.5    50 mm
-     0.0 / 55.0      0.86     1.64     1.79     1.30     0.69
-    45.2 / -35.4     1.18     0.63     1.60    41.87    33.92
-    65.0 / 0.0       1.71     1.71     1.10     1.67   104.19
+     0.0 / 55.0      1.15     1.08     0.57     0.76     0.29
+    45.2 / -35.4     1.18     0.93     1.33    41.76    34.16
+    65.0 / 0.0       1.10     2.87     1.38     1.48   104.58
 
 Study 3: can amplitude ratios select the ambiguity face, as the review
          proposes?  |X2|^2/|X1|^2 and |X3|^2/|X1|^2 for identical
          broadside elements, 20 dB, 50 mm spacing.
       az    |X2|^2/|X1|^2    |X3|^2/|X1|^2
-     0.0           0.9983           0.9989
-    10.0           1.0012           1.0015
-    30.0           1.0042           1.0042
-    50.0           1.0004           0.9994
-    65.0           1.0002           0.9988
-  Spread across 0..65 deg: 0.00594.  Identical elements put the same power
+     0.0           1.0012           1.0007
+    10.0           0.9995           0.9996
+    30.0           1.0004           0.9994
+    50.0           1.0040           1.0001
+    65.0           1.0007           1.0007
+  Spread across 0..65 deg: 0.00447.  Identical elements put the same power
   on every channel, so this ratio carries ~zero information about the
   face.  Amplitude face selection needs squinted beams (offset feeds);
   with broadside elements the frequency-domain estimate already resolves
@@ -114,10 +124,10 @@ Study 4: geometry.  Random element position error perturbs the phase by
          residual, at the cost of a narrower unambiguous field.
    spacing
    spacing       0.1 mm      0.25 mm       0.5 mm       1.0 mm
-      25 mm        0.243        0.537        1.276        2.685
-      30 mm        0.245        0.630        0.792        1.720
-      38 mm        0.160        0.330        0.756        1.324
-      50 mm        0.133        0.253        0.607        1.676
+      25 mm        0.219        0.425        1.283        1.862
+      30 mm        0.131        0.542        0.789        2.333
+      38 mm        0.118        0.504        0.763        1.466
+      50 mm        0.079        0.352        0.620        0.855
   A 0.5 deg budget with 0.5 mm of uncalibrated position error needs about
   0.3 mm residual; the simulated noise term (Study 1) is an order of
   magnitude smaller, so calibration, not the estimator, sets 0.5 deg.
@@ -139,6 +149,29 @@ Study 5: what unwrapping costs.  Fraction of trials whose azimuth error
     50 MHz          0            0           10            0            0
   (counts out of 10; 0 = never lost a frame.)
 
+Study 6: what a 75 mm or 150 mm pitch does to the SINGLE-emitter
+         estimator.  Wideband 2 GHz emitter, 20 dB/bin, azimuth swept.
+         The through-origin fit is unambiguous only while
+         d < c/(2B) = 75 mm for a 2 GHz band; the per-bin ML does not
+         depend on that bound because it never unwraps anything.
+  spacing              az  slope_org      wb_ml   centroid      worst
+  30 mm               0.0      0.043      0.099      0.059
+  30 mm              20.0      0.082      0.090      0.178
+  30 mm              40.0      0.044      0.061      0.139
+  30 mm              55.0      0.066      0.069      0.204
+  30 mm              65.0      0.132      0.125      0.606
+  75 mm               0.0      0.020      0.022      0.029
+  75 mm              20.0      0.015      0.026      0.049
+  75 mm              40.0     36.632      0.026     22.022
+  75 mm              55.0     67.345      0.041     73.716
+  75 mm              65.0     79.526      0.045     90.665
+  150 mm              0.0      0.011      0.011      0.014
+  150 mm             20.0     20.983      0.014     27.858
+  150 mm             40.0     41.257      0.016     41.741
+  150 mm             55.0     53.750      0.017     51.616
+  150 mm             65.0     63.802      0.030     56.230
+  worst over the sweep: 30 mm 0.132 deg, 75 mm 79.526 deg, 150 mm 63.802 deg (through-origin)
+
 VERDICT
   [PASS] 30.0 mm + through-origin fit: 0.066 deg az / 0.048 deg el over the
          full band; frequency-steered ML on the same data: 0.084 / 0.067.
@@ -148,11 +181,11 @@ VERDICT
   [PASS] diagonal aliasing is measured, not assumed: at the cone edge
          with the diagonal stressed (az/el 45.2/-35.4, 3.9 GHz) a
          50 mm array is 34 deg off, the recommended 30 mm holds
-         1.60 deg and 25 mm 0.6 deg.
-  [PASS] amplitude face selection carries 0.00594 of ratio spread over
+         1.33 deg and 25 mm 0.9 deg.
+  [PASS] amplitude face selection carries 0.00447 of ratio spread over
          0..65 deg with identical elements: it cannot select a face.
   [PASS] geometry dominates: a 0.5 mm position residual costs 0.79 deg at
-         30.0 mm and 0.61 deg at 50 mm, against a 0.066 deg noise term.
+         30.0 mm and 0.62 deg at 50 mm, against a 0.066 deg noise term.
          0.5 deg therefore needs a sub-0.4 mm calibration (G6); the
          estimator alone is more than an order of magnitude better.
   [PASS] the unwrap + intercept fit loses 49% of the low-SNR frames
@@ -164,10 +197,13 @@ VERDICT
   RECOMMENDATION: square 2x2 with d = 30.0 mm on both axes (42.4 mm
   diagonal). It is the widest round spacing that stays wrap-free for
   a +/-55 deg scan over the whole 2-4 GHz band: 0.066 deg az on a
-  wideband emitter and 0.252 deg az on a 50 MHz one, against 0.792 deg
+  wideband emitter and 0.252 deg az on a 50 MHz one, against 0.789 deg
   for a 0.5 mm position residual.
   The review's 50 mm is 1.7x too wide: its diagonal (70.7 mm) wraps
   above 2.6 GHz at the edge of the +/-55 deg cone.
+  A 150 mm pitch keeps the same accuracy at boresight but its
+  through-origin fit aliases away from it (Study 6); use it only with
+  the per-bin ML, and only if <elements> is large enough to pay for it.
   Use the through-origin fit as the primary estimator, the
   frequency-steered ML for disambiguation and quality, and the
   centroid-coherent inversion for narrowband emitters.

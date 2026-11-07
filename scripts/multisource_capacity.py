@@ -206,7 +206,8 @@ def main() -> int:
     emit("Study 0: what the geometry allows, before any estimator")
     emit("  %-10s %8s %9s %10s %10s %10s"
          % ("array", "elements", "M-1", "manifold", "cone@4GHz", "Rayleigh"))
-    arrays = ((2, 30.0), (3, 30.0), (4, 30.0), (4, 60.0), (5, 60.0), (6, 75.0))
+    arrays = ((2, 30.0), (3, 30.0), (4, 30.0), (4, 60.0), (5, 60.0), (6, 75.0),
+              (2, 150.0), (3, 150.0), (4, 150.0))
     geometry = {}
     for side, pitch in arrays:
         positions = square_grid(side, pitch * 1e-3)
@@ -280,7 +281,7 @@ def main() -> int:
             float(np.mean(errors)) if errors else float("nan"))
 
     comparison = {}
-    for side, pitch in ((4, 30.0), (4, 60.0)):
+    for side, pitch in ((4, 30.0), (4, 150.0)):
         for label, band_hz in (("600 MHz", 600e6), ("2 GHz", 2.0e9)):
             detected, error = run_band(side, pitch, band_hz, trials)
             comparison[(side, pitch, label)] = (detected, error)
@@ -317,6 +318,13 @@ def main() -> int:
     else:
         failures.append("6x6 did not resolve eight emitters")
 
+    emit("")
+    emit("  A 150 mm pitch does not rescue a small array: measured 2x2 %.1f, 3x3"
+         % results[(2, 150.0)][0])
+    emit("  %.1f and 4x4 %.1f of 8 -- the 600 mm aperture of 4x4@150 loses to the"
+         % (results[(3, 150.0)][0], results[(4, 150.0)][0]))
+    emit("  180 mm aperture of 4x4@60 because the 2 GHz edge grating lobes are")
+    emit("  unresolvable. The useful pitch band for eight emitters is 60-75 mm.")
     emit("")
     emit("  ANSWER: for one emitter the kit's per-bin phase interferometry is the")
     emit("  right estimator and reaches the numbers in V07 section 11 (0.066 deg")

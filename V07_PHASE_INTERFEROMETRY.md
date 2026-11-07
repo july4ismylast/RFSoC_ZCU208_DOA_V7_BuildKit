@@ -848,7 +848,44 @@ The 25 mm geometry of §4.4 remains available as `ARRAY_AXIS_SPACING_M=0.025`;
 it is the right choice if the qualified field ever becomes ±90° in both axes,
 and it costs 1.3–1.6× in the geometry term. What is *not* available is 50 mm.
 
-### 11.6 What is still not proven here
+### 11.6 If the pitch can be 75 mm or 150 mm
+
+The spacing rule of §11.1 is the rule for a **closed-form phase estimator**. A
+frequency-steered ML never unwraps anything, so it is not bound by it: over a
+2 GHz band it stays correct to `d < c/(2B) = 75 mm` for the *phase-slope* form
+and much further for the ML. Measured (wideband 2 GHz emitter, 20 dB/bin, N=16,
+RMSE azimuth in degrees; `slope` = through-origin fit, `ML` = per-bin
+frequency-steered):
+
+| d | estimator | 0° | 20° | 40° | 55° | 65° |
+|---|---|---|---|---|---|---|
+| 30 mm | slope | 0.043 | 0.082 | 0.044 | 0.066 | 0.132 |
+| 30 mm | ML | 0.099 | 0.090 | 0.061 | 0.069 | 0.125 |
+| 75 mm | slope | 0.020 | 0.015 | **36.6** | **67.3** | **79.5** |
+| 75 mm | ML | 0.022 | 0.026 | 0.026 | 0.041 | 0.045 |
+| 150 mm | slope | 0.011 | **21.0** | **41.3** | **53.8** | **63.8** |
+| 150 mm | ML | **0.011** | **0.014** | **0.016** | **0.017** | **0.030** |
+
+Read it as three separate conclusions:
+
+* **150 mm + ML is the most accurate single-emitter configuration measured
+  here**: 0.011–0.030° across the field, five times better than 30 mm, because
+  the baseline is five times longer and the ML squeezes the whole band.
+* **Everything cheap dies at 150 mm.** The closed-form through-origin fit is
+  21–64° off from 20° outward, and the band-centroid average is 9.8° (§11.2
+  table). If the pitch is 150 mm, the PS *must* run the ML search; the 40-DSP48
+  closed form cannot be used at all.
+* **A narrowband emitter at 150 mm is unrecoverable by any estimator** —
+  measured 9.8° (centroid) and 54° (ML) for a 50 MHz emitter, because a
+  50 MHz emitter does not span enough bandwidth to break the grating lobe.
+  150 mm is a wideband-only geometry.
+
+So the pitch is a requirements question, not an optimisation: 30 mm if narrowband
+emitters and a cheap closed-form estimator must be supported; 150 mm if the
+emitters are wideband, the PS can afford an ML search, and 0.01–0.03° is worth
+it. What does *not* work is 150 mm with the current estimator.
+
+### 11.7 What is still not proven here
 
 * Everything in this section is a **simulation** of per-bin cross-spectra. No RF,
   no antenna, no mutual coupling, no calibration measurement is behind it.
@@ -858,6 +895,9 @@ and it costs 1.3–1.6× in the geometry term. What is *not* available is 50 mm.
   feasibility* question that no amount of estimator work answers.
 * The 0.5° claim still waits on G5 (RF loopback) and G6 (calibration/geometry),
   exactly as §8 and §10.4 say.
+* The 150 mm result of §11.6 also assumes the element can be built at 150 mm —
+  a 2 GHz element is 0.5λ there, so coupling is mild — but the *grating lobes*
+  are not a simulation artefact: they are real and only the band resolves them.
 
 ---
 
@@ -885,12 +925,19 @@ as the source set and matched to the truth. Every number below is simulated.
 | 4×4 @ 30 mm | 16 | 15 | 16 | 4.5 of 8 |
 | 4×4 @ 60 mm | 16 | 15 | 16 | 7.0 of 8, RMSE 0.394° |
 | 5×5 @ 60 mm | 25 | 24 | 25 | 7.0 of 8, RMSE 0.317° |
-| **6×6 @ 75 mm** | **36** | 35 | 36 | **8.0 of 8 in 12/12, RMSE 0.295°** |
+| 6×6 @ 75 mm | 36 | 35 | 36 | **8.0 of 8 in 12/12, RMSE 0.295°** |
+| 2×2 @ 150 mm | 4 | 3 | 4 | 1.5 of 8 |
+| 3×3 @ 150 mm | 9 | 8 | 9 | 1.8 of 8 |
+| 4×4 @ 150 mm | 16 | 15 | 16 | 6.0 of 8, RMSE 0.326° |
 
 The "manifold rank" column is measured over the whole 2-D field at 3 GHz (it is
 the element count until the array runs out of independent directions); the
 *fixed-elevation slice* of §10.2 is rank 2, which is the number that matters when
-all emitters share an elevation. The 2×2 finds 1.2 of 8 because four elements
+all emitters share an elevation. A 150 mm pitch does **not** rescue a small array: 2×2 @ 150 mm still finds
+1.5 of 8, and 4×4 @ 150 mm (600 mm aperture, twice the aperture of 4×4 @ 60 mm)
+finds *six* of eight where 4×4 @ 60 mm finds seven — the grating lobes at the
+2 GHz edge eat the extra aperture. 60–75 mm is the useful pitch band for eight
+emitters. The 2×2 finds 1.2 of 8 because four elements
 carry at most three sources and, on a single elevation, only one — the array,
 not the estimator, is the limit. The single-emitter accuracy of §11 (0.066°) does not transfer to a
 multi-emitter requirement by any algorithmic trick.
@@ -903,9 +950,12 @@ Same eight emitters, same estimator, only the captured band changes:
 |---|---|---|
 | 4×4 @ 30 mm (90 mm aperture) | 4.9 of 8 | 4.8 of 8 |
 | 4×4 @ 60 mm (180 mm aperture) | 7.0 of 8 | 7.0 of 8 |
+| 4×4 @ 150 mm (450 mm aperture) | **2.0 of 8** | 6.0 of 8 |
 
-Doubling the *aperture* doubles the detection; tripling the *bandwidth* does not
-move it. Resolution is set by aperture and by the low edge of the band
+Doubling the *aperture* doubles the detection — for a well-sampled array;
+the 150 mm case is the exception that proves the rule, because there the narrow
+band leaves the grating lobes unresolved and detection collapses from 6.0 to 2.0
+of 8. Tripling the bandwidth does not move the 30 mm and 60 mm cases at all. Resolution is set by aperture and by the low edge of the band
 (`1.22·λ/D`: 58° at 2 GHz for the 180 mm array — MUSIC super-resolves that at
 these SNRs, which is exactly why it needs the extra elements). What the 2 GHz
 bandwidth buys is the alias rejection of §11 and `√K` noise averaging; it is
