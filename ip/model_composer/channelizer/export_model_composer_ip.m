@@ -38,6 +38,8 @@ target = setExportTarget(generator{1});
 fprintf('generate block: %s\n', generator{1});
 fprintf('export target:  %s\n', target);
 
+checkSubsystemName(model, generator{1});
+
 [name, available] = mc_generate_function();
 fprintf('generate entry: %s\n', available{:});
 if isempty(name)
@@ -150,4 +152,32 @@ while true
     pause(5);
 end
 fprintf('found %s\n', fullfile(component.folder, component.name));
+end
+
+function checkSubsystemName(model, hub)
+%CHECKSUBSYSTEMNAME The Hub exports a block, and names it; does that block exist?
+%   The documented failure mode is silent: xmcGenerate dies inside vmcGenerate.p
+%   with "Index exceeds the number of array elements" when the lookup for the
+%   subsystem named by SubsystemName comes back empty.  Saying so here turns that
+%   into a sentence.
+try
+    wanted = get_param(hub, 'SubsystemName');
+catch problem
+    fprintf('  note: this Hub has no SubsystemName: %s\n', problem.message);
+    return;
+end
+if isempty(wanted)
+    error('export_model_composer_ip:subsystem', ...
+        ['Hub.SubsystemName is empty, so there is nothing to export.  Set it to ' ...
+         'the name of the subsystem holding the design (this build uses ' ...
+         'channelizer_dut): run make mc-scratch to rebuild the model.']);
+end
+if getSimulinkBlockHandle([model '/' wanted]) == -1
+    error('export_model_composer_ip:subsystem', ...
+        ['Hub.SubsystemName is "%s" but %s has no block of that name, so Model ' ...
+         'Composer has nothing to export (xmcGenerate reports this as an index ' ...
+         'error).  Run make mc-scratch to rebuild the model with the subsystem.'], ...
+        wanted, model);
+end
+fprintf('exported subsystem: %s/%s\n', model, wanted);
 end

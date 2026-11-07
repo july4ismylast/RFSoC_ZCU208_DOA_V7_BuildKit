@@ -46,6 +46,43 @@ Two smaller things the same run exposed, both fixed:
   matches `Signed`, printing the full option list when nothing does.
 * `Gateway Out` has no `period` parameter — that call is gone.
 
+## The real cause: the Hub exports a *named subsystem*, and ours did not exist
+
+The platform attempts failed too (`Not Specified` and `Specify Platform`, with and
+without the ZCU208 board).  What settled it was AMD's own example, opened as a
+zip: its top level is
+
+```
+Vitis Model Composer Hub
+DDC_DUT                 <- a subsystem
+```
+
+and its Hub says `SubsystemName = DDC_DUT`.  Model Composer exports **the block
+named by that field**.  Our model had the gateways loose at the top level and
+`SubsystemName = channelizer_dut` naming nothing, so the lookup returned an empty
+array and the engine indexed it:
+
+```
+Index exceeds the number of array elements. Index must not exceed 0.
+```
+
+That is the same error in every run, whatever the device, platform, name or
+arguments.
+
+### The model shape now
+
+```
+channelizer.slx
+  System Generator            Hub: device, IP Catalog, SubsystemName
+  channelizer_dut             subsystem, same name as SubsystemName
+    In1 -> Delay1 -> Out1
+    ... four channels ...
+```
+
+`export_model_composer_ip` checks this before generating: if
+`Hub.SubsystemName` is empty, or the model has no block of that name, it stops
+with a sentence instead of letting the engine produce an index error.
+
 ## Next hypothesis, and the evidence for it
 
 Renaming the block to `System Generator` did not change the index error, so the
