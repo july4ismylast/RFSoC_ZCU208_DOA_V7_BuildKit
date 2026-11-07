@@ -199,8 +199,18 @@ MODEL_COMPOSER ?= /path/Model_Composer/2023.2/bin/model_composer
 ```
 
 `make tools MATLAB=1` prints both installs and an explicit `[ok]`/`[MISS]` for
-every toolbox the code generator needs. `make mc` opens the Model Composer GUI
-with R2022b first on `PATH`, and refuses to start on any other release.
+every toolbox the code generator needs.
+
+`make mc` **builds** the channelizer IP (it does not open a GUI): the 2023.2
+launcher, which carries R2022b, runs in batch mode, compiles the model's System
+Generator token to IP Catalog, installs `component.xml` in the IP repository and
+checks that the file really is there. `make mc-gui` is only for creating or
+editing the `.slx` itself.
+
+```bash
+make mc MODEL_COMPOSER_MODEL=/abs/path/channelizer.slx   # builds the IP
+make mc-gui                                              # edits the model
+```
 
 ## Progress that survives a push
 

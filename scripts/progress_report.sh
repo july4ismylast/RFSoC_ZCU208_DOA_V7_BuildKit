@@ -85,7 +85,8 @@ done
     echo "| command | MATLAB |"
     echo "|---|---|"
     echo "| preflight, HIL vectors, \`build_amc_r5.m\`, \`CHANNELIZER_FLOW=matlab_hdl\` | the \`matlab\` on \`PATH\` (R2024a) |"
-    echo "| \`CHANNELIZER_FLOW=model_composer\`, \`make mc\` | R2022b, through the Model Composer launcher |"
+    echo "| \`make mc\`, \`CHANNELIZER_FLOW=model_composer\` (builds the IP) | R2022b, through the Model Composer launcher, in batch mode |"
+    echo "| \`make mc-gui\` (only to create/edit the .slx) | the same R2022b, through the same launcher, with the GUI |"
     echo
     echo "See [\`docs/TWO_MATLABS.md\`](../TWO_MATLABS.md)."
 } > "$out"

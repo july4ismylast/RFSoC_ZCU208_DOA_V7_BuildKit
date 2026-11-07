@@ -19,7 +19,7 @@ MC_LAUNCH  := "$(MODEL_COMPOSER)"
 MC_WHY     := the Model Composer launcher (MATLAB $(if $(strip $(MATLAB_2022B)),2022b,from its own PATH))
 endif
 
-all: export
+all: export verify
 
 export:
 	@test -n "$(MODEL_COMPOSER_MODEL)" || { \
@@ -34,5 +34,23 @@ export:
 	    exit 2; fi
 	@echo "Model Composer export via $(MC_WHY)"
 	$(MC_PREPEND)$(MC_LAUNCH) -batch "addpath(pwd); export_model_composer_ip('$(MODEL_COMPOSER_MODEL)')"
+# A build is only a build if it produced IP.  The exporter prints its own
+# success line, but a token that was not set to IP Catalog, or a compile that
+# stopped early, leaves nothing behind -- so check the artifact too.
+verify:
+	@dest="$(IP_REPO)/model_composer_channelizer/component.xml"; \
+	if [ ! -s "$$dest" ]; then \
+	    echo "ERROR: the export did not produce $$dest"; \
+	    echo "Check the token's compile target is IP Catalog, and that the"; \
+	    echo "model was saved after the last edit."; \
+	    exit 3; fi; \
+	if [ "$$dest" -ot "$(MODEL_COMPOSER_MODEL)" ]; then \
+	    echo "WARNING: component.xml is older than the model -- stale IP"; fi; \
+	echo "verified IP: $$dest"; \
+	ls -l "$$dest" | awk '{print "  size " $$5 " bytes, " $$6 " " $$7 " " $$8}'; \
+	version="$$(grep -o '<spirit:version>[^<]*' "$$dest" | head -n 1 | cut -d'>' -f2)"; \
+	[ -n "$$version" ] && echo "  version $$version"; \
+	echo "  consumed by step06_collect_ip and step08_vivado_integrate"
+
 clean:
 	rm -rf build .Xil

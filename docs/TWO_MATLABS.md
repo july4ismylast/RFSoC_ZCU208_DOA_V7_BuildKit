@@ -37,13 +37,44 @@ Check step 1 took effect before step 2 — `command -v matlab` must print the
 R2022b path. If it still prints `/usr/local/bin/matlab`, step 2 starts the GUI
 on R2024a and the export fails later with `xlGenerateButton unavailable`.
 
-`make mc` runs both steps from `config.mk`, refuses to start if `matlab` still
-resolves to another release, and writes `docs/progress/model_composer_launch.md`
-(a tracked page) so a push shows the GUI was launched:
+That pair only **opens the GUI**. It is needed once, to create or edit the
+`.slx`; `make mc-gui` does exactly those two steps from `config.mk`, refuses to
+start if `matlab` still resolves to another release, and writes
+`docs/progress/model_composer_launch.md`.
+
+## The build (what `make mc` does)
+
+The GUI is not the deliverable — the IP is. To build:
 
 ```bash
-make mc                        # or: make mc MODEL_COMPOSER=/path/to/model_composer
+make mc MODEL_COMPOSER_MODEL=/absolute/path/channelizer.slx
 ```
+
+which is the same stage as:
+
+```bash
+make step05_channelizer CHANNELIZER_FLOW=model_composer \
+     MODEL_COMPOSER_MODEL=/absolute/path/channelizer.slx
+```
+
+Steps inside:
+
+1. `MC_MODEL` = `MODEL_COMPOSER_MODEL`, or the single `.slx` in
+   `ip/model_composer/channelizer/`; it must exist, otherwise the target stops.
+2. `ip/model_composer/channelizer/Makefile` puts the R2022b `bin/` first on
+   `PATH` and runs `model_composer -batch "addpath(pwd);
+   export_model_composer_ip('<model>')"` — **batch**, no GUI.
+3. `export_model_composer_ip.m` loads the model, asserts a *Xilinx System
+   Generator* token exists and that `xlGenerateButton` is available, runs the
+   token (System Generator compiles the design to IP Catalog with Vivado), then
+   copies the newest `component.xml` to `$(IP_REPO)/model_composer_channelizer`.
+4. A `verify` step fails the stage if that `component.xml` is missing or older
+   than the model — a launcher that exits 0 without producing IP is still a
+   failure.
+
+The build therefore produces, exactly like the other stages: `build/logs/`
+`step05_channelizer.log`, a stamp, and the tracked page
+`docs/progress/step05_channelizer.md`.
 
 ## How to set the paths
 

@@ -6,7 +6,7 @@ Written by `make progress` (and by every `make stepNN_...` through
 `scripts/run_stage.sh`). The raw logs stay in `build/logs/`, which is not
 tracked; these pages are, so a pushed branch shows what actually ran.
 
-Generated: 2026-11-07T15:02:39Z
+Generated: 2026-11-07T15:12:18Z
 
 | | count |
 |---|---|
@@ -50,6 +50,7 @@ and the badges in `docs/diagrams/system_block.png` follow those gates.
 | command | MATLAB |
 |---|---|
 | preflight, HIL vectors, `build_amc_r5.m`, `CHANNELIZER_FLOW=matlab_hdl` | the `matlab` on `PATH` (R2024a) |
-| `CHANNELIZER_FLOW=model_composer`, `make mc` | R2022b, through the Model Composer launcher |
+| `make mc`, `CHANNELIZER_FLOW=model_composer` (builds the IP) | R2022b, through the Model Composer launcher, in batch mode |
+| `make mc-gui` (only to create/edit the .slx) | the same R2022b, through the same launcher, with the GUI |
 
 See [`docs/TWO_MATLABS.md`](../TWO_MATLABS.md).

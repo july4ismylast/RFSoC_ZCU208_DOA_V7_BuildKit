@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-gui graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -69,7 +69,8 @@ help:
 	@echo "Association policy:  make policy"
 	@echo "AMC on the R5 (G8a): make amc-port"
 	@echo "What is installed:   make tools   (or: make tools MATLAB=1)"
-	@echo "Model Composer GUI:  make mc      (R2022b; logs to docs/progress/)"
+	@echo "Model Composer IP:   make mc  MODEL_COMPOSER_MODEL=/abs/x.slx   (builds, R2022b)"
+	@echo "Model Composer GUI:  make mc-gui  (only to create/edit that .slx)"
 	@echo "Progress pages:      make progress  -> docs/progress/PROGRESS.md"
 	@echo "Every step bench:    make steps"
 	@echo "Bring-up checklist:  bash step7_board_bringup/checklist.sh"
@@ -149,9 +150,34 @@ status:
 progress: $(STAGES_MANIFEST)
 	@./scripts/progress_report.sh "$(BUILD)"
 
-# Open the Model Composer GUI with MATLAB R2022b first on PATH, log the launch to
-# build/logs/model_composer_launch.log, and write docs/progress/model_composer_launch.md.
+# `make mc` BUILDS the channelizer IP through Model Composer 2023.2 -- it does
+# not open the GUI.  The 2023.2 launcher (which carries MATLAB R2022b) runs in
+# batch mode, compiles the model's System Generator token to IP Catalog, and
+# export_model_composer_ip.m installs component.xml in $(IP_REPO).  That is the
+# same stage as step05_channelizer, so the log, the stamp and the row in
+# docs/progress/PROGRESS.md are the ones a reader expects.
+#
+# The model is MODEL_COMPOSER_MODEL, or the single .slx in
+# ip/model_composer/channelizer/ if there is exactly one.
+MC_MODEL := $(or $(strip $(MODEL_COMPOSER_MODEL)),$(firstword $(wildcard ip/model_composer/channelizer/*.slx)))
+
 mc:
+	@if [ -z "$(MC_MODEL)" ]; then \
+	    echo "make mc builds a model that exists.  None was given:"; \
+	    echo "  MODEL_COMPOSER_MODEL=/absolute/path/channelizer.slx make mc"; \
+	    echo "  (or keep exactly one .slx in ip/model_composer/channelizer/)"; \
+	    echo "To create or edit that model first, open the GUI: make mc-gui"; \
+	    exit 2; fi
+	@if [ ! -e "$(MC_MODEL)" ]; then \
+	    echo "ERROR: model not found: $(MC_MODEL)"; exit 2; fi
+	@echo "Model Composer build: $(MC_MODEL)"
+	@echo "launcher: $(MODEL_COMPOSER)   (MATLAB R2022b from $(MATLAB_2022B))"
+	@$(MAKE) --no-print-directory step05_channelizer \
+	    CHANNELIZER_FLOW=model_composer MODEL_COMPOSER_MODEL="$(MC_MODEL)"
+
+# The GUI, only for creating or editing the .slx itself: R2022b first on PATH,
+# launch logged, docs/progress/model_composer_launch.md written.
+mc-gui:
 	@./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log"
 
 graph:
