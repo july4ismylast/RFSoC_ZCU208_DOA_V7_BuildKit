@@ -17,6 +17,11 @@ xmcGenerate threw: Index exceeds the number of array elements. Index must not ex
 Evidence, including the four variants and what each excludes:
 `docs/evidence/2026-11-06-model-composer-negative/README.md`.
 
+The stack settled one question outright: it is `vmcGenerate` itself that indexes the
+empty array, called from `xmcGenerate`, before any HDL exists. And the diagram does not
+update -- the root kept line fragments after the subsystem was replaced. Step 10
+rebuilds the root from clean copies instead of patching it.
+
 Every generation now also reports what the engine was handed -- the exported
 subsystem's inport/outport/child counts, the gateway counts, the Hub's ports, whether
 the diagram updates -- and prints the full MATLAB stack on failure, because

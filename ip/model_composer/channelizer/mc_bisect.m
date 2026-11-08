@@ -43,7 +43,8 @@ steps = { ...
     'our channels: gateway -> delay -> gateway', @stepReplaceDesign; ...
     'the same channels made from AMD''s own blocks', @stepCopiedDesign; ...
     'the testbench around the subsystem removed', @stepStripTestbench; ...
-    'the Hub re-selected after the design changed', @stepReselectHub};
+    'the Hub re-selected after the design changed', @stepReselectHub; ...
+    'the root rebuilt from clean copies', @stepRebuildRoot};
 
 originalFolder = pwd;
 results = cell(0, 2);
@@ -137,7 +138,12 @@ for count = 1:size(steps, 1)
 end
 
 cd(originalFolder);
-writeReport(repoRoot, results, failedAt, hubParametersOf(example));
+try
+    writeReport(repoRoot, results, failedAt, hubParametersOf(example));
+catch problem
+    fprintf(2, '  the report failed: %s\n%s\n', problem.message, ...
+        getReport(problem, 'extended', 'hyperlinks', 'off'));
+end
 fprintf('\n');
 for index = 1:size(results, 1)
     fprintf('  %-34s %s\n', results{index, 1}, results{index, 2});
@@ -436,6 +442,77 @@ end
 status = matched(ok, '');
 end
 
+function status = stepRebuildRoot(hub, modelName)
+%STEPREBUILDROOT Copy the Hub and the design, delete the originals, put them back.
+%   A run measured 'diagram update failed: Error due to multiple causes' with
+%   'cannot delete a line: Invalid Simulink line handle' before it: the root still
+%   held line fragments whose blocks were gone.  delete_block removes the lines
+%   attached to a block, so copying both blocks out and deleting the originals
+%   cannot leave one behind -- while deleting lines one handle at a time evidently
+%   can.
+hubName = strrep(hub, [modelName '/'], '');
+dutName = '';
+try
+    dutName = jsonSubsystem(hub);
+catch problem
+    fprintf(2, '  note: %s\n', problem.message);
+end
+if isempty(dutName)
+    dutName = 'DDC_DUT';
+end
+dut = [modelName '/' dutName];
+json = '';
+try
+    json = char(get_param(hub, 'IPInfoJsonString'));
+catch problem
+    fprintf(2, '  note: %s\n', problem.message);
+end
+hubCopy = [modelName '/zz_hub_copy'];
+dutCopy = [modelName '/zz_dut_copy'];
+ok = 0;
+try
+    add_block(hub, hubCopy);
+    add_block(dut, dutCopy);
+    ok = ok + 1;
+catch problem
+    fprintf(2, '  cannot copy: %s\n', problem.message);
+    return
+end
+try
+    delete_block(hub);
+    delete_block(dut);
+catch problem
+    fprintf(2, '  cannot delete the originals: %s\n', problem.message);
+    status = 'empty';
+    return
+end
+try
+    set_param(hubCopy, 'Name', hubName);
+    set_param(dutCopy, 'Name', dutName);
+catch problem
+    fprintf(2, '  cannot rename the copies: %s\n', problem.message);
+    status = 'empty';
+    return
+end
+fprintf('  root rebuilt: %s\n', strjoin(find_system(modelName, 'SearchDepth', 1, ...
+    'Type', 'Block'), ', '));
+fprintf('  lines at the root: %d\n', numel(find_system(modelName, 'SearchDepth', 1, ...
+    'FindAll', 'on', 'Type', 'Line')));
+prepareHub(hub, workFolder());
+if ~isempty(json)
+    if mc_hub_set(hub, 'IPInfoJsonString', json)
+        fprintf('  Hub identity restored: %s\n', json);
+        ok = ok + 1;
+    end
+end
+status = matched(ok, '');
+end
+
+function folder = workFolder()
+folder = fullfile(fileparts(fileparts(fileparts(fileparts(mfilename('fullpath'))))), ...
+    'build', 'mc_bisect');
+end
+
 function closeQuietly(name)
 %CLOSEQUIETLY Close a model if it is open, never throwing from a destructor.
 try
@@ -716,6 +793,10 @@ try
     fprintf('  diagram update: ok\n');
 catch problem
     fprintf(2, '  diagram update failed: %s\n', problem.message);
+    causes = problem.cause;
+    for index = 1:numel(causes)
+        fprintf(2, '    cause %d: %s\n', index, causes{index}.message);
+    end
 end
 end
 
@@ -996,6 +1077,11 @@ if ~isempty(candidates)
 end
 end
 
+function yes = beginsWith(text, prefix)
+%BEGINSWITH startsWith, without raising on something that is not text.
+yes = ischar(text) && numel(text) >= numel(prefix) && strcmp(text(1:numel(prefix)), prefix);
+end
+
 function rows = hubParametersOf(example)
 %HUBPARAMETERSOF The example's Hub settings, for the report.
 rows = {};
@@ -1068,7 +1154,7 @@ else
         fprintf(handle, '\nSteps 1..%d generated, so those changes are not the cause.\n', ...
             failedAt - 1);
     end
-    if startsWith(results{failedAt, 2}, 'no-op')
+    if beginsWith(results{failedAt, 2}, 'no-op')
         fprintf(handle, ['The step matched no block at all, which is a fault in the ' ...
             'script, not a verdict on\nthe design: nothing was changed and nothing ' ...
             'was tested.\n']);

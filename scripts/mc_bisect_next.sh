@@ -12,10 +12,11 @@ labels=("export target IP Catalog" "retarget device to MC_PART" \
         "our latency 4" "our channels: gateway -> delay -> gateway" \
         "the same channels made from AMD's own blocks" \
         "the testbench around the subsystem removed" \
-        "the Hub re-selected after the design changed")
+        "the Hub re-selected after the design changed" \
+        "the root rebuilt from clean copies")
 last=0
 echo "collected artifacts in $repo:"
-for step in 1 2 3 4 5 6 7 8 9; do
+for step in 1 2 3 4 5 6 7 8 9 10; do
     component="$repo/ssr_bisect_step$step/component.xml"
     if [ -f "$component" ]; then
         vlnv="$(python3 scripts/check_ip_component.py "$component" --any-ports 2>/dev/null | head -1)"
@@ -46,13 +47,15 @@ if unstaged="$(python3 scripts/mc_bisect_harvest.py 2>/dev/null)" && printf '%s'
     echo
 fi
 
-if [ "$last" -ge 9 ]; then
-    echo "all nine steps have artifacts: make mc-adopt-bisect"
+if [ "$last" -ge 10 ]; then
+    echo "all ten steps have artifacts: make mc-adopt-bisect"
     exit 0
 fi
 next=$((last + 1))
 echo "next: make mc-bisect MC_BISECT_FROM=$next"
 if [ "$next" -eq 7 ] || [ "$next" -eq 8 ]; then
+    echo "      (10 rebuilds the root by copying the Hub and the design, deleting the"\
+    echo "       originals and renaming the copies -- no stale line can survive that)"\
     echo "      (9 refreshes the Hub after the design changed; before every generation the"
     echo "       run now prints the subsystem's port counts, the Hub's ports and whether the"
     echo "       diagram updates, and on failure the full MATLAB stack trace)"

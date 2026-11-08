@@ -85,3 +85,36 @@ IP identity are usable on this install; only the contents replacement is blocked
 
 The first four are worth keeping: a reader who arrives with those intuitions can see
 the measurement that rules each one out, instead of repeating it.
+
+## The measurement that moves this forward: the model was invalid
+
+Step 9 printed, from this repository's own diagnostics:
+
+```
+  hub ports: 0 in, 0 out
+  SSRDDC/DDC_DUT: 0 inport(s), 0 outport(s), 13 child block(s)
+  gateway blocks inside: 4 in, 4 out
+  diagram update failed: Error due to multiple causes.
+  xmcGenerate threw: Index exceeds the number of array elements. Index must not exceed 0.
+  stack:
+  Error using vmcGenerate
+  Index exceeds the number of array elements. Index must not exceed 0.
+  Error in xmcGenerate
+```
+
+Two things stand out.
+
+1. The stack is **`vmcGenerate` itself**, called from `xmcGenerate`: the tool indexes an
+   empty array on its own account, before any HDL exists. Nothing about the part,
+   the export target or the fixed-point format can reach that line.
+2. The diagram **does not update**. Replacing the subsystem's contents left the root
+   holding line fragments whose blocks were gone -- the run had already said
+   `note: cannot delete a line: Invalid Simulink line handle` twice -- and a model
+   that does not update is exactly the state in which a port or rate lookup can come
+   back empty.
+
+So the next attempt rebuilds the root instead of patching it: copy the Hub and the
+design to new names, delete the originals (Simulink removes the lines attached to a
+block, so none can survive), rename the copies back, restore the Hub identity, and
+generate. Step 10 does that, and every generation now prints the diagram-update result
+and, if it fails, each of its causes.
