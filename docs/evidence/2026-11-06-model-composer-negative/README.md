@@ -338,3 +338,33 @@ The second cause on every error was noise: `Error evaluating 'StopFcn' ... Unrec
 function or variable 'start_time'`. The model's own callback expects a variable the
 scripted path never sets, so `start_time` is now assigned before generating, and a real
 cause is no longer buried under it.
+
+## SubsystemName was the field, and now the compiler names blocks
+
+Filling `hub.SubsystemName` (a mask field that only exists once the Hub dialog has run)
+turned XMC-2001 into a real compile:
+
+```
+  hub.SubsystemName =
+  SubsystemName.DDC_DUT = set_param
+  hub.SubsystemName filled with DDC_DUT
+  generating via xmcGenerateButtonPressed
+  stop_time =     0.0511
+ERROR-XMC-2002: Unsupported block SSRDDC/DDC_DUT/Delay1 for code generation.
+ERROR-XMC-2002: Unsupported block SSRDDC/DDC_DUT/Delay2 for code generation.
+ERROR-XMC-2002: Unsupported block SSRDDC/DDC_DUT/Delay3 for code generation.
+ERROR-XMC-2002: Unsupported block SSRDDC/DDC_DUT/Delay4 for code generation.
+```
+
+The gateways pass; only the delays are refused. AMD's own model uses the same library
+block, so the difference is in the instance: their saved blocks carry
+`XmcBlockStatus = 1`, `block_type = delay`, `block_config = sysgen:Delay_config`, which
+`add_block` does not reproduce.
+
+`buildChannels` now copies AMD's Delay out of a pristine copy of the example (every hidden
+field comes with it), falls back to `add_block` plus `XmcBlockStatus = 1` if no source is
+available, and prints a field-by-field comparison of AMD's block against ours so the next
+"Unsupported block" is answered by a table rather than another guess.
+
+Note what changed in kind: the tool is now reporting *which blocks* it will not compile.
+That is a normal engineering loop -- fix the block it names, run again.

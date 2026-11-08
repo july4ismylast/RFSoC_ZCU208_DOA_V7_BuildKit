@@ -335,14 +335,39 @@ end
 
 function portWrapped = buildChannels(dut)
 %BUILDCHANNELS Four P -> gateway in -> delay -> gateway out -> Q channels.
+%   The delay is copied from AMD's own model, not added from the library: the compiler
+%   said "ERROR-XMC-2002: Unsupported block .../Delay1 for code generation" for our
+%   add_block instances and accepts theirs.  A library block carries mask fields that
+%   add_block does not reproduce -- XmcBlockStatus, block_type, block_config -- and a
+%   copy brings every one of them along.
 portWrapped = false;
+source = loadPristine();
+cleanup = onCleanup(@() closeQuietly(source)); %#ok<NASGU>
+delaySource = '';
+if ~isempty(source)
+    candidates = findHDLBlocks(source, 'Delay');
+    if ~isempty(candidates)
+        delaySource = candidates{1};
+        fprintf('  copying the delay from %s\n', delaySource);
+    end
+end
 for channel = 1:4
     row = 40 + 60 * (channel - 1);
     inBlock = sprintf('%s/In%d', dut, channel);
     delay = sprintf('%s/Delay%d', dut, channel);
     outBlock = sprintf('%s/Out%d', dut, channel);
     add_block('hdlBasic/Gateway In', inBlock, 'Position', [45, row, 95, row + 20]);
-    add_block('hdlBasic/Delay', delay, 'Position', [130, row, 160, row + 20]);
+    if isempty(delaySource)
+        add_block('hdlBasic/Delay', delay, 'Position', [130, row, 160, row + 20]);
+        setQuietly(delay, 'XmcBlockStatus', '1');
+    else
+        try
+            add_block(delaySource, delay, 'Position', [130, row, 160, row + 20]);
+        catch problem
+            fprintf(2, '  cannot copy the delay: %s\n', problem.message);
+            add_block('hdlBasic/Delay', delay, 'Position', [130, row, 160, row + 20]);
+        end
+    end
     add_block('hdlBasic/Gateway Out', outBlock, 'Position', [195, row, 245, row + 20]);
     setIfPossible(inBlock, 'n_bits', '16');
     setIfPossible(inBlock, 'bin_pt', '14');
@@ -354,6 +379,9 @@ for channel = 1:4
     setParamIfPresent(inBlock, 'arith_type', ...
         {'Signed  (2''s comp)', 'Signed (2''s comp)', 'Signed'});
     setIfPossible(delay, 'latency', '4');
+    if channel == 1 && ~isempty(delaySource)
+        compareBlocks(delaySource, delay);
+    end
     if channel == 1
         inPorts = get_param(inBlock, 'PortHandles');
         outPorts = get_param(outBlock, 'PortHandles');
@@ -447,6 +475,87 @@ fprintf('  %d inport(s) driven, %d outport(s) terminated: %d unconnected\n', ...
 if dangling > 0
     error('mc_bisect:wiring', '%d port(s) of %s are still unconnected', dangling, dut);
 end
+end
+
+function compareBlocks(theirs, ours)
+%COMPAREBLOCKS Print the fields that differ, so the fix is evidence and not a guess.
+%   'Unsupported block' says the compiler does not recognise the instance; these are the
+%   fields that could carry that recognition.
+names = {'MaskType', 'XmcBlockStatus', 'block_type', 'block_config', 'latency', ...
+    'rst', 'en', 'reg_retiming', 'SourceType', 'SourceBlock'};
+fprintf('  %-30s %-22s %s\n', 'field', 'AMD', 'ours');
+for index = 1:numel(names)
+    theirsValue = readParameter(theirs, names{index});
+    oursValue = readParameter(ours, names{index});
+    marker = '';
+    if ~strcmp(theirsValue, oursValue)
+        marker = '   <- differs';
+    end
+    fprintf('  %-30s %-22s %s%s\n', names{index}, theirsValue, oursValue, marker);
+end
+end
+
+function value = readParameter(block, name)
+value = '<n/a>';
+try
+    value = char(get_param(block, name));
+catch
+    return
+end
+if isempty(value)
+    value = '<empty>';
+end
+end
+
+function setQuietly(block, name, value)
+%SETQUIETLY Write a hidden mask field; a miss is not worth a line in the log.
+try
+    set_param(block, name, value);
+catch
+    return
+end
+end
+
+function sourceModel = loadPristine()
+%LOADPRISTINE AMD's example under another name, as a source of block instances.
+sourceModel = '';
+here = fileparts(mfilename('fullpath'));
+repoRoot = fileparts(fileparts(fileparts(here)));
+example = findExample(repoRoot);
+if isempty(example)
+    fprintf(2, '  no pristine example to copy a block from\n');
+    return
+end
+target = fullfile(workFolder(), 'SSRDDC_src.slx');
+try
+    clearModelCopy(target);
+    copyfile(example, target);
+    [~, name] = fileparts(target);
+    if bdIsLoaded(name)
+        close_system(name, 0);
+    end
+    load_system(target);
+    sourceModel = name;
+catch problem
+    fprintf(2, '  cannot load a pristine copy: %s\n', problem.message);
+    sourceModel = '';
+end
+end
+
+function closeQuietly(name)
+%CLOSEQUIETLY Close a model if it is open, never throwing from a destructor.
+try
+    if ~isempty(name) && bdIsLoaded(name)
+        close_system(name, 0);
+    end
+catch problem
+    fprintf(2, '  note: cannot close %s: %s\n', name, problem.message);
+end
+end
+
+function folder = workFolder()
+folder = fullfile(fileparts(fileparts(fileparts(fileparts(mfilename('fullpath'))))), ...
+    'build', 'mc_bisect');
 end
 
 function count = unconnectedPorts(block)
