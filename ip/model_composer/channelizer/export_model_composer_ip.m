@@ -30,6 +30,7 @@ end
 fprintf('working folder: %s\n', pwd);
 mc_require_libraries(false);
 load_system(model);
+mc_resolve_links(model);
 % The Hub rejects the update until a device is selected, and MATLAB then reports
 % only "Error due to multiple causes"; print the causes and the Hub's device
 % settings so the log says which block and which parameter.

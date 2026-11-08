@@ -49,6 +49,7 @@ for created = {fullfile(work, 'netlist'), fullfile(work, 'netlist', 'ip'), ...
 end
 
 open_system(modelFile);
+mc_resolve_links(modelName);
 hubs = mc_find_hub(modelName);
 if isempty(hubs)
     error('no Hub block in the example');

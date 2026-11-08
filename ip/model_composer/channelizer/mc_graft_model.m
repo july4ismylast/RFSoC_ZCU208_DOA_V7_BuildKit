@@ -20,6 +20,7 @@ end
 mc_require_libraries(false);
 copyfile(template, destination);
 open_system(destination);   % runs the model's PreLoadFcn: clk, Tclk, ...
+mc_resolve_links(modelName);
 cleanup = onCleanup(@() closeQuietly(modelName)); %#ok<NASGU>
 
 hubs = mc_find_hub(modelName);

@@ -136,8 +136,33 @@ The `FollowLinks 'off'` + "must be inside the model" filter in `mc_find_hub` sta
 as hardening -- it was not the cause, but writing to a block in another model is
 never right.
 
-Still unverified: whether `mc_paths` finds the libraries on this install. If
-`mc_require_libraries` reports them missing, run `make mc-libs` for the paths it
+That run then went one step further and stopped on a library that does not exist:
+
+```
+the Model Composer block libraries are not on this path:
+  xilinxUtilities (No system or file called 'xilinxUtilities' found.)
+```
+
+`vmcUtilities`, `hdlBasic` and `hdlUtilities` had been found -- only
+`xilinxUtilities` was missing, and it is not part of Model Composer 2023.2 at all.
+A hard-coded list of four names was therefore the wrong test: it refused a session
+that was ready. So the list now marks `vmcUtilities` and `hdlBasic` required (the
+Hub and the gateway/delay blocks this kit uses), tries and reports the rest, and
+the real test is moved to where it belongs:
+
+* `mc_require_libraries` -- path repair, required libraries loaded, the rest
+  reported as absent, which is not an error.
+* `mc_resolve_links` -- called immediately after every `open_system` /
+  `load_system`. It finds the blocks whose link is still `unresolved`, loads the
+  library each one names in its own `SourceBlock`, and asks Simulink to resolve
+  that link. This uses what the model links to instead of a guessed list of
+  library names, which is what the failure actually needed.
+* `mc_bisect` still refuses to continue when `vmcUtilities` or `hdlBasic` cannot be
+  loaded, because then the Hub really has nothing to write.
+
+Still unverified: whether `mc_resolve_links` is enough on this install, or the
+model has to be closed and reopened after the libraries are on the path. If the
+Hub still reads empty after both, run `make mc-libs` for the paths `mc_paths`
 searched and set `MC_ROOT` to `Model_Composer/<version>`.
 
 ## Which change breaks it? `make mc-bisect`

@@ -65,6 +65,7 @@ for count = 1:size(steps, 1)
         end
     end
     open_system(modelFile);
+    mc_resolve_links(modelName);
     hubs = mc_find_hub(modelName);
     hub = hubs{1};
     ok = hubHasMask(hub);
@@ -112,9 +113,10 @@ function ok = hubHasMask(hub)
 %HUBHASMASK A Hub block with no parameters is an unresolved library link.
 ok = ~isempty(mc_hub_get(hub, 'ExportType')) || ~isempty(get_param(hub, 'MaskType'));
 if ~ok
-    fprintf(2, ['  %s has no mask and no parameters: its link into vmcUtilities is ' ...
-        'not resolved.\n  the libraries must be on the path before the model is ' ...
-        'opened; see mc_require_libraries.\n'], hub);
+    fprintf(2, ['  %s has no mask and no parameters: its library link is not ' ...
+        'resolved.\n  mc_require_libraries must run before the model is opened, ' ...
+        'and mc_resolve_links\n  right after it; both are called here already, so ' ...
+        'this means the library is missing\n  from the installation.\n'], hub);
 end
 end
 
