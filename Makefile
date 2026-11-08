@@ -42,14 +42,14 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-clean mc-bisect-ips mc-bisect-watch mc-bisect-harvest mc-bisect-next mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline mts-base all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-clean mc-bisect-ips mc-bisect-watch mc-bisect-harvest mc-bisect-next mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
 	@echo
 	@echo "Run one stage:       make step02_hls_covariance"
 	@echo "Complete the build:  make step01_fetch_references && make pipeline"
-	@echo "      (first, once per machine: the MTS base, V03_MTS_BASE_2023P2.md)"
+	@echo "      (first, once per machine: make mts-base)"
 	@echo "Force one stage:     make rebuild STEP=step02_hls_covariance"
 	@echo "Remove one result:   make clean-stage STEP=step02_hls_covariance"
 	@echo "Where the build is:  docs/WHERE_WE_ARE.md"
@@ -324,6 +324,11 @@ ip-equivalence:
 	@python3 ip/model_composer/channelizer/testbench/compare_hdl_vs_model.py
 
 # Package the hand-written Verilog as an IP Catalog component (no Model Composer).
+# Stage V03: the MTS base project BASE_XPR points at.  Not a stepNN_ stage because
+# it is AMD's tree and its output is a Vivado project, not an IP.  Idempotent.
+mts-base:
+	@./scripts/build_mts_base.sh
+
 ip-from-hdl:
 	@mkdir -p "$(IP_REPO)" "$(LOG_DIR)"
 	@echo "packaging ip/model_composer/channelizer/channelizer_dut.v as an IP"
