@@ -243,6 +243,31 @@ more pass with `MC_BISECT_FRESH=1` before their verdict can be used to clear the
 format and the latency -- worth doing only if step 6 fails, because if step 6
 generates the attribution question disappears.
 
+### The blocks are masked subsystems, not library links
+
+The measurement that ended four failed attempts:
+
+```
+110 block(s), 0 with a library source; masks: BitBasher Block, Constant Block Block,
+Delay Block, Gateway In Block, VMC Hub, Xilinx Vector DDFS Block, ...; links: resolved
+```
+
+In Model Composer 2023.2 a Gateway In is a **plain masked subsystem whose MaskType is
+`Gateway In Block`** -- no library source at all, and a suffix on the name. So:
+
+* searching `SourceBlock` can never find them;
+* searching `MaskType` for `Gateway In` fails on an exact comparison;
+* the Hub's mask in this release is `VMC Hub`, not `Vitis Model Composer Hub`.
+
+`findHDLBlocks` now matches `MaskType` by substring, so `Gateway In Block` and
+`Delay Block` are found, and `mc_find_hub` gained `MaskType = VMC Hub` as an identity.
+The lesson generalises: the identity of an AMD block in this release is its mask
+name, and those names carry a suffix.
+
+Adding our own channels into the exported subsystem is now fault-tolerant as well:
+each mask parameter is written on its own, `arith_type` is tried in three spellings,
+and a refused popup prints a note instead of aborting the step.
+
 ### `find_system` and the three wrong ways to enumerate blocks
 
 Step 4 has now spent three runs finding nothing, each time for a different reason, and

@@ -284,10 +284,15 @@ for channel = 1:4
     add_block('hdlBasic/Delay', delay, 'Position', [130, row, 160, row + 20]);
     add_block('hdlBasic/Gateway Out', outBlock, 'Position', [195, row, 245, row + 20]);
     add_block('built-in/Outport', outPort, 'Position', [275, row + 3, 295, row + 17]);
-    set_param(inBlock, 'n_bits', '16', 'bin_pt', '14', 'period', '1', ...
-        'arith_type', 'Signed  (2''s comp)', 'quantization', 'Truncate', ...
-        'overflow', 'Wrap');
-    set_param(delay, 'latency', '4');
+    % One popup spelled differently must not abort the run: each write stands alone
+    % and reports what it could not do.
+    setIfPossible(inBlock, 'n_bits', '16');
+    setIfPossible(inBlock, 'bin_pt', '14');
+    setIfPossible(inBlock, 'period', '1');
+    setIfPossible(inBlock, 'quantization', 'Truncate');
+    setIfPossible(inBlock, 'overflow', 'Wrap');
+    setParamIfPresent(inBlock, 'arith_type', {'Signed  (2''s comp)', 'Signed (2''s comp)', 'Signed'});
+    setIfPossible(delay, 'latency', '4');
     links = {sprintf('InPort%d/1', channel), sprintf('In%d/1', channel); ...
         sprintf('In%d/1', channel), sprintf('Delay%d/1', channel); ...
         sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel); ...
@@ -302,6 +307,30 @@ for channel = 1:4
 end
 fprintf('  design replaced with four channels inside %s\n', dut);
 status = 'ok';
+end
+
+function setIfPossible(block, name, value)
+%SETIFPOSSIBLE Write a block parameter, and carry on if this release spells it
+%   differently.  A missing popup is worth a note, never a dead run.
+try
+    set_param(block, name, value);
+catch problem
+    fprintf(2, '  note: %s: %s = %s (%s)\n', block, name, value, problem.message);
+end
+end
+
+function setParamIfPresent(block, name, candidates)
+%SETPARAMIFPRESENT Try each spelling until one is accepted.
+for index = 1:numel(candidates)
+    try
+        set_param(block, name, candidates{index});
+        return
+    catch problem
+        if index == numel(candidates)
+            fprintf(2, '  note: %s: %s (%s)\n', block, name, problem.message);
+        end
+    end
+end
 end
 
 function status = pick(ok)
@@ -406,7 +435,10 @@ for index = 1:numel(handles)
     if ~isempty(status)
         statuses{end + 1} = status; %#ok<AGROW>
     end
-    if contains(source, kind) || strcmp(maskType, kind)
+    % 'Gateway In Block', 'Delay Block', 'VMC Hub': the 2023.2 blocks are plain masked
+    % subsystems, not library links, so the mask IS the identity and it has a suffix.
+    % A run measured this: 110 blocks, 0 with a library source, mask 'Gateway In Block'.
+    if contains(source, kind) || contains(maskType, kind)
         blocks{end + 1} = path; %#ok<AGROW>
     end
 end
