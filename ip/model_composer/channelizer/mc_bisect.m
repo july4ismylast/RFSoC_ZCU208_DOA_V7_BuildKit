@@ -47,9 +47,22 @@ results = cell(0, 2);
 failedAt = 0;
 failedLabel = '';
 
+startAt = firstStep();
 for count = 1:size(steps, 1)
     label = steps{count, 1};
-    cached = cachedArtifact(label, example);
+    if count < startAt
+        % Steps before this one were proven by an earlier run; the model still gets
+        % their changes (1..count are applied), only their own generation is skipped.
+        verdict = sprintf('skipped (MC_BISECT_FROM=%d)', startAt);
+        fprintf('\n=== step %d: %s ===\n  -> %s\n', count, label, verdict);
+        results{end + 1, 1} = label; %#ok<AGROW>
+        results{end + 1, 2} = verdict; %#ok<AGROW>
+        continue
+    end
+    [cached, why] = cachedArtifact(label, example);
+    if isempty(cached)
+        fprintf('  step %d: generating (%s)\n', count, why);
+    end
     if ~isempty(cached)
         verdict = sprintf('generated earlier (%s)', cached);
         fprintf('\n=== step %d: %s ===\n  -> %s\n', count, label, verdict);
@@ -534,19 +547,32 @@ catch
 end
 end
 
-function cached = cachedArtifact(label, example)
+function startAt = firstStep()
+%FIRSTSTEP Where the ladder starts, so proven steps are not generated again.
+startAt = str2double(getenv('MC_BISECT_FROM'));
+if isnan(startAt) || startAt < 1
+    startAt = 1;
+end
+startAt = round(startAt);
+end
+
+function [cached, why] = cachedArtifact(label, example)
 %CACHEDARTIFACT A component this step already produced, if it is not out of date.
 %   Steps 1-3 generated on an earlier run; regenerating them spends ten minutes
 %   proving again what is already on disk.  MC_BISECT_FRESH=1 ignores the cache.
 cached = '';
+why = 'nothing cached for this step';
 if strcmp(getenv('MC_BISECT_FRESH'), '1')
+    why = 'MC_BISECT_FRESH=1';
     return
 end
 component = fullfile(getenv('IP_REPO'), label, 'component.xml');
 if ~isfile(component)
+    why = 'no component.xml from an earlier run';
     return
 end
 if dir(component).datenum < dir(example).datenum
+    why = sprintf('the example is newer than the artifact (%s)', datestr(dir(example).date));
     return
 end
 % The third step once exported a block called "ADC 1.5GSPS", whose name even holds
@@ -554,11 +580,12 @@ end
 % is not an identifier cannot be the IP this kit exports, so regenerate instead.
 name = componentName(component);
 if isempty(name) || isempty(regexp(name, '^[A-Za-z0-9_]+$', 'once'))
-    fprintf('  the cached component of "%s" is named %s, which cannot be an IP; regenerating\n', ...
-        label, printableName(name));
+    why = sprintf('the cached component is named %s, which cannot be an IP', ...
+        printableName(name));
     return
 end
 cached = datestr(dir(component).date);
+why = 'cached';
 end
 
 function name = componentName(file)

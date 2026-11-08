@@ -65,6 +65,28 @@ fi
 if [[ -z "$vivado_root_dir" ]]; then
     echo "WARNING: cannot find Vivado; set XILINX_VIVADO so the System Generator paths are known" >&2
 fi
+# SysGen keeps a per-session temp tree and a shared-memory proxy.  A session that is
+# cancelled leaves both behind, and the next session's proxy can then wait forever on
+# them -- which is what a ten minute "generation in progress" after a cancel looks
+# like.  Only ever cleared when no MATLAB is running, so a live session is safe.
+clear_stale_sysgen() {
+    if pgrep -x matlab >/dev/null 2>&1 || pgrep -x model_composer >/dev/null 2>&1; then
+        echo "a MATLAB / Model Composer session is running: leaving its SysGen temp state alone" >&2
+        return
+    fi
+    local cleaned=0
+    if compgen -G "/tmp/sysgentmp-${USER}/*" >/dev/null; then
+        rm -rf "/tmp/sysgentmp-${USER:?}"/* 2>/dev/null && cleaned=1
+    fi
+    if compgen -G "/dev/shm/sgproxy*" >/dev/null; then
+        rm -f /dev/shm/sgproxy* 2>/dev/null && cleaned=1
+    fi
+    if [ "$cleaned" = 1 ]; then
+        echo "cleared stale SysGen temp state (no MATLAB was running)"
+    fi
+}
+clear_stale_sysgen
+
 startup_dir="$root/build/mc_startup"
 mkdir -p "$startup_dir"
 {

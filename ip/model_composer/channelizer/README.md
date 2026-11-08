@@ -228,6 +228,42 @@ If a run stalls again, the two questions the log now answers without a rerun:
 | newest file keeps changing, `1 Vivado process(es)` | real synthesis -- let it finish, or raise `MC_GENERATE_TIMEOUT` |
 | nothing written for minutes, `0 Vivado process(es)` | hung in the engine -- Ctrl-C, then `make mc-bisect MC_BISECT_FRESH=1` for that step |
 
+### It stalls on every generation, and the cache stopped helping
+
+After the first cancel, every session hung again at the same place -- and the rerun
+regenerated step 1 even though its artifact was on disk, so the ten minutes were
+spent twice. Two separate causes, two separate fixes.
+
+**The cache was silent about missing.** A step regenerates when the artifact is
+absent, older than the example, named in a way that cannot be an IP, or when
+`MC_BISECT_FRESH=1`. None of that was printed, so a run that repeated step 1 looked
+identical to one that had nothing cached. Every step now says which of those it is:
+
+```
+  step 1: generating (the example is newer than the artifact (08-Nov-2026 13:05:11))
+```
+
+**A cancelled session leaves SysGen state behind.** Model Composer keeps a
+per-session temp tree (`/tmp/sysgentmp-<user>/<pid>/`) and a shared-memory proxy
+(`/dev/shm/sgproxy*`, `vivado_shmem.sh`, `SgWaveformServer.tcl`). A cancel does not
+remove them, and the next session's hand-back can wait on them for ever -- which is
+exactly the shape of the hang: the first session generates three steps fine, later
+sessions hang on the second. `launch_model_composer.sh` now clears both **only when
+no `matlab` or `model_composer` process is running**, and says so:
+
+```
+cleared stale SysGen temp state (no MATLAB was running)
+```
+
+**And the ladder can start where the proof stopped.** `MC_BISECT_FROM=4` marks
+steps 1..3 as `skipped (MC_BISECT_FROM=4)` without generating them; those steps are
+still applied to the model, so step 4 is generated from a model that carries changes
+1..4. Steps 1..3 are already proven by two runs, and the fixed step-3 code (the
+exported block named in `IPInfoJsonString`) is exercised inside step 4's chain.
+
+`make mc-bisect-clean` drops `build/mc_bisect/netlist` and `code` -- the engine's
+litter, never the collected artifacts in `$(IP_REPO)`.
+
 ### The GUI hung after the engine had finished
 
 The next run sat in "generation in progress" while, on disk, the engine was long

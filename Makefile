@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-ips mc-bisect-watch mc-bisect-harvest mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-clean mc-bisect-ips mc-bisect-watch mc-bisect-harvest mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -83,6 +83,7 @@ help:
 	@echo "Is the build alive:      make mc-bisect-watch   (no MATLAB, run in a second terminal)"
 	@echo "Did it finish after all: make mc-bisect-harvest   (INSTALL=step2 to adopt it)"
 	@echo "Slow synth / redo a step: make mc-bisect MC_GENERATE_TIMEOUT=7200 MC_BISECT_FRESH=1"
+	@echo "Start at step 4 (steps 1-3 proven): make mc-bisect MC_BISECT_FROM=4"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Read a saved model's Hub: make mc-hub-dump   (MODEL=..., AGAINST=...)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
@@ -231,6 +232,7 @@ mc-bisect:
 	@mkdir -p "$(LOG_DIR)"
 	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" \
 	    MC_GENERATE_TIMEOUT="$(MC_GENERATE_TIMEOUT)" MC_BISECT_FRESH="$(MC_BISECT_FRESH)" \
+	    MC_BISECT_FROM="$(MC_BISECT_FROM)" \
 	    ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_bisect.log" bisect
 
 # If every bisect step generated, its last artifact is our design, produced by
@@ -244,6 +246,12 @@ mc-bisect:
 # the bisect run left behind; INSTALL=step<N> adopts the newest one.
 mc-bisect-harvest:
 	@python3 scripts/mc_bisect_harvest.py --install "$(INSTALL)"
+
+# Drop the scratch netlist and code of the bisect work folder.  Collected artifacts in
+# $(IP_REPO) are untouched: those are the evidence, this is only the engine's litter.
+mc-bisect-clean:
+	@rm -rf build/mc_bisect/netlist build/mc_bisect/code build/mc_bisect/SSRDDC.slx.r20*
+	@echo "cleared build/mc_bisect/netlist, build/mc_bisect/code (artifacts in $(IP_REPO) kept)"
 
 mc-bisect-watch:
 	@./scripts/mc_watch.sh "$(if $(WORK),$(WORK),build/mc_bisect)"
