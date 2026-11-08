@@ -84,6 +84,9 @@ fails leaves its log and no stamp, which is the `FAILED/OLD` above. Resume with
 
 ### The same list, one stage at a time
 
+The script or Tcl file behind every stage, and what each one needs, is tabulated in
+[`STAGE_FLOW.md`](STAGE_FLOW.md).
+
 ```bash
 make step00_preflight          # tools, licences, parts — fails fast
 make step01_fetch_references
