@@ -113,7 +113,11 @@ for count = 1:size(steps, 1)
     switch status
         case 'ok'
             save_system(modelName);
-            verdict = generate(modelName, work, sprintf('ssr_bisect_step%d', count));
+            if checkOnly()
+                verdict = checkModel(modelName);
+            else
+                verdict = generate(modelName, work, sprintf('ssr_bisect_step%d', count));
+            end
         case 'empty'
             % Nothing was changed, so generating would prove nothing about this
             % step; stop instead of reporting a result that has no cause.  Name the
@@ -130,9 +134,12 @@ for count = 1:size(steps, 1)
     results{end + 1, 2} = verdict; %#ok<AGROW>
     fprintf('  -> %s\n', verdict);
     close_system(modelName, 0);
-    if ~strncmp(verdict, 'generated', 9)
+    accepted = strncmp(verdict, 'generated', 9) || strncmp(verdict, 'model ok', 8);
+    if ~accepted && failedAt == 0
         failedAt = count;
         failedLabel = label;
+    end
+    if ~accepted && ~checkOnly()
         break;
     end
 end
@@ -294,12 +301,20 @@ for channel = 1:4
     add_block('hdlBasic/Gateway Out', outBlock, 'Position', [195, row, 245, row + 20]);
     setIfPossible(inBlock, 'n_bits', '16');
     setIfPossible(inBlock, 'bin_pt', '14');
-    setIfPossible(inBlock, 'period', '1');
+    % -1 is "inherit from the model", which is what this example's own gateways carry.
+    % Setting 1 means one SECOND against a Hub whose period is 2 ns, and a design five
+    % hundred million periods off is not the design we measured.
+    setIfPossible(inBlock, 'period', '-1');
     setIfPossible(inBlock, 'quantization', 'Truncate');
     setIfPossible(inBlock, 'overflow', 'Wrap');
     setParamIfPresent(inBlock, 'arith_type', ...
         {'Signed  (2''s comp)', 'Signed (2''s comp)', 'Signed'});
     setIfPossible(delay, 'latency', '4');
+    if channel == 1
+        for probe = {inBlock, delay, outBlock}
+            fprintf('    %s: %s\n', probe{1}, describeBlock(probe{1}));
+        end
+    end
     wire(dut, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel));
     wire(dut, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel));
 end
@@ -360,14 +375,17 @@ for channel = 1:4
         fprintf(2, '  cannot copy the blocks of channel %d: %s\n', channel, problem.message);
         continue
     end
-    setIfPossible(inBlock, 'n_bits', '16');
-    setIfPossible(inBlock, 'bin_pt', '14');
-    setIfPossible(inBlock, 'period', '1');
-    setIfPossible(delay, 'latency', '4');
+    % Nothing is re-parameterised here on purpose.  An earlier version copied AMD's
+    % blocks and then overwrote their period with 1 second, so it changed two things
+    % at once and could not say which one broke the model.  A copied block is only a
+    % provenance test if it keeps the values it had.
+    for probe = {inBlock, delay, outBlock}
+        fprintf('    %s: %s\n', probe{1}, describeBlock(probe{1}));
+    end
     wire(dut, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel));
     wire(dut, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel));
 end
-fprintf('  %d channel(s) copied from AMD''s own blocks into %s\n', copied, dut);
+fprintf('  %d channel(s) copied from AMD''s own blocks into %s, unchanged\n', copied, dut);
 status = matched(copied, '');
 end
 
@@ -506,6 +524,27 @@ if ~isempty(json)
     end
 end
 status = matched(ok, '');
+end
+
+function text = describeBlock(block)
+%DESCRIBEBLOCK The few parameters that decide rates and widths, for the log.
+text = '';
+names = {'MaskType', 'period', 'n_bits', 'bin_pt', 'latency', 'SamplePeriod'};
+for index = 1:numel(names)
+    try
+        value = char(get_param(block, names{index}));
+    catch
+        continue
+    end
+    if isempty(value)
+        continue
+    end
+    if isempty(text)
+        text = sprintf('%s=%s', names{index}, value);
+    else
+        text = sprintf('%s, %s=%s', text, names{index}, value);
+    end
+end
 end
 
 function folder = workFolder()
@@ -739,6 +778,30 @@ try
     value = get_param(handle, name);
 catch
     value = '';
+end
+end
+
+function yes = checkOnly()
+%CHECKONLY MC_BISECT_CHECK=1 stops after the diagram update.
+%   A generation is minutes and its error names nothing; a diagram update is seconds
+%   and now prints the actual cause.  Fixing a model is a loop, and the loop belongs on
+%   the cheap side.
+yes = strcmp(getenv('MC_BISECT_CHECK'), '1');
+end
+
+function verdict = checkModel(modelName)
+%CHECKMODEL Update the diagram, and say what is wrong with it in words.
+inspectModel(modelName);
+try
+    set_param(modelName, 'SimulationCommand', 'update');
+    verdict = 'model ok (not generated: MC_BISECT_CHECK=1)';
+catch problem
+    causes = problem.cause;
+    if isempty(causes)
+        verdict = sprintf('model invalid: %s', problem.message);
+    else
+        verdict = sprintf('model invalid: %s', causes{1}.message);
+    end
 end
 end
 

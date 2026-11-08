@@ -118,3 +118,35 @@ design to new names, delete the originals (Simulink removes the lines attached t
 block, so none can survive), rename the copies back, restore the Hub identity, and
 generate. Step 10 does that, and every generation now prints the diagram-update result
 and, if it fails, each of its causes.
+
+## The causes, at last: my design was dimensionally wrong
+
+Step 10 rebuilt the root successfully (`lines at the root: 0`) and then printed what
+the diagram update objected to:
+
+```
+  SSRDDC/DDC_DUT: 0 inport(s), 0 outport(s), 13 child block(s)
+  gateway blocks inside: 4 in, 4 out
+  diagram update failed: Error due to multiple causes.
+    cause 1: Invalid setting for input port dimensions of 'SSRDDC/DDC_DUT/Out1/Demux1'.
+             The dimensions are being set to 1. This is not valid because the total
+             number of input and output elements are not the same
+    cause 2: Error in port widths or dimensions. 'Output Port 1' of
+             'SSRDDC/DDC_DUT/Out1/In1' is a one dimensional vector with 1 elements.
+```
+
+`Out1` is not a leaf block: AMD's `Vector Real Gateway Out` is a **subsystem** that
+demuxes a vector into several scalars. Feeding it a single scalar -- which is what our
+channel does -- is a dimension error, and `vmcGenerate` reports dimension errors as
+`Index exceeds the number of array elements`. The design was wrong, not the toolchain.
+
+Two further errors of mine are visible in the same log and are fixed:
+
+| error | why it mattered |
+|---|---|
+| `setIfPossible(inBlock, 'period', '1')` | 1 is one **second**; the Hub's period is 2 ns. The example's own gateways carry `-1` = inherit, and the design is now built with `-1` |
+| step 7 copied AMD's blocks and *then* overwrote their period | two variables at once, so "step 7 rules out provenance" was never true. Step 7 now changes nothing in the blocks it copies |
+
+`make mc-bisect MC_BISECT_FROM=10 MC_BISECT_CHECK=1` stops after the diagram update --
+seconds per step instead of minutes -- so the model can be fixed in a loop that fails
+cheaply and in words.

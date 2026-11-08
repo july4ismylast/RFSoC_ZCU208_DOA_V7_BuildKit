@@ -87,6 +87,7 @@ help:
 	@echo "What is proven / next:   make mc-bisect-next"
 	@echo "Slow synth / redo a step: make mc-bisect MC_GENERATE_TIMEOUT=7200 MC_BISECT_FRESH=1"
 	@echo "Start at step 4 (steps 1-3 proven): make mc-bisect MC_BISECT_FROM=4"
+	@echo "Check the model only, seconds:  make mc-bisect MC_BISECT_FROM=10 MC_BISECT_CHECK=1"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Read a saved model's Hub: make mc-hub-dump   (MODEL=..., AGAINST=...)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
@@ -235,7 +236,7 @@ mc-bisect:
 	@mkdir -p "$(LOG_DIR)"
 	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" \
 	    MC_GENERATE_TIMEOUT="$(MC_GENERATE_TIMEOUT)" MC_BISECT_FRESH="$(MC_BISECT_FRESH)" \
-	    MC_BISECT_FROM="$(MC_BISECT_FROM)" \
+	    MC_BISECT_FROM="$(MC_BISECT_FROM)" MC_BISECT_CHECK="$(MC_BISECT_CHECK)" \
 	    ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_bisect.log" bisect
 
 # If every bisect step generated, its last artifact is our design, produced by
