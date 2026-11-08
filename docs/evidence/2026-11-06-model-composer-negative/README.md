@@ -195,3 +195,26 @@ something it can be wired to. That is recorded above, not repeated on every run.
 
 The ladder is six steps and ends at our design, which is what `make mc-adopt-bisect`
 adopts as `$(IP_REPO)/model_composer_channelizer`.
+
+## The interface shape is measured now, not argued about
+
+A check run passed (`diagram update: ok`) and the generation still died in
+`vmcGenerate`, which proves only that Simulink accepts the diagram. One open question
+remained, and the repository had contradicted itself about it: does AMD's `DDC_DUT`
+carry Simulink Inport/Outport blocks, or are its gateways the boundary?
+
+It is not answered by reading. The design step therefore prints, on every run:
+
+* `AMD's own SSRDDC/DDC_DUT: N in, M out (before the replacement)` -- their subsystem,
+  before anything is touched;
+* `gateway in: N in, M out; gateway out: N in, M out` -- whether a `Gateway In` accepts
+  an incoming line at all;
+* `the design is defined by Simulink Inport/Outport blocks` or `by the gateways
+  themselves`.
+
+and builds the channels to match what it measured, grounding each inport and
+terminating each outport at the root when the design ends up port-wrapped.
+
+The earlier "Inport/Outport was already tried" result is withdrawn: that run carried
+`period = 1` and a vector `Gateway Out`, so it tested three wrong things at once and
+proved nothing about ports.

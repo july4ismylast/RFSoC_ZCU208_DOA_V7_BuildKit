@@ -269,10 +269,18 @@ end
 
 function status = stepReplaceDesign(hub, modelName)
 %STEPREPLACEDESIGN Our four channels inside the exported subsystem.
-%   No Inport/Outport blocks: in Model Composer a Gateway In is the IP's input and a
-%   Gateway Out its output, which is why AMD's DDC_DUT holds gateway blocks and no
-%   ports of its own.  Wrapping them is a different design, and step 7 tests it.
+%   The interface shape is measured, not assumed: this model may define a design by its
+%   Simulink Inport/Outport blocks, or by its Gateway blocks as the boundary.  A run
+%   printed both answers -- AMD's own subsystem port count and whether a Gateway In
+%   accepts an incoming line -- and the channels are built to match.
 dut = exportedSubsystem(modelName, hub);
+try
+    originalPorts = get_param(dut, 'PortHandles');
+    fprintf('  AMD''s own %s: %d in, %d out (before the replacement)\n', dut, ...
+        numel(originalPorts.Inport), numel(originalPorts.Outport));
+catch problem
+    fprintf('  note: no ports to count: %s\n', problem.message);
+end
 try
     set_param(dut, 'LinkStatus', 'none');
 catch problem
@@ -287,6 +295,7 @@ if ~isempty(find_system(dut, 'SearchDepth', 1, 'Type', 'Block'))
     delete_block(dut);
     add_block('built-in/Subsystem', dut, 'Position', [320, 60, 660, 340]);
 end
+portWrapped = false;
 for channel = 1:4
     row = 40 + 60 * (channel - 1);
     inBlock = sprintf('%s/In%d', dut, channel);
@@ -297,11 +306,8 @@ for channel = 1:4
     add_block('hdlBasic/Gateway Out', outBlock, 'Position', [195, row, 245, row + 20]);
     setIfPossible(inBlock, 'n_bits', '16');
     setIfPossible(inBlock, 'bin_pt', '14');
-    % A run measured both wrong guesses: -1 is refused outright ("Sample period is
-    % set to a value of -1, but the value must be greater than 0") and 1 means one
-    % second against a Hub running in nanoseconds.  Tclk is what AMD's own gateways in
-    % this model carry, and the model's PreLoadFcn defines it; one sample per clock is
-    % our design, and the clock frequency comes from the Hub.
+    % -1 is refused ("must be greater than 0") and 1 is a second against a Hub whose
+    % period is 2 ns; Tclk is what AMD's own gateways carry, one sample per clock.
     setIfPossible(inBlock, 'period', 'Tclk');
     setIfPossible(inBlock, 'quantization', 'Truncate');
     setIfPossible(inBlock, 'overflow', 'Wrap');
@@ -309,18 +315,57 @@ for channel = 1:4
         {'Signed  (2''s comp)', 'Signed (2''s comp)', 'Signed'});
     setIfPossible(delay, 'latency', '4');
     if channel == 1
-        for probe = {inBlock, delay, outBlock}
-            fprintf('    %s: %s\n', probe{1}, describeBlock(probe{1}));
-        end
+        inPorts = get_param(inBlock, 'PortHandles');
+        outPorts = get_param(outBlock, 'PortHandles');
+        fprintf('  gateway in: %d in, %d out; gateway out: %d in, %d out\n', ...
+            numel(inPorts.Inport), numel(inPorts.Outport), ...
+            numel(outPorts.Inport), numel(outPorts.Outport));
+        portWrapped = numel(inPorts.Inport) > 0 && numel(outPorts.Outport) > 0;
+        fprintf('  the design is defined by %s\n', ternaryText(portWrapped, ...
+            'Simulink Inport/Outport blocks', 'the gateways themselves'));
+    end
+    if portWrapped
+        add_block('built-in/Inport', sprintf('%s/P%d', dut, channel), ...
+            'Position', [10, row + 3, 30, row + 17]);
+        add_block('built-in/Outport', sprintf('%s/Q%d', dut, channel), ...
+            'Position', [270, row + 3, 290, row + 17]);
+        wire(dut, sprintf('P%d/1', channel), sprintf('In%d/1', channel));
     end
     wire(dut, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel));
     wire(dut, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel));
+    if portWrapped
+        wire(dut, sprintf('Out%d/1', channel), sprintf('Q%d/1', channel));
+    end
 end
-fprintf('  design replaced with four gateway -> delay -> gateway channels inside %s\n', dut);
+fprintf('  four channels built inside %s\n', dut);
 stripRoot(modelName, hub);
+if portWrapped
+    ports = get_param(dut, 'PortHandles');
+    for index = 1:numel(ports.Inport)
+        ground = sprintf('%s/Ground%d', modelName, index);
+        add_block('built-in/Ground', ground, 'Position', ...
+            [120, 60 + 60 * (index - 1), 150, 80 + 60 * (index - 1)]);
+        wire(modelName, sprintf('Ground%d/1', index), sprintf('%s/%d', dut, index));
+    end
+    for index = 1:numel(ports.Outport)
+        terminator = sprintf('%s/Term%d', modelName, index);
+        add_block('built-in/Terminator', terminator, 'Position', ...
+            [560, 60 + 60 * (index - 1), 580, 80 + 60 * (index - 1)]);
+        wire(modelName, sprintf('%s/%d', dut, index), sprintf('Term%d/1', index));
+    end
+    fprintf('  %d inport(s) grounded, %d outport(s) terminated at the root\n', ...
+        numel(ports.Inport), numel(ports.Outport));
+end
 status = 'ok';
 end
 
+function text = ternaryText(condition, whenTrue, whenFalse)
+if condition
+    text = whenTrue;
+else
+    text = whenFalse;
+end
+end
 function text = describeBlock(block)
 %DESCRIBEBLOCK The few parameters that decide rates and widths, for the log.
 text = '';
