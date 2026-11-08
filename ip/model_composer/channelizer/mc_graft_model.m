@@ -68,10 +68,14 @@ end
 function dut = findDut(modelName, hub)
 %FINDDUT The subsystem the Hub exports.
 wanted = '';
-try
-    wanted = get_param(hub, 'SubsystemName');
-catch problem
-    fprintf('  note: the Hub has no SubsystemName: %s\n', problem.message);
+text = mc_hub_get(hub, 'IPInfoJsonString');
+if ~isempty(text)
+    try
+        information = jsondecode(text);
+        wanted = information.HDLSubsystem.SubsystemName;
+    catch
+        wanted = '';
+    end
 end
 candidates = {};
 if ~isempty(wanted)
@@ -96,7 +100,7 @@ function block = emptySubsystem(block)
 %   subsystem is a library-linked instance, whose contents cannot be edited or
 %   extended in place.  So: detach the link, empty it with the supported API, and
 %   if anything is still there, recreate the subsystem under the same name -- the
-%   name is what the Hub's SubsystemName refers to.
+%   name is what the Hub's IPInfoJsonString refers to.
 detachLink(block);
 try
     Simulink.SubSystem.deleteContents(block);
@@ -212,31 +216,31 @@ end
 
 function configureHub(hub, settings, subsystemName)
 %CONFIGUREHUB Everything the Hub needs before it will generate anything.
-setParam(hub, 'ExportType', 'IP Catalog');
-setParam(hub, 'IpVendor', 'doa.v7');
-setParam(hub, 'IpLibrary', 'model_composer');
-setParam(hub, 'IpVersion', '1.0');
-setParam(hub, 'IpHWLanguage', 'Verilog');
-setParam(hub, 'CodeGeneration', 'on');
-setParam(hub, 'TargetDirectory', settings.codeDir);
-setParam(hub, 'directory', settings.netlistDir);
-setParam(hub, 'ProjDevice', settings.part.full);
-setParam(hub, 'ProjDevicePart', settings.part.full);
-setParam(hub, 'part', settings.part.device);
-setParam(hub, 'package', settings.part.package);
-setParam(hub, 'speed', settings.part.speed);
-setParam(hub, 'xilinxfamily', settings.part.family);
-setParam(hub, 'ClockFrequency', num2str(settings.sampleHz / 1e6));
-setParam(hub, 'SamplePeriod', '-1');
+mc_hub_set(hub, 'ExportType', 'IP Catalog');
+mc_hub_set(hub, 'IpVendor', 'doa.v7');
+mc_hub_set(hub, 'IpLibrary', 'model_composer');
+mc_hub_set(hub, 'IpVersion', '1.0');
+mc_hub_set(hub, 'IpHWLanguage', 'Verilog');
+mc_hub_set(hub, 'CodeGeneration', 'on');
+mc_hub_set(hub, 'TargetDirectory', settings.codeDir);
+mc_hub_set(hub, 'directory', settings.netlistDir);
+mc_hub_set(hub, 'ProjDevice', settings.part.full);
+mc_hub_set(hub, 'ProjDevicePart', settings.part.full);
+mc_hub_set(hub, 'part', settings.part.device);
+mc_hub_set(hub, 'package', settings.part.package);
+mc_hub_set(hub, 'speed', settings.part.speed);
+mc_hub_set(hub, 'xilinxfamily', settings.part.family);
+mc_hub_set(hub, 'ClockFrequency', num2str(settings.sampleHz / 1e6));
+mc_hub_set(hub, 'SamplePeriod', '-1');
 % Our gateways run at Simulink period 1 and a 200 MHz clock.  Inheriting the
 % example's expressions ((1e+9)/clk, 1/clk) produced
 %   'Simulink system period' ... smaller than required for the rates in the design
 % in the engine's own log, so both are written explicitly.
-setParam(hub, 'sysclk_period', num2str(1e9 / settings.sampleHz));
-setParam(hub, 'simulink_period', '1');
-setParam(hub, 'SubsystemName', subsystemName);
-setParam(hub, 'IpName', subsystemName);
-setParam(hub, 'IPInfoJsonString', sprintf(['{"HDLSubsystem":{' ...
+mc_hub_set(hub, 'sysclk_period', num2str(1e9 / settings.sampleHz));
+mc_hub_set(hub, 'simulink_period', '1');
+% The exported block is named in IPInfoJsonString only: a 2023.2 Hub has no
+% SubsystemName and no IpName parameter, so writes to those were skipped.
+mc_hub_set(hub, 'IPInfoJsonString', sprintf(['{"HDLSubsystem":{' ...
     '"SubsystemName":"%s","IPName":"%s",' ...
     '"IPLibrary":"model_composer","IPVendor":"doa.v7","IPVersion":"1.0"}}'], ...
     subsystemName, subsystemName));
@@ -251,13 +255,8 @@ if isempty(hubs)
     return;
 end
 fprintf('  Hub in %s: %s\n', savedName, hubs{1});
-for parameter = {'ExportType', 'ProjDevice', 'part', 'SubsystemName'}
-    name = parameter{1};
-    try
-        fprintf('  Hub.%s = %s\n', name, get_param(hubs{1}, name));
-    catch problem
-        fprintf('  Hub.%s = <%s>\n', name, problem.message);
-    end
+for parameter = {'ExportType', 'ProjDevice', 'part', 'IPInfoJsonString'}
+    fprintf('  Hub.%s = %s\n', parameter{1}, mc_hub_get(hubs{1}, parameter{1}));
 end
 fprintf('  exported subsystem: %s/%s\n', savedName, subsystemName);
 end

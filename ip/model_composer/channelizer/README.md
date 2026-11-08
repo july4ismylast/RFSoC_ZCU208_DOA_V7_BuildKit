@@ -69,6 +69,57 @@ block topology** instead of recreating its subsystem; if it does not, Model
 Composer's IP Catalog export is unusable for this part here and the Verilog route
 (`make ip-from-hdl`) remains the deliverable.
 
+## What the saved example actually says (read without MATLAB)
+
+A `.slx` is a zip. `scripts/slx_hub_params.py` unzips one and prints the Hub's
+stored `InstanceData`, so a saved model can be interrogated on a machine that has
+no Model Composer. `make mc-hub-dump` is that script; the dump of AMD's example
+is committed as `docs/evidence/2026-11-08-hub-parameters/ssr_example_hub.txt`.
+
+Three things that dump says, each of which contradicts an earlier note in this
+file:
+
+| earlier claim | what the file says |
+|---|---|
+| the Hub exports to `IP Catalog` by default, it is one popup away | `ExportType = System Generator` |
+| `SubsystemName` and `IpName` are Hub parameters; empty ones caused the failure | there is **no** such parameter. The exported block and the VLNV live in `IPInfoJsonString`, e.g. `{"HDLSubsystem":{"SubsystemName":"DDC_DUT",...,"IPVendor":"User Company"}}` |
+| the example is a ZCU208 design | `ProjDevice = xcku11p-ffva1156-1-e`, family `kintexuplus`, `part = xcku11p`, `package = ffva1156` |
+
+It also shows what the example feeds the rate machinery from: a `PreLoadFcn` that
+defines `clk = 500e6`, `sample_rate`, `SSR`, `Tclk`, `Ts`, which is why its
+`sysclk_period` reads `(1e+9)/clk` and `simulink_period` reads `1/clk`.
+
+### The bug this exposed, and the fix
+
+`make mc-bisect` died on its first write:
+
+```
+mc_bisect failed: Reference block does not have a parameter named 'ExportType'
+```
+
+`mc_find_hub` searched with `FollowLinks` **on**, which walks into the linked
+library, so the block it handed back was `vmcUtilities/Vitis Model Composer Hub` --
+the reference, not the instance in the model. Writing to that raises exactly the
+message above. Two changes:
+
+* `mc_find_hub` now searches with `FollowLinks 'off'` and drops any hit that is not
+  inside the model, whatever it is called.
+* `mc_hub_set` / `mc_hub_get` write and read a Hub parameter by three routes in
+  order -- `set_param`, the mask object's `parameter.Value`, then the
+  `MaskNames`/`MaskValues` vector -- read the value back after each, and on total
+  failure print the block's real parameter names and, for a popup, the legal
+  values. So a refused write now reports what it would accept instead of a message
+  that needs another guess.
+
+Every Hub write goes through those two helpers: `make_channelizer_model`,
+`mc_graft_model`, `export_model_composer_ip` and `mc_bisect`. The two dead
+`SubsystemName`/`IpName` writes are gone from all of them; the name is written
+where it is actually stored, in `IPInfoJsonString`.
+
+Still unverified: neither helper has been run against a live Model Composer, so
+whether route 2 or 3 is the one this Hub accepts is an open question -- the next
+run will print which route worked.
+
 ## Which change breaks it? `make mc-bisect`
 
 `make mc-example-ip` says whether the example survives at all. `make mc-bisect`
@@ -81,7 +132,7 @@ our design is the one the engine refuses?**
 
 | step | change | what a pass proves |
 |---|---|---|
-| 1 | `ExportType = IP Catalog` | IP Catalog export works for this install at all |
+| 1 | `ExportType` from `System Generator` to `IP Catalog` | IP Catalog export works for this install at all |
 | 2 | device retargeted to `MC_PART` | the xczu208 part is not the blocker |
 | 3 | exported subsystem named `channelizer`, VLNV set to `doa.v7:model_composer:channelizer:1.0` | `SubsystemName`/`IpName` being empty was not the blocker |
 | 4 | every `Gateway In` set to sfix16_En14 | our **sample format** is not the blocker |

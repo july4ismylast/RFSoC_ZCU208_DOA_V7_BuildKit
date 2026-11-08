@@ -27,7 +27,7 @@ end
 steps = { ...
     'export target IP Catalog',        @stepNothing; ...
     'retarget device to MC_PART',      @stepRetarget; ...
-    'name the exported subsystem',     @stepNameSubsystem; ...
+    'name the exported subsystem',     @stepIpIdentity; ...
     'our sample format 16.14',         @stepFormat; ...
     'our latency 4',                   @stepLatency; ...
     'our design inside the subsystem', @stepReplaceDesign};
@@ -57,14 +57,19 @@ for count = 1:size(steps, 1)
     open_system(modelFile);
     hubs = mc_find_hub(modelName);
     hub = hubs{1};
-    prepareHub(hub, work);
+    ok = prepareHub(hub, work);
     for applied = 1:count
-        steps{applied, 2}(hub, modelName);
+        if ok
+            ok = steps{applied, 2}(hub, modelName);
+        end
     end
-    save_system(modelName);
-
     fprintf('\n=== step %d: %s ===\n', count, label);
-    verdict = generate(modelName, work, sprintf('ssr_bisect_step%d', count));
+    if ~ok
+        verdict = 'set-failed: a Hub parameter could not be written';
+    else
+        save_system(modelName);
+        verdict = generate(modelName, work, sprintf('ssr_bisect_step%d', count));
+    end
     results{end + 1, 1} = label; %#ok<AGROW>
     results{end + 1, 2} = verdict; %#ok<AGROW>
     fprintf('  -> %s\n', verdict);
@@ -90,45 +95,72 @@ fprintf('MC_BISECT_DONE\n');
 end
 
 % ---------------------------------------------------------------------------
-function prepareHub(hub, work)
+function ok = prepareHub(hub, work)
 %PREPAREHUB Settings every step shares: IP Catalog, writable folders.
-set_param(hub, 'ExportType', 'IP Catalog');
-set_param(hub, 'CodeGeneration', 'on');
-set_param(hub, 'directory', fullfile(work, 'netlist'));
-set_param(hub, 'TargetDirectory', fullfile(work, 'code'));
+%   The example ships with ExportType = "System Generator" and CodeGeneration =
+%   off, so step 1 is a real change and not a no-op.  Writes go through
+%   mc_hub_set because this Hub is a library link whose parameters do not answer
+%   to set_param by name.
+fprintf('  hub %s: ExportType=%s, device=%s\n', hub, mc_hub_get(hub, 'ExportType'), ...
+    mc_hub_get(hub, 'ProjDevice'));
+% Written first, without CodeGeneration: the network of folders is what the
+% engine reads, and a folder it cannot write is the failure it reports as
+% "Failed to create and open file ./netlist/ip/Makefile".
+ok = mc_hub_set(hub, 'ExportType', 'IP Catalog');
+ok = mc_hub_set(hub, 'CodeGeneration', 'on') && ok;
+ok = mc_hub_set(hub, 'directory', fullfile(work, 'netlist')) && ok;
+ok = mc_hub_set(hub, 'TargetDirectory', fullfile(work, 'code')) && ok;
+fprintf('  hub now: ExportType=%s, CodeGeneration=%s\n', ...
+    mc_hub_get(hub, 'ExportType'), mc_hub_get(hub, 'CodeGeneration'));
 end
 
-function stepNothing(~, ~)
-%STEPNOTHING The example as shipped, only with an IP Catalog target.
+function ok = stepNothing(~, ~)
+%STEPNOTHING The example as shipped, with an IP Catalog target (prepareHub).
+ok = true;
 end
 
-function stepRetarget(hub, ~)
+function ok = stepRetarget(hub, ~)
 %STEPRETARGET The device this repository builds for.
 part = getenv('MC_PART');
 if isempty(part)
     part = 'xczu48dr-fsvg1517-2-e';
 end
 pieces = strsplit(part, '-');
-set_param(hub, 'ProjDevice', part, 'ProjDevicePart', part, 'part', pieces{1}, ...
-    'package', pieces{2}, 'speed', ['-' pieces{3} '-' pieces{4}], ...
-    'xilinxfamily', 'zynquplus');
+% The example ships an UltraScale+ Kintex part (xcku11p-ffva1156-1-e, family
+% kintexuplus), so this is a real change of family as well as of part.
+ok = mc_hub_set(hub, 'ProjDevice', part);
+ok = mc_hub_set(hub, 'ProjDevicePart', part) && ok;
+ok = mc_hub_set(hub, 'part', pieces{1}) && ok;
+ok = mc_hub_set(hub, 'package', pieces{2}) && ok;
+ok = mc_hub_set(hub, 'speed', ['-' pieces{3} '-' pieces{4}]) && ok;
+ok = mc_hub_set(hub, 'xilinxfamily', 'zynquplus') && ok;
 fprintf('  device -> %s\n', part);
 end
 
-function stepNameSubsystem(hub, modelName)
-%STEPNAMESUBSYSTEM Say explicitly which block is exported.
+function ok = stepIpIdentity(hub, modelName)
+%STEPIPIDENTITY Say explicitly which block is exported, and under which VLNV.
+%   There is no SubsystemName parameter on the 2023.2 Hub: the exported block and
+%   the IP identity live in one JSON string, IPInfoJsonString, which the example
+%   fills in as {"HDLSubsystem":{"SubsystemName":"DDC_DUT",...,"IPVendor":"User
+%   Company"}}.  Writing the JSON is the only way to say it; older notes that
+%   called SubsystemName a Hub parameter were wrong.
 dut = exportedSubsystem(modelName, hub);
 parts = strsplit(dut, '/');
 name = parts{end};
-set_param(hub, 'SubsystemName', name, 'IpName', name, ...
-    'IpVendor', 'doa.v7', 'IpLibrary', 'model_composer', 'IpVersion', '1.0');
-fprintf('  SubsystemName -> %s, VLNV doa.v7:model_composer:1.0\n', name);
+ok = mc_hub_set(hub, 'IpVendor', 'doa.v7');
+ok = mc_hub_set(hub, 'IpLibrary', 'model_composer') && ok;
+ok = mc_hub_set(hub, 'IpVersion', '1.0') && ok;
+information = struct('HDLSubsystem', struct('SubsystemName', name, 'IPName', name, ...
+    'IPLibrary', 'model_composer', 'IPVendor', 'doa.v7', 'IPVersion', '1.0'));
+text = jsonencode(information);
+ok = mc_hub_set(hub, 'IPInfoJsonString', text) && ok;
+fprintf('  exported block -> %s, VLNV doa.v7:model_composer:%s:1.0\n', name, name);
 end
 
-function stepFormat(~, modelName)
+function ok = stepFormat(~, modelName)
 %STEPFORMAT Gateways to sfix16_En14, as our channels use.
 count = 0;
-blocks = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'on', ...
+blocks = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
     'MaskType', 'Gateway In');
 for index = 1:numel(blocks)
     try
@@ -139,12 +171,13 @@ for index = 1:numel(blocks)
     end
 end
 fprintf('  %d gateway(s) set to 16.14\n', count);
+ok = count > 0;
 end
 
-function stepLatency(~, modelName)
+function ok = stepLatency(~, modelName)
 %STEPLATENCY Every delay to four clocks.
 count = 0;
-blocks = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'on', ...
+blocks = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
     'MaskType', 'Delay');
 for index = 1:numel(blocks)
     try
@@ -155,9 +188,10 @@ for index = 1:numel(blocks)
     end
 end
 fprintf('  %d delay(s) set to latency 4\n', count);
+ok = count > 0;
 end
 
-function stepReplaceDesign(hub, modelName)
+function ok = stepReplaceDesign(hub, modelName)
 %STEPREPLACEDESIGN Our four channels inside the exported subsystem.
 dut = exportedSubsystem(modelName, hub);
 try
@@ -165,6 +199,7 @@ try
 catch problem
     fprintf('  note: link: %s\n', problem.message);
 end
+ok = true;
 try
     Simulink.SubSystem.deleteContents(dut);
 catch problem

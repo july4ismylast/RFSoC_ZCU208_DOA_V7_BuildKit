@@ -8,16 +8,15 @@ function make_channelizer_model(destination)
 %
 %       channelizer.slx
 %         System Generator            (the Hub: device, export target)
-%         channelizer_dut             (a SUBSYSTEM with the same name the Hub's
-%           In1 -> Delay1 -> Out1       SubsystemName field holds)
+%         channelizer_dut             (a SUBSYSTEM whose name is the one recorded
+%           In1 -> Delay1 -> Out1       in the Hub's IPInfoJsonString)
 %           ... four channels ...
 %
-%   The Hub's `SubsystemName` names a block, and Model Composer exports *that*
-%   block.  AMD's working example has a `DDC_DUT` subsystem for exactly this
-%   reason.  With the gateways loose at the top level there is no block with that
-%   name, and xmcGenerate dies inside vmcGenerate.p with
-%   "Index exceeds the number of array elements. Index must not exceed 0." --
-%   the empty result of that lookup.
+%   Model Composer exports *one named block*, and the name comes from the Hub's
+%   IPInfoJsonString ("HDLSubsystem":"SubsystemName").  There is no SubsystemName
+%   parameter to set: a 2023.2 Hub has none, so earlier attempts to write one were
+%   skipped and the JSON was the only place the name could come from.  AMD's
+%   working example records DDC_DUT there and has a subsystem of that name.
 %
 %   Two routes, chosen automatically:
 %   1. TEMPLATE (preferred): take the Hub from an AMD example (build/mc_examples,
@@ -117,8 +116,8 @@ end
 % ---------------------------------------------------------------------------
 function subsys = addDut(modelName, settings)
 %ADDDUT The subsystem the Hub exports: four gateway/delay/gateway channels.
-%   Its name must equal the Hub's SubsystemName; that is the block Model Composer
-%   generates an IP for.
+%   Its name must equal the SubsystemName recorded in the Hub's IPInfoJsonString;
+%   that is the block Model Composer generates an IP for.
 subsys = [modelName '/' settings.subsystemName];
 deleteIfPresent(subsys);
 height = 100 + 60 * settings.channels;
@@ -159,31 +158,29 @@ end
 % ---------------------------------------------------------------------------
 function configureHub(hub, settings)
 %CONFIGUREHUB Everything the Hub needs before it will generate anything.
-applyPopup(hub, 'ExportType', 'IP Catalog');
-applyParam(hub, 'IpVendor', 'doa.v7');
-applyParam(hub, 'IpLibrary', 'model_composer');
-applyParam(hub, 'IpVersion', '1.0');
-applyParam(hub, 'IpHWLanguage', 'Verilog');
+mc_hub_set(hub, 'ExportType', 'IP Catalog');
+mc_hub_set(hub, 'IpVendor', 'doa.v7');
+mc_hub_set(hub, 'IpLibrary', 'model_composer');
+mc_hub_set(hub, 'IpVersion', '1.0');
+mc_hub_set(hub, 'IpHWLanguage', 'Verilog');
 % A real Generate presses these first: the example Hub ships with
 % CodeGeneration off and a relative TargetDirectory, and xmcGenerate reads them.
-applyPopup(hub, 'CodeGeneration', 'on');
-applyParam(hub, 'TargetDirectory', settings.codeDir);
-applyParam(hub, 'directory', settings.netlistDir);
-applyParam(hub, 'ProjDevice', settings.part.full);
-applyParam(hub, 'ProjDevicePart', settings.part.full);
-applyParam(hub, 'part', settings.part.device);
-applyParam(hub, 'package', settings.part.package);
-applyParam(hub, 'speed', settings.part.speed);
-applyParam(hub, 'xilinxfamily', settings.part.family);
-applyParam(hub, 'ClockFrequency', num2str(settings.sampleHz / 1e6));
-applyParam(hub, 'SamplePeriod', '-1');
-applyParam(hub, 'sysclk_period', num2str(1e9 / settings.sampleHz));
-applyParam(hub, 'simulink_period', '1');
-% The subsystem that gets exported.  Empty here is what made xmcGenerate index an
-% empty lookup, together with not having a block of that name in the model.
-applyParam(hub, 'SubsystemName', settings.subsystemName);
-applyParam(hub, 'IpName', settings.subsystemName);
-applyParam(hub, 'IPInfoJsonString', sprintf(['{"HDLSubsystem":{' ...
+mc_hub_set(hub, 'CodeGeneration', 'on');
+mc_hub_set(hub, 'TargetDirectory', settings.codeDir);
+mc_hub_set(hub, 'directory', settings.netlistDir);
+mc_hub_set(hub, 'ProjDevice', settings.part.full);
+mc_hub_set(hub, 'ProjDevicePart', settings.part.full);
+mc_hub_set(hub, 'part', settings.part.device);
+mc_hub_set(hub, 'package', settings.part.package);
+mc_hub_set(hub, 'speed', settings.part.speed);
+mc_hub_set(hub, 'xilinxfamily', settings.part.family);
+mc_hub_set(hub, 'ClockFrequency', num2str(settings.sampleHz / 1e6));
+mc_hub_set(hub, 'SamplePeriod', '-1');
+mc_hub_set(hub, 'sysclk_period', num2str(1e9 / settings.sampleHz));
+mc_hub_set(hub, 'simulink_period', '1');
+% The exported block is named in IPInfoJsonString only: a 2023.2 Hub has no
+% SubsystemName and no IpName parameter, so writes to those were skipped.
+mc_hub_set(hub, 'IPInfoJsonString', sprintf(['{"HDLSubsystem":{' ...
     '"SubsystemName":"%s","IPName":"%s",' ...
     '"IPLibrary":"model_composer","IPVendor":"doa.v7","IPVersion":"1.0"}}'], ...
     settings.subsystemName, settings.subsystemName));
@@ -254,7 +251,7 @@ fprintf('  Hub in %s: %s\n', savedName, hubs{1});
 printHubSetting(hubs{1}, 'ExportType');
 printHubSetting(hubs{1}, 'ProjDevice');
 printHubSetting(hubs{1}, 'part');
-printHubSetting(hubs{1}, 'SubsystemName');
+printHubSetting(hubs{1}, 'IPInfoJsonString');
 end
 
 function printHubSetting(hub, parameter)

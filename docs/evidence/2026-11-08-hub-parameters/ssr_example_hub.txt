@@ -1,0 +1,72 @@
+# Vitis Model Composer Hub parameters of AMD SSRDDC.slx, read from the .slx
+# (a zip) by scripts/slx_hub_params.py -- no MATLAB involved.
+
+model: build/mc_examples/SSRDDC.slx
+  hub block: Vitis Model Composer Hub  (vmcUtilities/Vitis Model Composer Hub)
+    AieCompilerOptions       = {}
+    AieSimTimeout            = 50000
+    AieSimulatorOptions      = {}
+    ClockFrequency           = 200
+    CodeGeneration           = off
+    CreateTestbench          = off
+    DataPathParallelism      = 1
+    ExportType               = System Generator
+    GenHwImage               = off
+    HideAutomaticName        = off
+    HwSystemType             = Baremetal
+    HwValidationTarget       = hw
+    IPInfoJsonString         = {"HDLSubsystem":{"SubsystemName":"DDC_DUT","IPName":"DDC_DUT","IPLibrary":"VMC","IPVendor":"User Company","IPVersion":"1.0"}}
+    IpHWLanguage             = Verilog
+    IpLibrary                = hls
+    IpVendor                 = xilinx.com
+    IpVersion                = 1.0
+    LaunchVitisAnalyzer      = off
+    LibraryVersion           = 1.51
+    LogFileName              = ''
+    MultithreadedSim         = auto
+    NThreads                 = 4
+    PlatformType             = Not Specified
+    PlotOutput               = off
+    Ports                    = []
+    Position                 = [787, 42, 837, 92]
+    ProjDevice               = xcku11p-ffva1156-1-e
+    ProjDevicePart           = xcku11p-ffva1156-1-e
+    RunAieSim                = off
+    RunAieSimProfiling       = off
+    RunX86Sim                = off
+    SamplePeriod             = -1
+    SourceBlock              = vmcUtilities/Vitis Model Composer Hub
+    SourceType               = VMC Hub
+    Tag                      = genX
+    TargetDirectory          = ./code
+    TestbenchStackSize       = 10
+    UserDataPersistent       = on
+    X86SimTimeout            = 10
+    ZOrder                   = 15472
+    clock_wrapper            = Clock Enables
+    dbl_ovrd                 = According to Block Masks
+    dcm_input_clock_period   = 10
+    directory                = ./netlist
+    eval_field               = 0
+    incr_netlist             = off
+    package                  = ffva1156
+    part                     = xcku11p
+    simulink_period          = 1/clk
+    speed                    = -1-e
+    synthesis_tool           = Vivado
+    sysclk_period            = (1e+9)/clk
+    testbench                = off
+    xilinxfamily             = kintexuplus
+  exported block: DDC_DUT
+  VLNV: User Company:VMC:DDC_DUT:1.0
+  model callbacks:
+    PreLoadFcn   Fbits=48; %frequency resolution Abits=16; %Sin/COS table dep
+      defines clk
+      defines sample_rate
+      defines SSR
+      defines Tclk
+      defines Ts
+    StartFcn     start_time = tic;
+    StopFcn      stop_time = toc(start_time)/60
+findings:
+  - ExportType is 'System Generator', not 'IP Catalog'

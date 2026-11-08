@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-example mc-example-ip mc-bisect mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -80,6 +80,7 @@ help:
 	@echo "Which change breaks it:  make mc-bisect"
 	@echo "Adopt its final IP:      make mc-adopt-bisect"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
+	@echo "Read a saved model's Hub: make mc-hub-dump   (MODEL=..., AGAINST=...)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
 	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
 	@echo "GUI that builds:     make mc-gui-build   (opens, builds, exports)"
@@ -293,6 +294,16 @@ mc-example:
 	@./scripts/fetch_mc_example.sh $(EXAMPLE)
 
 # Where is the .slx?  Nothing is guessed: every candidate is listed with its date.
+# A .slx is a zip: the Hub's settings are XML inside it, so they can be read on a
+# machine with no MATLAB.  This is how the 2023.2 Hub's real parameter names were
+# found (ExportType ships as "System Generator"; there is no SubsystemName).
+#   make mc-hub-dump                              -- the example
+#   make mc-hub-dump MODEL=build/channelizer.slx  -- what our builder wrote
+#   make mc-hub-dump MODEL=... AGAINST=...        -- diff against another model
+SLX_HUB_MODEL ?= $(firstword $(wildcard build/mc_examples/*.slx) build/channelizer.slx)
+mc-hub-dump:
+	@python3 scripts/slx_hub_params.py "$(SLX_HUB_MODEL)" $(if $(AGAINST),--against "$(AGAINST)") $(if $(CHECK),--check)
+
 mc-find:
 	@./scripts/find_mc_models.sh
 

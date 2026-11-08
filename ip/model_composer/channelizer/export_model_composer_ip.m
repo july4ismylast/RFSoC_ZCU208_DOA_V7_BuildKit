@@ -95,21 +95,15 @@ function target = setExportTarget(block)
 target = '<unknown>';
 candidates = {'IP Catalog', 'IP catalog', 'IPCatalog'};
 for index = 1:numel(candidates)
-    try
-        set_param(block, 'ExportType', candidates{index});
+    if mc_hub_set(block, 'ExportType', candidates{index})
         target = candidates{index};
         break;
-    catch problem
-        fprintf('ExportType "%s" rejected: %s\n', candidates{index}, problem.message);
     end
+    fprintf('ExportType "%s" rejected\n', candidates{index});
 end
-try
-    readBack = get_param(block, 'ExportType');
-    if ~isempty(readBack)
-        target = readBack;
-    end
-catch problem
-    fprintf('could not read ExportType back: %s\n', problem.message);
+readBack = mc_hub_get(block, 'ExportType');
+if ~isempty(readBack)
+    target = readBack;
 end
 end
 
@@ -121,11 +115,7 @@ parameters = {'ExportType', 'ProjDevice', 'ProjDevicePart', 'part', 'package', .
 for index = 1:numel(hubs)
     fprintf(2, 'Hub %s:\n', hubs{index});
     for one = 1:numel(parameters)
-        try
-            fprintf(2, '  %-14s = %s\n', parameters{one}, get_param(hubs{index}, parameters{one}));
-        catch problem
-            fprintf(2, '  %-14s = <%s>\n', parameters{one}, problem.message);
-        end
+        fprintf(2, '  %-14s = %s\n', parameters{one}, mc_hub_get(hubs{index}, parameters{one}));
     end
 end
 if isempty(hubs)
