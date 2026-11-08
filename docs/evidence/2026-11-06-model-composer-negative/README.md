@@ -315,3 +315,26 @@ Fixed in this round:
 | orphaned line fragments survive `delete_block` | `purgeDanglingLines` deletes every root line whose source or sink port is gone, and the same inside the design, after each strip |
 | a failed entry point printed only `Error due to multiple causes` | each failure now prints every `cause` and the full `getReport` stack |
 | `xmcGenerateCallback` returns without generating, and looked like success | removed from the attempt list; the run then waited an hour for a file nothing was writing |
+
+## ERROR-XMC-2001: the compiler's own words
+
+```
+  xmcGenerateButtonPressed threw: Error due to multiple causes.
+    cause 1: Error reported by S-function 'XilinxCompiler' in 'SSRDDC/Vitis Model Composer Hub':
+    ERROR-XMC-2001: Did not find top level subsystem '' specified in the Model Composer Hub.
+```
+
+Nineteen runs of guessing were aimed at a message ("Index exceeds the number of array
+elements") that only ever described the wrapper. The compiler's own diagnostic says the
+Hub's **top-level subsystem name is empty**. `IPInfoJsonString` does carry `DDC_DUT`, so
+the compiler reads a different field -- one the Hub's dialog creates when a subsystem is
+chosen in its dropdown. Opening the dialog makes the field exist; the run now prints every
+Hub parameter whose name mentions subsystem/top/design/hdl and fills the empty ones.
+
+`purgeDanglingLines` removed the seventeen orphaned line fragments, and the simulation
+that the GUI entry point performs before exporting no longer reports them.
+
+The second cause on every error was noise: `Error evaluating 'StopFcn' ... Unrecognized
+function or variable 'start_time'`. The model's own callback expects a variable the
+scripted path never sets, so `start_time` is now assigned before generating, and a real
+cause is no longer buried under it.

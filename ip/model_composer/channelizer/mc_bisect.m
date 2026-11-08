@@ -762,7 +762,11 @@ if ~isempty(hub)
     catch problem
         fprintf('  note: could not open the Hub dialog: %s\n', problem.message);
     end
+    selectDesign(hub);
 end
+% The model's StopFcn does toc(start_time) and fails if nothing set it, which shows up
+% as a second cause on every generation error and buries the real one.
+assignin('base', 'start_time', tic);
 % xmcGenerateCallback is not in this list: a run showed it return without doing
 % anything, and the script then waited an hour for a file nothing was producing.
 attempts = {
@@ -787,6 +791,71 @@ for index = 1:size(attempts, 1)
             fprintf(2, '    cause %d: %s\n', index, causes{index}.message);
         end
         fprintf(2, '%s\n', getReport(problem, 'extended', 'hyperlinks', 'off'));
+    end
+end
+end
+
+function selectDesign(hub)
+%SELECTDESIGN Name the design in whichever field the compiler actually reads.
+%   ERROR-XMC-2001 said it plainly: "Did not find top level subsystem '' specified in the
+%   Model Composer Hub."  The Hub's IPInfoJsonString carries DDC_DUT, so the compiler is
+%   reading another field -- one the dialog creates when a subsystem is picked from its
+%   dropdown.  Opening the dialog makes that field exist; this prints every Hub parameter
+%   whose name looks like a subsystem selector and fills the empty ones in.
+name = '';
+try
+    name = jsonSubsystem(hub);
+catch problem
+    fprintf('  note: %s\n', problem.message);
+end
+fprintf('  Hub design according to IPInfoJsonString: %s\n', ternaryText(isempty(name), ...
+    '<empty>', name));
+try
+    mask = get_param(hub, 'MaskObject');
+catch problem
+    fprintf('  note: no mask object: %s\n', problem.message);
+    return
+end
+if isempty(mask)
+    fprintf('  note: the Hub has no mask object to read\n');
+    return
+end
+parameters = mask.Parameters;
+fillable = 0;
+for index = 1:numel(parameters)
+    parameter = parameters(index).Name;
+    if isempty(regexpi(parameter, 'subsystem|top|design|hdl', 'once'))
+        continue
+    end
+    value = '';
+    try
+        value = char(get_param(hub, parameter));
+    catch problem
+        fprintf('  note: hub.%s unreadable: %s\n', parameter, problem.message);
+        continue
+    end
+    fprintf('  hub.%s = %s\n', parameter, value);
+    if isempty(value) && ~isempty(name)
+        fillable = fillable + 1;
+    end
+end
+if fillable == 0
+    fprintf('  no empty subsystem field among the Hub mask parameters\n');
+    return
+end
+for index = 1:numel(parameters)
+    parameter = parameters(index).Name;
+    if isempty(regexpi(parameter, 'subsystem|top|design|hdl', 'once'))
+        continue
+    end
+    value = '';
+    try
+        value = char(get_param(hub, parameter));
+    catch
+        continue
+    end
+    if isempty(value) && ~isempty(name) && mc_hub_set(hub, parameter, name)
+        fprintf('  hub.%s filled with %s\n', parameter, name);
     end
 end
 end
