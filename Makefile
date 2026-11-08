@@ -51,6 +51,7 @@ help:
 	@echo "Resume full build:   make pipeline"
 	@echo "Force one stage:     make rebuild STEP=step02_hls_covariance"
 	@echo "Remove one result:   make clean-stage STEP=step02_hls_covariance"
+	@echo "Where the build is:  docs/WHERE_WE_ARE.md"
 	@echo "Inspect progress:    make status"
 	@echo "Static validation:   make lint"
 	@echo "Dry-run a stage:     make -n step10_synth"
