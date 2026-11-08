@@ -2,6 +2,27 @@
 
 An alternative to `ip/matlab/channelizer_hdl`, not another datapath copy.
 
+## Status 2026-11-06: blocked on this install -- use `make ip-from-hdl`
+
+Six bisect steps that change the export type, the device, the IP identity, the sample
+format and the pipeline length all **generate** a component on this machine. Every
+attempt to replace the *contents* of the exported subsystem -- three different block
+sources, with and without Inport/Outport, with and without the surrounding testbench --
+dies with the same error before the engine writes anything:
+
+```
+xmcGenerate threw: Index exceeds the number of array elements. Index must not exceed 0.
+```
+
+Evidence, including the four variants and what each excludes:
+`docs/evidence/2026-11-06-model-composer-negative/README.md`.
+
+The verified deliverable for this kit is therefore
+`make ip-from-hdl` -> `$(IP_REPO)/channelizer_ip/component.xml`,
+`doa.v7:model_composer:channelizer:1.0`, measured bit-exact against the Model Composer
+model by `make ip-equivalence`. The bisect steps stay in the tree as evidence; do not
+re-run steps 6-8 expecting a different result unless the tool installation changes.
+
 ## There is no `.slx` in this directory, on purpose
 
 A `.slx` is a zip of XML plus binary arrays: it cannot be reviewed, diffed, or
