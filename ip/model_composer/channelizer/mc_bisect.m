@@ -1021,7 +1021,11 @@ hub = hubList{1};
 fprintf('  hub %s\n', hub);
 ports = get_param(hub, 'PortHandles');
 fprintf('  hub ports: %d in, %d out\n', numel(ports.Inport), numel(ports.Outport));
-for name = {'ClockFrequency', 'SamplePeriod', 'clock_wrapper'}
+% IpLibrary decides which library the code-generation check accepts blocks from: the
+% example ships with IpLibrary = hls, and "Unsupported block ... for code generation" is
+% the wording of that check.
+for name = {'ClockFrequency', 'SamplePeriod', 'clock_wrapper', 'ExportType', ...
+        'IpLibrary', 'IpVendor', 'IpVersion'}
     try
         fprintf('  hub.%s = %s\n', name{1}, char(get_param(hub, name{1})));
     catch
