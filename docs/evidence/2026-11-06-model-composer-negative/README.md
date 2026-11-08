@@ -249,3 +249,38 @@ own (`CHANNELIZER`), leave AMD's `DDC_DUT` alone until it is deleted, and point 
 Hub's `IPInfoJsonString` at the new name. Every attempt before it edited AMD's
 library-linked block -- broke the link, emptied it, refilled it -- which is not something
 a GUI user ever does.
+
+## The model is valid, and `xmcGenerate` still dies
+
+Step 6's last run, with every earlier defect fixed:
+
+```
+  AMD's own SSRDDC/DDC_DUT: 3 in, 2 out (before the replacement)
+  gateway in: 1 in, 1 out; gateway out: 1 in, 1 out
+  the design is defined by Simulink Inport/Outport blocks
+  4 inport(s) driven, 4 outport(s) terminated: 0 unconnected
+  SSRDDC/DDC_DUT: 4 inport(s), 4 outport(s), 21 child block(s)
+  unconnected ports on DDC_DUT: 0
+    in 1: line 3.100049e+01   ... out 4: line 5.200049e+01
+  diagram update: ok
+  xmcGenerate threw: Index exceeds the number of array elements. Index must not exceed 0.
+  stack:
+  Error using vmcGenerate
+```
+
+No model defect is left to blame: the diagram updates, every port is wired, the gateways
+carry 16.14 at `Tclk`, and the delay is latency 4. AMD's own design, with the same Hub,
+the same part and the same export type, generates -- steps 1-5 did.
+
+What remains different is **how the build is asked for**. Every run so far called
+`xmcGenerate('SSRDDC')`. The installation also ships the GUI's own entry points
+(`xmcGenerateButtonPressed`, `xmcGenerateCallback`, `xmcHubInit`), and the Hub's dialog is
+where the state the engine reads is built, so `startGeneration` now tries them in order,
+printing which one it used. A person pressing Generate runs that code; an API call may
+not.
+
+If all of them fail, the two possibilities left are (a) this engine will not compile a
+design that is only gateways and a delay, or (b) its scripting entry points are broken on
+this install. The GUI test in the README distinguishes them, and `make ip-from-hdl`
+-- `doa.v7:model_composer:channelizer:1.0`, verified bit-exact against the model -- is
+the deliverable either way.

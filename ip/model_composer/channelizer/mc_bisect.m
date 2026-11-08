@@ -708,6 +708,61 @@ catch
 end
 end
 
+function startGeneration(modelName)
+%STARTGENERATION Ask for the build the way the GUI asks for it, not only by API.
+%   Twenty runs have tried xmcGenerate('SSRDDC') and nothing else, and it dies inside
+%   vmcGenerate with an index into an empty array whatever the design.  The GUI's own
+%   entry points ship in this installation -- xmcGenerateButtonPressed,
+%   xmcGenerateCallback, xmcHubInit -- and the Hub's dialog is where the state the engine
+%   reads is built.  So each is tried in turn, the first one that starts the engine wins,
+%   and the log says which.  A person pressing Generate runs exactly this code.
+hubList = mc_find_hub(modelName);
+hub = '';
+if ~isempty(hubList)
+    hub = hubList{1};
+end
+if ~isempty(hub)
+    try
+        open_system(hub);
+        fprintf('  opened the Hub dialog: %s\n', hub);
+    catch problem
+        fprintf('  note: could not open the Hub dialog: %s\n', problem.message);
+    end
+end
+attempts = {
+    'xmcGenerateButtonPressed', {hub};
+    'xmcGenerateCallback', {hub};
+    'xmcHubInit', {hub};
+    'xmcGenerate', {modelName, 'closeProgressWindow', 1}};
+for index = 1:size(attempts, 1)
+    entry = attempts{index, 1};
+    args = attempts{index, 2};
+    if isempty(strtrim(args{1})) || exist(entry, 'file') == 0 %#ok<EXIST>
+        continue
+    end
+    fprintf('  generating via %s\n', entry);
+    try
+        callWithoutOutput(entry, args);
+        fprintf('  %s returned\n', entry);
+        return
+    catch problem
+        fprintf(2, '  %s threw: %s\n', entry, problem.message);
+    end
+end
+end
+
+function callWithoutOutput(entry, args)
+%CALLWITHOUTOUTPUT GUI callbacks are defined with nargout 0; asking for a value throws.
+switch numel(args)
+    case 1
+        feval(entry, args{1});
+    case 2
+        feval(entry, args{1}, args{2});
+    otherwise
+        feval(entry, args{1}, args{2}, args{3});
+end
+end
+
 function yes = checkOnly()
 %CHECKONLY MC_BISECT_CHECK=1 stops after the diagram update.
 %   A generation is minutes and its error names nothing; a diagram update is seconds
@@ -844,7 +899,7 @@ verdict = 'failed';
 baseline = now;
 inspectModel(modelName);
 try
-    xmcGenerate(modelName, 'closeProgressWindow', 1);
+    startGeneration(modelName);
 catch problem
     % Cancelling is not the same as failing.  A real run showed "generation in
     % progress" for 47 minutes after Vivado had already written "Exiting Vivado"
