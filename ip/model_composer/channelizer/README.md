@@ -434,12 +434,22 @@ gateway blocks and no ports of its own. So the ladder now separates the two ques
 
 | step | change | what a pass proves |
 |---|---|---|
-| 6 | four `Gateway In -> Delay -> Gateway Out` channels, **no** Inport/Outport | our datapath is accepted |
-| 7 | the same channels wrapped in `Inport`/`Outport` | the port wrapping is accepted too |
+| 6 | four `Gateway In -> Delay -> Gateway Out` channels added with `add_block`, **no** Inport/Outport | our datapath is accepted when its blocks come from the library |
+| 7 | the same four channels made from **AMD's own block instances**, copied out of a pristine example | the block *provenance* is not the blocker |
 
-If step 6 generates and step 7 does not, the wrapping is the bug and the builder must
-drop it. If both fail, the gateway->delay->gateway chain itself is what the engine
-refuses and that is the finding to report.
+Both step 6 variants failed with the same error, with ports and without, which rules
+out the wrapping. What is still different from AMD's own design is where the blocks
+come from: the example's gateways are plain masked subsystems
+(`MaskType = 'Gateway In Block'`, **no** library source), while
+`add_block('hdlBasic/Gateway In', ...)` produces a library link. Step 7 therefore
+copies AMD's instances and wires them identically, so exactly one thing differs from
+the model the engine accepts.
+
+* step 7 generates -> the block kind was the bug; the builder must copy instances out
+  of the example instead of adding them from the library.
+* step 7 fails -> gateway/delay/gateway is not something this engine will compile as
+  an exported subsystem, and that is the negative result to report; `make ip-from-hdl`
+  remains the deliverable, measured bit-exact against the model.
 
 ## Which change breaks it? `make mc-bisect`
 

@@ -41,7 +41,7 @@ steps = { ...
     'our sample format 16.14',         @stepFormat; ...
     'our latency 4',                   @stepLatency; ...
     'our channels: gateway -> delay -> gateway', @stepReplaceDesign; ...
-    'the same channels wrapped in Inport/Outport', @stepWrapPorts};
+    'the same channels made from AMD''s own blocks', @stepCopiedDesign};
 
 originalFolder = pwd;
 results = cell(0, 2);
@@ -299,31 +299,95 @@ fprintf('  design replaced with four gateway -> delay -> gateway channels inside
 status = 'ok';
 end
 
-function status = stepWrapPorts(hub, modelName)
-%STEPWRAPPORTS The same channels with Simulink Inport/Outport around the gateways.
-%   This is how the repository's own builder used to assemble the subsystem, and the
-%   engine refused it with "Index exceeds the number of array elements".  Kept as a
-%   step so the difference is measured rather than assumed: step 6 has no ports, step
-%   7 puts them back.
+function status = stepCopiedDesign(hub, modelName)
+%STEPCOPIEDDESIGN Four channels made from AMD's own block instances.
+%   The example's gateways are plain masked subsystems -- MaskType 'Gateway In Block',
+%   no library source -- while add_block('hdlBasic/Gateway In') produces a library
+%   link.  That is the only difference left between step 6, which the engine refused,
+%   and AMD's model, which it accepts.  So this step copies AMD's own blocks out of a
+%   pristine copy of the example and wires them the same way; if it generates, the
+%   block provenance was the problem, and if it fails, gateway/delay/gateway is simply
+%   not a design this engine will compile.
 dut = exportedSubsystem(modelName, hub);
-added = 0;
+sourceModel = loadPristine();
+if isempty(sourceModel)
+    status = 'empty';
+    return
+end
+cleanupSource = onCleanup(@() closeQuietly(sourceModel)); %#ok<NASGU>
+ins = findHDLBlocks(sourceModel, 'Gateway In');
+outs = findHDLBlocks(sourceModel, 'Gateway Out');
+delays = findHDLBlocks(sourceModel, 'Delay');
+if isempty(ins) || isempty(outs) || isempty(delays)
+    fprintf(2, '  the pristine example has no gateway/delay block to copy\n');
+    status = 'empty';
+    return
+end
+try
+    set_param(dut, 'LinkStatus', 'none');
+catch problem
+    fprintf('  note: link: %s\n', problem.message);
+end
+try
+    Simulink.SubSystem.deleteContents(dut);
+catch problem
+    fprintf('  note: deleteContents: %s\n', problem.message);
+end
+if ~isempty(find_system(dut, 'SearchDepth', 1, 'Type', 'Block'))
+    delete_block(dut);
+    add_block('built-in/Subsystem', dut, 'Position', [320, 60, 660, 340]);
+end
+copied = 0;
 for channel = 1:4
     row = 40 + 60 * (channel - 1);
-    inPort = sprintf('%s/InPort%d', dut, channel);
-    outPort = sprintf('%s/OutPort%d', dut, channel);
+    inBlock = sprintf('%s/In%d', dut, channel);
+    delay = sprintf('%s/Delay%d', dut, channel);
+    outBlock = sprintf('%s/Out%d', dut, channel);
     try
-        add_block('built-in/Inport', inPort, 'Position', [10, row + 3, 30, row + 17]);
-        add_block('built-in/Outport', outPort, 'Position', [275, row + 3, 295, row + 17]);
-        added = added + 1;
+        add_block(ins{1}, inBlock, 'Position', [45, row, 95, row + 20]);
+        add_block(delays{1}, delay, 'Position', [130, row, 160, row + 20]);
+        add_block(outs{1}, outBlock, 'Position', [195, row, 245, row + 20]);
+        copied = copied + 1;
     catch problem
-        fprintf('  note: cannot add the ports of channel %d: %s\n', channel, problem.message);
+        fprintf(2, '  cannot copy the blocks of channel %d: %s\n', channel, problem.message);
         continue
     end
-    wire(dut, sprintf('InPort%d/1', channel), sprintf('In%d/1', channel));
-    wire(dut, sprintf('Out%d/1', channel), sprintf('OutPort%d/1', channel));
+    setIfPossible(inBlock, 'n_bits', '16');
+    setIfPossible(inBlock, 'bin_pt', '14');
+    setIfPossible(inBlock, 'period', '1');
+    setIfPossible(delay, 'latency', '4');
+    wire(dut, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel));
+    wire(dut, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel));
 end
-fprintf('  %d channel(s) wrapped in Inport/Outport inside %s\n', added, dut);
-status = matched(added, '');
+fprintf('  %d channel(s) copied from AMD''s own blocks into %s\n', copied, dut);
+status = matched(copied, '');
+end
+
+function sourceModel = loadPristine()
+%LOADPRISTINE AMD's example under another name, as a source of block instances.
+sourceModel = '';
+here = fileparts(mfilename('fullpath'));
+repoRoot = fileparts(fileparts(fileparts(here)));
+example = findExample(repoRoot);
+if isempty(example)
+    fprintf(2, '  no pristine example (build/mc_examples/SSRDDC.slx or MC_TEMPLATE)\n');
+    return
+end
+work = fullfile(repoRoot, 'build', 'mc_bisect');
+target = fullfile(work, 'SSRDDC_src.slx');
+try
+    clearModelCopy(target);
+    copyfile(example, target);
+    [~, name] = fileparts(target);
+    if bdIsLoaded(name)
+        close_system(name, 0);
+    end
+    load_system(target);
+    sourceModel = name;
+catch problem
+    fprintf(2, '  cannot load a pristine copy: %s\n', problem.message);
+    sourceModel = '';
+end
 end
 
 function wire(subsystem, source, destination)

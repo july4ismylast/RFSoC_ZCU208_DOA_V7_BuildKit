@@ -10,7 +10,7 @@ repo="${IP_REPO:-build/ip_repo}"
 labels=("export target IP Catalog" "retarget device to MC_PART" \
         "name the exported subsystem" "our sample format 16.14" \
         "our latency 4" "our channels: gateway -> delay -> gateway" \
-        "the same channels wrapped in Inport/Outport")
+        "the same channels made from AMD's own blocks")
 last=0
 echo "collected artifacts in $repo:"
 for step in 1 2 3 4 5 6 7; do
@@ -51,6 +51,6 @@ fi
 next=$((last + 1))
 echo "next: make mc-bisect MC_BISECT_FROM=$next"
 if [ "$next" -eq 6 ] || [ "$next" -eq 7 ]; then
-    echo "      (steps 6 and 7 differ in one thing only: 6 has no Inport/Outport blocks,"
-    echo "       7 wraps each channel in them -- that is how the builder used to do it)"
+    echo "      (steps 6 and 7 differ in one thing only: 6 adds the blocks from hdlBasic"
+    echo "       as library links, 7 copies AMD's own instances out of the example)"
 fi
