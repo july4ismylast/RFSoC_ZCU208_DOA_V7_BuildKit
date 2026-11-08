@@ -96,7 +96,14 @@ for count = 1:size(steps, 1)
     applied = 0;
     while strcmp(status, 'ok') && applied < count
         applied = applied + 1;
-        status = steps{applied, 2}(hub, modelName);
+        % A step that throws must not take the whole run down with it: the report is
+        % written after this loop, so an uncaught error loses the evidence too.
+        try
+            status = steps{applied, 2}(hub, modelName);
+        catch problem
+            fprintf(2, '  step %d threw: %s\n', applied, problem.message);
+            status = 'threw';
+        end
     end
     fprintf('\n=== step %d: %s ===\n', count, label);
     switch status
@@ -110,6 +117,8 @@ for count = 1:size(steps, 1)
             % for a selector that broke at step 4.
             verdict = sprintf('no-op: step %d (%s) matched no block', ...
                 applied, steps{applied, 1});
+        case 'threw'
+            verdict = sprintf('step %d threw, see the console', applied);
         otherwise
             verdict = 'set-failed: a Hub parameter could not be written';
     end
@@ -380,7 +389,10 @@ for index = 1:numel(handles)
         continue
     end
     count = count + 1;
-    path = get_param(handles(index), 'Path');
+    % getfullname, not get_param(handle,'Path'): a block has no 'Path' parameter,
+    % which is how a run died with "SubSystem block does not have a parameter named
+    % 'Path'" after the handle-based rewrite.
+    path = nameOf(handles(index));
     source = parameterOf(handles(index), 'SourceBlock');
     maskType = parameterOf(handles(index), 'MaskType');
     status = parameterOf(handles(index), 'LinkStatus');
@@ -418,6 +430,15 @@ limit = min(numel(distinct), 10);
 text = strjoin(distinct(1:limit), ', ');
 if numel(distinct) > limit
     text = sprintf('%s (+%d more)', text, numel(distinct) - limit);
+end
+end
+
+function path = nameOf(handle)
+path = '';
+try
+    path = getfullname(handle);
+catch
+    path = '';
 end
 end
 
