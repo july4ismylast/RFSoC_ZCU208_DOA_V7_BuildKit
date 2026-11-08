@@ -58,7 +58,31 @@ Prefer the first row for the DOA pipeline. The second row is what to use if you 
 `model_composer` flow stamped. The third is for when you specifically want an IP authored
 in Model Composer, and it is the one thing here that is not finished.
 
-## 4. The route to a bitstream, in order
+## 4. The route to a bitstream
+
+`make pipeline` runs every production stage in order and stops at the first failure, but
+`PRODUCTION_STAGES` in the `Makefile` deliberately leaves out `step01_fetch_references`
+(it clones reference repositories, so it is a network operation, not a build step). Run
+it yourself first:
+
+```bash
+make step00_preflight           # tools, licences, parts — fails fast
+make step01_fetch_references    # NOT part of `make pipeline`
+make pipeline                   # the other nineteen, in order, stopping at the first failure
+```
+
+Run it under `tmux`, or with the output kept:
+
+```bash
+tmux new -s build
+make pipeline 2>&1 | tee build/logs/pipeline.log     # hours for synth/impl
+```
+
+Each stage is stamped under `build/.stamps/` and logged under `build/logs/`; a stage that
+fails leaves its log and no stamp, which is the `FAILED/OLD` above. Resume with
+`make pipeline` again — stamped stages are not repeated.
+
+### The same list, one stage at a time
 
 ```bash
 make step00_preflight          # tools, licences, parts — fails fast
