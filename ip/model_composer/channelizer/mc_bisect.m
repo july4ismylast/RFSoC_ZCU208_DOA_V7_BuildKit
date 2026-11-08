@@ -71,9 +71,7 @@ for count = 1:size(steps, 1)
         continue
     end
     modelFile = fullfile(work, 'SSRDDC.slx');
-    if isfile(modelFile)
-        delete(modelFile);
-    end
+    clearModelCopy(modelFile);
     copyfile(example, modelFile);
     [~, modelName] = fileparts(modelFile);
     if bdIsLoaded(modelName)
@@ -361,11 +359,12 @@ function [blocks, hint] = findHDLBlocks(modelName, kind)
 %   an exact 'hdlBasic/Gateway In' matched one stray block and reported "1 gateway
 %   set", which is a result that proves almost nothing.
 blocks = {};
-every = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off');
+% 'Type','Block' matters: without it find_system returns the model itself, and
+% get_param(model, 'BlockType') raises "block_diagram does not have a parameter
+% named 'BlockType'" -- a real run died there before generating anything.
+every = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
+    'Type', 'Block');
 for index = 1:numel(every)
-    if isempty(get_param(every{index}, 'BlockType'))
-        continue
-    end
     source = '';
     try
         source = get_param(every{index}, 'SourceBlock');
@@ -559,6 +558,28 @@ try
     end
 catch
     count = -1;
+end
+end
+
+function clearModelCopy(modelFile)
+%CLEARMODELCOPY Remove the model and everything Simulink keeps beside it.
+%   A newer .autosave makes open_system stop and ask a question -- impossible to
+%   answer in a scripted run, and the run waits for ever.  The .r2021a copy appears
+%   because the example was saved by R2021a and R2022b saves it again.
+patterns = {modelFile, [modelFile '.autosave'], [modelFile '.r2021a'], ...
+    [modelFile '.r20*']};
+for index = 1:numel(patterns)
+    hits = dir(patterns{index});
+    for one = 1:numel(hits)
+        file = fullfile(hits(one).folder, hits(one).name);
+        if isfile(file)
+            try
+                delete(file);
+            catch problem
+                fprintf('  note: cannot delete %s: %s\n', file, problem.message);
+            end
+        end
+    end
 end
 end
 

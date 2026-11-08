@@ -243,6 +243,27 @@ more pass with `MC_BISECT_FRESH=1` before their verdict can be used to clear the
 format and the latency -- worth doing only if step 6 fails, because if step 6
 generates the attribution question disappears.
 
+### Two ways a scripted run stops to ask a question
+
+Both hit the same run, and neither is Model Composer's fault.
+
+`find_system(model, 'LookUnderMasks', 'all', 'FollowLinks', 'off')` -- without a
+`Type` criterion -- returns **the model itself** alongside the blocks, and
+`get_param(model, 'BlockType')` raises
+
+```
+mc_bisect failed: block_diagram does not have a parameter named 'BlockType'
+```
+
+The run died before generating anything, which at least made the cause obvious. The
+call now passes `'Type','Block'`, the same guard `mc_find_hub` already had.
+
+The other one was the prompt about an unsaved copy: Simulink stops and asks when a
+`.autosave` is newer than the model, and a scripted run has nobody to answer. It sat
+there until the window was answered by hand. Before every step the run now deletes
+the model together with `.slx.autosave` and the `.slx.r2021a` copy that R2022b makes
+of an R2021a model, so opening is silent.
+
 ### `make mc-bisect-next`: what is proven, and the one command to run
 
 Each generation costs a couple of minutes and can be ended by the hand-back hang, so
