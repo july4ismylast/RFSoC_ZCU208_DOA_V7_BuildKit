@@ -228,6 +228,36 @@ If a run stalls again, the two questions the log now answers without a rerun:
 | newest file keeps changing, `1 Vivado process(es)` | real synthesis -- let it finish, or raise `MC_GENERATE_TIMEOUT` |
 | nothing written for minutes, `0 Vivado process(es)` | hung in the engine -- Ctrl-C, then `make mc-bisect MC_BISECT_FRESH=1` for that step |
 
+### The GUI hung after the engine had finished
+
+The next run sat in "generation in progress" while, on disk, the engine was long
+done: `build/mc_bisect/netlist/model_composer.log` ended with `exit`, and
+`netlist/ip/DDC_DUT/src/vivado.log` ended with
+
+```
+INFO: [Ipptcl 7-1486] check_integrity: Integrity check passed.
+INFO: [Common 17-206] Exiting Vivado at Sun Nov  8 13:08:43 2026...
+```
+
+Forty-seven minutes later the window still said "generation in progress", and the
+only live processes were `SgWaveformServer.tcl` and the SysGen shared-memory proxy
+(`vivado_shmem.sh`, `start_sharedmemory ... sgproxy<pid>_<id>`). Those are idle
+servers, not synthesis: the hand-back over shared memory never completed. The IP was
+packaged and sitting on disk the whole time.
+
+Three changes, all of them about not losing work the engine already did:
+
+* when `xmcGenerate` throws -- cancelled, interrupted, or a timeout -- `mc_bisect`
+  looks for a `component.xml` written since the step began, and adopts it instead of
+  calling the step failed. A cancelled call is not a failed step.
+* `make mc-bisect-harvest` (`scripts/mc_bisect_harvest.py`) lists every
+  `component.xml` the run left under `build/mc_bisect`, with VLNV and age;
+  `INSTALL=step2` copies the newest into `build/ip_repo/ssr_bisect_step2`.
+* a cached artifact whose component name is not an identifier is not reused: the
+  old step-3 artifact is named `ADC 1.5GSPS` (with a line break), which cannot be
+  the IP this kit exports, so that step regenerates instead of silently counting as
+  proven.
+
 ### `make mc-bisect-watch`, for the terminal that is not busy
 
 While Model Composer sits in "generation in progress", the useful evidence lives

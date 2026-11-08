@@ -407,12 +407,22 @@ baseline = now;
 try
     xmcGenerate(modelName, 'closeProgressWindow', 1);
 catch problem
-    fprintf(2, '  xmcGenerate failed: %s\n', problem.message);
-    mc_hdl_log_tail(work, 40);
-    return
+    % Cancelling is not the same as failing.  A real run showed "generation in
+    % progress" for 47 minutes after Vivado had already written "Exiting Vivado"
+    % and packaged the IP: the call never returned, the work was done.  So on any
+    % error, look for the component before believing the error.
+    fprintf(2, '  xmcGenerate threw: %s\n', problem.message);
+    component = newestComponent(work, baseline);
+    if isempty(component)
+        mc_hdl_log_tail(work, 40);
+        return
+    end
+    fprintf('  the engine had finished anyway: %s\n', component.folder);
 end
 limit = timeoutSeconds();
-component = waitForComponent(work, baseline, limit);
+if ~exist('component', 'var') || isempty(component)
+    component = waitForComponent(work, baseline, limit);
+end
 if isempty(component)
     fprintf(2, '  no component.xml after %d s\n', round(limit));
     mc_hdl_log_tail(work, 60);
@@ -454,6 +464,21 @@ while true
     end
     pause(5);
 end
+end
+
+function component = newestComponent(folder, baseline)
+%NEWESTCOMPONENT The component.xml this run wrote, or empty.
+component = [];
+candidates = dir(fullfile(folder, '**', 'component.xml'));
+if isempty(candidates)
+    return
+end
+fresh = candidates([candidates.datenum] > baseline);
+if isempty(fresh)
+    return
+end
+[~, newest] = max([fresh.datenum]);
+component = fresh(newest);
 end
 
 function limit = timeoutSeconds()
@@ -524,7 +549,36 @@ end
 if dir(component).datenum < dir(example).datenum
     return
 end
+% The third step once exported a block called "ADC 1.5GSPS", whose name even holds
+% a line break; that component exists and would count as a cache hit.  A name that
+% is not an identifier cannot be the IP this kit exports, so regenerate instead.
+name = componentName(component);
+if isempty(name) || isempty(regexp(name, '^[A-Za-z0-9_]+$', 'once'))
+    fprintf('  the cached component of "%s" is named %s, which cannot be an IP; regenerating\n', ...
+        label, printableName(name));
+    return
+end
 cached = datestr(dir(component).date);
+end
+
+function name = componentName(file)
+name = '';
+try
+    tokens = regexp(fileread(file), '<name>([^<]*)</name>', 'tokens', 'once');
+    if ~isempty(tokens)
+        name = strtrim(tokens{1});
+    end
+catch
+    name = '';
+end
+end
+
+function text = printableName(name)
+if isempty(name)
+    text = '<empty>';
+else
+    text = strrep(name, sprintf('\n'), '\\n');
+end
 end
 
 function example = findExample(repoRoot)

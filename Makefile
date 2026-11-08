@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-ips mc-bisect-watch mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-ips mc-bisect-watch mc-bisect-harvest mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -81,6 +81,7 @@ help:
 	@echo "Adopt its final IP:      make mc-adopt-bisect"
 	@echo "What the bisect built:   make mc-bisect-ips"
 	@echo "Is the build alive:      make mc-bisect-watch   (no MATLAB, run in a second terminal)"
+	@echo "Did it finish after all: make mc-bisect-harvest   (INSTALL=step2 to adopt it)"
 	@echo "Slow synth / redo a step: make mc-bisect MC_GENERATE_TIMEOUT=7200 MC_BISECT_FRESH=1"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Read a saved model's Hub: make mc-hub-dump   (MODEL=..., AGAINST=...)"
@@ -239,6 +240,11 @@ mc-bisect:
 # "generation in progress" for ten minutes: synthesis or deadlock?  Answers it from
 # a second terminal while Model Composer is busy.  A live build shows a Vivado
 # process and a file that keeps being touched; a stall shows one without the other.
+# The GUI can hang after the engine has finished.  This lists every component.xml
+# the bisect run left behind; INSTALL=step<N> adopts the newest one.
+mc-bisect-harvest:
+	@python3 scripts/mc_bisect_harvest.py --install "$(INSTALL)"
+
 mc-bisect-watch:
 	@./scripts/mc_watch.sh "$(if $(WORK),$(WORK),build/mc_bisect)"
 
