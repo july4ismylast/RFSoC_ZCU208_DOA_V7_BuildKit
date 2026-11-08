@@ -42,7 +42,8 @@ steps = { ...
     'our latency 4',                   @stepLatency; ...
     'our channels: gateway -> delay -> gateway', @stepReplaceDesign; ...
     'the same channels made from AMD''s own blocks', @stepCopiedDesign; ...
-    'the testbench around the subsystem removed', @stepStripTestbench};
+    'the testbench around the subsystem removed', @stepStripTestbench; ...
+    'the Hub re-selected after the design changed', @stepReselectHub};
 
 originalFolder = pwd;
 results = cell(0, 2);
@@ -401,6 +402,40 @@ fprintf('  root now holds: %s\n', strjoin(find_system(modelName, 'SearchDepth', 
 status = matched(removed, '');
 end
 
+function status = stepReselectHub(hub, modelName)
+%STEPRESELECTHUB Re-assert the Hub's export identity as the last edit before generating.
+%   The Hub was configured before the design inside it was replaced; if it cached the
+%   port or block list of the design it was pointed at, that cache is now stale.  This
+%   costs one set_param and no generation of its own.
+ok = 0;
+try
+    set_param(hub, 'ExportType', 'IP Catalog');
+    ok = ok + 1;
+catch problem
+    fprintf(2, '  note: ExportType: %s\n', problem.message);
+end
+try
+    set_param(hub, 'CodeGeneration', 'on');
+    ok = ok + 1;
+catch problem
+    fprintf(2, '  note: CodeGeneration: %s\n', problem.message);
+end
+try
+    text = char(get_param(hub, 'IPInfoJsonString'));
+    set_param(hub, 'IPInfoJsonString', text);
+    fprintf('  Hub re-selected: %s\n', text);
+    ok = ok + 1;
+catch problem
+    fprintf(2, '  note: IPInfoJsonString: %s\n', problem.message);
+end
+try
+    save_system(modelName);
+catch problem
+    fprintf(2, '  note: save: %s\n', problem.message);
+end
+status = matched(ok, '');
+end
+
 function closeQuietly(name)
 %CLOSEQUIETLY Close a model if it is open, never throwing from a destructor.
 try
@@ -630,6 +665,88 @@ catch
 end
 end
 
+function inspectModel(modelName)
+%INSPECTMODEL What the engine is being handed, in numbers.
+%   Two suggestions from outside this project were that the design has no Simulink
+%   Inport/Outport and that the Hub's inputs are left disconnected.  Both are checkable
+%   in one line each before generating, so they stop being opinions: the ports of the
+%   exported subsystem, the ports of the Hub, and a diagram update, which turns a
+%   broken line into a diagnostic instead of an empty array deep inside the tool.
+hubList = mc_find_hub(modelName);
+if isempty(hubList)
+    fprintf(2, '  no Hub found, cannot inspect\n');
+    return
+end
+hub = hubList{1};
+fprintf('  hub %s\n', hub);
+ports = get_param(hub, 'PortHandles');
+fprintf('  hub ports: %d in, %d out\n', numel(ports.Inport), numel(ports.Outport));
+for index = 1:numel(ports.Inport)
+    line = get_param(ports.Inport(index), 'Line');
+    fprintf('    hub input %d: line handle %d%s\n', index, line, ...
+        ternary(line == -1, ' (disconnected)', ''));
+end
+wanted = '';
+try
+    wanted = get_param(hub, 'SubsystemName');
+catch problem
+    fprintf('  note: no SubsystemName parameter: %s\n', problem.message);
+end
+if isempty(wanted)
+    wanted = jsonSubsystem(hub);
+end
+if isempty(wanted)
+    fprintf(2, '  the Hub does not name a subsystem\n');
+else
+    dut = [modelName '/' wanted];
+    if getSimulinkBlockHandle(dut) == -1
+        fprintf(2, '  the Hub names %s, which does not exist\n', dut);
+    else
+        dutPorts = get_param(dut, 'PortHandles');
+        fprintf('  %s: %d inport(s), %d outport(s), %d child block(s)\n', dut, ...
+            numel(dutPorts.Inport), numel(dutPorts.Outport), ...
+            numel(find_system(dut, 'SearchDepth', 1, 'Type', 'Block')));
+        ins = findHDLBlocks(dut, 'Gateway In');
+        outs = findHDLBlocks(dut, 'Gateway Out');
+        fprintf('  gateway blocks inside: %d in, %d out\n', numel(ins), numel(outs));
+    end
+end
+try
+    set_param(modelName, 'SimulationCommand', 'update');
+    fprintf('  diagram update: ok\n');
+catch problem
+    fprintf(2, '  diagram update failed: %s\n', problem.message);
+end
+end
+
+function text = ternary(condition, whenTrue, whenFalse)
+if condition
+    text = whenTrue;
+else
+    text = whenFalse;
+end
+end
+
+function name = jsonSubsystem(hub)
+%JSONSUBSYSTEM The subsystem name the Hub carries inside IPInfoJsonString.
+name = '';
+try
+    text = char(get_param(hub, 'IPInfoJsonString'));
+catch problem
+    fprintf('  note: no IPInfoJsonString: %s\n', problem.message);
+    return
+end
+at = strfind(text, '"SubsystemName":"');
+if isempty(at)
+    return
+end
+rest = text(at(1) + numel('"SubsystemName":"'):end);
+stop = find(rest == '"', 1);
+if ~isempty(stop)
+    name = rest(1:stop - 1);
+end
+end
+
 function verdict = generate(modelName, work, label)
 %GENERATE One attempt, artifact copied into the IP repository.
 %   A retargeted design is synthesised for the new part, which is minutes of
@@ -639,6 +756,7 @@ function verdict = generate(modelName, work, label)
 %   and when it gives up it prints the engine's own log.
 verdict = 'failed';
 baseline = now;
+inspectModel(modelName);
 try
     xmcGenerate(modelName, 'closeProgressWindow', 1);
 catch problem
@@ -646,7 +764,11 @@ catch problem
     % progress" for 47 minutes after Vivado had already written "Exiting Vivado"
     % and packaged the IP: the call never returned, the work was done.  So on any
     % error, look for the component before believing the error.
+    % The message alone says nothing about where it broke: three rounds of work went
+    % into guessing at "Index exceeds the number of array elements".  The extended
+    % report names the function and the line inside Model Composer.
     fprintf(2, '  xmcGenerate threw: %s\n', problem.message);
+    fprintf(2, '  stack:\n%s\n', getReport(problem, 'extended', 'hyperlinks', 'off'));
     component = newestComponent(work, baseline);
     if isempty(component)
         mc_hdl_log_tail(work, 40);

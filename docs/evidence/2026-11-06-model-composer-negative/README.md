@@ -71,3 +71,17 @@ depth 4: MATCH`, gateway error 6.103e-05 = 1.000 LSB, `RESULT=PASS`.
 The six steps that do generate are recorded in
 `docs/progress/model_composer_bisect.md` and prove the part, the export type and the
 IP identity are usable on this install; only the contents replacement is blocked.
+
+## Three explanations from outside, checked against these runs
+
+| claim | verdict |
+|---|---|
+| "the exported subsystem has no Simulink Inport/Outport, and that is the zero-index exception" | **falsified here**: the first shape of step 6 wrapped every channel in `Inport`/`Outport` and failed identically, byte for byte |
+| "the Hub's inputs are left disconnected; `groundUnconnectedInputs` is not called" | **does not apply**: this example's Hub has no data ports at all -- `Ports = []` in `docs/evidence/2026-11-08-hub-parameters/ssr_example_hub.txt` -- so there is nothing to ground |
+| "`MC_BISECT_FROM=8` skips steps 1-7, so the model was never conditioned" | **wrong**: a skipped step is still *applied*, only its generation is skipped. Run 8's log shows `3 gateway(s) set to 16.14`, `7 delay(s) set to latency 4`, `design replaced`, `4 channel(s) copied`, `21 block(s) removed` |
+| "the R2021a model is auto-upgraded and corrupted, so generation cannot work" | **not sufficient**: the same auto-upgraded copy generates a component in steps 1-5 |
+| "run the full flow once, without `MC_BISECT_FROM`" | would re-run the same nine steps in the same order; steps 1-5 already generate |
+| "print the full stack trace instead of `err.message`; update the diagram before generating; re-select the Hub after editing the model" | **done**: every generation now prints the exported subsystem's inport/outport/child counts, the gateway counts, the Hub's port list, the result of a diagram update, and `getReport(err,'extended')` on failure. Step 9 re-asserts the Hub's export identity as the last edit. |
+
+The first four are worth keeping: a reader who arrives with those intuitions can see
+the measurement that rules each one out, instead of repeating it.

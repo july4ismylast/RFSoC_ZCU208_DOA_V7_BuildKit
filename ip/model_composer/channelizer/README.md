@@ -17,6 +17,12 @@ xmcGenerate threw: Index exceeds the number of array elements. Index must not ex
 Evidence, including the four variants and what each excludes:
 `docs/evidence/2026-11-06-model-composer-negative/README.md`.
 
+Every generation now also reports what the engine was handed -- the exported
+subsystem's inport/outport/child counts, the gateway counts, the Hub's ports, whether
+the diagram updates -- and prints the full MATLAB stack on failure, because
+`Index exceeds the number of array elements` on its own named nothing for six runs.
+Step 9 re-asserts the Hub's export identity as the last edit before generating.
+
 The verified deliverable for this kit is therefore
 `make ip-from-hdl` -> `$(IP_REPO)/channelizer_ip/component.xml`,
 `doa.v7:model_composer:channelizer:1.0`, measured bit-exact against the Model Composer
