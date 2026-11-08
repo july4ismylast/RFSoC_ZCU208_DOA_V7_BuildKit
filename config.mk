@@ -39,6 +39,9 @@ EXPECTED_MATLAB_RELEASE ?= R2024a
 # Set to 1 only for a tool-presence smoke test on a machine without Vivado;
 # a production step00 must run the catalog proof.
 SKIP_IP_CATALOG_CHECK ?= 0
+# 1 turns the missing MTS base project (stage V03) from a preflight failure into a
+# warning, so steps 02-06 can be built before that base exists.
+PREFLIGHT_ALLOW_MISSING_BASE ?= 0
 
 # Base design: Xilinx RFSoC-MTS (boards/ZCU208, standard MTS), pinned in
 # config/upstream_repositories.tsv.  It was generated with Vivado 2022.1.2
@@ -177,7 +180,7 @@ HIL_OUTPUT_DIR ?= $(BUILD)/hil_vectors
 
 export PART BOARD_PART PROJECT_NAME VIVADO VITIS_HLS MATLAB JOBS
 export BUILD UPSTREAM IP_REPO RELEASE_DIR EXPECTED_VIVADO_VERSION EXPECTED_MATLAB_RELEASE
-export SKIP_IP_CATALOG_CHECK BASE_KIND CUSTOM_IP_VENDOR CUSTOM_IP_LIBRARY
+export SKIP_IP_CATALOG_CHECK PREFLIGHT_ALLOW_MISSING_BASE BASE_KIND CUSTOM_IP_VENDOR CUSTOM_IP_LIBRARY
 export IPVER_COVARIANCE IPVER_SPECTRUM IPVER_CANDIDATE IPVER_BEAM IPVER_CHANNELIZER
 export IPVER_RFDC_REPACK4 IPVER_SUBBAND_BRIDGE IPVER_PHASE_INTERF
 export OPFB_VLNV_ADC_TO_OPFB OPFB_VLNV_OPFB_FIR_CFG OPFB_VLNV_FIR_TO_FFT
