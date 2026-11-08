@@ -150,3 +150,23 @@ Two further errors of mine are visible in the same log and are fixed:
 `make mc-bisect MC_BISECT_FROM=10 MC_BISECT_CHECK=1` stops after the diagram update --
 seconds per step instead of minutes -- so the model can be fixed in a loop that fails
 cheaply and in words.
+
+## Four things the check-only run measured
+
+```
+note: SSRDDC/DDC_DUT/In1: period = -1 (Error reported by S-function 'sysgen' ...:
+      Sample period is set to a value of -1, but the value must be greater than 0.)
+    SSRDDC/DDC_DUT/In1: MaskType=Gateway In Block, period=Tclk, n_bits=48, bin_pt=0
+    SSRDDC/DDC_DUT/Delay1: MaskType=Delay Block, latency=3
+    SSRDDC/DDC_DUT/Out1: MaskType=Xilinx Vector Gateway Out Block, latency=0
+```
+
+| measurement | consequence |
+|---|---|
+| `period = -1` is **refused**: "Sample period is set to a value of -1, but the value must be greater than 0" | the inherit value does not exist on this block. AMD's own gateways carry `Tclk`, so the design uses `Tclk` |
+| AMD's `Gateway Out` is a **`Xilinx Vector Gateway Out Block`** that demuxes a vector | a scalar delay between two such gateways is a dimension error by construction; step 7 connects gateway to gateway |
+| AMD's copied gateways are `n_bits=48, bin_pt=0` with `latency=3` delays | this model's datapath is 48-bit vector, not 16-bit scalar. A scalar channel is still buildable, but it must be built from the *scalar* library gateways, which is step 6 |
+| copying the Hub raised **"a design can have one Vitis Model Composer Hub block"** and stopped the run until the dialog was dismissed | step 10 copies only the design, never the Hub |
+
+The design step also removes the testbench as it builds, so a check at step 6 is a
+verdict on the design and nothing else.

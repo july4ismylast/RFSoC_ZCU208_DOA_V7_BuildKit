@@ -301,10 +301,12 @@ for channel = 1:4
     add_block('hdlBasic/Gateway Out', outBlock, 'Position', [195, row, 245, row + 20]);
     setIfPossible(inBlock, 'n_bits', '16');
     setIfPossible(inBlock, 'bin_pt', '14');
-    % -1 is "inherit from the model", which is what this example's own gateways carry.
-    % Setting 1 means one SECOND against a Hub whose period is 2 ns, and a design five
-    % hundred million periods off is not the design we measured.
-    setIfPossible(inBlock, 'period', '-1');
+    % A run measured both wrong guesses: -1 is refused outright ("Sample period is
+    % set to a value of -1, but the value must be greater than 0") and 1 means one
+    % second against a Hub running in nanoseconds.  Tclk is what AMD's own gateways in
+    % this model carry, and the model's PreLoadFcn defines it; one sample per clock is
+    % our design, and the clock frequency comes from the Hub.
+    setIfPossible(inBlock, 'period', 'Tclk');
     setIfPossible(inBlock, 'quantization', 'Truncate');
     setIfPossible(inBlock, 'overflow', 'Wrap');
     setParamIfPresent(inBlock, 'arith_type', ...
@@ -319,6 +321,7 @@ for channel = 1:4
     wire(dut, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel));
 end
 fprintf('  design replaced with four gateway -> delay -> gateway channels inside %s\n', dut);
+stripRoot(modelName, hub);
 status = 'ok';
 end
 
@@ -376,16 +379,26 @@ for channel = 1:4
         continue
     end
     % Nothing is re-parameterised here on purpose.  An earlier version copied AMD's
-    % blocks and then overwrote their period with 1 second, so it changed two things
-    % at once and could not say which one broke the model.  A copied block is only a
-    % provenance test if it keeps the values it had.
+    % blocks and then overwrote their period, so it changed two things at once and
+    % could not say which one broke the model.  A copied block is only a provenance
+    % test if it keeps the values it had.
+    %
+    % The delay is not inserted here either: a measurement showed AMD's Gateway Out is
+    % a "Xilinx Vector Gateway Out Block" that demuxes a vector, so a scalar between
+    % the two gateways is a dimension error by construction.  Gateway to gateway is
+    % what AMD's own widths support.
     for probe = {inBlock, delay, outBlock}
         fprintf('    %s: %s\n', probe{1}, describeBlock(probe{1}));
     end
-    wire(dut, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel));
-    wire(dut, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel));
+    try
+        delete_block(delay);
+    catch problem
+        fprintf(2, '  note: cannot drop the delay: %s\n', problem.message);
+    end
+    wire(dut, sprintf('In%d/1', channel), sprintf('Out%d/1', channel));
 end
 fprintf('  %d channel(s) copied from AMD''s own blocks into %s, unchanged\n', copied, dut);
+stripRoot(modelName, hub);
 status = matched(copied, '');
 end
 
@@ -423,7 +436,7 @@ fprintf('  %d block(s) removed from the root, leaving %s and the Hub\n', ...
     removed, dut);
 fprintf('  root now holds: %s\n', strjoin(find_system(modelName, 'SearchDepth', 1, ...
     'Type', 'Block'), ', '));
-status = matched(removed, '');
+status = matched(removed + 1, '');
 end
 
 function status = stepReselectHub(hub, modelName)
@@ -485,32 +498,34 @@ try
 catch problem
     fprintf(2, '  note: %s\n', problem.message);
 end
-hubCopy = [modelName '/zz_hub_copy'];
+% Only the design is copied.  Copying the Hub as well raises Simulink's "a design can
+% have one Vitis Model Composer Hub block" dialog, which a scripted run cannot dismiss --
+% the run that did it sat waiting for a click.
 dutCopy = [modelName '/zz_dut_copy'];
 ok = 0;
 try
-    add_block(hub, hubCopy);
     add_block(dut, dutCopy);
     ok = ok + 1;
 catch problem
-    fprintf(2, '  cannot copy: %s\n', problem.message);
+    fprintf(2, '  cannot copy the design: %s\n', problem.message);
     return
 end
 try
-    delete_block(hub);
     delete_block(dut);
 catch problem
-    fprintf(2, '  cannot delete the originals: %s\n', problem.message);
+    fprintf(2, '  cannot delete the original: %s\n', problem.message);
     status = 'empty';
     return
 end
 try
-    set_param(hubCopy, 'Name', hubName);
     set_param(dutCopy, 'Name', dutName);
 catch problem
-    fprintf(2, '  cannot rename the copies: %s\n', problem.message);
+    fprintf(2, '  cannot rename the copy: %s\n', problem.message);
     status = 'empty';
     return
+end
+if ~isempty(hubName) && getSimulinkBlockHandle(hub) == -1
+    fprintf(2, '  the Hub is gone after the rebuild\n');
 end
 fprintf('  root rebuilt: %s\n', strjoin(find_system(modelName, 'SearchDepth', 1, ...
     'Type', 'Block'), ', '));
@@ -544,6 +559,34 @@ for index = 1:numel(names)
     else
         text = sprintf('%s, %s=%s', text, names{index}, value);
     end
+end
+end
+
+function removed = stripRoot(modelName, hub)
+%STRIPROOT Leave the Hub and the exported design at the root, and nothing else.
+%   A Model Composer design needs nothing beside them -- the gateways are the interface,
+%   and the stimulus is only there to simulate AMD's datapath.
+dut = '';
+try
+    dut = [modelName '/' jsonSubsystem(hub)];
+catch problem
+    fprintf(2, '  note: %s\n', problem.message);
+end
+blocks = find_system(modelName, 'SearchDepth', 1, 'Type', 'Block');
+removed = 0;
+for index = 1:numel(blocks)
+    if strcmp(blocks{index}, hub) || strcmp(blocks{index}, dut)
+        continue
+    end
+    try
+        delete_block(blocks{index});
+        removed = removed + 1;
+    catch problem
+        fprintf(2, '  note: cannot delete %s: %s\n', blocks{index}, problem.message);
+    end
+end
+if removed > 0
+    fprintf('  %d block(s) removed from the root\n', removed);
 end
 end
 
@@ -821,6 +864,13 @@ hub = hubList{1};
 fprintf('  hub %s\n', hub);
 ports = get_param(hub, 'PortHandles');
 fprintf('  hub ports: %d in, %d out\n', numel(ports.Inport), numel(ports.Outport));
+for name = {'ClockFrequency', 'SamplePeriod', 'clock_wrapper'}
+    try
+        fprintf('  hub.%s = %s\n', name{1}, char(get_param(hub, name{1})));
+    catch
+        continue
+    end
+end
 for index = 1:numel(ports.Inport)
     line = get_param(ports.Inport(index), 'Line');
     fprintf('    hub input %d: line handle %d%s\n', index, line, ...
