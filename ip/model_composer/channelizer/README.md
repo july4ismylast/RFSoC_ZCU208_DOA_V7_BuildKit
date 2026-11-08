@@ -243,6 +243,34 @@ more pass with `MC_BISECT_FRESH=1` before their verdict can be used to clear the
 format and the latency -- worth doing only if step 6 fails, because if step 6
 generates the attribution question disappears.
 
+### `find_system` and the three wrong ways to enumerate blocks
+
+Step 4 has now spent three runs finding nothing, each time for a different reason, and
+all three were in the same twelve lines:
+
+| attempt | what it did |
+|---|---|
+| `'MaskType','Gateway In'` | matched nothing: a linked instance has an empty MaskType |
+| `'SourceBlock','hdlBasic/Gateway In'` | matched one stray block and missed the two `Vector Real Gateway In` that carry the samples |
+| `'Type','Block'` | matched **nothing at all** -- `get_param(block,'Type')` is `'block'`, lowercase |
+
+So the function no longer guesses. It takes handles from
+`find_system(model,'FindAll','on','LookUnderMasks','all','FollowLinks','off')`, keeps
+the ones whose `get(h,'Type')` is `'block'`, and matches on `SourceBlock` *containing*
+the kind (`Vector Real Gateway In` includes `Gateway In`) or on `MaskType`.
+
+When nothing matches it now measures instead of asserting. The old hint said "the
+model has no library-linked blocks at all", which was false every time; the new one
+prints
+
+```
+  <n> block(s), <m> with a library source; masks: ...; links: ...; sources: ...
+```
+
+so the next run says what the blocks actually are. And a failed selector names the
+sub-step it happened in: the last run reported `no-op` against step 6 when the
+selector had actually broken at step 4.
+
 ### Two ways a scripted run stops to ask a question
 
 Both hit the same run, and neither is Model Composer's fault.

@@ -105,8 +105,11 @@ for count = 1:size(steps, 1)
             verdict = generate(modelName, work, sprintf('ssr_bisect_step%d', count));
         case 'empty'
             % Nothing was changed, so generating would prove nothing about this
-            % step; stop instead of reporting a result that has no cause.
-            verdict = 'no-op: the step matched no block';
+            % step; stop instead of reporting a result that has no cause.  Name the
+            % sub-step that failed, not the outer one: a run once reported step 6
+            % for a selector that broke at step 4.
+            verdict = sprintf('no-op: step %d (%s) matched no block', ...
+                applied, steps{applied, 1});
         otherwise
             verdict = 'set-failed: a Hub parameter could not be written';
     end
@@ -352,35 +355,47 @@ end
 
 function [blocks, hint] = findHDLBlocks(modelName, kind)
 %FINDHDLBLOCKS Blocks of one Model Composer kind, by library path, not by MaskType.
-%   Two lessons in one function.  A linked masked block has an empty MaskType on the
-%   instance -- the same reason the Hub could not be found by mask -- so a search on
-%   'MaskType','Gateway In' matches nothing.  And matching the exact library path is
-%   not enough either: the example's data gateways are 'Vector Real Gateway In', so
-%   an exact 'hdlBasic/Gateway In' matched one stray block and reported "1 gateway
-%   set", which is a result that proves almost nothing.
+%   Three failures in a row came from guessing how to enumerate blocks here, so this
+%   now uses handles from 'FindAll' and filters on get(h,'Type')=='block', which is
+%   what "a block" actually means to Simulink ('Type' is 'block', not 'Block').  When
+%   nothing matches it prints what the model contains -- block count, how many carry
+%   a library source, the MaskTypes and the LinkStatus values -- because every earlier
+%   hint ("the model has no library-linked blocks at all") was an assertion, not a
+%   measurement.
 blocks = {};
-% 'Type','Block' matters: without it find_system returns the model itself, and
-% get_param(model, 'BlockType') raises "block_diagram does not have a parameter
-% named 'BlockType'" -- a real run died there before generating anything.
-every = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
-    'Type', 'Block');
-for index = 1:numel(every)
-    source = '';
-    try
-        source = get_param(every{index}, 'SourceBlock');
-    catch
-        source = '';
-    end
-    if contains(source, kind)
-        blocks{end + 1} = every{index}; %#ok<AGROW>
+handles = [];
+try
+    handles = find_system(modelName, 'FindAll', 'on', 'LookUnderMasks', 'all', ...
+        'FollowLinks', 'off');
+catch problem
+    fprintf('  listing %s failed: %s\n', modelName, problem.message);
+end
+count = 0;
+sourced = 0;
+sources = {};
+maskTypes = {};
+statuses = {};
+for index = 1:numel(handles)
+    if ~strcmp(blockType(handles(index)), 'block')
         continue
     end
-    try
-        if strcmp(get_param(every{index}, 'MaskType'), kind)
-            blocks{end + 1} = every{index}; %#ok<AGROW>
-        end
-    catch
-        continue
+    count = count + 1;
+    path = get_param(handles(index), 'Path');
+    source = parameterOf(handles(index), 'SourceBlock');
+    maskType = parameterOf(handles(index), 'MaskType');
+    status = parameterOf(handles(index), 'LinkStatus');
+    if ~isempty(source)
+        sourced = sourced + 1;
+        sources{end + 1} = source; %#ok<AGROW>
+    end
+    if ~isempty(maskType)
+        maskTypes{end + 1} = maskType; %#ok<AGROW>
+    end
+    if ~isempty(status)
+        statuses{end + 1} = status; %#ok<AGROW>
+    end
+    if contains(source, kind) || strcmp(maskType, kind)
+        blocks{end + 1} = path; %#ok<AGROW>
     end
 end
 blocks = unique(blocks, 'stable');
@@ -388,37 +403,39 @@ hint = '';
 if ~isempty(blocks)
     return
 end
-% Nothing matched: say what the model does contain, so the next run is decisive.
-sources = {};
-for index = 1:numel(every)
-    source = '';
-    try
-        source = get_param(every{index}, 'SourceBlock');
-    catch
-        source = '';
-    end
-    if ~isempty(source)
-        sources{end + 1} = source; %#ok<AGROW>
-    end
-end
-sources = unique(sources);
-if isempty(sources)
-    hint = '  the model has no library-linked blocks at all';
-    return
-end
-limit = min(numel(sources), 40);
-hint = sprintf('  library blocks present (%d): %s', numel(sources), ...
-    strjoin(sources(1:limit), ', '));
+hint = sprintf(['  %d block(s), %d with a library source; masks: %s; links: %s; sources: %s'], ...
+    count, sourced, summarise(maskTypes), summarise(statuses), summarise(sources));
 end
 
-function hits = search(modelName, parameter, wanted)
-hits = {};
+function text = summarise(values)
+%SUMMARISE The distinct values, at most ten, or "none".
+if isempty(values)
+    text = 'none';
+    return
+end
+distinct = unique(values);
+limit = min(numel(distinct), 10);
+text = strjoin(distinct(1:limit), ', ');
+if numel(distinct) > limit
+    text = sprintf('%s (+%d more)', text, numel(distinct) - limit);
+end
+end
+
+function text = blockType(handle)
+text = '';
 try
-    hits = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
-        parameter, wanted);
-catch problem
-    fprintf('  search by %s failed: %s\n', parameter, problem.message);
-    hits = {};
+    text = get_param(handle, 'Type');
+catch
+    text = '';
+end
+end
+
+function value = parameterOf(handle, name)
+value = '';
+try
+    value = get_param(handle, name);
+catch
+    value = '';
 end
 end
 
