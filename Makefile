@@ -78,6 +78,7 @@ help:
 	@echo "Same datapath as the model?  make ip-equivalence"
 	@echo "Build AMD's example to IP: make mc-example-ip"
 	@echo "Which change breaks it:  make mc-bisect"
+	@echo "Build the IP by hand:    docs/GUI_MODEL_COMPOSER_IP.md  (make mc-gui, then follow it)"
 	@echo "  (steps 6-8 are known to fail on this install: docs/evidence/2026-11-06-model-composer-negative)"
 	@echo "The verified IP instead: make ip-from-hdl  &&  make ip-equivalence"
 	@echo "Adopt its final IP:      make mc-adopt-bisect"
