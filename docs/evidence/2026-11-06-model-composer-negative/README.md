@@ -218,3 +218,34 @@ terminating each outport at the root when the design ends up port-wrapped.
 The earlier "Inport/Outport was already tried" result is withdrawn: that run carried
 `period = 1` and a vector `Gateway Out`, so it tested three wrong things at once and
 proved nothing about ports.
+
+## Two more measurements, and one construction that had never been tried
+
+```
+  AMD's own SSRDDC/DDC_DUT: 3 in, 2 out (before the replacement)
+  gateway in: 1 in, 1 out; gateway out: 1 in, 1 out
+  the design is defined by Simulink Inport/Outport blocks
+```
+
+The contested question is settled by number: this model defines a design by Simulink
+**ports**, AMD's subsystem has 3 in and 2 out, and a `Gateway In` does accept an
+incoming line. So `P -> Gateway In -> Delay -> Gateway Out -> Q` is the right shape, and
+our 4 in / 4 out is the same convention one channel wider.
+
+The same run also exposed a lie in this harness:
+
+```
+note: cannot wire Ground1/1 -> SSRDDC/DDC_DUT/1: Invalid Simulink object name
+ 4 inport(s) grounded, 4 outport(s) terminated at the root
+```
+
+`add_line('SSRDDC', ...)` takes names relative to that system (`DDC_DUT/1`), so every
+grounding call failed while the loop reported success. Wiring is now verified
+afterwards, a dangling port raises an error, and each `Constant` runs at `Tclk` instead
+of a `Ground`'s infinite sample time.
+
+Step 7 is the construction that had never been tried: build a **new** subsystem of our
+own (`CHANNELIZER`), leave AMD's `DDC_DUT` alone until it is deleted, and point the
+Hub's `IPInfoJsonString` at the new name. Every attempt before it edited AMD's
+library-linked block -- broke the link, emptied it, refilled it -- which is not something
+a GUI user ever does.

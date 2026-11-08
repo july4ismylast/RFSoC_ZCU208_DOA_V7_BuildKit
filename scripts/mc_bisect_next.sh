@@ -9,10 +9,11 @@ root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 repo="${IP_REPO:-build/ip_repo}"
 labels=("export target IP Catalog" "retarget device to MC_PART" \
         "name the exported subsystem" "our sample format 16.14" \
-        "our latency 4" "our channels: gateway -> delay -> gateway")
+        "our latency 4" "our channels: gateway -> delay -> gateway" \
+        "our own subsystem instead of AMD's")
 last=0
 echo "collected artifacts in $repo:"
-for step in 1 2 3 4 5 6; do
+for step in 1 2 3 4 5 6 7; do
     component="$repo/ssr_bisect_step$step/component.xml"
     if [ -f "$component" ]; then
         vlnv="$(python3 scripts/check_ip_component.py "$component" --any-ports 2>/dev/null | head -1)"
@@ -43,8 +44,8 @@ if unstaged="$(python3 scripts/mc_bisect_harvest.py 2>/dev/null)" && printf '%s'
     echo
 fi
 
-if [ "$last" -ge 6 ]; then
-    echo "all six steps have artifacts: make mc-adopt-bisect"
+if [ "$last" -ge 7 ]; then
+    echo "all seven steps have artifacts: make mc-adopt-bisect"
     exit 0
 fi
 next=$((last + 1))

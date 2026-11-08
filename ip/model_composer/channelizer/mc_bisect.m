@@ -40,7 +40,8 @@ steps = { ...
     'name the exported subsystem',     @stepIpIdentity; ...
     'our sample format 16.14',         @stepFormat; ...
     'our latency 4',                   @stepLatency; ...
-    'our channels: gateway -> delay -> gateway', @stepReplaceDesign};
+    'our channels: gateway -> delay -> gateway', @stepReplaceDesign; ...
+    'our own subsystem instead of AMD''s', @stepOwnSubsystem};
 
 originalFolder = pwd;
 results = cell(0, 2);
@@ -268,11 +269,10 @@ status = matched(count, hint);
 end
 
 function status = stepReplaceDesign(hub, modelName)
-%STEPREPLACEDESIGN Our four channels inside the exported subsystem.
-%   The interface shape is measured, not assumed: this model may define a design by its
-%   Simulink Inport/Outport blocks, or by its Gateway blocks as the boundary.  A run
-%   printed both answers -- AMD's own subsystem port count and whether a Gateway In
-%   accepts an incoming line -- and the channels are built to match.
+%STEPREPLACEDESIGN Our four channels inside AMD's exported subsystem.
+%   Measured, not assumed: this model defines a design by its Simulink Inport/Outport
+%   blocks -- AMD's own DDC_DUT is 3 in, 2 out -- and a Gateway In does accept a line.
+%   So each channel is P -> Gateway In -> Delay -> Gateway Out -> Q.
 dut = exportedSubsystem(modelName, hub);
 try
     originalPorts = get_param(dut, 'PortHandles');
@@ -295,6 +295,46 @@ if ~isempty(find_system(dut, 'SearchDepth', 1, 'Type', 'Block'))
     delete_block(dut);
     add_block('built-in/Subsystem', dut, 'Position', [320, 60, 660, 340]);
 end
+portWrapped = buildChannels(dut);
+stripRoot(modelName, hub);
+driveRoot(modelName, dut, portWrapped);
+status = 'ok';
+end
+
+function status = stepOwnSubsystem(hub, modelName)
+%STEPOWNSUBSYSTEM Our design in a subsystem of our own, AMD's left untouched.
+%   Every earlier attempt edited AMD's DDC_DUT: broke its library link, emptied it, and
+%   filled it with our blocks.  This leaves that block alone and gives the Hub a
+%   subsystem that was never anything else -- what a person does in the GUI: drop a
+%   subsystem, drag gateways in, select it in the Hub.
+name = 'CHANNELIZER';
+dut = [modelName '/' name];
+former = exportedSubsystem(modelName, hub);
+if getSimulinkBlockHandle(dut) ~= -1
+    delete_block(dut);
+end
+add_block('built-in/Subsystem', dut, 'Position', [320, 60, 660, 340]);
+portWrapped = buildChannels(dut);
+if ~strcmp(former, dut) && getSimulinkBlockHandle(former) ~= -1
+    try
+        delete_block(former);
+        fprintf('  AMD''s %s removed\n', former);
+    catch problem
+        fprintf(2, '  note: cannot remove %s: %s\n', former, problem.message);
+    end
+end
+json = sprintf(['{"HDLSubsystem":{"SubsystemName":"%s","IPName":"%s",' ...
+    '"IPLibrary":"model_composer","IPVendor":"doa.v7","IPVersion":"1.0"}}'], name, name);
+if mc_hub_set(hub, 'IPInfoJsonString', json)
+    fprintf('  Hub now exports %s\n', name);
+end
+stripRoot(modelName, hub);
+driveRoot(modelName, dut, portWrapped);
+status = 'ok';
+end
+
+function portWrapped = buildChannels(dut)
+%BUILDCHANNELS Four P -> gateway in -> delay -> gateway out -> Q channels.
 portWrapped = false;
 for channel = 1:4
     row = 40 + 60 * (channel - 1);
@@ -306,8 +346,8 @@ for channel = 1:4
     add_block('hdlBasic/Gateway Out', outBlock, 'Position', [195, row, 245, row + 20]);
     setIfPossible(inBlock, 'n_bits', '16');
     setIfPossible(inBlock, 'bin_pt', '14');
-    % -1 is refused ("must be greater than 0") and 1 is a second against a Hub whose
-    % period is 2 ns; Tclk is what AMD's own gateways carry, one sample per clock.
+    % -1 is refused ("must be greater than 0"), 1 is a second against a Hub whose period
+    % is 2 ns; Tclk is what AMD's own gateways carry, one sample per clock.
     setIfPossible(inBlock, 'period', 'Tclk');
     setIfPossible(inBlock, 'quantization', 'Truncate');
     setIfPossible(inBlock, 'overflow', 'Wrap');
@@ -338,25 +378,50 @@ for channel = 1:4
     end
 end
 fprintf('  four channels built inside %s\n', dut);
-stripRoot(modelName, hub);
-if portWrapped
-    ports = get_param(dut, 'PortHandles');
-    for index = 1:numel(ports.Inport)
-        ground = sprintf('%s/Ground%d', modelName, index);
-        add_block('built-in/Ground', ground, 'Position', ...
-            [120, 60 + 60 * (index - 1), 150, 80 + 60 * (index - 1)]);
-        wire(modelName, sprintf('Ground%d/1', index), sprintf('%s/%d', dut, index));
-    end
-    for index = 1:numel(ports.Outport)
-        terminator = sprintf('%s/Term%d', modelName, index);
-        add_block('built-in/Terminator', terminator, 'Position', ...
-            [560, 60 + 60 * (index - 1), 580, 80 + 60 * (index - 1)]);
-        wire(modelName, sprintf('%s/%d', dut, index), sprintf('Term%d/1', index));
-    end
-    fprintf('  %d inport(s) grounded, %d outport(s) terminated at the root\n', ...
-        numel(ports.Inport), numel(ports.Outport));
 end
-status = 'ok';
+
+function driveRoot(modelName, dut, portWrapped)
+%DRIVEROOT Give the design's ports a signal outside, and prove it.
+%   add_line('SSRDDC', ...) wants names relative to that system: 'DDC_DUT/1', not
+%   'SSRDDC/DDC_DUT/1'.  Passing the full path failed every call while the loop still
+%   reported success, so the wiring is verified and a dangling port is an error.
+if ~portWrapped
+    return
+end
+name = get_param(dut, 'Name');
+ports = get_param(dut, 'PortHandles');
+for index = 1:numel(ports.Inport)
+    source = sprintf('%s/Const%d', modelName, index);
+    add_block('built-in/Constant', source, 'Position', ...
+        [120, 60 + 60 * (index - 1), 150, 80 + 60 * (index - 1)]);
+    setIfPossible(source, 'Value', '0');
+    setIfPossible(source, 'SampleTime', 'Tclk');
+    wire(modelName, sprintf('Const%d/1', index), sprintf('%s/%d', name, index));
+end
+for index = 1:numel(ports.Outport)
+    terminator = sprintf('%s/Term%d', modelName, index);
+    add_block('built-in/Terminator', terminator, 'Position', ...
+        [560, 60 + 60 * (index - 1), 580, 80 + 60 * (index - 1)]);
+    wire(modelName, sprintf('%s/%d', name, index), sprintf('Term%d/1', index));
+end
+dangling = unconnectedPorts(dut);
+fprintf('  %d inport(s) driven, %d outport(s) terminated: %d unconnected\n', ...
+    numel(ports.Inport), numel(ports.Outport), dangling);
+if dangling > 0
+    error('mc_bisect:wiring', '%d port(s) of %s are still unconnected', dangling, dut);
+end
+end
+
+function count = unconnectedPorts(block)
+%UNCONNECTEDPORTS How many of a block's ports have no line.
+count = 0;
+ports = get_param(block, 'PortHandles');
+handles = [ports.Inport, ports.Outport];
+for index = 1:numel(handles)
+    if get_param(handles(index), 'Line') == -1
+        count = count + 1;
+    end
+end
 end
 
 function text = ternaryText(condition, whenTrue, whenFalse)
@@ -681,6 +746,14 @@ else
         ins = findHDLBlocks(dut, 'Gateway In');
         outs = findHDLBlocks(dut, 'Gateway Out');
         fprintf('  gateway blocks inside: %d in, %d out\n', numel(ins), numel(outs));
+        fprintf('  unconnected ports on %s: %d\n', wanted, unconnectedPorts(dut));
+        for index = 1:numel(dutPorts.Inport)
+            fprintf('    in %d: line %d\n', index, get_param(dutPorts.Inport(index), 'Line'));
+        end
+        for index = 1:numel(dutPorts.Outport)
+            fprintf('    out %d: line %d\n', index, ...
+                get_param(dutPorts.Outport(index), 'Line'));
+        end
     end
 end
 try
