@@ -89,7 +89,7 @@ It also shows what the example feeds the rate machinery from: a `PreLoadFcn` tha
 defines `clk = 500e6`, `sample_rate`, `SSR`, `Tclk`, `Ts`, which is why its
 `sysclk_period` reads `(1e+9)/clk` and `simulink_period` reads `1/clk`.
 
-### The bug this exposed, and the fix
+### The bug this exposed, and two wrong diagnoses before the right one
 
 `make mc-bisect` died on its first write:
 
@@ -97,28 +97,48 @@ defines `clk = 500e6`, `sample_rate`, `SSR`, `Tclk`, `Ts`, which is why its
 mc_bisect failed: Reference block does not have a parameter named 'ExportType'
 ```
 
-`mc_find_hub` searched with `FollowLinks` **on**, which walks into the linked
-library, so the block it handed back was `vmcUtilities/Vitis Model Composer Hub` --
-the reference, not the instance in the model. Writing to that raises exactly the
-message above. Two changes:
+**First diagnosis (wrong):** `mc_find_hub` searched with `FollowLinks` on and must
+have returned the library's reference block. The next run disproved it: the block
+path was `SSRDDC/Vitis Model Composer Hub`, which is in the model.
 
-* `mc_find_hub` now searches with `FollowLinks 'off'` and drops any hit that is not
-  inside the model, whatever it is called.
-* `mc_hub_set` / `mc_hub_get` write and read a Hub parameter by three routes in
-  order -- `set_param`, the mask object's `parameter.Value`, then the
-  `MaskNames`/`MaskValues` vector -- read the value back after each, and on total
-  failure print the block's real parameter names and, for a popup, the legal
-  values. So a refused write now reports what it would accept instead of a message
-  that needs another guess.
+**What that run actually printed:**
 
-Every Hub write goes through those two helpers: `make_channelizer_model`,
-`mc_graft_model`, `export_model_composer_ip` and `mc_bisect`. The two dead
-`SubsystemName`/`IpName` writes are gone from all of them; the name is written
-where it is actually stored, in `IPInfoJsonString`.
+```
+hub SSRDDC/Vitis Model Composer Hub: ExportType=, device=
+block ..., BlockType=Reference, ReferenceBlock=, SourceBlock=vmcUtilities/...
+MaskType=
+no mask parameters are visible on this block
+Warning: Cannot find library called 'vmcUtilities'.
+Warning: Cannot find library called 'hdlUtilities'.
+```
 
-Still unverified: neither helper has been run against a live Model Composer, so
-whether route 2 or 3 is the one this Hub accepts is an open question -- the next
-run will print which route worked.
+Empty reads, empty `MaskType`, empty `ReferenceBlock`, no mask parameters, and two
+libraries that cannot be found. That is not a parameter-name problem and not a
+library-block problem either: **the link does not resolve, because the library is
+not on the path of this session, so the masked block has no parameters at all.**
+`set_param` reports the missing parameter, which sends you looking at the name.
+
+**Second diagnosis (right):** the payload runs from `build/mc_startup/startup.m`,
+before or without Model Composer's own path setup. The fix is to load the
+libraries *before* any model is opened -- a link that failed once stays unresolved
+until the model is reopened:
+
+* `mc_require_libraries` calls the existing `mc_paths`, then loads
+  `vmcUtilities`, `hdlBasic`, `hdlUtilities`, `xilinxUtilities`, and prints what is
+  still missing together with the root it searched.
+* `mc_bisect` refuses to run when that fails: with no parameters to set there is
+  nothing to bisect, and a report would blame the design.
+* `make_channelizer_model`, `mc_graft_model`, `mc_example_ip` and
+  `export_model_composer_ip` call it before they open a model.
+* `mc_hub_set` now says what an empty mask means instead of only listing nothing.
+
+The `FollowLinks 'off'` + "must be inside the model" filter in `mc_find_hub` stays
+as hardening -- it was not the cause, but writing to a block in another model is
+never right.
+
+Still unverified: whether `mc_paths` finds the libraries on this install. If
+`mc_require_libraries` reports them missing, run `make mc-libs` for the paths it
+searched and set `MC_ROOT` to `Model_Composer/<version>`.
 
 ## Which change breaks it? `make mc-bisect`
 

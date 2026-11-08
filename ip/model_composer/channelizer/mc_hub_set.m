@@ -148,6 +148,11 @@ if ~isempty(names)
     end
 else
     fprintf(2, '  no mask parameters are visible on this block\n');
+    if isempty(get_param(block, 'MaskType'))
+        fprintf(2, ['  that means the library link is not resolved: vmcUtilities ' ...
+            'is not on the path,\n  so the block has no parameters to write.  ' ...
+            'Call mc_require_libraries before\n  the model is opened.\n']);
+    end
 end
 mask = maskOf(block);
 if isempty(mask)

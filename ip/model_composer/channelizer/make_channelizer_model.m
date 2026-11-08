@@ -28,6 +28,7 @@ arguments
     destination (1, :) char = ''
 end
 
+mc_require_libraries(false);
 here = fileparts(mfilename('fullpath'));
 if isempty(destination)
     destination = fullfile(here, 'channelizer.slx');

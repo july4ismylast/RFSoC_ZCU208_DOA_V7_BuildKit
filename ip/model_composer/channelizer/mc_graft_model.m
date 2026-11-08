@@ -17,6 +17,7 @@ end
 if bdIsLoaded(modelName)
     close_system(modelName, 0);
 end
+mc_require_libraries(false);
 copyfile(template, destination);
 open_system(destination);   % runs the model's PreLoadFcn: clk, Tclk, ...
 cleanup = onCleanup(@() closeQuietly(modelName)); %#ok<NASGU>

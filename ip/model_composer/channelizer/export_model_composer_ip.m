@@ -28,6 +28,7 @@ for created = {fullfile(folder, 'netlist'), fullfile(folder, 'netlist', 'ip'), .
     end
 end
 fprintf('working folder: %s\n', pwd);
+mc_require_libraries(false);
 load_system(model);
 % The Hub rejects the update until a device is selected, and MATLAB then reports
 % only "Error due to multiple causes"; print the causes and the Hub's device

@@ -17,6 +17,10 @@ if isempty(getenv('IP_REPO'))
     setenv('IP_REPO', fullfile(repoRoot, 'build', 'ip_repo'));
 end
 
+% Before any model is opened: the Hub is a link into vmcUtilities, and with that
+% library off the path the block has no parameters at all.
+mc_require_libraries(true);
+
 example = findExample(repoRoot);
 if isempty(example)
     error(['no AMD example found. Run: make mc-example   (downloads ' ...

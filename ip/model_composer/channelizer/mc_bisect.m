@@ -15,6 +15,16 @@ if isempty(getenv('IP_REPO'))
     setenv('IP_REPO', fullfile(repoRoot, 'build', 'ip_repo'));
 end
 
+% Before any model is opened: a Hub whose library link does not resolve has no
+% parameters at all, and every write to it is refused with a message about the
+% parameter name.  There is nothing to bisect in that state, so stop here rather
+% than write a report that blames the design.
+if ~mc_require_libraries(true)
+    error(['mc_bisect: the Model Composer block libraries are not on this path, ' ...
+        'so the Hub block has no parameters to set.  Run `make mc-libs` for the ' ...
+        'paths mc_paths can find, and set MC_ROOT if it guesses wrong.']);
+end
+
 example = findExample(repoRoot);
 if isempty(example)
     error('no example: run make mc-example first');
@@ -57,7 +67,10 @@ for count = 1:size(steps, 1)
     open_system(modelFile);
     hubs = mc_find_hub(modelName);
     hub = hubs{1};
-    ok = prepareHub(hub, work);
+    ok = hubHasMask(hub);
+    if ok
+        ok = prepareHub(hub, work);
+    end
     for applied = 1:count
         if ok
             ok = steps{applied, 2}(hub, modelName);
@@ -95,6 +108,16 @@ fprintf('MC_BISECT_DONE\n');
 end
 
 % ---------------------------------------------------------------------------
+function ok = hubHasMask(hub)
+%HUBHASMASK A Hub block with no parameters is an unresolved library link.
+ok = ~isempty(mc_hub_get(hub, 'ExportType')) || ~isempty(get_param(hub, 'MaskType'));
+if ~ok
+    fprintf(2, ['  %s has no mask and no parameters: its link into vmcUtilities is ' ...
+        'not resolved.\n  the libraries must be on the path before the model is ' ...
+        'opened; see mc_require_libraries.\n'], hub);
+end
+end
+
 function ok = prepareHub(hub, work)
 %PREPAREHUB Settings every step shares: IP Catalog, writable folders.
 %   The example ships with ExportType = "System Generator" and CodeGeneration =
@@ -328,7 +351,12 @@ try
     if isempty(hubs)
         return;
     end
-    parameters = get_param(hubs{1}, 'MaskObject').Parameters;
+    mask = get_param(hubs{1}, 'MaskObject');
+    if isempty(mask)
+        close_system(name, 0);
+        return
+    end
+    parameters = mask.Parameters;
     for index = 1:numel(parameters)
         parameter = parameters(index).Name;
         try
