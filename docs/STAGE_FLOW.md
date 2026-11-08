@@ -53,10 +53,13 @@ so a stage that fails keeps its log and gets no stamp, and `make pipeline` (a pl
 onwards needs it; nothing in the nineteen-stage list builds it:
 
 ```bash
-make rebuild STEP=step01_fetch_references FETCH_SET=RFSoC-MTS
-./scripts/prepare_mts_2023p2_patch.sh
-cd build/mts_base_src_2023p2/boards/ZCU208/build_mts && vivado -mode batch -source mts.tcl
+make mts-base                     # idempotent; MTS_BASE_FORCE=1 rebuilds
 ```
+
+It wraps the three original commands (`make rebuild STEP=step01_fetch_references
+FETCH_SET=RFSoC-MTS`, `scripts/prepare_mts_2023p2_patch.sh`, then `vivado -mode batch
+-source mts.tcl` in `boards/ZCU208/build_mts`) and keeps the transcript in
+`build/logs/mts_base.log`, which `make publish-debug-logs` then publishes.
 
 `PREFLIGHT_ALLOW_MISSING_BASE=1` downgrades the preflight check to a warning, so steps
 02–06 can be run before the base exists.

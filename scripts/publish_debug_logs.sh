@@ -5,8 +5,9 @@ set -euo pipefail
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 branch="$(git branch --show-current)"
-if [[ "$branch" != arena/* ]]; then
-    echo "ERROR: debug-log publication is allowed only from an Arena working branch, not $branch." >&2
+if [[ "$branch" != arena/* && "${PUBLISH_ALLOW_ANY_BRANCH:-0}" != "1" ]]; then
+    echo "ERROR: debug-log publication is allowed only from an Arena working branch, not ${branch:-detached HEAD}." >&2
+    echo "On a local checkout, rerun as: PUBLISH_ALLOW_ANY_BRANCH=1 make publish-debug-logs" >&2
     exit 2
 fi
 flow="${CHANNELIZER_FLOW:-opfb}"
@@ -20,7 +21,7 @@ mkdir "$out"
 
 # Keep this allowlist focused on stage progress and the failure boundary.
 stages=(
-    step00_preflight step01_fetch_references
+    mts_base step00_preflight step01_fetch_references
     step02_hls_covariance step03_hls_spectrum step04_hls_candidate
     step04_hls_beam step05_hls_repack step05_channelizer
     step05_subband_bridge step05_hls_phase_interf step06_collect_ip step07_vivado_project

@@ -72,15 +72,32 @@ and `step00_preflight` fails while that file is absent. Steps 02–06 do not nee
 
 ```bash
 # 0. the MTS base (once per machine; AMD's tree, stays out of git)
-make rebuild STEP=step01_fetch_references FETCH_SET=RFSoC-MTS
-./scripts/prepare_mts_2023p2_patch.sh
-cd build/mts_base_src_2023p2/boards/ZCU208/build_mts && vivado -mode batch -source mts.tcl
+make mts-base                    # fetch check + prepare + vivado, logged to build/logs/mts_base.log
 
 # 1. then the build
 make step00_preflight            # fails fast on tools/licences/parts and on the base above
 make step01_fetch_references     # not part of `make pipeline`; "Nothing to be done" = already stamped
 make pipeline                    # the other nineteen, in order, stopping at the first failure
 ```
+
+`make mts-base` is idempotent: with `mts/mts.xpr` present it reports and exits 0, so it is
+safe to have in your notes and to re-run. `MTS_BASE_FORCE=1` wipes
+`build/mts_base_src_2023p2` and rebuilds — nothing else should be used to rebuild it,
+because `scripts/prepare_mts_2023p2_patch.sh` removes that directory before copying.
+
+#### Publishing the logs
+
+`build/` is untracked, so a log on that machine is invisible to anyone reading the branch.
+
+```bash
+make publish-debug-logs          # copies build/logs/* into docs/debug-logs/<UTC>-<flow>/
+git add docs/debug-logs && git commit -m "logs: <what ran>" && git push
+```
+
+It keeps a bounded snapshot (2 MB head + 4 MB tail of an oversized log), and refuses to run
+from a branch that is not `arena/*` unless you pass `PUBLISH_ALLOW_ANY_BRANCH=1` — the guard
+exists because logs carry local paths. `mts_base` is in its allowlist, so the base build's
+transcript travels with the stage logs.
 
 `make rebuild STEP=...` is the one to remember: `make step01_fetch_references` on its own
 prints `Nothing to be done` whenever a stamp is already there, so a stage that needs a
