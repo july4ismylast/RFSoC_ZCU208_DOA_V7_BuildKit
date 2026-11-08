@@ -382,14 +382,39 @@ end
 
 function driveRoot(modelName, dut, portWrapped)
 %DRIVEROOT Give the design's ports a signal outside, and prove it.
-%   add_line('SSRDDC', ...) wants names relative to that system: 'DDC_DUT/1', not
-%   'SSRDDC/DDC_DUT/1'.  Passing the full path failed every call while the loop still
-%   reported success, so the wiring is verified and a dangling port is an error.
+%   Two harness bugs came from this function.  add_line('SSRDDC', ...) takes names
+%   relative to that system ('DDC_DUT/1', not 'SSRDDC/DDC_DUT/1'), and a re-created
+%   Terminator can already carry a line left over from the previous design, so wiring to
+%   it fails with "The destination port already has a line connection".  Both are dealt
+%   with by clearing the slate first, and the result is verified: a dangling port is an
+%   error, not a note.
 if ~portWrapped
     return
 end
 name = get_param(dut, 'Name');
 ports = get_param(dut, 'PortHandles');
+for handle = [ports.Inport, ports.Outport]
+    line = get_param(handle, 'Line');
+    if line ~= -1
+        try
+            delete_line(line);
+        catch problem
+            fprintf(2, '  note: cannot clear a line on %s: %s\n', name, problem.message);
+        end
+    end
+end
+rootBlocks = find_system(modelName, 'SearchDepth', 1, 'Type', 'Block');
+for index = 1:numel(rootBlocks)
+    [~, leaf] = fileparts(rootBlocks{index});
+    if beginsWith(leaf, 'Const') || beginsWith(leaf, 'Term')
+        try
+            delete_block(rootBlocks{index});
+        catch problem
+            fprintf(2, '  note: cannot delete %s: %s\n', rootBlocks{index}, ...
+                problem.message);
+        end
+    end
+end
 for index = 1:numel(ports.Inport)
     source = sprintf('%s/Const%d', modelName, index);
     add_block('built-in/Constant', source, 'Position', ...
@@ -404,6 +429,7 @@ for index = 1:numel(ports.Outport)
         [560, 60 + 60 * (index - 1), 580, 80 + 60 * (index - 1)]);
     wire(modelName, sprintf('%s/%d', name, index), sprintf('Term%d/1', index));
 end
+ports = get_param(dut, 'PortHandles');
 dangling = unconnectedPorts(dut);
 fprintf('  %d inport(s) driven, %d outport(s) terminated: %d unconnected\n', ...
     numel(ports.Inport), numel(ports.Outport), dangling);
