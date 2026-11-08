@@ -515,6 +515,40 @@ end
 if removed > 0
     fprintf('  %d block(s) removed from the root\n', removed);
 end
+purgeDanglingLines(modelName);
+if ~isempty(dut) && getSimulinkBlockHandle(dut) ~= -1
+    % The ornaments inside the design go the same way: emptying a subsystem leaves line
+    % fragments behind it as well.
+    purgeDanglingLines(dut);
+end
+end
+
+function purgeDanglingLines(modelName)
+%PURGEDANGLINGLINES Delete line fragments whose source or sink block is gone.
+%   Deleting the testbench blocks leaves lines whose other end no longer exists: a run
+%   printed 'cannot delete a line: Invalid Simulink line handle' twice and later
+%   seventeen 'Unconnected line found in SSRDDC' warnings during simulation.  Those
+%   warnings come from the simulation the GUI entry point runs before generating, and
+%   the run died there with 'Error due to multiple causes'.  A line with no source or no
+%   destination port is deleted here.
+lines = find_system(modelName, 'SearchDepth', 1, 'FindAll', 'on', 'Type', 'Line');
+removed = 0;
+for index = 1:numel(lines)
+    try
+        source = get_param(lines(index), 'SrcPortHandle');
+        destinations = get_param(lines(index), 'DstPortHandle');
+        if source == -1 || any(destinations == -1)
+            delete_line(lines(index));
+            removed = removed + 1;
+        end
+    catch
+        % The handle went with its parent line; nothing to delete.
+        continue
+    end
+end
+if removed > 0
+    fprintf('  %d dangling line(s) removed from the root\n', removed);
+end
 end
 
 function wire(subsystem, source, destination)
@@ -729,9 +763,10 @@ if ~isempty(hub)
         fprintf('  note: could not open the Hub dialog: %s\n', problem.message);
     end
 end
+% xmcGenerateCallback is not in this list: a run showed it return without doing
+% anything, and the script then waited an hour for a file nothing was producing.
 attempts = {
     'xmcGenerateButtonPressed', {hub};
-    'xmcGenerateCallback', {hub};
     'xmcHubInit', {hub};
     'xmcGenerate', {modelName, 'closeProgressWindow', 1}};
 for index = 1:size(attempts, 1)
@@ -747,6 +782,11 @@ for index = 1:size(attempts, 1)
         return
     catch problem
         fprintf(2, '  %s threw: %s\n', entry, problem.message);
+        causes = problem.cause;
+        for index = 1:numel(causes)
+            fprintf(2, '    cause %d: %s\n', index, causes{index}.message);
+        end
+        fprintf(2, '%s\n', getReport(problem, 'extended', 'hyperlinks', 'off'));
     end
 end
 end

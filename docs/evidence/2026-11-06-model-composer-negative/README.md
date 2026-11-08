@@ -284,3 +284,34 @@ design that is only gateways and a delay, or (b) its scripting entry points are 
 this install. The GUI test in the README distinguishes them, and `make ip-from-hdl`
 -- `doa.v7:model_composer:channelizer:1.0`, verified bit-exact against the model -- is
 the deliverable either way.
+
+## The GUI entry point simulates first, and the simulation was broken
+
+`xmcGenerateButtonPressed` is the first call in twenty runs that starts real work. Its
+stack shows what `vmcGenerate` does:
+
+```
+Warning: Unconnected line found in 'SSRDDC' (starts 80% from left and 35% from top of view)
+  ...(seventeen of these)...
+In Simulink.Simulation.internal.DesktopSimHelper.sim
+In Simulink/SimulationInput/sim
+In xmcGenerateImpl
+In vmcGenerateImpl
+In xmcGenerateButtonPressed
+  xmcGenerateButtonPressed threw: Error due to multiple causes.
+```
+
+It **simulates the model before generating**, and the simulation failed. The seventeen
+"Unconnected line" warnings are line fragments whose other end was deleted with AMD's
+testbench -- the same fragments that produced `cannot delete a line: Invalid Simulink
+line handle` in earlier runs. So the model that reached the engine still had a broken
+diagram, and an exporter that inspects the simulation's port list would find it empty.
+That is a far better explanation of "Index must not exceed 0" than any parameter.
+
+Fixed in this round:
+
+| defect | fix |
+|---|---|
+| orphaned line fragments survive `delete_block` | `purgeDanglingLines` deletes every root line whose source or sink port is gone, and the same inside the design, after each strip |
+| a failed entry point printed only `Error due to multiple causes` | each failure now prints every `cause` and the full `getReport` stack |
+| `xmcGenerateCallback` returns without generating, and looked like success | removed from the attempt list; the run then waited an hour for a file nothing was writing |
