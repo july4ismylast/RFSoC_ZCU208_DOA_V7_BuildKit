@@ -876,12 +876,18 @@ end
 % The model's StopFcn does toc(start_time) and fails if nothing set it, which shows up
 % as a second cause on every generation error and buries the real one.
 assignin('base', 'start_time', tic);
-% xmcGenerateCallback is not in this list: a run showed it return without doing
-% anything, and the script then waited an hour for a file nothing was producing.
+% Order matters, and a control run settled it: AMD's own untouched design sent through
+% xmcGenerateButtonPressed produced hundreds of 'ERROR-XMC-2002: Unsupported block ...
+% for code generation', including its Vector FIR and its Vector Real Gateway In.  That
+% entry point drives the HLS code-generation check (this Hub carries IpLibrary = hls),
+% which rejects every HDL block by design; it is not the IP Catalog export.  The API call
+% is what wrote the components in steps 1-5, and it has never run with SubsystemName
+% filled in -- the state that turns vmcGenerate's empty lookup into XMC-2001.
+% xmcGenerateCallback is absent: it returns without doing anything.
 attempts = {
+    'xmcGenerate', {modelName, 'closeProgressWindow', 1};
     'xmcGenerateButtonPressed', {hub};
-    'xmcHubInit', {hub};
-    'xmcGenerate', {modelName, 'closeProgressWindow', 1}};
+    'xmcHubInit', {hub}};
 for index = 1:size(attempts, 1)
     entry = attempts{index, 1};
     args = attempts{index, 2};

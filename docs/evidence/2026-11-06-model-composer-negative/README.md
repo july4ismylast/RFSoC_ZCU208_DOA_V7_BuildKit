@@ -368,3 +368,28 @@ available, and prints a field-by-field comparison of AMD's block against ours so
 
 Note what changed in kind: the tool is now reporting *which blocks* it will not compile.
 That is a normal engineering loop -- fix the block it names, run again.
+
+## The control run: AMD's own design fails the same check
+
+`MC_BISECT_FROM=1` sends AMD's design, untouched apart from the export type, through
+`xmcGenerateButtonPressed`. It produced hundreds of these:
+
+```
+ERROR-XMC-2002: Unsupported block SSRDDC/DDC_DUT/Vector FIR/FIR Compiler 7.2 for code generation.
+ERROR-XMC-2002: Unsupported block SSRDDC/DDC_DUT/Vector Real Gateway In/Demux1 for code generation.
+ERROR-XMC-2002: Unsupported block SSRDDC/DDC_DUT/Vector DDFS2/NCO/Systolic Adder/... for code generation.
+Diagnostics got truncated
+```
+
+Not one channel of ours is in that list. So the check is not about our blocks: this entry
+point drives the **HLS code-generation** flow -- the Hub carries `IpLibrary = hls` -- which
+rejects every HDL block by design, AMD's included. It is not the IP Catalog export.
+
+Undo the false trail it created: the "Unsupported block Delay1" that sent us copying
+AMD's instances came from the wrong entry point. The delay copy is harmless and stays,
+but it explained nothing.
+
+The entry point that wrote components in steps 1-5 is `xmcGenerate(model, ...)`. It has
+never run with `hub.SubsystemName` filled in -- and an empty `SubsystemName` is exactly
+what `vmcGenerate` was indexing when it said "Index exceeds the number of array elements".
+So the order is now: the API call first, the GUI callbacks after it.
