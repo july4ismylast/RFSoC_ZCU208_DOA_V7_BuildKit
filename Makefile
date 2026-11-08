@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-ips mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-ips mc-bisect-watch mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -80,6 +80,7 @@ help:
 	@echo "Which change breaks it:  make mc-bisect"
 	@echo "Adopt its final IP:      make mc-adopt-bisect"
 	@echo "What the bisect built:   make mc-bisect-ips"
+	@echo "Is the build alive:      make mc-bisect-watch   (no MATLAB, run in a second terminal)"
 	@echo "Slow synth / redo a step: make mc-bisect MC_GENERATE_TIMEOUT=7200 MC_BISECT_FRESH=1"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Read a saved model's Hub: make mc-hub-dump   (MODEL=..., AGAINST=...)"
@@ -235,6 +236,12 @@ mc-bisect:
 # Model Composer.  Adopt it under the name step06_collect_ip looks for and check it.
 # Every component the bisect generated, with its VLNV and ports.  AMD's example
 # exports its own port names, so the clk/din/dout demand is relaxed here on purpose.
+# "generation in progress" for ten minutes: synthesis or deadlock?  Answers it from
+# a second terminal while Model Composer is busy.  A live build shows a Vivado
+# process and a file that keeps being touched; a stall shows one without the other.
+mc-bisect-watch:
+	@./scripts/mc_watch.sh "$(if $(WORK),$(WORK),build/mc_bisect)"
+
 mc-bisect-ips:
 	@found=0; \
 	for component in $(IP_REPO)/ssr_bisect_step*/component.xml; do \

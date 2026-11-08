@@ -228,6 +228,26 @@ If a run stalls again, the two questions the log now answers without a rerun:
 | newest file keeps changing, `1 Vivado process(es)` | real synthesis -- let it finish, or raise `MC_GENERATE_TIMEOUT` |
 | nothing written for minutes, `0 Vivado process(es)` | hung in the engine -- Ctrl-C, then `make mc-bisect MC_BISECT_FRESH=1` for that step |
 
+### `make mc-bisect-watch`, for the terminal that is not busy
+
+While Model Composer sits in "generation in progress", the useful evidence lives
+outside it. `make mc-bisect-watch` (or `scripts/mc_watch.sh <folder>`) prints, with
+no MATLAB involved: the live `vivado` processes with their elapsed time, the newest
+files under the work folder, the age of the newest log, whether anything has been
+written for more than five minutes, and which `component.xml` files exist already.
+
+The engine's log is **not** where the earlier code looked. A real run had it at
+`build/mc_bisect/netlist/model_composer.log` (723 bytes) while `mc_hdl_log_tail`
+searched only for `model_composer_hdl.log` in the model folder and reported "no
+log". It now tries `<folder>`, `<folder>/netlist` and `<folder>/code` for the known
+names, and falls back to the newest `*.log` anywhere below `<folder>`.
+
+That run's process table was the decisive evidence: three `vivado` processes, two of
+them running `SgWaveformServer.tcl` -- System Generator's simulation data server,
+which `xmcGenerate` starts because it simulates the model before synthesising. So
+the engine was inside its own work, not deadlocked on a dialog.
+
+
 ## Which change breaks it? `make mc-bisect`
 
 `make mc-example-ip` says whether the example survives at all. `make mc-bisect`
