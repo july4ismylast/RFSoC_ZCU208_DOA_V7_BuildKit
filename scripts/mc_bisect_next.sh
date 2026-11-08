@@ -10,10 +10,11 @@ repo="${IP_REPO:-build/ip_repo}"
 labels=("export target IP Catalog" "retarget device to MC_PART" \
         "name the exported subsystem" "our sample format 16.14" \
         "our latency 4" "our channels: gateway -> delay -> gateway" \
-        "the same channels made from AMD's own blocks")
+        "the same channels made from AMD's own blocks" \
+        "the testbench around the subsystem removed")
 last=0
 echo "collected artifacts in $repo:"
-for step in 1 2 3 4 5 6 7; do
+for step in 1 2 3 4 5 6 7 8; do
     component="$repo/ssr_bisect_step$step/component.xml"
     if [ -f "$component" ]; then
         vlnv="$(python3 scripts/check_ip_component.py "$component" --any-ports 2>/dev/null | head -1)"
@@ -44,13 +45,13 @@ if unstaged="$(python3 scripts/mc_bisect_harvest.py 2>/dev/null)" && printf '%s'
     echo
 fi
 
-if [ "$last" -ge 7 ]; then
-    echo "all seven steps have artifacts: make mc-adopt-bisect"
+if [ "$last" -ge 8 ]; then
+    echo "all eight steps have artifacts: make mc-adopt-bisect"
     exit 0
 fi
 next=$((last + 1))
 echo "next: make mc-bisect MC_BISECT_FROM=$next"
-if [ "$next" -eq 6 ] || [ "$next" -eq 7 ]; then
-    echo "      (steps 6 and 7 differ in one thing only: 6 adds the blocks from hdlBasic"
-    echo "       as library links, 7 copies AMD's own instances out of the example)"
+if [ "$next" -eq 7 ] || [ "$next" -eq 8 ]; then
+    echo "      (7 takes the blocks from AMD's own instances, 8 then strips the root"
+    echo "       testbench, whose lines pointed at ports the replacement removed)"
 fi

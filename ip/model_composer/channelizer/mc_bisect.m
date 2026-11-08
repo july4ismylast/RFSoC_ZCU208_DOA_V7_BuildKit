@@ -41,7 +41,8 @@ steps = { ...
     'our sample format 16.14',         @stepFormat; ...
     'our latency 4',                   @stepLatency; ...
     'our channels: gateway -> delay -> gateway', @stepReplaceDesign; ...
-    'the same channels made from AMD''s own blocks', @stepCopiedDesign};
+    'the same channels made from AMD''s own blocks', @stepCopiedDesign; ...
+    'the testbench around the subsystem removed', @stepStripTestbench};
 
 originalFolder = pwd;
 results = cell(0, 2);
@@ -363,6 +364,54 @@ fprintf('  %d channel(s) copied from AMD''s own blocks into %s\n', copied, dut);
 status = matched(copied, '');
 end
 
+function status = stepStripTestbench(hub, modelName)
+%STEPSTRIPTESTBENCH Leave the root with the Hub and the exported subsystem only.
+%   Steps 6 and 7 replaced DDC_DUT's contents, which removes the ports the root's
+%   lines were attached to.  AMD's design generates, so the engine tolerates the
+%   testbench; it may well not tolerate a testbench wired to ports that no longer
+%   exist.  A Model Composer design needs nothing else at the root: the gateways are
+%   the interface, so the stimulus is not needed to compile the IP.
+dut = exportedSubsystem(modelName, hub);
+blocks = find_system(modelName, 'SearchDepth', 1, 'Type', 'Block');
+removed = 0;
+for index = 1:numel(blocks)
+    if strcmp(blocks{index}, hub) || strcmp(blocks{index}, dut) || ...
+            strncmp(blocks{index}, [dut '/'], numel(dut) + 1)
+        continue
+    end
+    try
+        delete_block(blocks{index});
+        removed = removed + 1;
+    catch problem
+        fprintf(2, '  note: cannot delete %s: %s\n', blocks{index}, problem.message);
+    end
+end
+lines = find_system(modelName, 'SearchDepth', 1, 'FindAll', 'on', 'Type', 'Line');
+for index = 1:numel(lines)
+    try
+        delete_line(lines(index));
+    catch problem
+        fprintf(2, '  note: cannot delete a line: %s\n', problem.message);
+    end
+end
+fprintf('  %d block(s) removed from the root, leaving %s and the Hub\n', ...
+    removed, dut);
+fprintf('  root now holds: %s\n', strjoin(find_system(modelName, 'SearchDepth', 1, ...
+    'Type', 'Block'), ', '));
+status = matched(removed, '');
+end
+
+function closeQuietly(name)
+%CLOSEQUIETLY Close a model if it is open, never throwing from a destructor.
+try
+    if bdIsLoaded(name)
+        close_system(name, 0);
+    end
+catch problem
+    fprintf(2, '  note: cannot close %s: %s\n', name, problem.message);
+end
+end
+
 function sourceModel = loadPristine()
 %LOADPRISTINE AMD's example under another name, as a source of block instances.
 sourceModel = '';
@@ -629,6 +678,15 @@ started = tic;
 reported = 0;
 while true
     candidates = dir(fullfile(folder, '**', 'component.xml'));
+    if isempty(candidates)
+        % contains({}, '_ip') raises "First argument must be text.", which is how a
+        % failed generation ended the run without a report at all.
+        pause(5);
+        if toc(started) > limit
+            return
+        end
+        continue
+    end
     preferred = candidates(contains({candidates.folder}, '_ip'));
     if ~isempty(preferred)
         component = preferred(1);

@@ -436,6 +436,7 @@ gateway blocks and no ports of its own. So the ladder now separates the two ques
 |---|---|---|
 | 6 | four `Gateway In -> Delay -> Gateway Out` channels added with `add_block`, **no** Inport/Outport | our datapath is accepted when its blocks come from the library |
 | 7 | the same four channels made from **AMD's own block instances**, copied out of a pristine example | the block *provenance* is not the blocker |
+| 8 | the root testbench removed, leaving the Hub and the exported subsystem | the **stale testbench wiring** is not the blocker |
 
 Both step 6 variants failed with the same error, with ports and without, which rules
 out the wrapping. What is still different from AMD's own design is where the blocks
@@ -445,11 +446,45 @@ come from: the example's gateways are plain masked subsystems
 copies AMD's instances and wires them identically, so exactly one thing differs from
 the model the engine accepts.
 
-* step 7 generates -> the block kind was the bug; the builder must copy instances out
-  of the example instead of adding them from the library.
-* step 7 fails -> gateway/delay/gateway is not something this engine will compile as
-  an exported subsystem, and that is the negative result to report; `make ip-from-hdl`
-  remains the deliverable, measured bit-exact against the model.
+Step 7 -- four channels made from AMD's own copied block instances -- **also failed**
+with the same index error. So block provenance is not the cause either.
+
+### What all three failures have in common
+
+| step | blocks | ports | result |
+|---|---|---|---|
+| 6 | `add_block('hdlBasic/...')` | none | `Index exceeds ... must not exceed 0` |
+| 6 (earlier variant) | `add_block('hdlBasic/...')` | Inport/Outport | same |
+| 7 | copied from AMD's model | none | same |
+
+What they share is not the blocks: it is the **root testbench**. Replacing
+`DDC_DUT`'s contents removes the ports its lines were attached to, so the model the
+engine is asked to compile is wired to gateways that no longer exist. AMD's own design
+generates because its testbench matches its gateways. A Model Composer design needs
+nothing else at the root -- the gateways *are* the interface -- so step 8 removes every
+root block except the Hub and the exported subsystem:
+
+```bash
+make mc-bisect MC_BISECT_FROM=8
+```
+
+* step 8 generates -> the stale testbench was the blocker; rebuild the design as
+  Hub + subsystem and the route works.
+* step 8 fails -> `gateway -> delay -> gateway` is not exportable by this engine, the
+  negative result is recorded, and `make ip-from-hdl` stays the deliverable.
+
+### Two bugs in the harness itself, found by that run
+
+```
+Undefined function 'closeQuietly'          <- referenced by an onCleanup, never defined
+mc_bisect failed: First argument must be text.   <- contains({}, '_ip') on the empty
+                                                    candidate list, i.e. on the very
+                                                    path a failed generation takes
+```
+
+The first is cosmetic (the pristine copy was not closed); the second destroyed the
+report exactly when it was needed, because the empty-list guard in `waitForComponent`
+was missing. Both are fixed, and `contains` is no longer reached with an empty cell.
 
 ## Which change breaks it? `make mc-bisect`
 
