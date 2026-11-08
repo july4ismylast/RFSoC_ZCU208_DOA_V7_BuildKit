@@ -47,6 +47,13 @@ if [[ ! -d "$src/.git" ]]; then
     exit 3
 fi
 
+# prepare_mts_2023p2_patch.sh removes $dst, which would take an earlier manual run's
+# only transcript with it.  Keep it before anything is deleted.
+if [[ -s "$bm/vivado.log" && ! -f "$xpr" ]]; then
+    kept="$log_dir/mts_previous_run.log"
+    cp -- "$bm/vivado.log" "$kept"
+    echo "Kept the previous manual run's transcript as $kept"
+fi
 if [[ "$force" == "1" && -d "$dst" ]]; then
     echo "MTS_BASE_FORCE=1: removing $dst"
 fi
