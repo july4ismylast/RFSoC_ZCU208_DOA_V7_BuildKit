@@ -40,7 +40,8 @@ steps = { ...
     'name the exported subsystem',     @stepIpIdentity; ...
     'our sample format 16.14',         @stepFormat; ...
     'our latency 4',                   @stepLatency; ...
-    'our design inside the subsystem', @stepReplaceDesign};
+    'our channels: gateway -> delay -> gateway', @stepReplaceDesign; ...
+    'the same channels wrapped in Inport/Outport', @stepWrapPorts};
 
 originalFolder = pwd;
 results = cell(0, 2);
@@ -257,6 +258,9 @@ end
 
 function status = stepReplaceDesign(hub, modelName)
 %STEPREPLACEDESIGN Our four channels inside the exported subsystem.
+%   No Inport/Outport blocks: in Model Composer a Gateway In is the IP's input and a
+%   Gateway Out its output, which is why AMD's DDC_DUT holds gateway blocks and no
+%   ports of its own.  Wrapping them is a different design, and step 7 tests it.
 dut = exportedSubsystem(modelName, hub);
 try
     set_param(dut, 'LinkStatus', 'none');
@@ -274,39 +278,60 @@ if ~isempty(find_system(dut, 'SearchDepth', 1, 'Type', 'Block'))
 end
 for channel = 1:4
     row = 40 + 60 * (channel - 1);
-    inPort = sprintf('%s/InPort%d', dut, channel);
     inBlock = sprintf('%s/In%d', dut, channel);
     delay = sprintf('%s/Delay%d', dut, channel);
     outBlock = sprintf('%s/Out%d', dut, channel);
-    outPort = sprintf('%s/OutPort%d', dut, channel);
-    add_block('built-in/Inport', inPort, 'Position', [10, row + 3, 30, row + 17]);
     add_block('hdlBasic/Gateway In', inBlock, 'Position', [45, row, 95, row + 20]);
     add_block('hdlBasic/Delay', delay, 'Position', [130, row, 160, row + 20]);
     add_block('hdlBasic/Gateway Out', outBlock, 'Position', [195, row, 245, row + 20]);
-    add_block('built-in/Outport', outPort, 'Position', [275, row + 3, 295, row + 17]);
-    % One popup spelled differently must not abort the run: each write stands alone
-    % and reports what it could not do.
     setIfPossible(inBlock, 'n_bits', '16');
     setIfPossible(inBlock, 'bin_pt', '14');
     setIfPossible(inBlock, 'period', '1');
     setIfPossible(inBlock, 'quantization', 'Truncate');
     setIfPossible(inBlock, 'overflow', 'Wrap');
-    setParamIfPresent(inBlock, 'arith_type', {'Signed  (2''s comp)', 'Signed (2''s comp)', 'Signed'});
+    setParamIfPresent(inBlock, 'arith_type', ...
+        {'Signed  (2''s comp)', 'Signed (2''s comp)', 'Signed'});
     setIfPossible(delay, 'latency', '4');
-    links = {sprintf('InPort%d/1', channel), sprintf('In%d/1', channel); ...
-        sprintf('In%d/1', channel), sprintf('Delay%d/1', channel); ...
-        sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel); ...
-        sprintf('Out%d/1', channel), sprintf('OutPort%d/1', channel)};
-    for index = 1:size(links, 1)
-        try
-            add_line(dut, links{index, 1}, links{index, 2}, 'autorouting', 'on');
-        catch problem
-            fprintf('  note: %s\n', problem.message);
-        end
-    end
+    wire(dut, sprintf('In%d/1', channel), sprintf('Delay%d/1', channel));
+    wire(dut, sprintf('Delay%d/1', channel), sprintf('Out%d/1', channel));
 end
-fprintf('  design replaced with four channels inside %s\n', dut);
+fprintf('  design replaced with four gateway -> delay -> gateway channels inside %s\n', dut);
 status = 'ok';
+end
+
+function status = stepWrapPorts(hub, modelName)
+%STEPWRAPPORTS The same channels with Simulink Inport/Outport around the gateways.
+%   This is how the repository's own builder used to assemble the subsystem, and the
+%   engine refused it with "Index exceeds the number of array elements".  Kept as a
+%   step so the difference is measured rather than assumed: step 6 has no ports, step
+%   7 puts them back.
+dut = exportedSubsystem(modelName, hub);
+added = 0;
+for channel = 1:4
+    row = 40 + 60 * (channel - 1);
+    inPort = sprintf('%s/InPort%d', dut, channel);
+    outPort = sprintf('%s/OutPort%d', dut, channel);
+    try
+        add_block('built-in/Inport', inPort, 'Position', [10, row + 3, 30, row + 17]);
+        add_block('built-in/Outport', outPort, 'Position', [275, row + 3, 295, row + 17]);
+        added = added + 1;
+    catch problem
+        fprintf('  note: cannot add the ports of channel %d: %s\n', channel, problem.message);
+        continue
+    end
+    wire(dut, sprintf('InPort%d/1', channel), sprintf('In%d/1', channel));
+    wire(dut, sprintf('Out%d/1', channel), sprintf('OutPort%d/1', channel));
+end
+fprintf('  %d channel(s) wrapped in Inport/Outport inside %s\n', added, dut);
+status = matched(added, '');
+end
+
+function wire(subsystem, source, destination)
+try
+    add_line(subsystem, source, destination, 'autorouting', 'on');
+catch problem
+    fprintf(2, '  note: cannot wire %s -> %s: %s\n', source, destination, problem.message);
+end
 end
 
 function setIfPossible(block, name, value)

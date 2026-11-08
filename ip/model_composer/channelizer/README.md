@@ -411,6 +411,36 @@ which `xmcGenerate` starts because it simulates the model before synthesising. S
 the engine was inside its own work, not deadlocked on a dialog.
 
 
+## Step 6 failed: the topology, not the engine
+
+With every earlier change in place, the run replaced `DDC_DUT`'s contents with our
+four channels and `xmcGenerate` died the same way the repository's own builder always
+died:
+
+```
+  xmcGenerate threw: Index exceeds the number of array elements. Index must not exceed 0.
+  | Generating code for DDC_DUT        <- the engine's log, and then nothing
+```
+
+Steps 1..5 generate, so the export target, the RFSoC part, our VLNV, our sample format
+and our latency are all accepted by the engine on AMD's own model. What it refuses is
+**the subsystem we put inside**. That is the answer to "can it work?" -- not a maybe:
+yes for everything about the IP, no for the block topology as this kit built it.
+
+The topology step itself was also wrong: it wrapped each channel in
+`Inport -> Gateway In -> Delay -> Gateway Out -> Outport`. In Model Composer a
+Gateway In **is** the IP's input and a Gateway Out its output -- AMD's `DDC_DUT` holds
+gateway blocks and no ports of its own. So the ladder now separates the two questions:
+
+| step | change | what a pass proves |
+|---|---|---|
+| 6 | four `Gateway In -> Delay -> Gateway Out` channels, **no** Inport/Outport | our datapath is accepted |
+| 7 | the same channels wrapped in `Inport`/`Outport` | the port wrapping is accepted too |
+
+If step 6 generates and step 7 does not, the wrapping is the bug and the builder must
+drop it. If both fail, the gateway->delay->gateway chain itself is what the engine
+refuses and that is the finding to report.
+
 ## Which change breaks it? `make mc-bisect`
 
 `make mc-example-ip` says whether the example survives at all. `make mc-bisect`
@@ -428,7 +458,8 @@ our design is the one the engine refuses?**
 | 3 | exported subsystem named `channelizer`, VLNV set to `doa.v7:model_composer:channelizer:1.0` | `SubsystemName`/`IpName` being empty was not the blocker |
 | 4 | every `Gateway In` set to sfix16_En14 (found by `SourceBlock`, not `MaskType`) | our **sample format** is not the blocker |
 | 5 | every `Delay` set to latency 4 (same selector) | our **pipeline length** is not the blocker |
-| 6 | the design inside the exported subsystem replaced by our four channels | our **block topology** is not the blocker |
+| 6 | four `Gateway In -> Delay -> Gateway Out` channels inside the exported subsystem, no Inport/Outport | our **datapath** is not the blocker |
+| 7 | the same channels wrapped in `Inport`/`Outport` (how the builder used to do it) | the **port wrapping** is not the blocker |
 
 The run stops at the first failing step and prints that step's Hub parameters, so
 the culprit is named by the output instead of guessed at. If all six generate, our

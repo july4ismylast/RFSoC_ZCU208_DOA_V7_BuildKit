@@ -9,10 +9,11 @@ root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 repo="${IP_REPO:-build/ip_repo}"
 labels=("export target IP Catalog" "retarget device to MC_PART" \
         "name the exported subsystem" "our sample format 16.14" \
-        "our latency 4" "our design inside the subsystem")
+        "our latency 4" "our channels: gateway -> delay -> gateway" \
+        "the same channels wrapped in Inport/Outport")
 last=0
 echo "collected artifacts in $repo:"
-for step in 1 2 3 4 5 6; do
+for step in 1 2 3 4 5 6 7; do
     component="$repo/ssr_bisect_step$step/component.xml"
     if [ -f "$component" ]; then
         vlnv="$(python3 scripts/check_ip_component.py "$component" --any-ports 2>/dev/null | head -1)"
@@ -43,14 +44,13 @@ if unstaged="$(python3 scripts/mc_bisect_harvest.py 2>/dev/null)" && printf '%s'
     echo
 fi
 
-if [ "$last" -ge 6 ]; then
-    echo "all six steps have artifacts: make mc-adopt-bisect"
+if [ "$last" -ge 7 ]; then
+    echo "all seven steps have artifacts: make mc-adopt-bisect"
     exit 0
 fi
 next=$((last + 1))
 echo "next: make mc-bisect MC_BISECT_FROM=$next"
-if [ "$next" -le 5 ]; then
-    echo "      (steps 4 and 5 were applied with the exact-path selector, which missed"
-    echo "       the 'Vector Real Gateway In' blocks; if step 6 fails, redo them with"
-    echo "       MC_BISECT_FRESH=1 before blaming the topology)"
+if [ "$next" -eq 6 ] || [ "$next" -eq 7 ]; then
+    echo "      (steps 6 and 7 differ in one thing only: 6 has no Inport/Outport blocks,"
+    echo "       7 wraps each channel in them -- that is how the builder used to do it)"
 fi
