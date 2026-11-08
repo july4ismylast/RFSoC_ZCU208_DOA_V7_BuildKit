@@ -47,6 +47,20 @@ so a stage that fails keeps its log and gets no stamp, and `make pipeline` (a pl
 `step01_fetch_references` is **not** in `PRODUCTION_STAGES` (`Makefile:35`), so
 `make pipeline` skips it; run it yourself. Everything else is in pipeline order.
 
+## The one input no stage produces
+
+`BASE_XPR` (stage V03, the MTS base project). `step00_preflight` checks it and `step07`
+onwards needs it; nothing in the nineteen-stage list builds it:
+
+```bash
+make rebuild STEP=step01_fetch_references FETCH_SET=RFSoC-MTS
+./scripts/prepare_mts_2023p2_patch.sh
+cd build/mts_base_src_2023p2/boards/ZCU208/build_mts && vivado -mode batch -source mts.tcl
+```
+
+`PREFLIGHT_ALLOW_MISSING_BASE=1` downgrades the preflight check to a warning, so steps
+02–06 can be run before the base exists.
+
 ## What each stage needs from you
 
 | stages | need | notes |

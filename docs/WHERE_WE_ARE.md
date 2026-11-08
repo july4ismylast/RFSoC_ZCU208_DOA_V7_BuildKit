@@ -60,18 +60,33 @@ in Model Composer, and it is the one thing here that is not finished.
 
 ## 4. The route to a bitstream
 
-`make pipeline` runs every production stage in order and stops at the first failure, but
-`PRODUCTION_STAGES` in the `Makefile` deliberately leaves out `step01_fetch_references`
-(it clones reference repositories, so it is a network operation, not a build step). Run
-it yourself first:
+There is one prerequisite **no stage builds**: the MTS base project, stage **V03**.
+`config.mk` sets `BASE_XPR` to
 
-```bash
-make step00_preflight           # tools, licences, parts — fails fast
-make step01_fetch_references    # NOT part of `make pipeline`
-make pipeline                   # the other nineteen, in order, stopping at the first failure
+```
+$(BUILD)/mts_base_src_2023p2/boards/ZCU208/build_mts/mts/mts.xpr
 ```
 
-Run it under `tmux`, or with the output kept:
+and `step00_preflight` fails while that file is absent. Steps 02–06 do not need it; steps
+07–15 do.
+
+```bash
+# 0. the MTS base (once per machine; AMD's tree, stays out of git)
+make rebuild STEP=step01_fetch_references FETCH_SET=RFSoC-MTS
+./scripts/prepare_mts_2023p2_patch.sh
+cd build/mts_base_src_2023p2/boards/ZCU208/build_mts && vivado -mode batch -source mts.tcl
+
+# 1. then the build
+make step00_preflight            # fails fast on tools/licences/parts and on the base above
+make step01_fetch_references     # not part of `make pipeline`; "Nothing to be done" = already stamped
+make pipeline                    # the other nineteen, in order, stopping at the first failure
+```
+
+`make rebuild STEP=...` is the one to remember: `make step01_fetch_references` on its own
+prints `Nothing to be done` whenever a stamp is already there, so a stage that needs a
+different argument set is skipped silently.
+
+Run the long part where a disconnect cannot kill it:
 
 ```bash
 tmux new -s build
@@ -81,6 +96,13 @@ make pipeline 2>&1 | tee build/logs/pipeline.log     # hours for synth/impl
 Each stage is stamped under `build/.stamps/` and logged under `build/logs/`; a stage that
 fails leaves its log and no stamp, which is the `FAILED/OLD` above. Resume with
 `make pipeline` again — stamped stages are not repeated.
+
+If you want to build the IP stages before the base exists:
+
+```bash
+make step00_preflight PREFLIGHT_ALLOW_MISSING_BASE=1   # base reported as WARN
+make step02_hls_covariance                             # ... through step06_collect_ip
+```
 
 ### The same list, one stage at a time
 

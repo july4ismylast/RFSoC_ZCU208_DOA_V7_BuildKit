@@ -49,6 +49,7 @@ help:
 	@echo
 	@echo "Run one stage:       make step02_hls_covariance"
 	@echo "Complete the build:  make step01_fetch_references && make pipeline"
+	@echo "      (first, once per machine: the MTS base, V03_MTS_BASE_2023P2.md)"
 	@echo "Force one stage:     make rebuild STEP=step02_hls_covariance"
 	@echo "Remove one result:   make clean-stage STEP=step02_hls_covariance"
 	@echo "Where the build is:  docs/WHERE_WE_ARE.md"
