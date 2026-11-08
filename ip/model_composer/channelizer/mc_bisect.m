@@ -49,6 +49,14 @@ failedLabel = '';
 
 for count = 1:size(steps, 1)
     label = steps{count, 1};
+    cached = cachedArtifact(label, example);
+    if ~isempty(cached)
+        verdict = sprintf('generated earlier (%s)', cached);
+        fprintf('\n=== step %d: %s ===\n  -> %s\n', count, label, verdict);
+        results{end + 1, 1} = label; %#ok<AGROW>
+        results{end + 1, 2} = verdict; %#ok<AGROW>
+        continue
+    end
     modelFile = fullfile(work, 'SSRDDC.slx');
     if isfile(modelFile)
         delete(modelFile);
@@ -95,7 +103,7 @@ for count = 1:size(steps, 1)
     results{end + 1, 2} = verdict; %#ok<AGROW>
     fprintf('  -> %s\n', verdict);
     close_system(modelName, 0);
-    if ~strcmp(verdict, 'generated')
+    if ~strncmp(verdict, 'generated', 9)
         failedAt = count;
         failedLabel = label;
         break;
@@ -389,17 +397,27 @@ end
 
 function verdict = generate(modelName, work, label)
 %GENERATE One attempt, artifact copied into the IP repository.
+%   A retargeted design is synthesised for the new part, which is minutes of
+%   Vivado, not seconds: a real run sat in "generation in progress" past ten
+%   minutes while a fixed 15 minute timeout printed nothing at all, so the tool
+%   looked dead.  The wait now says what is happening and how long it may take,
+%   and when it gives up it prints the engine's own log.
 verdict = 'failed';
 baseline = now;
 try
     xmcGenerate(modelName, 'closeProgressWindow', 1);
 catch problem
     fprintf(2, '  xmcGenerate failed: %s\n', problem.message);
-    return;
+    mc_hdl_log_tail(work, 40);
+    return
 end
-component = waitForComponent(work, baseline, 900);
+limit = timeoutSeconds();
+component = waitForComponent(work, baseline, limit);
 if isempty(component)
-    return;
+    fprintf(2, '  no component.xml after %d s\n', round(limit));
+    mc_hdl_log_tail(work, 60);
+    verdict = sprintf('timeout after %d s', round(limit));
+    return
 end
 destination = fullfile(getenv('IP_REPO'), label);
 if isfolder(destination)
@@ -409,9 +427,10 @@ copyfile(component.folder, destination);
 verdict = 'generated';
 end
 
-function component = waitForComponent(folder, baseline, timeoutSeconds)
+function component = waitForComponent(folder, baseline, limit)
 component = [];
 started = tic;
+reported = 0;
 while true
     candidates = dir(fullfile(folder, '**', 'component.xml'));
     preferred = candidates(contains({candidates.folder}, '_ip'));
@@ -424,11 +443,88 @@ while true
         component = fresh(1);
         return;
     end
-    if toc(started) > timeoutSeconds
-        return;
+    elapsed = toc(started);
+    if elapsed > limit
+        return
+    end
+    if elapsed - reported > 30
+        fprintf('  waiting for component.xml (%d s of %d): %s\n', ...
+            round(elapsed), round(limit), activity(folder));
+        reported = elapsed;
     end
     pause(5);
 end
+end
+
+function limit = timeoutSeconds()
+%TIMEOUTSECONDS How long one generation may take, in seconds.
+limit = str2double(getenv('MC_GENERATE_TIMEOUT'));
+if isnan(limit) || limit <= 0
+    limit = 3600;
+end
+end
+
+function text = activity(folder)
+%ACTIVITY What the work folder is doing, so a wait does not look like a hang.
+newest = '';
+age = Inf;
+files = dir(fullfile(folder, '**', '*'));
+for index = 1:numel(files)
+    if files(index).isdir
+        continue
+    end
+    if files(index).datenum < age
+        age = files(index).datenum;
+        newest = files(index).name;
+    end
+end
+if isempty(newest)
+    text = 'nothing written yet';
+else
+    text = sprintf('newest file %s, %d s ago', newest, round((now - age) * 86400));
+end
+count = runningVivado();
+if count >= 0
+    text = sprintf('%s, %d Vivado process(es)', text, count);
+end
+end
+
+function count = runningVivado()
+count = -1;
+if ~isunix
+    return
+end
+try
+    [status, output] = system('pgrep -c vivado');
+    if status == 0
+        count = str2double(strtrim(output));
+        if isnan(count)
+            count = -1;
+        end
+    elseif status == 1
+        count = 0;
+    end
+catch
+    count = -1;
+end
+end
+
+function cached = cachedArtifact(label, example)
+%CACHEDARTIFACT A component this step already produced, if it is not out of date.
+%   Steps 1-3 generated on an earlier run; regenerating them spends ten minutes
+%   proving again what is already on disk.  MC_BISECT_FRESH=1 ignores the cache.
+cached = '';
+if strcmp(getenv('MC_BISECT_FRESH'), '1')
+    return
+end
+component = fullfile(getenv('IP_REPO'), label, 'component.xml');
+if ~isfile(component)
+    return
+end
+if dir(component).datenum < dir(example).datenum
+    return
+end
+cached = datestr(dir(component).date);
 end
 
 function example = findExample(repoRoot)

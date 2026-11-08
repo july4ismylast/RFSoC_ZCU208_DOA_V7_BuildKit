@@ -80,6 +80,7 @@ help:
 	@echo "Which change breaks it:  make mc-bisect"
 	@echo "Adopt its final IP:      make mc-adopt-bisect"
 	@echo "What the bisect built:   make mc-bisect-ips"
+	@echo "Slow synth / redo a step: make mc-bisect MC_GENERATE_TIMEOUT=7200 MC_BISECT_FRESH=1"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Read a saved model's Hub: make mc-hub-dump   (MODEL=..., AGAINST=...)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
@@ -220,9 +221,15 @@ mc-scratch:
 # Which single change makes AMD's example stop generating?  Applies our changes to
 # a copy of the example one at a time, generating after each, and writes the table
 # to docs/progress/model_composer_bisect.md.  Stops at the first failure.
+# MC_GENERATE_TIMEOUT: seconds one generation may take (default 3600: synthesis of
+#   a retargeted design is minutes, the old fixed 900 was not enough and printed
+#   nothing while it waited).  MC_BISECT_FRESH=1 regenerates steps whose artifact
+#   is already on disk.
 mc-bisect:
 	@mkdir -p "$(LOG_DIR)"
-	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_bisect.log" bisect
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" \
+	    MC_GENERATE_TIMEOUT="$(MC_GENERATE_TIMEOUT)" MC_BISECT_FRESH="$(MC_BISECT_FRESH)" \
+	    ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_bisect.log" bisect
 
 # If every bisect step generated, its last artifact is our design, produced by
 # Model Composer.  Adopt it under the name step06_collect_ip looks for and check it.

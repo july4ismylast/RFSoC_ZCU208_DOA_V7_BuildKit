@@ -201,6 +201,33 @@ tested nothing cannot accuse the design.
 `make mc-bisect-ips` prints the VLNV and ports of everything the bisect generated,
 so the artifacts of steps 1..3 can be read without Model Composer.
 
+### The rerun stalled in step 2, and that was the tool's fault too
+
+The second run reached step 2 and then showed "generation in progress" for more
+than ten minutes with nothing printed. Two things were wrong with that, neither of
+them Model Composer's:
+
+* the wait was a fixed 900 s with **no output**, so a synthesis that legitimately
+  takes minutes is indistinguishable from a hang. It now prints a line every 30 s:
+  the newest file in the work folder and its age, and how many `vivado` processes
+  are alive (`pgrep -c vivado`). A real synthesis shows a fresh file and a Vivado
+  process; a hang shows neither.
+* steps 1..3 had already generated in the previous run, and the rerun repeated
+  them anyway -- roughly ten minutes spent re-proving what is on disk. Each step
+  whose `$(IP_REPO)/ssr_bisect_step<N>/component.xml` is newer than the example is
+  now reported as `generated earlier (<date>)` and skipped. `MC_BISECT_FRESH=1`
+  forces a rerun of those steps.
+
+The timeout is now `MC_GENERATE_TIMEOUT` seconds, default 3600, and on expiry the
+run prints the tail of `model_composer_hdl.log` instead of a bare verdict.
+
+If a run stalls again, the two questions the log now answers without a rerun:
+
+| symptom | reading |
+|---|---|
+| newest file keeps changing, `1 Vivado process(es)` | real synthesis -- let it finish, or raise `MC_GENERATE_TIMEOUT` |
+| nothing written for minutes, `0 Vivado process(es)` | hung in the engine -- Ctrl-C, then `make mc-bisect MC_BISECT_FRESH=1` for that step |
+
 ## Which change breaks it? `make mc-bisect`
 
 `make mc-example-ip` says whether the example survives at all. `make mc-bisect`
