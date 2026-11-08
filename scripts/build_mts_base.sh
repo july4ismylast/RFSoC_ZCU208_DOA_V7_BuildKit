@@ -75,6 +75,15 @@ if [[ ! -f "$xpr" ]]; then
         echo "First errors in the transcript:" >&2
         grep -n -m 10 -E '^(ERROR|CRITICAL WARNING)' "$log" >&2 || echo "  (none -- the script exited early; see $log)" >&2
     fi
+    # Vivado writes its own log in the working directory; an earlier run that was
+    # not captured by this wrapper leaves its only transcript there.
+    for candidate in "$bm/vivado.log" "$bm/mts/vivado.log"; do
+        if [[ -s "$candidate" ]]; then
+            echo "Transcribed run found: $candidate" >&2
+            grep -n -m 10 -E '^(ERROR|CRITICAL WARNING)' "$candidate" >&2 || echo "  (no ERROR lines in it)" >&2
+            break
+        fi
+    done
     exit 4
 fi
 
