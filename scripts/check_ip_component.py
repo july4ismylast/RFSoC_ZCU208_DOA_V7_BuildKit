@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Print the VLNV and the ports of a packaged IP, so the log proves what was built.
 
-Usage: check_ip_component.py build/ip_repo/channelizer_ip/component.xml
+Usage: check_ip_component.py <component.xml> [--any-ports]
 Exit status is non-zero when the file is not a complete component.
+
+--any-ports prints the ports without demanding clk/din/dout: AMD's example exports
+its own names, and reading them is how a bisect artifact gets compared with ours.
 """
 import sys
 import xml.etree.ElementTree as ET
@@ -13,9 +16,11 @@ def local(tag):
 
 
 def main():
-    if len(sys.argv) != 2:
-        sys.exit("usage: check_ip_component.py <component.xml>")
-    root = ET.parse(sys.argv[1]).getroot()
+    arguments = [argument for argument in sys.argv[1:] if not argument.startswith("--")]
+    flags = {argument for argument in sys.argv[1:] if argument.startswith("--")}
+    if len(arguments) != 1:
+        sys.exit("usage: check_ip_component.py <component.xml> [--any-ports]")
+    root = ET.parse(arguments[0]).getroot()
 
     wanted = ("vendor", "library", "name", "version")
     values = {}
@@ -25,7 +30,7 @@ def main():
             values[key] = element.text.strip()
     missing = [key for key in wanted if key not in values]
     if missing:
-        sys.exit(f"component.xml is missing {missing}: {sys.argv[1]}")
+        sys.exit(f"component.xml is missing {missing}: {arguments[0]}")
     print("VLNV: " + ":".join(values[key] for key in wanted))
 
     ports = []
@@ -47,9 +52,12 @@ def main():
                 ports.append(f"{name} ({direction or '?'}, {width or '?'})")
     print(f"ports ({len(ports)}): " + ", ".join(ports))
 
+    if "--any-ports" in flags:
+        print("CHECK_IP_OK (ports not constrained)")
+        return
     for needed in ("clk", "din", "dout"):
         if not any(port.startswith(needed) for port in ports):
-            sys.exit(f"port {needed} is missing from {sys.argv[1]}")
+            sys.exit(f"port {needed} is missing from {arguments[0]}")
     print("CHECK_IP_OK")
 
 

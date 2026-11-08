@@ -165,6 +165,42 @@ model has to be closed and reopened after the libraries are on the path. If the
 Hub still reads empty after both, run `make mc-libs` for the paths `mc_paths`
 searched and set `MC_ROOT` to `Model_Composer/<version>`.
 
+## The bisect ran: three steps generate, and two were the script's fault
+
+First real run of `make mc-bisect` (2026-11-08, ZCU208 host, Model Composer 2023.2):
+
+| step | result | what it settles |
+|---|---|---|
+| 1 | **generated** | IP Catalog export works on this install at all |
+| 2 | **generated** | ... and for `xczu48dr-fsvg1517-2-e`, an RFSoC part, not the example's `xcku11p` |
+| 3 | **generated** | ... and with `doa.v7:model_composer:...:1.0` written into `IPInfoJsonString` |
+| 4 | *no-op* | the script's fault, not a verdict -- see below |
+
+That is the answer to "can it work?" for the engine and the part: yes, at least for
+AMD's model retargeted. What is still open is step 6, our block topology.
+
+Two faults in the ladder, both now fixed:
+
+**`MaskType` is empty on a linked instance.** Step 4 searched
+`'MaskType','Gateway In'` and matched nothing -- the same trap as the Hub, where
+the mask lives in the library and the instance only carries `SourceBlock`. The
+selector now uses `SourceBlock`/`ReferenceBlock` against `hdlBasic`, `hdlSSR` and
+`xilinxUtilities`, and when nothing matches it prints every library block the
+model *does* contain, so a failed selector is visible instead of silent.
+
+**`exportedSubsystem` fell back to "the first subsystem".** Step 3 therefore
+exported AMD's test-bench block `ADC 1.5GSPS` -- a name containing a line break --
+and generation still succeeded, which says the *name* was never a blocker. The
+fallback is now: the name in `IPInfoJsonString`, else `DDC_DUT`, else the
+subsystem that actually contains Gateway In blocks, and the choice is printed.
+
+A step that changes nothing no longer produces a result row: it is reported as
+`no-op: the step matched no block` and the run stops there, because a step that
+tested nothing cannot accuse the design.
+
+`make mc-bisect-ips` prints the VLNV and ports of everything the bisect generated,
+so the artifacts of steps 1..3 can be read without Model Composer.
+
 ## Which change breaks it? `make mc-bisect`
 
 `make mc-example-ip` says whether the example survives at all. `make mc-bisect`
@@ -180,8 +216,8 @@ our design is the one the engine refuses?**
 | 1 | `ExportType` from `System Generator` to `IP Catalog` | IP Catalog export works for this install at all |
 | 2 | device retargeted to `MC_PART` | the xczu208 part is not the blocker |
 | 3 | exported subsystem named `channelizer`, VLNV set to `doa.v7:model_composer:channelizer:1.0` | `SubsystemName`/`IpName` being empty was not the blocker |
-| 4 | every `Gateway In` set to sfix16_En14 | our **sample format** is not the blocker |
-| 5 | every `Delay` set to latency 4 | our **pipeline length** is not the blocker |
+| 4 | every `Gateway In` set to sfix16_En14 (found by `SourceBlock`, not `MaskType`) | our **sample format** is not the blocker |
+| 5 | every `Delay` set to latency 4 (same selector) | our **pipeline length** is not the blocker |
 | 6 | the design inside the exported subsystem replaced by our four channels | our **block topology** is not the blocker |
 
 The run stops at the first failing step and prints that step's Hub parameters, so

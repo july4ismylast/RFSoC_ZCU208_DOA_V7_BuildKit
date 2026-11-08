@@ -45,6 +45,7 @@ steps = { ...
 originalFolder = pwd;
 results = cell(0, 2);
 failedAt = 0;
+failedLabel = '';
 
 for count = 1:size(steps, 1)
     label = steps{count, 1};
@@ -68,21 +69,27 @@ for count = 1:size(steps, 1)
     mc_resolve_links(modelName);
     hubs = mc_find_hub(modelName);
     hub = hubs{1};
-    ok = hubHasMask(hub);
-    if ok
-        ok = prepareHub(hub, work);
+    if hubHasMask(hub) && prepareHub(hub, work)
+        status = 'ok';
+    else
+        status = 'failed';
     end
-    for applied = 1:count
-        if ok
-            ok = steps{applied, 2}(hub, modelName);
-        end
+    applied = 0;
+    while strcmp(status, 'ok') && applied < count
+        applied = applied + 1;
+        status = steps{applied, 2}(hub, modelName);
     end
     fprintf('\n=== step %d: %s ===\n', count, label);
-    if ~ok
-        verdict = 'set-failed: a Hub parameter could not be written';
-    else
-        save_system(modelName);
-        verdict = generate(modelName, work, sprintf('ssr_bisect_step%d', count));
+    switch status
+        case 'ok'
+            save_system(modelName);
+            verdict = generate(modelName, work, sprintf('ssr_bisect_step%d', count));
+        case 'empty'
+            % Nothing was changed, so generating would prove nothing about this
+            % step; stop instead of reporting a result that has no cause.
+            verdict = 'no-op: the step matched no block';
+        otherwise
+            verdict = 'set-failed: a Hub parameter could not be written';
     end
     results{end + 1, 1} = label; %#ok<AGROW>
     results{end + 1, 2} = verdict; %#ok<AGROW>
@@ -90,6 +97,7 @@ for count = 1:size(steps, 1)
     close_system(modelName, 0);
     if ~strcmp(verdict, 'generated')
         failedAt = count;
+        failedLabel = label;
         break;
     end
 end
@@ -101,7 +109,8 @@ for index = 1:size(results, 1)
     fprintf('  %-34s %s\n', results{index, 1}, results{index, 2});
 end
 if failedAt > 0
-    fprintf('\nthe first step that failed: "%s"\n', results{failedAt, 1});
+    fprintf('\nstopped at step %d: %s\n', failedAt, failedLabel);
+    fprintf('  %s\n', results{failedAt, 2});
 else
     fprintf('\nevery step generated\n');
 end
@@ -139,12 +148,12 @@ fprintf('  hub now: ExportType=%s, CodeGeneration=%s\n', ...
     mc_hub_get(hub, 'ExportType'), mc_hub_get(hub, 'CodeGeneration'));
 end
 
-function ok = stepNothing(~, ~)
+function status = stepNothing(~, ~)
 %STEPNOTHING The example as shipped, with an IP Catalog target (prepareHub).
-ok = true;
+status = 'ok';
 end
 
-function ok = stepRetarget(hub, ~)
+function status = stepRetarget(hub, ~)
 %STEPRETARGET The device this repository builds for.
 part = getenv('MC_PART');
 if isempty(part)
@@ -160,9 +169,10 @@ ok = mc_hub_set(hub, 'package', pieces{2}) && ok;
 ok = mc_hub_set(hub, 'speed', ['-' pieces{3} '-' pieces{4}]) && ok;
 ok = mc_hub_set(hub, 'xilinxfamily', 'zynquplus') && ok;
 fprintf('  device -> %s\n', part);
+status = pick(ok);
 end
 
-function ok = stepIpIdentity(hub, modelName)
+function status = stepIpIdentity(hub, modelName)
 %STEPIPIDENTITY Say explicitly which block is exported, and under which VLNV.
 %   There is no SubsystemName parameter on the 2023.2 Hub: the exported block and
 %   the IP identity live in one JSON string, IPInfoJsonString, which the example
@@ -177,16 +187,15 @@ ok = mc_hub_set(hub, 'IpLibrary', 'model_composer') && ok;
 ok = mc_hub_set(hub, 'IpVersion', '1.0') && ok;
 information = struct('HDLSubsystem', struct('SubsystemName', name, 'IPName', name, ...
     'IPLibrary', 'model_composer', 'IPVendor', 'doa.v7', 'IPVersion', '1.0'));
-text = jsonencode(information);
-ok = mc_hub_set(hub, 'IPInfoJsonString', text) && ok;
-fprintf('  exported block -> %s, VLNV doa.v7:model_composer:%s:1.0\n', name, name);
+ok = mc_hub_set(hub, 'IPInfoJsonString', jsonencode(information)) && ok;
+fprintf('  exported block -> %s\n', dut);
+status = pick(ok);
 end
 
-function ok = stepFormat(~, modelName)
+function status = stepFormat(~, modelName)
 %STEPFORMAT Gateways to sfix16_En14, as our channels use.
+[blocks, hint] = findHDLBlocks(modelName, 'Gateway In');
 count = 0;
-blocks = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
-    'MaskType', 'Gateway In');
 for index = 1:numel(blocks)
     try
         set_param(blocks{index}, 'n_bits', '16', 'bin_pt', '14');
@@ -196,14 +205,13 @@ for index = 1:numel(blocks)
     end
 end
 fprintf('  %d gateway(s) set to 16.14\n', count);
-ok = count > 0;
+status = matched(count, hint);
 end
 
-function ok = stepLatency(~, modelName)
+function status = stepLatency(~, modelName)
 %STEPLATENCY Every delay to four clocks.
+[blocks, hint] = findHDLBlocks(modelName, 'Delay');
 count = 0;
-blocks = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
-    'MaskType', 'Delay');
 for index = 1:numel(blocks)
     try
         set_param(blocks{index}, 'latency', '4');
@@ -213,10 +221,10 @@ for index = 1:numel(blocks)
     end
 end
 fprintf('  %d delay(s) set to latency 4\n', count);
-ok = count > 0;
+status = matched(count, hint);
 end
 
-function ok = stepReplaceDesign(hub, modelName)
+function status = stepReplaceDesign(hub, modelName)
 %STEPREPLACEDESIGN Our four channels inside the exported subsystem.
 dut = exportedSubsystem(modelName, hub);
 try
@@ -224,7 +232,6 @@ try
 catch problem
     fprintf('  note: link: %s\n', problem.message);
 end
-ok = true;
 try
     Simulink.SubSystem.deleteContents(dut);
 catch problem
@@ -263,25 +270,121 @@ for channel = 1:4
     end
 end
 fprintf('  design replaced with four channels inside %s\n', dut);
+status = 'ok';
+end
+
+function status = pick(ok)
+if ok
+    status = 'ok';
+else
+    status = 'failed';
+end
+end
+
+function status = matched(count, hint)
+%MATCHED A step that changed nothing must not be reported as a result.
+if count > 0
+    status = 'ok';
+    return
+end
+fprintf(2, '  nothing matched, so this step changed nothing\n');
+if ~isempty(hint)
+    fprintf(2, '%s\n', hint);
+end
+status = 'empty';
 end
 
 function dut = exportedSubsystem(modelName, hub)
-%EXPORTEDSUBSYSTEM The subsystem the Hub names, else the first one.
-dut = '';
-try
-    wanted = get_param(hub, 'SubsystemName');
-    if ~isempty(wanted) && getSimulinkBlockHandle([modelName '/' wanted]) ~= -1
-        dut = [modelName '/' wanted];
-        return;
+%EXPORTEDSUBSYSTEM The subsystem the Hub names, else the one with the gateways.
+%   The name lives in IPInfoJsonString, not in a SubsystemName parameter.  Falling
+%   back to "the first subsystem" is how a run ended up exporting AMD's test-bench
+%   block "ADC 1.5GSPS" -- whose name even contains a line break -- so the fallback
+%   is now a subsystem that actually holds Gateway In blocks.
+candidates = {};
+wanted = '';
+text = mc_hub_get(hub, 'IPInfoJsonString');
+if ~isempty(text)
+    try
+        wanted = jsondecode(text).HDLSubsystem.SubsystemName;
+    catch
+        wanted = '';
     end
-catch problem
-    fprintf('  note: SubsystemName: %s\n', problem.message);
 end
+if ~isempty(wanted)
+    candidates{end + 1} = [modelName '/' wanted];
+end
+candidates{end + 1} = [modelName '/DDC_DUT'];
 subsystems = find_system(modelName, 'SearchDepth', 1, 'BlockType', 'SubSystem');
-if isempty(subsystems)
-    error('no subsystem in %s', modelName);
+for index = 1:numel(subsystems)
+    gateways = findHDLBlocks(subsystems{index}, 'Gateway In');
+    if ~isempty(gateways)
+        candidates{end + 1} = subsystems{index}; %#ok<AGROW>
+    end
 end
-dut = subsystems{1};
+for index = 1:numel(candidates)
+    if getSimulinkBlockHandle(candidates{index}) ~= -1
+        dut = candidates{index};
+        fprintf('  exporting %s\n', dut);
+        return
+    end
+end
+error('no subsystem to export in %s (looked for %s)', modelName, strjoin(candidates, ', '));
+end
+
+function [blocks, hint] = findHDLBlocks(modelName, kind)
+%FINDHDLBLOCKS Blocks of one Model Composer kind, by library, not by MaskType.
+%   A linked masked block has an empty MaskType on the instance -- the same reason
+%   the Hub could not be found by mask -- so a search on 'MaskType','Gateway In'
+%   matched nothing and the step silently changed nothing.  SourceBlock, which is
+%   the library block's path, is the identity that exists.
+blocks = {};
+libraries = {'hdlBasic', 'hdlSSR', 'xilinxUtilities'};
+for index = 1:numel(libraries)
+    blocks = [blocks; search(modelName, 'SourceBlock', ...
+        [libraries{index} '/' kind])]; %#ok<AGROW>
+    blocks = [blocks; search(modelName, 'ReferenceBlock', ...
+        [libraries{index} '/' kind])]; %#ok<AGROW>
+end
+blocks = [blocks; search(modelName, 'MaskType', kind)];
+blocks = unique(blocks, 'stable');
+hint = '';
+if ~isempty(blocks)
+    return
+end
+% Nothing matched: say what the model does contain, so the next run is decisive.
+sources = {};
+every = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
+    'Type', 'Block');
+for index = 1:numel(every)
+    source = '';
+    try
+        source = get_param(every{index}, 'SourceBlock');
+    catch
+        source = '';
+    end
+    if ~isempty(source)
+        sources{end + 1} = source; %#ok<AGROW>
+    end
+end
+sources = unique(sources);
+if isempty(sources)
+    hint = '  the model has no library-linked blocks at all';
+    return
+end
+limit = min(numel(sources), 40);
+hint = sprintf('  library blocks present (%d): %s', numel(sources), ...
+    strjoin(sources(1:limit), ', '));
+end
+
+function hits = search(modelName, parameter, wanted)
+hits = {};
+try
+    hits = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
+        parameter, wanted);
+catch problem
+    fprintf('  search by %s failed: %s\n', parameter, problem.message);
+    hits = {};
+end
 end
 
 function verdict = generate(modelName, work, label)
@@ -399,6 +502,25 @@ if failedAt > 0
     fprintf(handle, '\nThe first failing step: **%s**.\n', results{failedAt, 1});
 else
     fprintf(handle, '\nEvery step generated.\n');
+end
+fprintf(handle, '\n## What this means\n\n');
+if failedAt == 0
+    fprintf(handle, ['Every step generated, including our four channels inside the ' ...
+        'exported subsystem.\nSo IP Catalog export works on this install, for the ' ...
+        'part in MC_PART, with our VLNV --\nand the block topology was never the ' ...
+        'problem.  What differs is the model this builder assembles.\n']);
+else
+    fprintf(handle, 'The first step that did not generate was **%s**: %s.\n', ...
+        results{failedAt, 1}, results{failedAt, 2});
+    if failedAt > 1
+        fprintf(handle, '\nSteps 1..%d generated, so those changes are not the cause.\n', ...
+            failedAt - 1);
+    end
+    if startsWith(results{failedAt, 2}, 'no-op')
+        fprintf(handle, ['The step matched no block at all, which is a fault in the ' ...
+            'script, not a verdict on\nthe design: nothing was changed and nothing ' ...
+            'was tested.\n']);
+    end
 end
 if ~isempty(hubRows)
     fprintf(handle, '\n## Hub settings of the example\n\n| parameter | value |\n|---|---|\n');

@@ -42,7 +42,7 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-ips mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
@@ -79,6 +79,7 @@ help:
 	@echo "Build AMD's example to IP: make mc-example-ip"
 	@echo "Which change breaks it:  make mc-bisect"
 	@echo "Adopt its final IP:      make mc-adopt-bisect"
+	@echo "What the bisect built:   make mc-bisect-ips"
 	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
 	@echo "Read a saved model's Hub: make mc-hub-dump   (MODEL=..., AGAINST=...)"
 	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
@@ -225,6 +226,20 @@ mc-bisect:
 
 # If every bisect step generated, its last artifact is our design, produced by
 # Model Composer.  Adopt it under the name step06_collect_ip looks for and check it.
+# Every component the bisect generated, with its VLNV and ports.  AMD's example
+# exports its own port names, so the clk/din/dout demand is relaxed here on purpose.
+mc-bisect-ips:
+	@found=0; \
+	for component in $(IP_REPO)/ssr_bisect_step*/component.xml; do \
+	    [ -f "$$component" ] || continue; \
+	    found=1; \
+	    echo "== $$(basename "$$(dirname "$$component")")"; \
+	    python3 scripts/check_ip_component.py "$$component" --any-ports || true; \
+	done; \
+	if [ "$$found" = 0 ]; then \
+	    echo "no $(IP_REPO)/ssr_bisect_step*/component.xml -- run make mc-bisect first"; \
+	fi
+
 mc-adopt-bisect:
 	@if [ ! -f "$(IP_REPO)/ssr_bisect_step6/component.xml" ]; then \
 		echo "no $(IP_REPO)/ssr_bisect_step6/component.xml -- run make mc-bisect first"; exit 1; \
