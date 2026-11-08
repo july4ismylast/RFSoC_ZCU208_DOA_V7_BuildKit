@@ -382,12 +382,11 @@ end
 
 function driveRoot(modelName, dut, portWrapped)
 %DRIVEROOT Give the design's ports a signal outside, and prove it.
-%   Two harness bugs came from this function.  add_line('SSRDDC', ...) takes names
-%   relative to that system ('DDC_DUT/1', not 'SSRDDC/DDC_DUT/1'), and a re-created
-%   Terminator can already carry a line left over from the previous design, so wiring to
-%   it fails with "The destination port already has a line connection".  Both are dealt
-%   with by clearing the slate first, and the result is verified: a dangling port is an
-%   error, not a note.
+%   Wiring is done by port handles, never by block name or by geometry: with names,
+%   add_line reads 'CHANNELIZER/1' as either port 1 of the block, and with 'autorouting'
+%   it finds ports by position, which is how a Terminator placed on top of the subsystem
+%   produced "The destination port already has a line connection".  Handles cannot be
+%   misread.  The result is verified: a dangling port is an error, not a note.
 if ~portWrapped
     return
 end
@@ -415,21 +414,33 @@ for index = 1:numel(rootBlocks)
         end
     end
 end
+ports = get_param(dut, 'PortHandles');
 for index = 1:numel(ports.Inport)
     source = sprintf('%s/Const%d', modelName, index);
     add_block('built-in/Constant', source, 'Position', ...
         [120, 60 + 60 * (index - 1), 150, 80 + 60 * (index - 1)]);
     setIfPossible(source, 'Value', '0');
     setIfPossible(source, 'SampleTime', 'Tclk');
-    wire(modelName, sprintf('Const%d/1', index), sprintf('%s/%d', name, index));
+    sourcePorts = get_param(source, 'PortHandles');
+    try
+        add_line(modelName, sourcePorts.Outport(1), ports.Inport(index));
+    catch problem
+        fprintf(2, '  note: cannot drive input %d: %s\n', index, problem.message);
+    end
 end
 for index = 1:numel(ports.Outport)
     terminator = sprintf('%s/Term%d', modelName, index);
+    % x = 700: the subsystem spans 320..660, and a sink on top of it is exactly what
+    % geometry-based autorouting misreads.
     add_block('built-in/Terminator', terminator, 'Position', ...
-        [560, 60 + 60 * (index - 1), 580, 80 + 60 * (index - 1)]);
-    wire(modelName, sprintf('%s/%d', name, index), sprintf('Term%d/1', index));
+        [700, 60 + 60 * (index - 1), 720, 80 + 60 * (index - 1)]);
+    terminatorPorts = get_param(terminator, 'PortHandles');
+    try
+        add_line(modelName, ports.Outport(index), terminatorPorts.Inport(1));
+    catch problem
+        fprintf(2, '  note: cannot terminate output %d: %s\n', index, problem.message);
+    end
 end
-ports = get_param(dut, 'PortHandles');
 dangling = unconnectedPorts(dut);
 fprintf('  %d inport(s) driven, %d outport(s) terminated: %d unconnected\n', ...
     numel(ports.Inport), numel(ports.Outport), dangling);
