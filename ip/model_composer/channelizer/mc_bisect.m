@@ -353,20 +353,37 @@ error('no subsystem to export in %s (looked for %s)', modelName, strjoin(candida
 end
 
 function [blocks, hint] = findHDLBlocks(modelName, kind)
-%FINDHDLBLOCKS Blocks of one Model Composer kind, by library, not by MaskType.
-%   A linked masked block has an empty MaskType on the instance -- the same reason
-%   the Hub could not be found by mask -- so a search on 'MaskType','Gateway In'
-%   matched nothing and the step silently changed nothing.  SourceBlock, which is
-%   the library block's path, is the identity that exists.
+%FINDHDLBLOCKS Blocks of one Model Composer kind, by library path, not by MaskType.
+%   Two lessons in one function.  A linked masked block has an empty MaskType on the
+%   instance -- the same reason the Hub could not be found by mask -- so a search on
+%   'MaskType','Gateway In' matches nothing.  And matching the exact library path is
+%   not enough either: the example's data gateways are 'Vector Real Gateway In', so
+%   an exact 'hdlBasic/Gateway In' matched one stray block and reported "1 gateway
+%   set", which is a result that proves almost nothing.
 blocks = {};
-libraries = {'hdlBasic', 'hdlSSR', 'xilinxUtilities'};
-for index = 1:numel(libraries)
-    blocks = [blocks; search(modelName, 'SourceBlock', ...
-        [libraries{index} '/' kind])]; %#ok<AGROW>
-    blocks = [blocks; search(modelName, 'ReferenceBlock', ...
-        [libraries{index} '/' kind])]; %#ok<AGROW>
+every = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off');
+for index = 1:numel(every)
+    if isempty(get_param(every{index}, 'BlockType'))
+        continue
+    end
+    source = '';
+    try
+        source = get_param(every{index}, 'SourceBlock');
+    catch
+        source = '';
+    end
+    if contains(source, kind)
+        blocks{end + 1} = every{index}; %#ok<AGROW>
+        continue
+    end
+    try
+        if strcmp(get_param(every{index}, 'MaskType'), kind)
+            blocks{end + 1} = every{index}; %#ok<AGROW>
+        end
+    catch
+        continue
+    end
 end
-blocks = [blocks; search(modelName, 'MaskType', kind)];
 blocks = unique(blocks, 'stable');
 hint = '';
 if ~isempty(blocks)
@@ -374,8 +391,6 @@ if ~isempty(blocks)
 end
 % Nothing matched: say what the model does contain, so the next run is decisive.
 sources = {};
-every = find_system(modelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', ...
-    'Type', 'Block');
 for index = 1:numel(every)
     source = '';
     try

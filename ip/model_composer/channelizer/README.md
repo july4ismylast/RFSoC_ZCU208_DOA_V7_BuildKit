@@ -228,6 +228,29 @@ If a run stalls again, the two questions the log now answers without a rerun:
 | newest file keeps changing, `1 Vivado process(es)` | real synthesis -- let it finish, or raise `MC_GENERATE_TIMEOUT` |
 | nothing written for minutes, `0 Vivado process(es)` | hung in the engine -- Ctrl-C, then `make mc-bisect MC_BISECT_FRESH=1` for that step |
 
+### Step 4 "generated" with one gateway changed, which proves little
+
+`MC_BISECT_FROM=4` worked: step 4 generated, step 5 found seven delays and generated.
+But step 4 printed `1 gateway(s) set to 16.14`, and the example's data gateways are
+`Vector Real Gateway In` -- an exact match on `hdlBasic/Gateway In` caught one stray
+block and missed the two that carry the design's samples. So the step generated
+without really testing our sample format.
+
+`findHDLBlocks` now matches any block whose `SourceBlock` *contains* the kind, so
+`Vector Real Gateway In` is included, and it still falls back to printing every
+library block the model has when nothing matches. Steps 4 and 5 therefore need one
+more pass with `MC_BISECT_FRESH=1` before their verdict can be used to clear the
+format and the latency -- worth doing only if step 6 fails, because if step 6
+generates the attribution question disappears.
+
+### `make mc-bisect-next`: what is proven, and the one command to run
+
+Each generation costs a couple of minutes and can be ended by the hand-back hang, so
+the loop after a cancel is always the same three moves. `make mc-bisect-next` prints
+the first two from what is on disk -- the collected steps with their VLNV and block
+name, any component the engine wrote but nobody harvested -- and ends with the exact
+command for the next step.
+
 ### It stalls on every generation, and the cache stopped helping
 
 After the first cancel, every session hung again at the same place -- and the rerun
