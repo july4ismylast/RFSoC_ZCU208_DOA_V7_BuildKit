@@ -2,7 +2,16 @@
 
 An alternative to `ip/matlab/channelizer_hdl`, not another datapath copy.
 
-## Status 2026-11-06: blocked on this install -- use `make ip-from-hdl`
+## Status 2026-11-06: the model is valid, waiting on one generation
+
+A check-only run (`MC_BISECT_CHECK=1`) reports `diagram update: ok` for the six-step
+ladder: four `Gateway In (16.14, Tclk) -> Delay (latency 4) -> Gateway Out` channels
+inside the exported subsystem, root holding only the Hub and the design.  The failures
+before that came from a wrong gateway selector, `period = 1` (one second), `period = -1`
+(refused by the block), and a 48-bit vector gateway fed a scalar.
+
+`make ip-from-hdl` remains the verified deliverable until a generation of the model
+succeeds; `make ip-equivalence` measures that Verilog against this model bit-exactly.
 
 Six bisect steps that change the export type, the device, the IP identity, the sample
 format and the pipeline length all **generate** a component on this machine. Every

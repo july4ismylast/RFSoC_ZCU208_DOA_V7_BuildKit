@@ -170,3 +170,28 @@ note: SSRDDC/DDC_DUT/In1: period = -1 (Error reported by S-function 'sysgen' ...
 
 The design step also removes the testbench as it builds, so a check at step 6 is a
 verdict on the design and nothing else.
+
+## Step 6 is valid: the model is right, the ladder ends there
+
+```
+=== step 6: our channels: gateway -> delay -> gateway ===
+  hub.ClockFrequency = 200
+  hub.clock_wrapper = Clock Enables
+  SSRDDC/DDC_DUT: 0 inport(s), 0 outport(s), 13 child block(s)
+  gateway blocks inside: 4 in, 4 out
+  diagram update: ok
+  -> model ok (not generated: MC_BISECT_CHECK=1)
+```
+
+Four `Gateway In (16.14, period = Tclk) -> Delay (latency 4) -> Gateway Out (scalar)`
+channels inside the exported subsystem, root holding only the Hub and the design, is a
+model Simulink accepts. The earlier failures came from three things that are now gone:
+no library gateway (the first shape used `add_block` on a path that did not match), no
+`period = 1`, no `period = -1`, and no 48-bit vector gateway taking a scalar.
+
+Steps 7-10 were the AMD-vector detour and are removed from the ladder: a copied
+`Xilinx Vector Gateway Out Block` demuxes a vector, so a 16-bit scalar channel is not
+something it can be wired to. That is recorded above, not repeated on every run.
+
+The ladder is six steps and ends at our design, which is what `make mc-adopt-bisect`
+adopts as `$(IP_REPO)/model_composer_channelizer`.
