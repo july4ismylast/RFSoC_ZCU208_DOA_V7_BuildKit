@@ -39,8 +39,14 @@ make clean-stage STEP=step05_channelizer
 | the Model Composer model is well formed | 4 in / 4 out, 21 child blocks, 0 unconnected ports, `Ctrl+D` clean | `ip/model_composer/channelizer/README.md` |
 | Model Composer can export *an* IP on this install | AMD's untouched `SSRDDC.slx`, steps 1–5 → `generated` | `docs/evidence/2026-11-06-model-composer-negative/` |
 | Model Composer cannot export *this* IP | unresolved: `XMC-2002 … Delay1…Delay4`, block fields identical to AMD's | same, plus this branch's `mc_bisect` runs |
-| every stage the Makefile has | 20/20 PASS | `make status` |
+| every stage the Makefile has | 20/20 PASS (2026-11-08/09) | `make status` |
+| it fits the part | CLB LUTs 206,179/425,280 = **48.48 %**, CLB regs 313,132 = 36.81 %, BRAM tiles 773.5/1,080 = **71.62 %**, DSP 1,543/4,272 = 36.12 %, URAM 20/80, IOB 82/347 | `docs/evidence/2026-11-09-matlab_hdl/post_route_utilization.rpt` |
+| it closes timing | post-route **WNS +0.164 ns** | `docs/evidence/2026-11-09-matlab_hdl/post_route_timing.rpt` |
+| it produces the files | `build/output/doa_v7_zcu208.bit`, `.xsa`, `build/release/doa_v7_zcu208_artifacts.tar.gz` (24.9 MB + sha256) | `step12`–`step15` stamps |
 | the whole pipeline runs end to end | **20/20 stages PASS**, 2026-11-08/09: synth 16:56, impl 17:35, bitstream 17:37, xsa 17:37, HIL vectors 08:13, package 08:13 | `make status` on the Vivado host |
+
+Tightest resource is Block RAM at 71.6 %, so BRAM is what any further feature must
+budget against; timing has 164 ps of margin at 500 MHz.
 
 Unmeasured, and not to be asserted: board bring-up on hardware. Resource use and timing were
 measured by the run above and live in `build/output/post_route_utilization.rpt` and
