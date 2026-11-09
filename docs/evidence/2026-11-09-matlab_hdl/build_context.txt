@@ -1,0 +1,35 @@
+Source commit: 98e3d8cac0f897c3d1e185c04c73dd7f1da6b920
+Collection time UTC: 2026-11-09T08:23:43Z
+Requested channelizer flow: matlab_hdl
+BUILD=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build
+IP_REPO=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo
+
+Configuration defaults (command-line overrides may differ):
+2:PART ?= xczu48dr-fsvg1517-2-e
+3:BOARD_PART ?= xilinx.com:zcu208:part0:2.0
+50:BASE_KIND ?= mts
+58:IPVER_COVARIANCE ?= 7.1
+59:IPVER_SPECTRUM ?= 2.0
+60:IPVER_CANDIDATE ?= 1.0
+61:IPVER_BEAM ?= 2.1
+62:IPVER_RFDC_REPACK4 ?= 1.0
+63:IPVER_CHANNELIZER ?= 7.0
+64:IPVER_SUBBAND_BRIDGE ?= 1.0
+65:IPVER_PHASE_INTERF ?= 1.0
+74:OPFB_VLNV_ADC_TO_OPFB ?= mazinlab:mkidgen3:adc_to_opfb:1.32
+75:OPFB_VLNV_OPFB_FIR_CFG ?= mazinlab:mkidgen3:opfb_fir_cfg:1.31
+76:OPFB_VLNV_FIR_TO_FFT ?= mazinlab:mkidgen3:fir_to_fft:1.31
+77:OPFB_VLNV_SSRFFT ?= MazinLab:mkidgen3:ssrfft_16x4096_axis:1.0
+78:OPFB_VLNV_PKG_FFT_OUTPUT ?= mazinlab:mkidgen3:pkg_fft_output:1.31
+79:OPFB_VLNV_CAPTURE_UPSIZER ?= mazinlab:mkidgen3:capture_upsizer:0.5
+80:OPFB_VLNV_FILTER_IQ ?= mazinlab:mkidgen3:filter_iq:0.3
+81:OPFB_VLNV_FILTER_PHASE ?= mazinlab:mkidgen3:filter_phase:0.5
+82:OPFB_VLNV_PAIR_IQ ?= mazinlab:mkidgen3:pair_iq:0.4
+83:OPFB_VLNV_BIN_TO_RES ?= mazinlab:mkidgen3:bin_to_res:1.33
+109:CHANNELIZER_NUM_BANDS ?= 1024
+110:CHANNELIZER_TAPS_PER_BAND ?= 12
+111:CHANNELIZER_STOPBAND_DB ?= 100
+115:CHANNELIZER_NORMALIZE ?= 0
+120:CHANNELIZER_FILTER_STRUCTURE ?= transposed
+121:CHANNELIZER_BIN_SPACING_HZ ?= 1953125
+140:CHANNELIZER_FLOW ?= matlab_hdl

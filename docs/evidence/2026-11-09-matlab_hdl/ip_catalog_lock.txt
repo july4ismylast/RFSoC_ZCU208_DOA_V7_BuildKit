@@ -1,0 +1,46 @@
+# DOA V7 IP catalog lock proof
+# vivado=2023.2 lock=2023.2 part=xczu48dr-fsvg1517-2-e board=xilinx.com:zcu208:part0:2.0 base_kind=mts
+# key	pinned_vlnv	status
+rfdc	xilinx.com:ip:usp_rf_data_converter:2.6	PASS
+ps	xilinx.com:ip:zynq_ultra_ps_e:3.5	PASS
+axis_data_fifo	xilinx.com:ip:axis_data_fifo:2.0	PASS
+axi_data_fifo	xilinx.com:ip:axi_data_fifo:2.1	PASS
+axi_fifo_mm_s	xilinx.com:ip:axi_fifo_mm_s:4.3	PASS
+axi_bram_ctrl	xilinx.com:ip:axi_bram_ctrl:4.1	PASS
+blk_mem_gen	xilinx.com:ip:blk_mem_gen:8.4	PASS
+axi_dma	xilinx.com:ip:axi_dma:7.1	PASS
+axi_datamover	xilinx.com:ip:axi_datamover:5.1	PASS
+axi_interconnect	xilinx.com:ip:axi_interconnect:2.1	PASS
+smartconnect	xilinx.com:ip:smartconnect:1.0	PASS
+axi_clock_converter	xilinx.com:ip:axi_clock_converter:2.1	PASS
+axi_dwidth_converter	xilinx.com:ip:axi_dwidth_converter:2.1	PASS
+axi_register_slice	xilinx.com:ip:axi_register_slice:2.1	PASS
+axi_gpio	xilinx.com:ip:axi_gpio:2.0	PASS
+axi_intc	xilinx.com:ip:axi_intc:4.1	PASS
+proc_sys_reset	xilinx.com:ip:proc_sys_reset:5.0	PASS
+clk_wiz	xilinx.com:ip:clk_wiz:6.0	PASS
+ddr4	xilinx.com:ip:ddr4:2.2	PASS
+axis_clock_converter	xilinx.com:ip:axis_clock_converter:1.1	PASS
+axis_dwidth_converter	xilinx.com:ip:axis_dwidth_converter:1.1	PASS
+axis_register_slice	xilinx.com:ip:axis_register_slice:1.1	PASS
+axis_broadcaster	xilinx.com:ip:axis_broadcaster:1.1	PASS
+axis_combiner	xilinx.com:ip:axis_combiner:1.1	PASS
+axis_switch	xilinx.com:ip:axis_switch:1.1	PASS
+fir_compiler	xilinx.com:ip:fir_compiler:7.2	PASS
+util_ds_buf	xilinx.com:ip:util_ds_buf:2.2	PASS
+xpm_cdc_gen	xilinx.com:ip:xpm_cdc_gen:1.0	PASS
+xlconcat	xilinx.com:ip:xlconcat:2.1	PASS
+xlconstant	xilinx.com:ip:xlconstant:1.1	PASS
+xlslice	xilinx.com:ip:xlslice:1.0	PASS
+util_reduced_logic	xilinx.com:ip:util_reduced_logic:2.0	PASS
+util_vector_logic	xilinx.com:ip:util_vector_logic:2.0	PASS
+ila	xilinx.com:ip:ila:6.2	PASS
+vio	xilinx.com:ip:vio:3.0	PASS
+covariance	openai:doa:doa_covariance_4ch_v4:7.1	DEFERRED (checked at step06/step08)
+spectrum	openai:doa:spectrum_power4:2.0	DEFERRED (checked at step06/step08)
+candidate	openai:doa:candidate_peak4:1.0	DEFERRED (checked at step06/step08)
+beam	openai:doa:beam_weight_4ch:2.1	DEFERRED (checked at step06/step08)
+rfdc_repack4	openai:doa:rfdc_repack4:1.0	DEFERRED (checked at step06/step08)
+channelizer	openai:doa:matlab_channelizer:7.0	DEFERRED (checked at step06/step08)
+subband_bridge	openai:doa:doa_subband_bridge_4ch:1.0	DEFERRED (checked at step06/step08)
+phase_interf	openai:doa:phase_interf_4ch:1.0	DEFERRED (checked at step06/step08)

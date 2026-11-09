@@ -1,0 +1,14 @@
+stage=step06_collect_ip
+started_utc=2026-11-08T16:47:55Z
+command=./scripts/collect_ip.sh 
+PASS openai:doa:doa_covariance_4ch_v4:7.1
+PASS openai:doa:spectrum_power4:2.0
+PASS openai:doa:candidate_peak4:1.0
+PASS openai:doa:beam_weight_4ch:2.1
+PASS openai:doa:rfdc_repack4:1.0
+PASS openai:doa:phase_interf_4ch:1.0
+PASS openai:doa:matlab_channelizer:7.0
+PASS openai:doa:doa_subband_bridge_4ch:1.0
+Validated IP repository (versions pinned): /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/ip_manifest.tsv
+finished_utc=2026-11-08T16:47:55Z
+result=PASS
