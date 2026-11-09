@@ -131,8 +131,13 @@ Gates are marked on the figure; their state is Part 4.
 - **interface:** 256 bit in → 416 bit out, 250 MHz.
 - **built from:** `dsphdl.Channelizer` through HDL Coder — `ip/matlab/channelizer_hdl/`
   holds the wrapper that adds AXI4-Stream and the `TLAST` cadence
-  (`channelizer_axis_wrapper.sv`). The Model Composer route to the same function is
-  `ip/model_composer/channelizer/` and is documented, not used.
+  (`channelizer_axis_wrapper.sv`). Inside it: `g_pack_lanes` (lane unpack), the
+  `Channelizer_DUT` subsystem (`Channelizer_DUT.v`, 228 generated files), the
+  `ChannelizerCore` `dsphdl.Channelizer` object (1024 bands, 12 taps/band, 12 288
+  coefficients), the clock-enable handshake (`core_clk_enable = m_axis_tready`), the
+  `LAST_BEAT_IN_SNAPSHOT` framing and the 52-bit lane packing. Part 5.1 draws exactly this.
+  The Model Composer route to the same function is `ip/model_composer/channelizer/` and is
+  documented, not used.
 - **build:** `make step05_channelizer` (`CHANNELIZER_FLOW=matlab_hdl`).
 - **IDE:** MATLAB R2024a for the model and the HDL Coder run; the resulting IP opens in
   Vivado like any other component.
@@ -292,7 +297,7 @@ make step3      # one of them
 | folder | source | duty | test bench closes |
 |---|---|---|---|
 | `step0_antenna` | `py/`, `matlab/`, `py/make_scenes.py` | array geometry, steering vectors, `R = XXᴴ/K`, WPI and GN estimators, the spacing rule | **G0**: 5.996 GHz at 25 mm / 4.997 GHz at 30 mm; σ = 0.302/0.170/0.096/0.030° at 0/5/10/20 dB |
-| `step1_rfadc_mts` | `py/`, `matlab/` | the V04 contract: 4 ADC channels, 512-bit beats at 7.8125 ns, decimation by 4, zone-2 R2C DDC, the MTS configuration `step07` opens | G5 simulated, not measured |
+| `step1_rfadc_mts` | `py/`, `matlab/` | the V04 contract: 4 ADC channels at 4.000 GSPS, 512-bit beats, decimation 2 (2.000 GSPS complex), zone-2 R2C DDC, the MTS configuration `step07` opens | G5 simulated, not measured |
 | `step2_pl_ip` | `kernels.tsv`, `matlab/`, and everything under `ip/custom/` | the kernels of Part 2 — repack, channelizer, bridge, covariance, spectrum, candidate, beam | **G1a/G1c** |
 | `step3_r5_doa` | `c/` (this *is* the R5F code: C99, libm, no allocation), `py/` reference | covariance → angle, ladder rung selection, decoy handling | **G7a** |
 | `step4_r5_amc` | `c/`, `matlab/step4_classify_burst.m`, export `firmware/amc_r5/` | features → modulation label, same code the R5 runs | **G8a** (`make amc-port` checks C against the model) |
@@ -353,6 +358,12 @@ own source and READMEs, each showing *only* that block — its inputs on the lef
 stages in the middle in the order a beat passes through them, its outputs on the right, and at
 the bottom the notes that would otherwise live in a README nobody opens.
 
+The middle column is deliberately not a block diagram of abstract boxes. Every stage carries
+the **function, module, register or tcl line that implements it** — `doa_wpi()` and
+`solve2()`, `quantize_s26_to_s16`, `SRCH_IDLE`/`SRCH_CAPTURE`, `CONFIG.NUM_MI = 13`,
+`amc_classify()`, `Store.update()` — so a reader can go from a picture to the line of code
+without guessing which file holds it.
+
 Every picture is generated, not drawn by hand, so it cannot drift away from the text:
 
 ```bash
@@ -383,76 +394,106 @@ Nothing in these pictures is inferred from a block name. The ports and widths co
 
 ![RF Data Converter](diagrams/blocks/rfdc.png)
 
-- **In:** the `s_axi` config port, four ADC sample clocks at 2.048 GHz, and the 250 MHz PL clock.
-- **Inside:** two ADC tiles (225 and 226), zone-2 real-to-complex mixing, digital decimation
-  by 4 (so 2.048 GSPS becomes 512 MSPS complex), and an AXI4-Stream output stage.
-- **Out:** eight 128-bit streams, `m00/m01 … m12/m13` — even stream = I, odd stream = Q of the
-  same antenna — plus `clkRFdiv2` at 250 MHz, which is the clock everything else runs on.
-- **Remember:** the RFDC belongs to the MTS base project (stage V03). This repository never
-  configures it; it consumes it. The eight separate streams are exactly why `repack4` exists.
+- **In:** four ADC channels at **4.000 GSPS** (direct clocking, `LMX2594_4000`), a 500 MHz PL
+  clock (`CONFIG.PL_Clock_Freq`) and the 32-bit `s_axi` config port.
+- **Inside, in order:** the fine real-to-complex mixer (`CONFIG.Mixer_Type=2`, NCO
+  `-3.000 GHz`, zone 2) → decimation by 2 (`CONFIG.Decimation_Mode=2`, so 4.000 GSPS real
+  becomes 2.000 GSPS complex) → fabric format (`CONFIG.Data_Width=8`,
+  `Fabric_Freq=250.000`: eight complex samples per 128-bit word) → MTS alignment
+  (`CONFIG.ADC0/1_Multi_Tile_Sync=1`, SYSREF and NCO phase shared) → the fabric clocking that
+  puts every output stream on `clk_rf_250m`.
+- **Out:** eight 128-bit streams `m00_axis … m13_axis` at 250 MHz — even = I, odd = Q of the
+  same antenna.
+- **Remember:** the RFDC belongs to the MTS base (`/usp_rf_data_converter_1`), but it is
+  *reconfigured* here, by `config/zcu208_bd_map.tcl` (`build_rfdc_pair_dict`), which sets I/Q,
+  decimation 2 and 8 samples per word. Upstream MTS ships real output and decimation 1. Eight
+  samples × 250 MHz = 2.000 GSPS complex, and every width downstream assumes exactly that.
 
 ### `doa_rfdc_repack_0` — the gearbox
 
 ![rfdc_repack4](diagrams/blocks/rfdc_repack4.png)
 
-- **In:** the eight 128-bit RFDC streams, `ch0_i` … `ch3_q`.
-- **Inside:** pair I with Q per antenna, interleave four samples per beat, pack each complex
-  sample as `{Q[31:16], I[15:0]}`, then emit one AXI4-Stream master per antenna.
-- **Out:** four 256-bit streams, `m_axis_ch0 … ch3`.
+- **In:** the eight 128-bit RFDC streams, `s_axis_ch0_i … s_axis_ch3_q`.
+- **Inside, in order:** read one I beat and one Q beat per antenna → `static pack_iq_ssr8()`
+  packs `{Q[31:16], I[15:0]}` per sample and interleaves eight samples per beat
+  (`pack_lane`, `#pragma HLS UNROLL`) → four `m_axis_ch*.write()`. `#pragma HLS
+  PIPELINE II=1` and `ap_ctrl_none`: no state, no control, no rate change.
+- **Out:** four 256-bit streams, `m_axis_ch0 … ch3`, 250 MHz.
 - **Remember:** this is not `axis_combiner`. AMD's combiner concatenates beats and leaves the
-  consumer to un-interleave; here the interleaving is done before the beat exists, which is why
-  the channelizer sees four samples per beat instead of one.
+  consumer to un-interleave; here the interleaving exists before the beat does. csim must be
+  bit-exact (`tb/rfdc_repack4_tb.cpp`) or synthesis is not allowed.
 
-### `doa_channelizer_0…3` — the channelizer
+### `doa_channelizer_0…3` — the channelizer, block by block
 
 ![matlab_channelizer](diagrams/blocks/matlab_channelizer.png)
 
-- **In:** one 256-bit stream per antenna, plus the clock enable from the wrapper.
-- **Inside:** `channelizer_axis_wrapper.sv` → the `dsp.Channelizer` prototype (1024-point FFT,
-  8 sub-bands) → a streaming transposed filter bank → a TLAST generator that closes a snapshot
-  every 128 accepted beats.
-- **Out:** a **416-bit** stream of `sfix26_En24` complex-bin words, and `tlast` every 128 beats.
-- **Remember:** the width is 416, not a power of two — that single fact drives the register
-  that straddles the 250/125 MHz boundary and every width in the bridge. The systolic form was
-  tried first and rejected at 93.2 % of the CLB LUTs.
+- **In:** a 256-bit stream (8 complex `sfix16` lanes, lane 0 in the LSB), `aclk`/`aresetn` at
+  250 MHz, and `m_axis_tready` from the bridge.
+- **Inside, in order — these are the actual pieces, not a summary:**
+  1. `g_pack_lanes` in `channelizer_axis_wrapper.sv` — `s_axis_tdata[32*lane +: 16]` into
+     `core_re_in`/`core_im_in`, eight lanes.
+  2. `Channelizer_DUT` — the HDL Coder subsystem (`hdl_prj/hdlsrc_transposed/Channelizer_DUT.v`,
+     228 generated files).
+  3. `ChannelizerCore` — the `dsphdl.Channelizer` object: **1024 bands, 12 taps per band,
+     12 288 prototype coefficients**, transposed direct form, output `sfix26_En24`.
+  4. The clock enable, not TREADY — `core_clk_enable = m_axis_tready`: the generated core has
+     no TREADY port, so a stall holds all internal state and back-pressure is propagated as
+     `s_axis_tready = m_axis_tready`.
+  5. Snapshot framing — `output_beat_in_snapshot == LAST_BEAT_IN_SNAPSHOT` drives `TLAST` on
+     every 128th beat, i.e. once per 1024-bin snapshot.
+  6. Output packing — `m_axis_tdata[52*lane +: 26]`, eight `sfix26_En24` lanes into one
+     416-bit beat.
+- **Out:** `m_axis` (416 bit) and `m_axis_tlast` (one per snapshot).
+- **Remember:** the 416 is 8 × 52, not a power of two, and that one number sets the width of
+  every block that touches the search stream. Latency is 351 cycles transposed against 1760
+  systolic; the systolic form was rejected at 93.2 % of the CLB LUTs for four channels. Built
+  by `make step05_channelizer`; gates 0T–4C passed on the user PC, 4C bit-exact against the
+  MATLAB fixed-point golden.
 
 ### `doa_subband_bridge_0` — the bridge
 
 ![subband_bridge](diagrams/blocks/subband_bridge.png)
 
-- **In:** four 416-bit channelizer streams, the 192-bit candidate record coming back from the
-  125 MHz domain, and the 32-bit AXI4-Lite control port.
-- **Inside:** seven stages — always-ready ingest, the `sfix26_En24 → sfix16_En15` scale stage
-  (half-up, saturating, `SCALE_SHIFT = 9`), the dual-port snapshot store, the search
-  serialiser (natural bin order, 256 beats), the selected-bin packer (four snapshots per
-  512-bit beat), the beam packetiser (64 beats per TLAST), and the register file.
+- **In:** four 416-bit channelizer streams, the 192-bit candidate record from
+  `doa_cdc_candidate`, and `s_axi_ctrl` (32 bit, M12 of the control interconnect).
+- **Inside, in order:** always-ready sinks (`assign s_axis_ch*_tready = aresetn`) → the
+  quantiser function `quantize_s26_to_s16` (half-up, symmetric saturation, `SCALE_SHIFT = 9`)
+  → stage-1 alignment (`q_lo512`/`q_hi512`, `in_beat_idx`, `q_valid`: one coherent
+  four-channel beat) → the search FSM (`SRCH_IDLE`/`SRCH_CAPTURE`, 256 beats, natural bin
+  order) → the snapshot packer (`snap_pack_reg`, `snap_lane_cnt`, `active_bin` locked for
+  4096 samples) → the beam packetiser (`reg_beam_beats`, 64 by default) → the AXI-Lite
+  register file (`aw_holding`/`w_holding`, `0x00 … 0x3C`).
 - **Out:** `m_axis_search`, `m_axis_capture`, `m_axis_beam` (512 bit each) and the legacy
-  four-lane `mon_ch0…3` monitor.
-- **Remember:** this is the only block that knows everybody's timing. `tready` is tied high on
-  purpose: the channelizers can never be allowed to stall. The full register map is in
-  Part 2.1; the picture's notes list all fifteen registers by address.
+  `mon_ch0…3` monitor.
+- **Remember:** this is the only block that knows everybody's timing, and its `tready` is
+  tied high on purpose — a stalled channelizer would break the lockstep. The full register map
+  is in Part 2.1; the picture's notes list all fifteen registers by address, and
+  `tb/tb_doa_subband_bridge_4ch.sv` is the golden check for them.
 
 ### The three forward clock crossings
 
 ![cdc_forward](diagrams/blocks/cdc_forward.png)
 
-- **In:** three 512-bit streams in the 250 MHz domain.
-- **Inside:** one `axis_clock_converter` per stream — an asynchronous FIFO with grey-coded
-  pointers in each direction, carrying TDATA with TVALID/TREADY/TLAST.
-- **Out:** the same three streams at 125 MHz.
-- **Remember:** one converter per stream, never one shared converter — sharing would couple
-  search traffic to capture latency, and capture is what produces the covariance frame.
+- **In:** three 512-bit streams written at 250 MHz (`s_axis_aclk = clk_rf_250m`).
+- **Inside:** `axis_clock_converter` with `CONFIG.IS_ACLK_ASYNC=1` — write pointer in the RF
+  domain, grey-coded pointers across, read side on `clk_doa_125m`, with TDATA and
+  TVALID/TREADY/TLAST crossing together.
+- **Out:** the same three streams, read at 125 MHz.
+- **Remember:** one converter per stream. Sharing one would couple search traffic to capture
+  latency, and capture is what produces the covariance frame.
 
 ### `doa_cdc_candidate` — the one backward crossing
 
 ![cdc_candidate](diagrams/blocks/cdc_candidate.png)
 
-- **In:** a 192-bit candidate record produced at 125 MHz.
-- **Inside:** an asynchronous FIFO written at 125 MHz and read at 250 MHz; bin index, validity,
-  peak and average all cross inside the same record.
-- **Out:** the record at 250 MHz, latched into the bridge as `active_bin`.
-- **Remember:** this is the only loop that closes across the two clock domains, and it is why
-  the bridge *latches* `active_bin` instead of reading a wire that could change mid-frame.
+- **In:** the 192-bit candidate record written at 125 MHz.
+- **Inside:** the same primitive, reversed — `s_axis_aclk = clk_doa_125m`,
+  `m_axis_aclk = clk_rf_250m`; bin index, validity, peak and average cross as one record; the
+  bridge then latches it into `pending_auto_bin` / `has_auto_bin`.
+- **Out:** the record at 250 MHz, consumed as `active_bin`.
+- **Remember:** this is the only loop that closes across the two clock domains, which is why
+  the bridge stores the bin instead of reading a live wire, and why `STATUS[17]` tells you
+  whether the loop has produced anything at all.
 
 ## 5.2 The 125 MHz `/doa_v7` hierarchy — seven pictures
 
@@ -460,105 +501,128 @@ Nothing in these pictures is inferred from a block name. The ports and widths co
 
 ![spectrum_power](diagrams/blocks/spectrum_power.png)
 
-- **In:** the 512-bit search stream.
-- **Inside:** four lanes of four channels, per-channel `I² + Q²` widened, lane accumulation into
-  four unsigned 64-bit powers per beat, TLAST copied through.
-- **Out:** a 256-bit stream, one beat per clock, no control port.
-- **Remember:** this is the statistic the candidate gate thresholds — it is *not* the
-  covariance. Confusing the two is the easiest way to misread the whole design.
+- **In:** the 512-bit search stream: 4 lanes × 4 channels of complex `sfix16`.
+- **Inside:** `spectrum_power4()` reads one beat, then `lane_loop` (`#pragma HLS UNROLL`, four
+  `ap_uint<64>` sums) and an inner `channel_loop` computing `I*I + Q*Q` into `ap_uint<33>`
+  per channel; the four powers are packed with `output.data.range(64*lane+63, 64*lane)` and
+  `output.last = input.last`.
+- **Out:** a 256-bit beat per clock, `TLAST` copied.
+- **Remember:** `#pragma HLS INTERFACE ap_ctrl_none` — free-running, no `ap_start`, one beat
+  per clock; `register_mode=both` registers the 512-bit input before its fan-out. This is the
+  detector statistic, *not* the covariance.
 
 ### `candidate_peak` — the gate
 
 ![candidate_peak](diagrams/blocks/candidate_peak.png)
 
-- **In:** the 256-bit power stream and a 16-bit `thresholdQ8_8` (512 = 2.0×).
-- **Inside:** a per-frame maximum tracker, an average accumulator (`sum / bin count`), the
-  comparison at TLAST, and a record builder.
-- **Out:** a 192-bit record — bin index, validity, peak, average.
-- **Remember:** it is deliberately not sold as CA-CFAR. It is a cheap reason to capture or not,
-  and its record is exactly what becomes `active_bin` at the bridge, through the backward CDC.
+- **In:** the 256-bit power stream and `thresholdQ8_8` (16 bit, AXI-Lite; 512 = 2.0×).
+- **Inside:** static frame state in registers (`frameSum`, `framePeak`, `peakBin`, `binBase`;
+  no BRAM), `lane_loop` accumulating and tracking the maximum, and at `input.last`:
+  `average = nextSum / (binBase + 4)`, `valid = (nextPeak<<8) > average*thresholdQ8_8`,
+  then the record builder — `bin[15:0]`, `valid[16]`, `peak[95:32]`, `avg[159:96]`.
+- **Out:** one 192-bit record per frame.
+- **Remember:** `ap_ctrl_none`, so it can never stall a single-beat path; only the threshold
+  is AXI-Lite. Deliberately not CA-CFAR: a cheap reason to capture or not, nothing more.
 
 ### `covariance` — the DOA statistic
 
 ![covariance](diagrams/blocks/covariance.png)
 
-- **In:** the 512-bit capture stream, four complex Q2.14 calibration gains, and `frameSamples`.
-- **Inside:** apply the calibration (`>>14` rescale), accumulate 4096 samples in int64 (worst
-  case 51 bits), form the four powers and the six + six cross terms with Re and Im kept
-  separately, then emit one burst of sixteen 64-bit words with TLAST at the end.
-- **Out:** `64 × 16` beats — the upper triangle of `R = XXᴴ`, in the order the R5 expects.
-- **Remember:** it is a frame processor, not a stream processor. It needs a triggered capture
-  in front of it (the bridge's `m_axis_capture`), and csim must match all sixteen words exactly
-  before synthesis is allowed.
+- **In:** the 512-bit capture stream, `cal0…cal3` (Q2.14 complex gain, AXI-Lite),
+  `frameSamples` (0 means 4096) and — crucially — `ap_start`/`ap_done` from
+  `#pragma HLS INTERFACE s_axilite port=return`, i.e. `ap_ctrl_hs`.
+- **Inside:** `static calibrate()` (inline, `>>14`, `ap_int<20>`) → `beat_loop`
+  (`(samples+3)/4` beats, `PIPELINE II=1`, trip count 1024) → `lane_loop`/`channel_loop`
+  (unrolled 4 × 4) → accumulation into `power[4]`, `crossReal[6]`, `crossImag[6]`
+  (`ap_int<64>`; the worst case is 51 bits) → `output_loop` writing 16 × 64-bit words,
+  `TLAST` at index 15.
+- **Out:** `m_axis`, 16 beats per integration frame: powers first, then cross real, then cross
+  imaginary.
+- **Remember:** `ap_ctrl_hs` is deliberate — the PS starts a frame, so capture and integration
+  cannot drift apart. It is a frame processor: it needs the bridge's `m_axis_capture` in front
+  of it, and csim must match all sixteen words before synthesis.
 
 ### `beam_monitor` — the diagnostic
 
 ![beam_monitor](diagrams/blocks/beam_monitor.png)
 
-- **In:** the 512-bit beam stream and four Q1.15 complex weights `w0…w3`.
-- **Inside:** per-lane multiply-accumulate over the four antennas, then round and saturate back
-  to `sfix16_En15`.
+- **In:** the 512-bit beam stream and `w0…w3` (Q1.15 complex weights, AXI-Lite).
+- **Inside:** `weights[4]` with `ARRAY_PARTITION complete` → `lane_loop`/`channel_loop`
+  computing `real = Σ(xr·wr − xi·wi)` and `imag = Σ(xr·wi + xi·wr)` in `ap_int<40>` → `>>15`
+  back to `sfix16_En15` → `output.last = input.last`.
 - **Out:** a 256-bit stream.
-- **Remember:** nothing downstream depends on it and it does not estimate DOA. Its only job is
-  to make a calibration or steering error *visible in hardware* rather than inferred from a
-  host model.
+- **Remember:** v2.0 used `s_axilite port=return` and stalled in the BD; 2.1 moved to
+  `ap_ctrl_none`. Nothing downstream depends on it — its job is to make a calibration or
+  steering error *visible in hardware*.
 
 ### `phase_interf_4ch` — packaged, not attached
 
 ![phase_interf](diagrams/blocks/phase_interf.png)
 
-- **In:** the 512-bit stream, four calibration gains, `frameSamples` and `frameTag`.
-- **Inside:** calibrate, form the six cross-spectra, run **one** time-multiplexed CORDIC
-  (16 iterations) over the six phases, round to Q3.13, and close a frame result.
-- **Out:** `64 × 16` beats plus a 128-bit `m_phase` word.
+- **In:** the 512-bit stream, `cal0…cal3`, `frameSamples` and `frameTag`.
+- **Inside:** `calibrate()` from `phase_interf_core.hpp` (`CalCoefficient`, Q2.14) → six
+  cross-spectra over the pair table 01/02/03/12/13/23 → `atan2_q13()` with the 32-entry
+  `kAtanQ30` table and 16 iterations — **one** CORDIC, time-multiplexed over the six phases →
+  Q3.13 phase per pair (≤ 2 LSB) → the frame result.
+- **Out:** `m_axis` (16 × 64-bit) and `m_phase` (128 bit).
 - **Remember:** packaged, csim- and csynth-checked, but its net, clock and address are
-  undecided — attaching it is G4 work. One CORDIC is enough because the phase rate is one frame
-  per 4096 samples.
+  undecided; `V07_PHASE_INTERFEROMETRY.md` §7.5 lists what attaching it needs, and that is G4
+  work. One CORDIC is enough because the phase rate is one frame per 4096 samples.
 
 ### `doa_cov_dwc` + `doa_cov_fifo`
 
 ![covariance FIFO](diagrams/blocks/fifo_cov.png)
 
 - **In:** the 64-bit covariance burst.
-- **Inside:** `axis_dwidth_converter` 64 → 32 bit, an `axi_fifo_mm_s` receive FIFO of
-  `512 × 32` bit, and an AXI4-Lite slave for occupancy, reset and data.
+- **Inside:** `doa_cov_dwc` (`axis_dwidth_converter`, `M_TDATA_NUM_BYTES=4` → 32 bit) →
+  `doa_cov_fifo` (`axi_fifo_mm_s`, `C_RX_FIFO_DEPTH=512`, RX only, no TX path) → `S_AXI` at
+  M10 of the control interconnect.
 - **Out:** 32-bit reads the A53 can `mmap`.
-- **Remember:** depth 512 is 16 words × 32 frames of slack — enough to absorb one frame burst
-  while the PS is still busy with the previous one.
+- **Remember:** 512 deep = 16 words per frame × 32 frames of slack, and RX-only by
+  construction: nothing here can ever write back into the DOA path.
 
 ### `doa_beam_dwc` + `doa_beam_fifo`
 
 ![beam FIFO](diagrams/blocks/fifo_beam.png)
 
 - **In:** the 256-bit beam stream.
-- **Inside:** the same widening path, but a `2048 × 32` bit FIFO.
+- **Inside:** the same two IPs — `doa_beam_dwc` (256 → 32 bit) and `doa_beam_fifo`
+  (`C_RX_FIFO_DEPTH=2048`), `S_AXI` at M11.
 - **Out:** 32-bit reads for the diagnostic path.
-- **Remember:** it is four times deeper because beam packets are longer (64 beats by default),
-  and it must *never* be able to stall the DOA path.
+- **Remember:** four times deeper because beam packets are longer (64 beats per `TLAST`), and
+  it must never be able to stall the DOA path.
 
 ## 5.3 Clocking and the control plane — two pictures
 
-### `doa_clk_wiz_125m` + `doa_rst_125m`
+### `clocktreeMTS/clkRFdiv2` → `doa_clk_wiz_125m` + `doa_rst_125m`
 
 ![clocking](diagrams/blocks/clocking.png)
 
-- **In:** `clkRFdiv2` at 250 MHz, and the peripheral reset from the PS.
-- **Inside:** an MMCM (250 → 125 MHz, phase aligned), BUFG fan-out, and a `proc_sys_reset`
-  that releases synchronously into the 125 MHz domain.
+- **In:** `clocktreeMTS/clkRFdiv2` at 250 MHz, `clocktreeMTS/clkRF` at 500 MHz, and
+  `zynq_ultra_ps_e_0/pl_resetn0`.
+- **Inside:** source select (`clk_rf_250m` from the MTS clock tree, already MTS-aligned) →
+  `doa_clk_wiz_125m` (clk_wiz, `CLKOUT1_REQUESTED_OUT_FREQ` = `DOA_CLOCK_HZ` = 125.000) →
+  BUFG fan-out → `doa_rst_125m` (`proc_sys_reset` on `pl_resetn0`, synchronous release).
 - **Out:** `clk_doa_125m` and `reset_doa_125m_n`.
-- **Remember:** the 125 MHz domain exists so the DOA logic gets two cycles per RF beat. Both
-  the CDCs and the dwidth converters are reset from here — one reset, one domain, no strays.
+- **Remember:** the 250 MHz is the MTS divider, not the RFDC's own output pin — re-deriving
+  125 MHz from anywhere else would break MTS alignment. The three CDCs and the two dwidth
+  converters are all reset from here.
 
 ### `control_interconnect`
 
 ![control interconnect](diagrams/blocks/control_ic.png)
 
-- **In:** one 128-bit AXI4-Lite master from the PS.
-- **Inside:** clock/reset for the `clk_doa_125m` domain, address decode over six 4 KB windows,
-  128 → 32 bit width conversion, round-robin arbitration without QoS.
-- **Out:** six 32-bit slave ports `M00…M05`.
-- **Remember:** the six slaves are the two FIFOs, the bridge, covariance, `candidate_peak` and
-  `beam_monitor`. `phase_interf_4ch` is **not** a seventh slave — it has no address yet.
+- **In:** `S00_AXI` (128 bit) from `zynq_ultra_ps_e_0`, clocked by `clk_doa_125m` except for
+  the one RF-domain slave.
+- **Inside:** `CONFIG.NUM_MI = 13` — the MTS base keeps M00…M06, the DOA design uses
+  **M07…M12**: M07 `S_AXI_COV_CTRL` (covariance), M08 `S_AXI_CANDIDATE_CTRL`
+  (`candidate_peak`), M09 `S_AXI_BEAM_CTRL` (`beam_monitor`), M10/M11 the two FIFOs, and
+  M12 `s_axi_ctrl` on the bridge — the only slave re-clocked to `clk_rf_250m` and reset by
+  `rst_rf_250m_n`.
+- **Out:** six 32-bit slave ports, M07…M12.
+- **Remember:** the port count is asserted by the map script, so a wrong topology fails the
+  build rather than the board. `phase_interf_4ch` is **not** a seventh DOA slave: it has no
+  address until G4 attaches it.
 
 ## 5.4 The RPU — four pictures
 
@@ -566,62 +630,66 @@ Nothing in these pictures is inferred from a block name. The ports and widths co
 
 ![RPU](diagrams/blocks/rpu.png)
 
-- **Software:** `step3_r5_doa` and `step4_r5_amc` are C99 — libm only, no dynamic allocation,
-  because that is what a bare-metal R5F build tolerates; `step5_r5_tracking` is the python
-  reference ladder, and `step6_ps_linux/c/supervisor.cpp` carries the same logic on the A53.
-- **In:** covariance frames out of the FIFO, candidate records through the bridge, and
-  AXI4-Lite control writes.
-- **Inside:** frame intake and alignment → the DOA estimate (rung ladder, below) → AMC →
-  tracking → telemetry into a static buffer. Nothing in the path allocates, which is exactly
-  what lets it drop into an RPMsg loop; the loop itself is board work, not written here.
+- **Software:** `step3_r5_doa/c/doa_core.c` and `firmware/amc_r5/amc.c` are C99 — libm only,
+  no allocation, because that is what a bare-metal R5F build tolerates. The ladder exists
+  twice: `step5_r5_tracking/py/ladder.py` and `step6_ps_linux/c/supervisor.cpp`.
+- **Inside, in order:** frame intake (`doa_core.h`: R as 4×4 complex double, frame-aligned) →
+  `doa_estimate()` → `amc_run()` → `associate()` / `Store.update()` → telemetry into static
+  buffers.
 - **Out:** an angle, a modulation label and a track set per frame.
-- **Remember:** G7a and G8a are closed with this code on the host (`make amc-port`). G8b needs
-  Embedded Coder, G8c needs the board — the firmware itself is written, not pending.
+- **Remember:** G7a and G8a are closed with exactly this code on the host. G8b needs Embedded
+  Coder and G8c needs the board; neither is a code gap. Nothing in the path allocates, which
+  is what lets it drop into an RPMsg loop with a static buffer.
 
-### The DOA rung ladder
+### The estimator: `doa_core.c`
 
-![DOA ladder](diagrams/blocks/rpu_doa.png)
+![DOA estimator](diagrams/blocks/rpu_doa.png)
 
-- **In:** the 4×4 Hermitian `R` (sixteen 64-bit words) and the previous frame's track state.
-- **Inside:** rung 1 coarse WPI (all-pairs phases, unweighted) → rung 2 weighted WPI (weights
-  from SNR and bandwidth) → rung 3 Gauss-Newton refinement from the WPI seed → the score
-  `C = Σ w_r (d_r/σ_r)²` with σ direction 0.5° and bandwidth 0.35 → decoy handling.
-- **Out:** azimuth and elevation per detected source, plus `C` and the rung that produced it.
-- **Remember:** the module penalty of 9 exists so a heavier rung cannot win on a tie, and a
-  repeater is rank 1 in *every* bin, so no per-bin estimator can separate it — that is what the
-  cepstrum ripple test is for.
+- **In:** `r_re`/`r_im` (16 doubles, the 4×4 Hermitian R), `fc_hz`, `dy_m`, `dz_m`, and
+  `gn_iterations`.
+- **Inside, in order:** `positions()` (geometry in the y–z plane) → `doa_wpi()` (six pairs,
+  coherence weight `c/(1−c)` clipped to 0.05…100) → `solve2()`
+  (`−(BᵀWB)⁻¹Bᵀφ/k`, then `|u| ≤ 0.999999`) → `doa_bartlett()` (four stages of 3×3 at
+  0.5/0.1/0.02/0.005°, 36 ML evaluations, az clamped to ±55°, el to ±45°) →
+  `dominant_vector()` (four power iterations of R) → Gauss-Newton (`gn_iterations`, analytic
+  gradient and Hessian with the projector `I − vvᴴ`) → `angles()`.
+- **Out:** `out_az_el[2]` in degrees; return 0 for solved, 1 for singular.
+- **Remember:** the *rungs* are not here — this file is one estimator with three stages. The
+  decoy question is answered later, by `two_arrivals()` on the raw burst.
 
-### AMC
+### AMC: the same classifier in MATLAB and in C
 
 ![AMC](diagrams/blocks/rpu_amc.png)
 
-- **In:** burst samples from the selected bin (calibrated), and the pinned vector set in
-  `build/amc/amc_vectors.bin` (`make amc-export`, fixed seed, 120 bursts × 1024 samples).
-- **Inside:** feature extraction (the `amc_features.m` port) → the classifier built from the
-  `amc_model.h` parameters, compiled twice (double and single accumulators) → label and
-  confidence → a verification hook that replays the same vectors the model was derived from.
-- **Out:** a label per burst. Measured on the host today (`make amc-port`, seed 20261111,
-  120 bursts × 1024 samples): **100.0 % label agreement** for both the double and the single
-  build, every feature within 1e-3, and **72.5 % accuracy against the true class in the
-  firmware, the single build and the model alike** — the three cannot disagree because the
-  features agree.
-- **Remember:** G8a is exactly the claim that this C reproduces the model. It is a host check;
-  the RPU binary is G8b, and cycles on the R5F are G8c. The report is
-  `docs/evidence/2026-11-06-phase-interf/amc_port.txt`.
+- **In:** a 1024-sample complex burst (4 samples/symbol) and `amc_model.h`.
+- **Inside, in order:** `matlab_v7/amc_features.m` (six features: `|C40|`, `C42`,
+  `sigma_ap`, `gamma_max`, `freq_std`, `spike`) → `matlab_v7/classify_modulation.m`
+  (nearest class mean + margin) → `scripts/amc_export.py` (writes `amc_model.h` and
+  `amc_model_params.m` from the same tables) → `amc_features()` and `fft_complex()` in
+  `firmware/amc_r5/amc.c` (1024-point FFT, 1024 `atan2`, 4 `sqrt`) → `amc_classify()` →
+  `scripts/amc_port_check.py` as the referee.
+- **Out:** a label over five classes and a margin. Measured today: **100.0 % label agreement**
+  over 120 bursts for the double *and* the single build, every feature within 1e-3, **72.5 %
+  accuracy against the true class in firmware, single build and model alike**.
+- **Remember:** G8a is exactly this claim, on the host, with `make amc-port`; the report is
+  `docs/evidence/2026-11-06-phase-interf/amc_port.txt`. Cycles on the R5F are G8c — not
+  measured anywhere in this repository.
 
-### Tracking
+### Tracking: the ladder and the store
 
 ![tracking](diagrams/blocks/rpu_tracking.png)
 
-- **In:** detections (angle + label per frame) and the frame id.
-- **Inside:** gate on the predicted angle → update the smoothed state per track → lifecycle
-  (birth, retire, ghost flag) → frame accounting that counts malformed frames instead of
-  silently dropping them.
-- **Out:** the live track set and the counters.
-- **Remember:** the track accounting is duplicated on purpose — `step5_r5_tracking/py` here and
-  `step6_ps_linux/c/supervisor.cpp` on the A53 — and T6.2 requires both to build 3 tracks from the
-  same fixture. The summary line `frames=7 cells=15 tracks_live=2 born=3 retired=1 ghosts=1
-  malformed=0` is the supervisor's, and it is the pass criterion, ghosts included.
+- **In:** cells (`az`, `el`, `bw_hz`, `mod`, `frame`) and the track store.
+- **Inside, in order:** rung 1 `rung_residuals()` modulation (0.0 or 9.0) → rung 2 direction
+  (`hypot(Δaz, Δel)/0.5`) → rung 3 bandwidth (`|log(bw/bw)|/0.35`) → rung 4 cadence
+  (`max(0, gap−1)/1.5`) → `cost()` and `associate()` (`C = Σ w_r d_r²`, weights 1/1/1/0.5,
+  greedy sort) → `Store.update()` (`_absorb()`, retire after 3 empty frames) →
+  `two_arrivals()` (autocorrelation peak between 10 and 300 ns).
+- **Out:** a per-frame report (alive, born, retired) and the tracks with cells, votes,
+  `verified` and `arrivals`.
+- **Remember:** a wrong modulation label contributes a *distance* of 9.0 on that one rung —
+  it is not a separate penalty term. `two_arrivals()` is also exported as
+  `verification_index`, the name the rest of the documentation uses.
 
 ## 5.5 The APU / Linux side (step6_ps_linux)
 
@@ -630,23 +698,22 @@ Nothing in these pictures is inferred from a block name. The ports and widths co
 - **Platform:** Cortex-A53 running Linux. Built on the host with any g++ (`make -C step6_ps_linux/c`),
   cross-built for the board with the PetaLinux SDK (`make -C step6_ps_linux/c cross` →
   `build/step6/supervisor_aarch64`).
-- **In:** cells as JSONL on stdin — one line per detection with frame, angle, bandwidth and
-  modulation — or the fixture `step6_ps_linux/testbench/fixture_cells.jsonl` (15 cells over 7
-  frames, containing a QPSK mover with a dropped frame, a 16QAM emitter at the *same* direction,
-  and a ghost at 25° that disappears).
-- **Inside:** the ladder (modulation → direction → bandwidth → cadence), association and
-  retirement after N empty frames, a policy switch (`--policy direction-only`), and a telemetry
-  writer that emits one JSON object per cell and per retirement.
-- **Out:** JSONL track events on stdout, and one summary line on stderr —
-  `supervisor: frames=7 cells=15 tracks_live=2 born=3 retired=1 ghosts=1 malformed=0 policy=full`.
-  That summary line is what a watchdog parses on the board.
+- **In:** cells as JSONL on stdin, `--policy` (`full` or `direction-only`), and the fixture
+  `step6_ps_linux/testbench/fixture_cells.jsonl` — 15 cells over 7 frames, holding a QPSK
+  mover with a dropped frame, a 16QAM emitter at the *same* direction, and a ghost at 25°
+  that disappears.
+- **Inside, in order (`supervisor.cpp`):** `parse_cell()` with `read_double()`/`read_string()`
+  → `passes()` (the same four rungs as `ladder.py`) → `absorb()` (update the track, vote the
+  label) → retirement after N empty frames → telemetry (one JSON object per cell and per
+  retirement on stdout) → the summary line on stderr.
+- **Out:** JSONL track events, and
+  `supervisor: frames=7 cells=15 tracks_live=2 born=3 retired=1 ghosts=1 malformed=0 policy=full`
+  — that line is what a watchdog parses on the board.
 - **Remember:** the A53 does four jobs and **no maths** — calibration manager, policy,
-  configuration, telemetry and watchdog. The signal processing stays on the R5. It carries the
-  same four rungs as `step5_r5_tracking/py` deliberately: a shared library across two cores with
-  different ABIs costs more than 300 lines twice, so the duplication is checked instead of
-  removed (T6.1–T6.5, `make step6`).
-- **State:** the host build and all five T6 checks pass; the cross target is written and refuses
-  politely without the SDK. Nothing has run on an A53 yet — that is board work, not a code gap.
+  telemetry, watchdog. The duplication with `step5_r5_tracking/py` is deliberate: a shared
+  library across two cores with different ABIs costs more than 300 lines twice, so it is
+  checked instead of removed (T6.1–T6.5, `make step6`). The cross target exists and refuses
+  politely without the SDK; nothing has run on an A53 yet.
 
 ## 5.6 The host, the base project, and the IP flow — three pictures
 
@@ -654,12 +721,14 @@ Nothing in these pictures is inferred from a block name. The ports and widths co
 
 ![host](diagrams/blocks/host.png)
 
-- **In:** python3 + numpy (no licence) and, optionally, MATLAB.
-- **Inside:** the eight step benches — step0 physics → G0, step1 the 512-bit/7.8125 ns
-  contract, step2 fixed-point references of the PL blocks → G1a, step3/4/5 the R5 models →
-  G7a and G8a, step6 the capture fixtures, step7 the checklist of what needs the board.
+- **In:** python3 + numpy (no licence) and, optionally, MATLAB R2024a.
+- **Inside, in order:** step0 (`step0_antenna/py/array_model.py`, `make_scenes.py`) → G0;
+  step1 (`step1_rfadc_mts/py/capture_format.py`) → the capture contract; step2
+  (`ip/custom/*/tb/*.cpp`, `step2_pl_ip/kernels.tsv`) → G1a/G1c; step3/4/5 (`doa_core.c`,
+  `amc.c`, `ladder.py`) → G7a/G8a; step6 (`testbench/run_testbench.py`) → T6.1–T6.5; step7
+  (`step7_board_bringup/checklist.sh`) → the eleven commands that need silicon.
 - **Out:** the green gates and everything under `docs/evidence/`.
-- **Remember:** `make steps` runs all eight — 8/8 PASS, no vendor tools required. Every number
+- **Remember:** `make steps` runs all eight benches — 8/8 PASS, no vendor tools. Every number
   in this guide that is not from a Vivado report came from here.
 
 ### Stage V03 — the MTS base project
@@ -667,26 +736,31 @@ Nothing in these pictures is inferred from a block name. The ports and widths co
 ![MTS base](diagrams/blocks/mts_base.png)
 
 - **In:** `upstream/RFSoC-MTS` at a pinned SHA and two recorded substitutions.
-- **Inside:** fetch → copy to `build/mts_base_src_2023p2` → patch 1 (`zynq_ultra_ps_e` 3.4 → 3.5
-  for the 2023.2 catalog) → patch 2 (implementation strategy →
-  `Performance_ExtraTimingOpt`) → `vivado -source mts.tcl`.
-- **Out:** `mts/mts.xpr` and the base block design the project builds on.
-- **Remember:** no `stepNN_` target builds it — step00 checks it, step07 opens it, and
-  `make mts-base` runs the whole thing. It refuses to wipe an existing build because
-  `prepare_mts_2023p2_patch.sh` `rm -rf`s its destination.
+- **Inside, in order:** `scripts/build_mts_base.sh` (target `mts-base`, refuses to rebuild
+  unless `MTS_BASE_FORCE=1`) → fetch (`make rebuild STEP=step01_fetch_references
+  FETCH_SET=RFSoC-MTS`) → `prepare_mts_2023p2_patch.sh` copies to
+  `build/mts_base_src_2023p2` → patch 1 (`zynq_ultra_ps_e` 3.4 → 3.5 for the 2023.2
+  catalog) → patch 2 (implementation strategy `Performance_ExtraTimingOpt`) →
+  `vivado -source mts.tcl`.
+- **Out:** `mts/mts.xpr` (`BASE_XPR`) and its `BASE_BD`.
+- **Remember:** no `stepNN_` target builds it — step00 checks it, step07 opens it. The guard
+  exists because `prepare_mts_2023p2_patch.sh` `rm -rf`s its own destination.
 
 ### IP packaging and collection — steps 02…06
 
 ![IP flow](diagrams/blocks/ip_flow.png)
 
-- **In:** `ip/custom/*` (five HLS kernels and two RTL blocks) and `ip/matlab/channelizer_hdl`.
-- **Inside:** csim per kernel → csynth at 4.000 ns out of context → `export_design -format
-  ip_catalog` with the pinned VLNV → `collect_ip.sh` verifying every VLNV into
-  `ip_manifest.tsv` → step07 appending the repository path to the BD.
-- **Out:** `build/ip_repo` and the flat manifest.
-- **Remember:** a stale `component.xml` fails at step06 with the directory and the expected
-  value named, and the BD cannot instantiate an unpinned version because every VLNV comes from
-  `config/ip_versions.tcl`.
+- **In:** `ip/custom/*/src` (five HLS kernels), `ip/custom/rfdc_repack4` and
+  `ip/custom/doa_subband_bridge_4ch` (two hand-written RTL blocks), and
+  `ip/matlab/channelizer_hdl` (HDL Coder output).
+- **Inside, in order:** csim (`vitis_hls -f run_csim.tcl`) → csynth at 4.000 ns out of context
+  → `export_design -format ip_catalog` → `collect_ip.sh` (checks every VLNV, writes
+  `ip_manifest.tsv` into `build/ip_repo`) → `check_ip_component.py` → `doa_create_pinned_ip`
+  in the BD.
+- **Out:** one IP repository and the flat manifest.
+- **Remember:** `config/ip_versions.tcl` is the single source of truth — no wildcard VLNVs
+  anywhere, so the BD cannot instantiate an unpinned version, and a stale `component.xml`
+  fails at step06 with the directory and the expected value named.
 
 ## 5.7 Adding or changing a picture
 
@@ -694,8 +768,8 @@ The gallery is a table (`BLOCKS`) in `scripts/draw_block_details.py`. One entry 
 
 ```python
 ("stem", "title", "subtitle", colour,
- [("input port", "width or clock")],
- [("internal stage", "what it does")],
+ [("input port", "width, clock, or where it comes from")],
+ [("stage name", "function / module / file", "what it does")],
  [("output port", "width")],
  ["note", "note"]),
 ```
@@ -707,10 +781,14 @@ python3 scripts/draw_block_details.py                 # render all twenty-three
 make lint                                             # shell/Tcl/SV checks (it does not read Python or Markdown)
 ```
 
-Two rules for anyone editing it, learned the hard way: the layout gives each column a fixed
-role, so the figure stays readable only if a stage line is **one** sentence; and any new fact
-must come from the block's own source or README — a picture that guesses is worse than no
-picture, because it looks authoritative.
+Three rules for anyone editing it, learned the hard way. The middle column is *"stage → the
+code that does it"*: a stage without a real function, module, register or tcl line next to it
+is a summary, not a diagram — that is why `doa_channelizer_0..3` names `g_pack_lanes`,
+`Channelizer_DUT`, `ChannelizerCore`, `core_clk_enable`, `LAST_BEAT_IN_SNAPSHOT` and the
+52-bit lane packing instead of saying "the channelizer". Each stage gets one short sentence:
+a paragraph does not fit and will be cut. And any new fact must come from the block's own
+source, not from its name — a picture that guesses is worse than no picture, because it looks
+authoritative.
 
 ---
 
