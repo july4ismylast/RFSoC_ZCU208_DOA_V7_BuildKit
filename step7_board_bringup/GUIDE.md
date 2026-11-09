@@ -1,7 +1,8 @@
 # step7 — bring-up: the gates that need your tools and the board
 
-**Gates:** G2, G3, G4, G5, G6, G7b, G8b, G8c — every one of them **open**, and
-every one of them here, in the order that works.
+**Gates:** G2, G3, G4, G5, G6, G7b, G8b, G8c.  **G2 and G4 closed on 2026-11-08**
+(`step02`–`step06` and `step07`–`step12` all PASS on the ZCU208 host, bitstream written);
+what is left of this list is G3 and everything that needs the board or Embedded Coder.
 **Runs on:** your machine with Vitis HLS 2023.2, Vivado 2023.2, MATLAB
 (+ Embedded Coder) and the ZCU208.
 
@@ -22,7 +23,7 @@ bash step7_board_bringup/checklist.sh --run 2      # run one of them
 | 3 | G2 | eight HLS kernels: csim + csynth at 4.000 ns | `make hls-all` |
 | 4 | G2 | copy the csynth reports out | `make -C ip/custom/phase_interf_4ch collect-reports` |
 | 5 | G3 | out-of-context synthesis (the 4.000 ns question) | `make -C ip/custom/phase_interf_4ch gate3-ooc` |
-| 6 | G4 | the Vivado base — **needs `BASE_XPR`** | `make step07_vivado_base BASE_XPR=<path>/mts.xpr` |
+| 6 | G4 | the Vivado base — **needs `BASE_XPR`** (stage V03) | `make mts-base` then `make step07_vivado_project` |
 | 7 | G4 | synth, impl, bitstream, XSA | `make step10_synth step11_impl step12_bitstream step13_export_xsa` |
 | 8 | G8b | MATLAB → Embedded Coder → C for the AMC | `matlab -batch "cd matlab_v7; verify_amc_vectors"` then `"cd matlab_v7; build_amc_r5"` |
 | 9 | G5 | boot, then the DAC→ADC loopback capture | `dd if=/dev/xdma0_c2h_0 of=/tmp/loop.bin bs=65568 count=16` |
