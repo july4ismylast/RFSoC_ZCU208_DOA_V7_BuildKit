@@ -77,6 +77,15 @@ files=(
     "$build/output/v06_mts_base_utilization.rpt"
     "$build/output/v06_mts_base_utilization_detailed.rpt"
     "$build/output/v06_mts_base_utilization_hierarchical.rpt"
+    # The production flow's own reports (step00 lock proof, step10/step11).  They were
+    # never published, so a fully built design left no numbers behind in the branch.
+    "$build/output/ip_catalog_lock.txt"
+    "$build/output/post_synth_utilization.rpt"
+    "$build/output/post_synth_timing.rpt"
+    "$build/output/post_route_utilization.rpt"
+    "$build/output/post_route_utilization_hierarchical.rpt"
+    "$build/output/post_route_timing.rpt"
+    "$ip_repo/ip_manifest.tsv"
 )
 for file in "${files[@]}"; do
     if [[ ! -f "$file" ]]; then

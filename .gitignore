@@ -30,6 +30,10 @@ config.local.mk
 !docs/debug-logs/**/*.log
 !docs/debug-logs/**/*.jou
 
+# Same for the evidence snapshots: a published .rpt is the point of publishing.
+!docs/evidence/**/*.log
+!docs/evidence/**/*.rpt
+
 # Model Composer working files: the builder script is the reviewable artifact
 # (make mc-scratch), so the model and its generated trees stay out of git.
 /ip/model_composer/channelizer/channelizer.slx
