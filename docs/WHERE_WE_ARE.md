@@ -39,6 +39,7 @@ make clean-stage STEP=step05_channelizer
 | the Model Composer model is well formed | 4 in / 4 out, 21 child blocks, 0 unconnected ports, `Ctrl+D` clean | `ip/model_composer/channelizer/README.md` |
 | Model Composer can export *an* IP on this install | AMD's untouched `SSRDDC.slx`, steps 1–5 → `generated` | `docs/evidence/2026-11-06-model-composer-negative/` |
 | Model Composer cannot export *this* IP | unresolved: `XMC-2002 … Delay1…Delay4`, block fields identical to AMD's | same, plus this branch's `mc_bisect` runs |
+| every stage the Makefile has | 20/20 PASS | `make status` |
 | the whole pipeline runs end to end | **20/20 stages PASS**, 2026-11-08/09: synth 16:56, impl 17:35, bitstream 17:37, xsa 17:37, HIL vectors 08:13, package 08:13 | `make status` on the Vivado host |
 
 Unmeasured, and not to be asserted: board bring-up on hardware. Resource use and timing were

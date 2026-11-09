@@ -21,16 +21,16 @@ Status as of this commit:
 | G1a | is the fixed-point core bit-exact? | **PASS** |
 | G1b | does the kernel pass its own testbench (shimmed)? | **PASS** |
 | G1c | do `config.mk`, `build_hls.tcl` and `collect_ip.sh` agree on the VLNV? | **PASS** (contract only) |
-| G2 | does Vitis HLS compile, synthesise and export it? | **NOT RUN** |
-| G3 | does the packaged IP meet 4.0 ns out of context? | **NOT RUN** |
-| G4 | does it integrate into the block design and produce a bitstream? | **NOT RUN** |
-| G5 | on silicon, does the phase sign and offset hold? | **NOT RUN** |
-| G6 | with a calibrated array, does the accuracy hold in a chamber? | **NOT RUN** |
+| G2 | does Vitis HLS compile, synthesise and export it? | **PASS** (2026-11-08: `step02`–`step06` all PASS, every VLNV collected) |
+| G3 | does the packaged IP meet 4.0 ns out of context? | **NOT RUN** (in context it does: `step10`/`step11` PASS) |
+| G4 | does it integrate into the block design and produce a bitstream? | **PASS** (2026-11-08: `step07`–`step12` PASS, `doa_v7_zcu208.bit` written) |
+| G5 | on silicon, does the phase sign and offset hold? | **NOT RUN** — needs the board |
+| G6 | with a calibrated array, does the accuracy hold in a chamber? | **NOT RUN** — needs array + source |
 | G7a | do the decoy criteria pass on host models? | **PASS** |
-| G7b | does a repeater get rejected on hardware? | **NOT RUN** |
+| G7b | does a repeater get rejected on hardware? | **NOT RUN** — needs board + DRFM/source |
 | G8a | does the R5 firmware reproduce the model? | **PASS** (host gcc) |
-| G8b | does Embedded Coder build and link it for the RPU? | **NOT RUN** |
-| G8c | does an AMC frame meet its deadline on the R5F? | **NOT RUN** |
+| G8b | does Embedded Coder build and link it for the RPU? | **NOT RUN** — needs Embedded Coder for the RPU toolchain |
+| G8c | does an AMC frame meet its deadline on the R5F? | **NOT RUN** — needs the board |
 
 ---
 
