@@ -37,6 +37,7 @@ required=(
     "$IP_REPO/candidate_peak4|$vendor:$library:candidate_peak4:${IPVER_CANDIDATE:-1.0}"
     "$IP_REPO/beam_weight_4ch|$vendor:$library:beam_weight_4ch:${IPVER_BEAM:-2.1}"
     "$IP_REPO/rfdc_repack4|$vendor:$library:rfdc_repack4:${IPVER_RFDC_REPACK4:-1.0}"
+    "$IP_REPO/phase_interf_4ch|$vendor:$library:phase_interf_4ch:${IPVER_PHASE_INTERF:-1.0}"
 )
 case "${CHANNELIZER_FLOW:-matlab_hdl}" in
     matlab_hdl)
@@ -45,7 +46,17 @@ case "${CHANNELIZER_FLOW:-matlab_hdl}" in
             "$IP_REPO/doa_subband_bridge_4ch|$vendor:$library:doa_subband_bridge_4ch:${IPVER_SUBBAND_BRIDGE:-1.0}"
         )
         ;;
-    model_composer) required+=("$IP_REPO/model_composer_channelizer|-") ;;
+    model_composer)
+        # Two routes produce this core.  Model Composer writes
+        # model_composer_channelizer/component.xml; `make ip-from-hdl` packages the
+        # same datapath from Verilog into channelizer_ip/ with a pinned VLNV.  Either
+        # one satisfies the stage, and a stale core still fails the check.
+        if [[ -f "$IP_REPO/model_composer_channelizer/component.xml" ]]; then
+            required+=("$IP_REPO/model_composer_channelizer|-")
+        else
+            required+=("$IP_REPO/channelizer_ip|doa.v7:model_composer:channelizer:${IPVER_CHANNELIZER:-1.0}")
+        fi
+        ;;
     external) required+=("${EXTERNAL_CHANNELIZER_IP:-}|-") ;;
     opfb)
         # Exact MazinLab IP set instantiated by the pinned RFSoC_OPFB

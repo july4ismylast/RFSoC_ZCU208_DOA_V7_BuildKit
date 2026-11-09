@@ -10,6 +10,7 @@ case "$stage" in
     step05_hls_repack) rm -rf ip/custom/rfdc_repack4/rfdc_repack4_hls "$ip_repo/rfdc_repack4" ;;
     step05_channelizer) rm -rf "$ip_repo/matlab_channelizer" "$build/v06_gate5_package" ip/model_composer/channelizer/build "$ip_repo/model_composer_channelizer" ;;
     step05_subband_bridge) rm -rf "$ip_repo/doa_subband_bridge_4ch" "$build/subband_bridge_work" "$build/output/doa_subband_bridge_4ch_package.rpt" ;;
+    step05_hls_phase_interf) rm -rf ip/custom/phase_interf_4ch/phase_interf_4ch_prj "$ip_repo/phase_interf_4ch" "$build/host/phase_interf_host_tb" ;;
     step06_collect_ip) rm -f "$ip_repo/ip_manifest.tsv" ;;
     step07_vivado_project)
         rm -rf "$build/vivado/$project_name"

@@ -1,0 +1,62 @@
+Model Composer launcher cannot take a batch command -- observed on the ZCU208 host
+2026-11-07, pasted by the user from build/logs/step05_channelizer.log
+
+WHAT WAS RUN (our previous recipe, which was wrong)
+
+  make step05_channelizer CHANNELIZER_FLOW=model_composer \
+       MODEL_COMPOSER_MODEL=/absolute/path/channelizer.slx
+
+  PATH="/media/joshua/Linux/Programs/R2022b/bin/:$PATH" \
+  "/media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin/model_composer" \
+       -batch "addpath(pwd); export_model_composer_ip('/absolute/path/channelizer.slx')"
+
+WHAT MODEL COMPOSER PRINTED
+
+  Launching Vitis Model Composer with System Generator functionality!
+     Model Composer v2023.2
+     Build 4029153 on Fri Oct 13 20:21:45 MDT 2023
+  ENVIRONMENT INFO:
+     Model Composer Bin Dir   : /media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin
+     Vitis Bin Dir            : /media/joshua/Linux/Programs/X20232/Vitis/2023.2/bin
+     System Generator Bin Dir : /media/joshua/Linux/Programs/X20232/Vivado/2023.2/bin
+
+  /media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin/modelcomposerArgs.sh:
+      eval: line 856: syntax error near unexpected token `('
+  ...: `exec matlab -batch addpath(pwd); export_model_composer_ip('/absolute/path/channelizer.slx')
+       -r "addpath('/media/.../Model_Composer/2023.2/simulink');...;javaaddpath('.../sysgen.jar');;xmcStart;"'
+
+  make[1]: *** [Makefile:28: export] Error 2
+  result=FAIL exit_code=2
+
+WHAT IT PROVES
+
+1. The launcher does not pass arguments through. It builds a string
+       exec matlab <your args> -r "<its own startup, ending in xmcStart>"
+   and hands that to the shell -- so the quotes around our -batch payload were
+   consumed by our own shell before the launcher saw them, and the eval then
+   split the statement at the first space:
+       -batch addpath(pwd); export_model_composer_ip('...')
+   The first parenthesis is a shell syntax error. No escaping of the payload can
+   be trusted here: the launcher is the one choosing how to re-quote.
+2. Even with the quoting repaired, the flag combination is illegal: the launcher
+   always appends `-r "<startup>"`, and MATLAB does not accept -batch together
+   with -r. So a headless build cannot go through this launcher, full stop.
+
+WHAT WE CHANGED BECAUSE OF IT
+
+  scripts/build_model_composer_ip.sh now runs MATLAB R2022b directly in -batch
+  and puts the same directories the banner above lists onto the MATLAB path
+  (Model Composer simulink/{aie,hls}/lib, Vivado scripts/sysgen/matlab and
+  plugins/compilation, Vivado lib/classes/sysgen.jar), then calls
+  ip/model_composer/channelizer/mc_batch_export.m. The launcher keeps one job:
+  the GUI, through `make mc-gui` -- that is what this log also shows working
+  (a 6 min 36 s session, result=PASS).
+
+WHAT IS STILL UNPROVEN
+
+  Whether xlGenerateButton is available in a plain -batch session after those
+  addpaths, or whether only xmcStart can initialise Model Composer. The script
+  tries xmcStart only if the button is missing and, if it is still missing,
+  stops with the fallback: make mc-gui -> run the token (or
+  export_model_composer_ip('<model>')) in the Command Window -> make mc-verify.
+  One run of `make mc` answers it; the log line to look for is MC_EXPORT_OK.

@@ -65,9 +65,11 @@ convention at the actual RF frequency `f_RF(k)=F_C+f_bb(k)`. (Setting the
 opposite effective sign would deliberately select the conjugated/inverted
 image; do not do that.) The loopback‑tone HIL test still proves the sign on
 hardware before the estimator is trusted. Per-frequency calibration already
-exists in the MATLAB side (`estimate_multifrequency_calibration.m`); the
-array remains unambiguous across the band: diagonal baseline 35.4 mm < λ/2
-up to ≈4.24 GHz.
+exists in the MATLAB side (`estimate_multifrequency_calibration.m`). Array
+geometry is owned by `config.mk` (`ARRAY_AXIS_SPACING_M`, 30 mm since V07 §11).
+For a square 2×2 the wrap-free condition is `d·√2·sin θ ≤ λ/2`, i.e. a 62°
+cone at 4 GHz — the declared ±55° scan. §11 of V07 carries the rule, the
+measurement and the 25 mm fallback for a full ±90° field.
 
 **Analog prerequisite:** a preselector/band‑pass in front of the 4 ADCs
 must reject Zone‑1/Zone‑3 energy that would alias into the band; the

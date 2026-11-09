@@ -1,0 +1,131 @@
+# one protected emitter at 2.5 GHz behind decoys
+# generated 2026-11-07T09:29:50Z
+# script: scripts/decoy_discrimination.py (python3 + numpy only)
+# source: 2.500 GHz, az +10 deg, el 0, 20 dB/bin, 64 snapshots per bin
+# array: 2x2 at 30 mm unless stated; seed=20261107, trials=16
+
+Study A: decoys at other carriers -- the channelizer does the work
+  scene 2.30-2.70 GHz: the protected emitter at 2.500 GHz (20 MHz),
+  decoys of equal bandwidth on their own carriers, 20 dB/bin each
+  decoys   clusters      source az   source error
+  0        1.0               9.976         -0.024
+  1        2.0               9.988         -0.012
+  3        4.0               9.991         -0.009
+  6        7.0              10.020          0.020
+  Decoys on their own carrier never enter the source's bins: they cost
+  a cluster entry each and 0.00 deg of source accuracy. This is the
+  cheap half of the problem, and the 1024-band channelizer already
+  solves it.
+
+Study B: coherent repeater decoy at the same carrier
+  50 MHz emitter and a repeater copy at az 40 deg, equal power
+  delay          fused az       bias    wobble rms   delay estimate
+  none              10.01       0.01          0.31 noise (ratio 2)
+  20 ns              6.53      -3.47         41.16         21 ns (ratio 7)
+  50 ns             15.83       5.83         31.47         49 ns (ratio 10)
+  100 ns             5.72      -4.28         43.78        101 ns (ratio 11)
+  200 ns             6.57      -3.43         41.18        201 ns (ratio 9)
+  Three signatures, all measured above. (1) The DOA is pulled off the
+  emitter towards the decoy. (2) It *wobbles* across the band: a
+  single emitter's DOA is exactly linear in frequency, so the residual
+  is a second coherent path -- 43.8 deg rms here against 0.31 deg with
+  no decoy. (3) The ripple period is the repeater delay: 101 ns
+  recovered from 100 ns of true delay, peak/median 11.
+  The no-decoy row still produces a peak of ratio 2 at an arbitrary
+  delay, so the alarm threshold is peak/median >= 5: every repeater row
+  clears it, the clean emitter does not.
+
+Study C: bin width sets the delay that can be seen at all
+  the ripple is sampled once per bin; the unambiguous delay is
+  1/(2*bin), so the play is bin width against the 1024-band channelizer
+  front end                 bin width      delay range
+  1024-band channelizer       1953 kHz           256 ns
+  4096-point FFT               488 kHz          1024 ns
+  16384-point FFT              122 kHz          4097 ns
+  A 1 us DRFM delay (typical) is invisible to the 1024-band
+  channelizer and visible to a 4096-point transform. This is the case
+  V07 section 4.2 anticipated: finer bins buy separation of signals
+  inside the band, and here they buy a decoy discriminator.
+
+Study D: an independent decoy at the same carrier
+  two 50 MHz signals at 2.500 GHz, az 10 and 25 deg, independent
+  array              of 2 found    false peaks
+  2x2@30 mm                 0.4            1.6
+  3x3@30 mm                 2.0            0.0
+  4x4@30 mm                 2.0            0.0
+
+Study E: can the pair be resolved anyway?  Yes -- using the delay
+  50 MHz emitter at az 8 deg plus a coherent repeater at az 37 deg,
+  equal power, delay handed in as the TRUE 100 ns to isolate the
+  estimator; Study F repeats it with the delay unknown.
+  Two-path ML on the per-bin spatial vectors, delay supplied:
+  array            path 1   path 2     gain   both < 3 deg
+  2x2@30 mm           8.0     37.0      1.0           100%
+  3x3@30 mm           8.0     37.0      1.0           100%
+  The frequency dimension substitutes for elements: with the delay
+  known, 26 bins of a four-element array resolve the emitter and the
+  repeater as two distinct directions, at the 1 deg search grid.
+  Delay sensitivity (2x2@30 mm, delay handed in scaled by):
+  delay in     both < 3 deg   path 1/2
+  1.00x                100%   8/37 deg
+  1.01x                  0%  12/32 deg
+  1.02x                  0%  19/25 deg
+  1.05x                  0%  14/31 deg
+  1.10x                  0%  20/24 deg
+  The tolerance is about 1/(10*bandwidth): 0.5 ns at 50 MHz, a few ns
+  at 20 MHz. A radar hands you exactly that from the leading edge of
+  its own pulse (V07 section 13.7); for a continuous emitter the blind
+  search of Study F is the weaker fallback.
+  What the delay supplies is not a phase but a slope: the relative
+  phase between the two paths changes by 2*pi*tau from one edge of the
+  band to the other, and that is the dimension four elements do not
+  have. The absolute phase is unknown (the decoy's own chain adds it)
+  and the fit leaves it free.
+
+Study F: the same search with NO delay supplied
+  delay and both directions searched jointly -- 31 coarse + 11 fine
+  delay hypotheses, 1 deg angle grid, per trial
+  bandwidth      bins        delay   path 1   path 2   both < 3 deg
+  1 MHz             1         0 ns   17.5     29.0             0%
+  5 MHz             3       117 ns    9.8     35.0            25%
+  20 MHz           10       100 ns    8.0     37.0           100%
+  50 MHz           26       100 ns    8.0     37.0           100%
+  42 delay hypotheses per scene: the delay is estimated, not supplied,
+  and the peak/median alarm of Study B is only a confirmatory check.
+  The joint search only
+  works while the emitter fills several bins: at 1 MHz the 1.953 MHz
+  channelizer puts the whole signal in one bin, the ripple disappears,
+  and with it the only handle four elements have on a coherent decoy.
+  Model assumptions, all matched to this study: two paths only, equal
+  power, same bandwidth, 20 dB/bin, 64 snapshots per bin, and the
+  repeater copies the source waveform exactly. A third path or unequal
+  power raises the model order; a decoy with its own waveform is Study D.
+
+VERDICT
+  Decoys that use their own carrier: free to reject (Study A) -- the
+  channelizer separates them and the source DOA is untouched.
+  Decoys that repeat the source coherently: they cannot be separated by
+  angle on four elements, because a delay makes the two paths one
+  rank-1 signal (Study B). They are detected by their signature: a DOA
+  that wobbles across the band (measured 43.8 deg rms at 100 ns) and a
+  ripple whose period is the delay (recovered to 101 ns).
+  Independent decoys at the same carrier need angular separation and
+  more elements: 0.4 of 2 on the 2x2, 2.0 on 3x3 (Study D).
+  A decoy that is co-located, co-carrier, zero-delay and equal power is
+  indistinguishable from the source on this hardware: no spatial,
+  spectral or temporal signature remains. Discriminating that case
+  needs polarisation, waveform/PRF recognition, or a second platform.
+  [PASS] the 1.953 MHz channelizer resolves the delay of a 100 ns
+         repeater (cepstrum peak/median 11).
+  [PASS] the recovered delay is within 10 ns of the true 100 ns.
+  [PASS] off-carrier decoys cost < 1 deg of source accuracy and are
+         counted one cluster each.
+  [PASS] the wobble detector separates repeater (43.8 deg rms) from
+         clean (0.31 deg rms) by more than 20x.
+  [PASS] the joint delay+direction search recovers both paths at
+         50 MHz (100%) and fails at 1 MHz (0%), as the bin
+         count predicts.
+  [PASS] two-path ML recovers both directions on the 2x2 in 100% of
+         trials with the delay supplied.
+
+RESULT=PASS

@@ -1,0 +1,25 @@
+# Packaging/VLNV contract for phase_interf_4ch (host check, no Vivado/Vitis)
+# generated 2026-11-06T15:07:30Z
+#
+# What this proves: the VLNV that config.mk asks for is exactly the one
+# build_hls.tcl would export (it reads the same exported variables and
+# defaults to 1.0), and the checker scripts/collect_ip.sh runs accepts that
+# VLNV and rejects any other.  What it does NOT prove: that Vitis HLS
+# actually produced such a component.xml -- that is gate G2.
+
+$ . ./config.mk && echo "$CUSTOM_IP_VENDOR:$CUSTOM_IP_LIBRARY:phase_interf_4ch:$IPVER_PHASE_INTERF"
+openai:doa:phase_interf_4ch:1.0
+
+$ common/scripts/check_component_vlnv.sh /tmp/vlnvtest/component.xml "$V"
+PASS packaged VLNV openai:doa:phase_interf_4ch:1.0
+exit=0
+
+$ common/scripts/check_component_vlnv.sh /tmp/vlnvtest/component.xml openai:doa:phase_interf_4ch:1.1
+ERROR: packaged IP VLNV mismatch
+  component.xml: /tmp/vlnvtest/component.xml
+  expected:      openai:doa:phase_interf_4ch:1.1
+  actual:        openai:doa:phase_interf_4ch:1.0
+exit=4 (non-zero expected: a stale 1.1 core must fail at step06, not at step09)
+
+# component.xml used here is a synthetic stand-in for the HLS export;
+# it exists only to exercise the checker against config.mk.

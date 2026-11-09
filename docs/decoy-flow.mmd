@@ -1,0 +1,23 @@
+flowchart TD
+    A["raw 2 GS/s complex<br/>4 channels (RFDC)"] --> B["channelizer 1024 bins<br/>1.953 MHz each"]
+    B --> C["power clustering<br/>floor = 25th percentile, 4x threshold"]
+    C --> D{"is there a<br/>pulse edge?"}
+
+    D -- yes --> E1["leading-edge gate<br/>W = min(tau, 100 ns)<br/>radar DOA 0.09-0.79 deg"]
+    D -- no --> F1["per-bin DOA of the<br/>priority cluster"]
+
+    E1 --> E2["tail after the pulse ends<br/>decoy DOA 0.4-0.7 deg<br/>tau = tail length"]
+
+    F1 --> F2{"wobble > 5 deg rms<br/>or cepstrum ratio >= 5?"}
+    F2 -- no --> G1["report DOA<br/>(single path)"]
+    F2 -- yes --> G2["two-path ML with the<br/>measured delay<br/>both directions"]
+
+    E2 --> H["two directions + confidence flag"]
+    G1 --> H
+    G2 --> H
+    H --> I["PS tracker<br/>operator priority = runtime choice"]
+
+    classDef ok fill:#e8f5e9,stroke:#2e7d32;
+    classDef warn fill:#fff8e1,stroke:#f9a825;
+    class E1,E2,G2 ok;
+    class F2,G1 warn;

@@ -39,8 +39,41 @@ case "${BASE_KIND:-mts}" in
     *) echo "FAIL BASE_KIND=${BASE_KIND:-unset}; only 'mts' is certified for the Vivado-first flow (see VIVADO stage plan V03)"
        failures=$((failures+1)) ;;
 esac
+base_missing_remedy() {
+    # The MTS base project is stage V03: no stepNN_ target builds it, and its
+    # absence is the most common first failure, so say what to run.
+    echo "     This file is stage V03, the MTS base project. No stepNN_ target builds it."
+    if [[ -d "${UPSTREAM:-$root/upstream}/RFSoC-MTS/.git" ]]; then
+        echo "     Sources are fetched but the base is not built. Run:"
+        echo "       ./scripts/prepare_mts_2023p2_patch.sh"
+        echo "       (cd ${BUILD:-$root/build}/mts_base_src_2023p2/boards/ZCU208/build_mts && vivado -mode batch -source mts.tcl)"
+    else
+        echo "     Sources are not fetched either. Run, in this order:"
+        echo "       make rebuild STEP=step01_fetch_references FETCH_SET=RFSoC-MTS"
+        echo "       ./scripts/prepare_mts_2023p2_patch.sh"
+        echo "       (cd ${BUILD:-$root/build}/mts_base_src_2023p2/boards/ZCU208/build_mts && vivado -mode batch -source mts.tcl)"
+    fi
+    echo "     See V03_MTS_BASE_2023P2.md. Contents and license are AMD's; it stays out of git."
+}
 if [[ -n "${BASE_XPR:-}" ]]; then
-    [[ -f "$BASE_XPR" ]] || { echo "FAIL BASE_XPR does not exist: $BASE_XPR"; failures=$((failures+1)); }
+    if [[ -f "$BASE_XPR" ]]; then
+        :
+    elif [[ "${BASE_KIND:-mts}" == "mts" && "$BASE_XPR" == */mts_base_src_2023p2/* ]]; then
+        if [[ "${PREFLIGHT_ALLOW_MISSING_BASE:-0}" == "1" ]]; then
+            echo "WARN BASE_XPR does not exist yet: $BASE_XPR"
+            base_missing_remedy
+            echo "     PREFLIGHT_ALLOW_MISSING_BASE=1: reported as a warning, so steps 02-06 can run."
+            warnings=$((warnings+1))
+        else
+            echo "FAIL BASE_XPR does not exist yet: $BASE_XPR"
+            base_missing_remedy
+            echo "     Steps 02-06 do not need it: run them individually, or pass PREFLIGHT_ALLOW_MISSING_BASE=1."
+            failures=$((failures+1))
+        fi
+    else
+        echo "FAIL BASE_XPR does not exist: $BASE_XPR"
+        failures=$((failures+1))
+    fi
 else
     echo "WARN BASE_XPR is unset; steps 07-13 will stop until a verified ZCU208 RFDC/MTS project is supplied"
     warnings=$((warnings+1))

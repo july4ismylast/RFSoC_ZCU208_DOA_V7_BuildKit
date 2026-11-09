@@ -1,0 +1,192 @@
+Clustering emitters in the (frequency, azimuth, time) cube
+seed 20261108, 6 draws, 410 bins of 1.9526 MHz over 2.70-3.50 GHz
+Simulated with decoy_discrimination.simulate_scene, measured with the
+six-baseline WLS direction of the shipped 2x2 array at 30 mm.
+
+Study A: three emitters, clustered per frame and then linked
+  T1 1 MHz hopping over the band at 10 deg, T2 1 MHz CW at 3.05 GHz,
+  T3 5 MHz hopping at -15 deg. 10 frames, 8 snapshots, 20 dB per bin,
+  410 bins of 1.953 MHz, 6 draws.
+
+  Per frame, how many detection clusters appear (three emitters):
+    scene              frequency   direction     both
+    distinct angles          3.0         3.0      3.2
+    shared angle             3.0         2.0      3.2
+  Frequency finds the three blocks but cannot say which emitter owns
+  one when two of them share bins; direction merges the two that share
+  an angle (2.0 clusters for three emitters).
+
+  Then link the per-frame clusters over 10 frames:
+    link on                              tracks   mature   emitters   purity
+    -- distinct angles
+    carrier                                20.7      1.0     1.0/3     1.00
+    direction                               4.7      3.5     3.0/3     1.00
+    direction+bandwidth                     5.8      3.3     3.0/3     1.00
+    direction+bandwidth+cadence             5.8      3.2     3.0/3     1.00
+    -- shared angle
+    carrier                                21.2      1.0     1.0/3     1.00
+    direction                               4.3      3.2     2.3/3     0.71
+    direction+bandwidth                     5.0      3.0     2.3/3     0.70
+    direction+bandwidth+cadence             5.0      3.0     3.0/3     1.00
+  A carrier-only link -- the frequency-hopping-network way -- leaves
+  the hoppers as singletons: 20.7 tracks for three emitters, 1 of
+  them recovered, because every hop is a new frequency.
+  Direction and bandwidth hold (5.8 tracks, 3 of 3 recovered, purity
+  1.00) because a hop cannot change either.
+  Tracks includes fragments -- a frame whose per-bin direction falls
+  outside the 4 deg gate starts a new track -- so the mature column is
+  the one that matters.
+  Two emitters with the SAME direction and the SAME bandwidth are put
+  in one track by either rule (2.3 of 3 recovered, purity 0.70);
+  cadence is the third invariant and it is enough (3.0 of 3, purity
+  1.00), because one carrier is occupied in every frame and the other
+  never repeats.
+
+Study B: masking needs a position, not a fingerprint
+  T1 hops at random over 410 bin positions of the band; the other two
+  emitters live in it. Five ways to get T1 out of one frame of the
+  display, scored on now / the next hop / what else survives.
+  strategy                                now   next hop others kept
+  replay the last hop                    100%      0.20%      100%
+  extrapolate the hop plan               100%      0.20%      100%
+    same, a sequential plan              100%    100.00%      100%
+  mask the whole band                    100%       100%        0%
+  null its direction                     100%       100%     see C
+  Every strategy removes T1 from the frame you are looking at -- that is
+  a detection, not a fingerprint, and it is free. Predicting the NEXT hop
+  is the only thing a fingerprint could add, and for random hopping it
+  is worth 0.20% (100% for a sequential plan). A band mask predicts
+  nothing but takes every other emitter with it. A null needs no
+  frequency prediction at all -- but study C measures what it costs,
+  and on this aperture it is not selective in angle either.
+
+Study C: three ways to remove a known emitter, and their price
+  T1 at 10 deg, T2 at 10 + separation, equal power, 8 bins simulated,
+  16 snapshots, 20 dB/bin. Directions come from a Bartlett scan on the
+  effective manifold, so a filter can be accounted for by the estimator
+  that knows it. First the cost of a null on an emitter that is NOT
+  colliding with the removed one -- the pure cost of the filter:
+                 shipped 2x2 (4 el)    3x3 at 30 mm (9 el)
+  separation        power     error        power     error
+  2 deg          -20.9 dB   82.0 deg     -19.5 dB   67.0 deg
+  5 deg          -18.8 dB   85.0 deg     -16.6 dB   63.3 deg
+  10 deg         -15.6 dB   90.0 deg     -12.1 dB   50.0 deg
+  20 deg         -10.8 dB  100.0 deg      -7.1 dB   40.0 deg
+  40 deg          -6.3 dB  120.0 deg      -2.8 dB   20.0 deg
+  A 2x2 square at elevation 0 has only TWO distinct element phases --
+  the phase depends on the y coordinate alone -- so it is a two-channel
+  array. Nulling one direction there does not attenuate the neighbour,
+  it rotates its phase by about 90 deg: the errors of 82-120 deg are
+  not noise, they are the residual of a two-channel projection, and the
+  neighbour's direction stops being measurable at any separation.
+  With three elements per side the null is less brutal (-12.1 dB at 10
+  deg) but the direction is still off by 50.0 deg, so it is a better
+  filter, not a usable mask. Masking needs aperture this kit does not
+  have; labelling needs nothing more than what it already measures.
+
+  Now the collision itself: T1 and T2 on the SAME bin, 20 deg apart.
+  what is done                   kept     T2 error    T1 residual
+  nothing                       100%      9.75 deg         (none)
+  notch                           0%    100.00 deg        removed
+  null                          100%    100.00 deg     -1.2 dB
+  cancel 0 dB                   100%    100.00 deg     -1.4 dB
+  cancel 6 dB                   100%     25.42 deg     23.1 dB
+  Nothing removed, the two sources are one detection and the direction
+  lands between them (9.8 deg from T2 with 20 deg of separation): the
+  collision is a limit of the data, not of the display. The notch is the
+  only complete removal and T2 goes with it (kept 0%). The null and
+  the cancellation keep the power (kept 100%) and destroy the
+  direction (100 deg). Cancellation does remove T1 -- at 0 dB of gain
+  error the residual is -1.4 dB, the noise floor -- but what is left of
+  T2 is no longer a plane wave on this array, so its direction is gone.
+  That is the real objection to masking: not that the emitter survives,
+  but that removing it costs whoever else is in the bin the ability to
+  be measured at all.
+  Depth of the null on the emitter it is aimed at: 21 dB.
+
+  Why the null cannot be a mask here: at elevation 0 the phase across
+  this array depends on the y coordinate alone, so the 2x2 is a
+  two-channel array and a null leaves one channel -- every direction
+  maps onto the same residual, and no estimator can recover T2 from it.
+  Measured with the estimator that ships in this repository, on nulled
+  data, the plane-wave fit lands 130 deg from a T2 that was 40 deg away.
+  A mask is therefore not available on this aperture: the workable
+  removal is the notch, and the notch is exactly what deletes the
+  co-channel emitter. That is the whole argument for labelling.
+
+Study D: can two emitters be separated by clustering at all?
+  two CW emitters, 6 draws per cell, joint (direction, frequency)
+  features in one frame; solved when the two clusters match exactly.
+  angle \ df         0 bin    1 bin    4 bin   20 bin
+  1 deg                 0%      17%     100%     100%
+  3 deg                 0%      83%     100%     100%
+  6 deg                 0%     100%     100%     100%
+  12 deg                0%     100%     100%     100%
+  25 deg                0%     100%     100%     100%
+  The cluster is the pair, so what matters is that one coordinate
+  separates them. The same bin (df = 0) is not solvable at any angle:
+  there is one detection and no second coordinate to split it -- that is
+  the two-source MUSIC case of V07 11.2, not a clustering problem.
+  Below about 3 deg direction alone stops working and a frequency
+  offset rescues it; at 25 deg either coordinate is enough.
+
+Study E: the map -- what the cube looks like
+  10 frames of the three-emitter scene, printed as azimuth rows against
+  frequency columns. One column is 14 MHz, one row 10 deg.
+  freq  2.7                                             3.5 GHz
+    -30 deg  ..........................................................
+    -20 deg  ...33...3....33.3...33.................33...33.......3....
+    -10 deg  ..........................................................
+      0 deg  ..........................................................
+     10 deg  1........1.....1.........1..1..1.1.......1.............1..
+     20 deg  ................#.........................................
+     30 deg  ................22........................................
+     40 deg  ..........................................................
+  1 = hopper at 10 deg, 2 = CW at 30 deg, 3 = hopper at -20 deg,
+  # = more than one emitter in that cell.
+  Emitter 2 is a fixed column; the hoppers are scattered blocks on one
+  row. Frequency says *when*, the row says *who*. Nothing needs to be
+  erased: the row assignment is already the separation, and it is not
+  destructive -- the same detections can be reported per emitter.
+  25 occupied cells, 1 shared (4%). The shared ones are the whole
+  ambiguity, and no mask changes it: it is in the data, not the display.
+
+VERDICT
+  To cluster the hopper you do not extract its fingerprint and mask it
+  out of the spectrum. A mask is a destructive edit of the cube you are
+  clustering and it needs the position you were about to measure; on
+  this aperture it is also measured to be unusable (study C): the notch
+  deletes whoever shares the bin, and the null rotates the neighbour's
+  phase so badly that its direction stops being estimable. What
+  clusters an emitter is what a hop cannot change. In order:
+  1. per frame, take the detections and cluster them on (direction,
+     bandwidth): 3.2 clusters per frame for three emitters. Frequency
+     alone cannot say who owns a block when two share bins, direction
+     alone merges two emitters that share an angle (2.0 for three).
+  2. link those clusters over frames on the same pair: 3 of 3 emitters
+     at purity 1.00, because direction and bandwidth hold while the
+     carrier moves. A carrier-only link -- the hopping-network way --
+     recovers 1 of 3: the hopper becomes 21 singletons.
+  3. when two emitters share both, cadence is the third invariant: same
+     direction, same bandwidth, 2 of 3 recovered at purity 0.70, and
+     adding cadence gives 3 of 3 at purity 1.00.
+  4. masking buys nothing here, and a fingerprint buys one thing only:
+     predicting the next hop, worth 0.2% for random hopping against
+     100% for a sequential plan. Clustering never needs it.
+  The map in study E is the picture to hand to an operator: one row per
+  emitter, the hopper as scattered blocks along the row, the static one
+  as a fixed column, and a shared cell marked. 1 of 25 cells are shared
+  in this sample -- those are the limit described in V07 14.6, and they
+  are a property of the data, not of the display.
+
+  [PASS] per-frame clustering by frequency alone merges nothing it should
+  [PASS] pairwise linking recovers 3 of 3 emitters at purity >= 0.95
+  [PASS] a carrier-only link fragments the hoppers
+  [PASS] cadence separates two emitters that share direction and bandwidth
+  [PASS] predicting the next hop is worth under 5% for random hopping
+  [PASS] a sequential plan is predicted perfectly
+  [PASS] the notch deletes the co-channel emitter
+  [PASS] the null keeps the power but destroys the direction
+  [PASS] the shared-cell ambiguity is reported, not hidden
+
+RESULT=PASS

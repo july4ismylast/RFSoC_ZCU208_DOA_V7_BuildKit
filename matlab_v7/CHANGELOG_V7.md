@@ -54,3 +54,48 @@ The MATLAB and independent numerical checks support plausibility. A final
 ZU48DR fit/performance claim still requires the included Vitis HLS synthesis
 report, Vivado place-and-route timing/utilization report, repeated RFDC MTS
 startup measurements, exact board HIL capture and a calibrated far-field test.
+
+## V07.1 wideband phase interferometry (2026-11-06)
+
+* **Convention alignment.** `PhaseInterferometryEstimator` now forms
+  `S_ba = X_b*conj(X_a)` — the product order `doa_covariance_4ch_v4` and
+  `estimate_doa_from_covariance_v7.m` already use — and applies the leading
+  minus of `directionYZ = -(B'WB)^-1*B'W*phi/k`, in both the fixed-point and the
+  floating-point paths. The HLS block was changed to match, so its 16-word
+  `m_axis` output feeds `estimate_doa_from_covariance_v7.m` unchanged; without
+  the matched order every angle is mirrored. The diagnostic phase-slope fit
+  carries the corresponding minus. Sign is asserted by
+  `verify_phase_interferometry_2x2.m` case 3, the g++ host test and
+  `scripts/phase_interf_verify.py`.
+* **HLS-hazard fixes in the block.** The CORDIC normaliser is no longer a pair of
+  data-dependent `while` loops (51 fixed-trip conditional steps now), and the
+  phase loop is no longer `PIPELINE II=1` (which would have required six
+  unrolled 16-stage 64-bit CORDIC chains inside 4.0 ns). `build_hls.tcl` now
+  constrains `WIDEBAND_CLOCK_PERIOD_NS` (4.0 ns, the clock the block actually
+  runs on) instead of `PL_CLOCK_PERIOD_NS` (7.8125 ns). The resource table in
+  V07 §7.4 is now counted from the per-beat multiply tree instead of asserted.
+* **Estimator question closed with numbers.** `scripts/compare_wpi_vs_music.py`
+  (V07 §10) shows coherent WPI at 1.22× the CRB, per-bin MUSIC 2.47× and
+  narrowband MUSIC 4.82× worse, and — structurally — that a 2×2 grid spans rank 2
+  at one elevation, so no subspace method can represent two emitters on it at any
+  SNR. Two-emitter capability needs ≥ 3 rows (9 elements).
+* **New tools.** `ip/custom/phase_interf_4ch/tb/host_shim/` + `make
+  host-kernel-check` run the production kernel and its Vitis testbench on g++;
+  `gate3_ooc.tcl` + `make gate3-ooc` are the (unrun) OOC timing gate.
+
+- `PhaseInterferometryEstimator`: per-bin cross-spectrum DOA on the four channel
+  spectra, six-baseline coherence-weighted least squares, contraction to the
+  +x hemisphere, automatic cluster detection, and per-cluster diagnostics
+  (coherence, SNR, amplitude balance, ambiguity flag).
+- The multi-frequency phase-slope fit is retained only as a reported diagnostic:
+  measured 457x worse than coherent WPI for a 50 MHz emitter and 5.8x worse even
+  for a 2 GHz band-filling emitter (see `V07_PHASE_INTERFEROMETRY.md`).
+- `FixedPointMode` reproduces the PL exactly: Q3.17 calibrated integers, exact
+  integer cross-spectrum sums, and the same 16-iteration CORDIC as
+  `ip/custom/phase_interf_4ch` (`phase_from_cordic_q13`, bit-identical to the
+  C++ core on 48/48 test vectors).
+- `verify_phase_interferometry_2x2`: time-domain chain (IFFT, 16-bit
+  quantisation, raised-cosine window, FFT), CORDIC accuracy, fixed-point parity,
+  narrowband vs wideband estimator comparison, and the 50 mm ambiguity case.
+- Geometry unchanged and now explicitly justified: 25 mm axes / 35.4 mm
+  diagonal, unambiguous to 4.24 GHz.

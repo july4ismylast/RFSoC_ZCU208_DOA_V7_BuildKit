@@ -1,0 +1,70 @@
+V07 WIDEBAND FRONT-END FEASIBILITY SCREEN -- ZCU208 / XCZU48DR (ZU48DR)
+generated : 2026-11-06T16:32:29Z
+throughput: 2.000 GS/s complex per channel, 8 samples/clk at 250 MHz, 4 channels
+
+DEVICE CAPACITY / ROUTED MTS BASE (V06 evidence)
+resource       device     MTS base         free
+LUT            425280      42263.0     383017.0
+FF             850560      47760.0     802800.0
+BRAM36           1080         50.5       1029.5
+URAM               80         20.0         60.0
+DSP48            4272          3.0       4269.0
+
+memory overhead factor observed on the measured channelizer: 15.2x of the theoretical data+twiddle bits
+
+ONE-CHANNEL FRONT-END CANDIDATES
+candidate                                       bin[kHz]   BRAM36 range    DSP48      LUT frame[us]
+1024-band PFB channelizer, 12 taps, SSR-8 (MEASURED, one channel)    1953.1   176 ..   176      312    35902      4.10
+1024-point FFT, SSR-8                             1953.1     4 ..    27       90    35902      0.51
+4096-point FFT, SSR-8                              488.3    14 ..   108      108    43082      2.05
+16384-point FFT, SSR-8                             122.1    57 ..   433      126    50263      8.19
+  BRAM36 range = deep-memory packing (2x of data+twiddle, optimistic) ..
+                 overhead seen on the measured channelizer (15.2x, pessimistic)
+  DSP48        = radix-4 first-principles lower bound, 25% trivial twiddles
+
+FOUR-CHANNEL PROJECTION INCLUDING THE ROUTED MTS BASE
+candidate                                            BRAM36     DSP48       LUT  verdict
+1024-band PFB channelizer, 12 taps, SSR-8      754..    754     29.3%     43.7%  closes (V06 arithmetic)
+1024-point FFT, SSR-8                          65..    159      8.5%     43.7%  fits arithmetically: 6%..15%
+4096-point FFT, SSR-8                         107..    484     10.2%     50.5%  fits arithmetically: 10%..45%
+16384-point FFT, SSR-8                        278..   1783     11.9%     57.2%  NOT SETTLED by arithmetic: 26%..165% BRAM
+
+The 4x projection is arithmetic addition, not placement/routing.  V06 already
+shows four transposed channelizers landing at 69.9% BRAM by the same argument.
+
+IP SUPPORT -- THE DECIDING FACT, INDEPENDENT OF THE ARITHMETIC
+implementation                     max samples/clk applies here?
+AMD FFT LogiCORE v9.1 (PG109)      1              NO: needs 8 cores/channel, each with full 16K memory
+Vitis DSP Library SSR FFT          2/4/8/16 (<=4K) NO at 16K: benchmark envelope stops at 4K
+MathWorks dsphdl FFT / Channelizer power-of-2 vector UNPROVEN at 16K x SSR-8: needs OOC synthesis first
+8 x AMD FFT + polyphase recombine  8 (by construction) NO: 8x memory, twiddle+recombine logic, no IP support
+
+Verdict: a 16K FFT at 2.048 GSPS is not an instantiable IP configuration in
+this toolchain, its four-channel BRAM cost is either near the device limit or
+over it depending on the memory packing, and it buys no angular accuracy over
+the measured 1024-band channelizer at equal observation time.  Do not adopt.
+
+WHY 16K AT 2 GSPS DOES NOT BUY ACCURACY (equal observation time)
+Angular variance for a coherent cross-spectrum measurement is set by the
+number of coherently combined bin-snapshot products, not by FFT length:
+
+  sigma_theta ~ c / (2*pi*f_c*d) * sigma_phi / sqrt(K),  K = bins x snapshots
+
+front end                          bins in 50 MHz frames/8.2us            K
+1024-band channelizer                    25.6      16.02          410
+4K FFT                                  102.4       4.00          410
+16K FFT                                 409.6       1.00          410
+
+So 1024 bands x 16 frames and 16K x 1 frame both give K ~ 410 for a 50 MHz
+emitter: the same angular accuracy for the same integration time.  Finer bins
+matter for separating emitters that are close together inside the band, not
+for the angle of a single emitter.
+
+PHASE-INTERFEROMETRY BLOCK (ip/custom/phase_interf_4ch), 4 lanes x 4 channels
+  per beat: 16 cal multiplies + 6 cross-spectra (24 real multiplies) = ~40 DSP48
+  6 complex accumulators (48-bit) + 4 power accumulators     = ~130 FF, no BRAM
+  6 CORDIC atan2 (16 iterations, 16-bit) at the 125 MHz DOA clock
+      ~ 6 x 1,100 LUT / 6 x 900 FF, no DSP (shift-add)        = ~7k LUT
+  total: ~40 DSP48 (0.9%), ~8k LUT (1.9%), <1 BRAM36 -- small next to either
+  front end, which is why the front end, not the interferometer, is the risk.
+

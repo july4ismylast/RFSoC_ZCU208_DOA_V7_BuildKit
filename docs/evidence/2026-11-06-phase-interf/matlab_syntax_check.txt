@@ -1,0 +1,14 @@
+# MATLAB syntax/parse check - V07 reference files
+# generated 2026-11-06T15:00:32Z
+# tool: MISS_HIT 0.9.44
+# command: mh_lint --brief matlab_v7/PhaseInterferometryEstimator.m \
+#            matlab_v7/phase_from_cordic_q13.m matlab_v7/verify_phase_interferometry_2x2.m
+
+MISS_HIT Lint Summary: 3 file(s) analysed, everything seems fine
+
+Notes:
+  * This proves the three files PARSE as MATLAB (classdef, properties,
+    methods, arguments blocks, nested functions).  It does not execute
+    them: no MATLAB or Octave is available in the authoring environment,
+    so every number in V07 section 6 comes from scripts/phase_interf_verify.py
+    or from the g++ host test, not from these files.

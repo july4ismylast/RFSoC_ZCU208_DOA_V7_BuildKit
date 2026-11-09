@@ -10,6 +10,10 @@
 #                      * wires rfdc_repack4 -> 4x matlab_channelizer -> doa_subband_bridge_4ch
 #                      * wires 4x async axis_clock_converter + 2x PS AXI-Stream RX FIFOs
 #                      * attaches all 6 DOA AXI4-Lite slaves to /control_interconnect
+#                        (a 7th packaged block, openai:doa:phase_interf_4ch, is
+#                         NOT attached here yet -- see V07 section 7.5 for the
+#                         exact net/clock/address requirements; adding it is
+#                         gate G4 and must be measured, not guessed)
 #   external_ports - Structural-only smoke mode (not placeable on ZU48DR).
 
 namespace eval ::doa_bd_map {

@@ -16,6 +16,7 @@ STAGES := \
 	step05_hls_repack \
 	step05_channelizer \
 	step05_subband_bridge \
+	step05_hls_phase_interf \
 	step06_collect_ip \
 	step07_vivado_project \
 	step08_vivado_integrate \
@@ -27,9 +28,13 @@ STAGES := \
 	step14_hil_vectors \
 	step15_package
 
+# scripts/run_stage.sh rebuilds docs/progress/PROGRESS.md from this list.
+STAGES_MANIFEST := $(BUILD)/stages.txt
+$(shell mkdir -p $(BUILD) && printf '%s\n' $(STAGES) > $(STAGES_MANIFEST))
+
 PRODUCTION_STAGES := step00_preflight step02_hls_covariance step03_hls_spectrum \
 	step04_hls_candidate step04_hls_beam step05_hls_repack step05_channelizer \
-	step05_subband_bridge step06_collect_ip step07_vivado_project \
+	step05_subband_bridge step05_hls_phase_interf step06_collect_ip step07_vivado_project \
 	step08_vivado_integrate step09_vivado_validate step10_synth step11_impl \
 	step12_bitstream step13_export_xsa step14_hil_vectors step15_package
 
@@ -37,19 +42,66 @@ ifeq ($(FORCE),1)
 FORCE_DEP := FORCE
 endif
 
-.PHONY: help list lint pipeline all stage rebuild status graph clean-stage clean-build FORCE $(STAGES)
+.PHONY: help list lint pipeline mts-base fit all stage rebuild status progress mc mc-scratch mc-gui mc-gui-build mc-verify mc-find mc-path mc-hub-dump mc-example mc-example-ip mc-bisect mc-bisect-clean mc-bisect-ips mc-bisect-watch mc-bisect-harvest mc-bisect-next mc-adopt-bisect mc-libs mc-probe mc-eval mc-shell-help ip-from-hdl ip-equivalence graph clean-stage clean-build FORCE $(STAGES)
 
 help:
 	@echo "ZCU208 DOA V7 restartable build"
 	@echo
 	@echo "Run one stage:       make step02_hls_covariance"
-	@echo "Resume full build:   make pipeline"
+	@echo "Complete the build:  make step01_fetch_references && make pipeline"
+	@echo "      (first, once per machine: make mts-base)"
 	@echo "Force one stage:     make rebuild STEP=step02_hls_covariance"
 	@echo "Remove one result:   make clean-stage STEP=step02_hls_covariance"
+	@echo "Where the build is:  docs/WHERE_WE_ARE.md"
+	@echo "Does it fit the part: make fit   (after step10_synth / step11_impl)"
 	@echo "Inspect progress:    make status"
 	@echo "Static validation:   make lint"
 	@echo "Dry-run a stage:     make -n step10_synth"
 	@echo "Run/capture V06 gate: make debug-channelizer-gate GATE=gate4-axis-wrapper-rtl-sim"
+	@echo "V07 host checks:     make verify-phase-interf"
+	@echo "V07 estimator study: make compare-estimators  (or: make wideband-df)"
+	@echo "Multi-source study:  make multisource-df"
+	@echo "1-50 MHz 8-target:   make narrowband-targets"
+	@echo "Decoy discrimination:make decoy-df"
+	@echo "Radar + decoy:       make radar-decoy   (gate G7a: make g7-selftest)"
+	@echo "Hopping emitter:     make hopping-target"
+	@echo "Clustering:          make target-clusters"
+	@echo "Moving targets:      make moving-targets"
+	@echo "Feature models:      make feature-models"
+	@echo "Modulation (AMC):    make modulation-clusters"
+	@echo "Association policy:  make policy"
+	@echo "AMC on the R5 (G8a): make amc-port"
+	@echo "What is installed:   make tools   (or: make tools MATLAB=1)"
+	@echo "Model Composer IP:   make mc   (builds the .slx in ip/model_composer/; R2022b)"
+	@echo "Create that .slx:    make mc-scratch   (from scratch, no GUI)"
+	@echo "AMD 2023.2 example:  make mc-example   (reference only, not committed)"
+	@echo "Blocks not found:    make mc-libs      (where the libraries are)"
+	@echo "What can this run:   make mc-probe     (Hub parameters, generate entry)"
+	@echo "IP without Model Composer: make ip-from-hdl (packages channelizer_dut.v)"
+	@echo "Same datapath as the model?  make ip-equivalence"
+	@echo "Build AMD's example to IP: make mc-example-ip"
+	@echo "Which change breaks it:  make mc-bisect"
+	@echo "Build the IP by hand:    docs/GUI_MODEL_COMPOSER_IP.md  (make mc-gui, then follow it)"
+	@echo "  (the scripted path stops at the Hub subsystem selector: use docs/GUI_MODEL_COMPOSER_IP.md)"
+	@echo "The verified IP instead: make ip-from-hdl  &&  make ip-equivalence"
+	@echo "Adopt its final IP:      make mc-adopt-bisect"
+	@echo "What the bisect built:   make mc-bisect-ips"
+	@echo "Is the build alive:      make mc-bisect-watch   (no MATLAB, run in a second terminal)"
+	@echo "Did it finish after all: make mc-bisect-harvest   (INSTALL=step2 to adopt it)"
+	@echo "What is proven / next:   make mc-bisect-next"
+	@echo "Slow synth / redo a step: make mc-bisect MC_GENERATE_TIMEOUT=7200 MC_BISECT_FRESH=1"
+	@echo "Start at step 4 (steps 1-3 proven): make mc-bisect MC_BISECT_FROM=4"
+	@echo "Check the model only, seconds:  make mc-bisect MC_BISECT_FROM=10 MC_BISECT_CHECK=1"
+	@echo "Build the IP:        make mc-gui-build   (one command, no paths)"
+	@echo "Read a saved model's Hub: make mc-hub-dump   (MODEL=..., AGAINST=...)"
+	@echo "Which .slx do I have: make mc-find   (exact path: make mc-path)"
+	@echo "Model Composer GUI:  make mc-gui  (helpers already on the MATLAB path)"
+	@echo "GUI that builds:     make mc-gui-build   (opens, builds, exports)"
+	@echo "After a GUI compile: make mc-verify MODEL_COMPOSER_MODEL=/abs/x.slx"
+	@echo "Progress pages:      make progress  -> docs/progress/PROGRESS.md"
+	@echo "Every step bench:    make steps"
+	@echo "Bring-up checklist:  bash step7_board_bringup/checklist.sh"
+	@echo "Every custom HLS IP: make hls-all"
 	@echo
 	@echo "Stages (each can be invoked independently):"
 	@echo "  step00_preflight         Check tools, part, versions, and configuration"
@@ -62,6 +114,7 @@ help:
 	@echo "  step05_channelizer       Build selected channelizer flow"
 	@echo "                             CHANNELIZER_FLOW=matlab_hdl|model_composer|opfb|external"
 	@echo "  step05_subband_bridge    Verify, synth-check, and package 4-channel subband stream bridge IP"
+	@echo "  step05_hls_phase_interf  C-sim, synth, and export V07 per-bin phase-interferometry IP"
 	@echo "  step06_collect_ip        Validate component.xml files and assemble one IP repository"
 	@echo "  step07_vivado_project    Copy a verified ZCU208 base .xpr into an isolated project"
 	@echo "  step08_vivado_integrate  Add DOA V7 using config/zcu208_bd_map.tcl"
@@ -114,6 +167,232 @@ rebuild:
 
 status:
 	@./scripts/stage_status.sh "$(BUILD)" $(STAGES)
+	@echo
+	@echo "Tracked pages: docs/progress/PROGRESS.md (make progress)"
+	@echo "Model Composer GUI: make mc   (R2022b through the launcher)"
+
+# Rebuild docs/progress/PROGRESS.md from the stamps, the logs and the pages.
+# Every stage also refreshes it, so this target is for after a manual edit or a
+# fresh clone where build/ was copied around.
+progress: $(STAGES_MANIFEST)
+	@./scripts/progress_report.sh "$(BUILD)"
+
+# `make mc` BUILDS the channelizer IP through Model Composer 2023.2 -- it does
+# not open the GUI.  The 2023.2 launcher (which carries MATLAB R2022b) runs in
+# batch mode, compiles the model's System Generator token to IP Catalog, and
+# export_model_composer_ip.m installs component.xml in $(IP_REPO).  That is the
+# same stage as step05_channelizer, so the log, the stamp and the row in
+# docs/progress/PROGRESS.md are the ones a reader expects.
+#
+# The model is MODEL_COMPOSER_MODEL, or -- when there is exactly one -- the .slx
+# under ip/model_composer/.  This repository ships no .slx (it is a binary that
+# is built once in the GUI), so `make mc` with no model says where it goes
+# instead of inventing a path.
+MC_MODELS := $(wildcard ip/model_composer/*/*.slx)
+MC_MODEL  := $(or $(strip $(MODEL_COMPOSER_MODEL)),$(if $(filter 1,$(words $(MC_MODELS))),$(MC_MODELS)))
+
+mc:
+	@if [ -z "$(MC_MODEL)" ]; then \
+	    echo "make mc builds a real .slx, and this repository has none (it is built once in the GUI)."; \
+	    if [ -n "$(MC_MODELS)" ]; then \
+	        echo "Several candidates, so say which:"; \
+	        for one in $(MC_MODELS); do echo "  make mc MODEL_COMPOSER_MODEL=$(CURDIR)/$$one"; done; \
+	    else \
+	        echo "The model goes here, and then \`make mc\` needs no path:"; \
+	        echo "  $(CURDIR)/ip/model_composer/channelizer/channelizer.slx"; \
+	        echo "Create it with no GUI at all:  make mc-scratch"; \
+	        echo "Or edit it by hand:            make mc-gui"; \
+	        echo "Already have one somewhere?    make mc-find"; \
+	    fi; \
+	    exit 2; fi
+	@if [ ! -e "$(MC_MODEL)" ]; then \
+	    echo "ERROR: model not found: $(MC_MODEL)"; \
+	    echo "A path like /absolute/path/channelizer.slx is a placeholder:"; \
+	    echo "create the real model with make mc-gui, or point at the .slx you have."; \
+	    exit 2; fi
+	@echo "Model Composer build: $(MC_MODEL)"
+	@echo "launcher: $(MODEL_COMPOSER)   (MATLAB R2022b from $(MATLAB_2022B))"
+	@$(MAKE) --no-print-directory step05_channelizer \
+	    CHANNELIZER_FLOW=model_composer MODEL_COMPOSER_MODEL="$(MC_MODEL)"
+
+# Build the model from scratch, from text, with no GUI: make_channelizer_model.m
+# creates the Hub + 4 gateway pairs + delays and saves channelizer.slx.  A .slx
+# cannot be reviewed in a diff, so the builder script is the committed artifact.
+mc-scratch:
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/create_model_composer_model.sh "$(if $(strip $(MODEL_COMPOSER_MODEL)),$(MODEL_COMPOSER_MODEL),ip/model_composer/channelizer/channelizer.slx)"
+	@echo "now: make mc"
+
+# The GUI, only for creating or editing the .slx itself: R2022b first on PATH,
+# launch logged, docs/progress/model_composer_launch.md written.  The launcher
+# cannot run a headless build -- it evals its own arguments and appends its own
+# -r -- so `make mc` never goes through it.
+# Build AMD's own example to an IP Catalog component and write down everything
+# about that model (Hub parameters, blocks, callbacks) into a tracked report.  Not
+# our design: the point is to learn what a model that generates looks like here.
+# Which single change makes AMD's example stop generating?  Applies our changes to
+# a copy of the example one at a time, generating after each, and writes the table
+# to docs/progress/model_composer_bisect.md.  Stops at the first failure.
+# MC_GENERATE_TIMEOUT: seconds one generation may take (default 3600: synthesis of
+#   a retargeted design is minutes, the old fixed 900 was not enough and printed
+#   nothing while it waited).  MC_BISECT_FRESH=1 regenerates steps whose artifact
+#   is already on disk.
+mc-bisect:
+	@mkdir -p "$(LOG_DIR)"
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" \
+	    MC_GENERATE_TIMEOUT="$(MC_GENERATE_TIMEOUT)" MC_BISECT_FRESH="$(MC_BISECT_FRESH)" \
+	    MC_BISECT_FROM="$(MC_BISECT_FROM)" MC_BISECT_CHECK="$(MC_BISECT_CHECK)" \
+	    ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_bisect.log" bisect
+
+# If every bisect step generated, its last artifact is our design, produced by
+# Model Composer.  Adopt it under the name step06_collect_ip looks for and check it.
+# Every component the bisect generated, with its VLNV and ports.  AMD's example
+# exports its own port names, so the clk/din/dout demand is relaxed here on purpose.
+# "generation in progress" for ten minutes: synthesis or deadlock?  Answers it from
+# a second terminal while Model Composer is busy.  A live build shows a Vivado
+# process and a file that keeps being touched; a stall shows one without the other.
+# The GUI can hang after the engine has finished.  This lists every component.xml
+# the bisect run left behind; INSTALL=step<N> adopts the newest one.
+# Which steps have artifacts, and the one command to run next.  After a cancel the
+# answer is always: harvest what the engine wrote, then start at the next step.
+mc-bisect-next:
+	@./scripts/mc_bisect_next.sh
+
+mc-bisect-harvest:
+	@python3 scripts/mc_bisect_harvest.py --install "$(INSTALL)"
+
+# Drop the scratch netlist and code of the bisect work folder.  Collected artifacts in
+# $(IP_REPO) are untouched: those are the evidence, this is only the engine's litter.
+mc-bisect-clean:
+	@rm -rf build/mc_bisect/netlist build/mc_bisect/code build/mc_bisect/SSRDDC.slx.r20*
+	@echo "cleared build/mc_bisect/netlist, build/mc_bisect/code (artifacts in $(IP_REPO) kept)"
+
+mc-bisect-watch:
+	@./scripts/mc_watch.sh "$(if $(WORK),$(WORK),build/mc_bisect)"
+
+mc-bisect-ips:
+	@found=0; \
+	for component in $(IP_REPO)/ssr_bisect_step*/component.xml; do \
+	    [ -f "$$component" ] || continue; \
+	    found=1; \
+	    echo "== $$(basename "$$(dirname "$$component")")"; \
+	    python3 scripts/check_ip_component.py "$$component" --any-ports || true; \
+	done; \
+	if [ "$$found" = 0 ]; then \
+	    echo "no $(IP_REPO)/ssr_bisect_step*/component.xml -- run make mc-bisect first"; \
+	fi
+
+mc-adopt-bisect:
+	@if [ ! -f "$(IP_REPO)/ssr_bisect_step6/component.xml" ]; then \
+		echo "no $(IP_REPO)/ssr_bisect_step6/component.xml -- run make mc-bisect first"; exit 1; \
+	fi
+	@rm -rf "$(IP_REPO)/model_composer_channelizer"
+	@cp -r "$(IP_REPO)/ssr_bisect_step6" "$(IP_REPO)/model_composer_channelizer"
+	@python3 scripts/check_ip_component.py "$(IP_REPO)/model_composer_channelizer/component.xml"
+
+mc-example-ip:
+	@mkdir -p "$(LOG_DIR)"
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_example_ip.log" example
+
+mc-gui:
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_launch.log" interactive
+
+# Same GUI, but it builds the model and exports the IP as soon as it opens
+# (startup.m calls mc_gui_build), then leaves the session open to look at it.
+mc-gui-build:
+	@MC_PART="$(PART)" MC_BOARD="$(BOARD_PART)" ./scripts/launch_model_composer.sh "$(LOG_DIR)/model_composer_gui_build.log" build
+
+# Run Model Composer MATLAB code from the shell without typing any path:
+#   make mc-eval CODE="mc_gui_build"
+mc-eval:
+	@./scripts/mc_eval.sh "$(CODE)"
+
+# Two commands, literal paths, nothing to edit.
+mc-shell-help:
+	@echo "1. Build the channelizer IP (opens Model Composer, builds, exports):"
+	@echo
+	@echo "     make mc-gui-build"
+	@echo
+	@echo "2. If a MATLAB window is already open, paste this one line:"
+	@echo
+	@echo "     addpath('$(CURDIR)/ip/model_composer/channelizer'); mc_gui_build"
+
+# What can this installation actually run?  Libraries, generate entry points,
+# every Hub mask parameter and its value.
+# Compare the datapath channelizer.slx describes with channelizer_dut.v:
+# arithmetic, latency and the quantisation the gateways perform.  It also prints
+# the interface differences (port layout, clock enable) instead of hiding them.
+ip-equivalence:
+	@python3 ip/model_composer/channelizer/testbench/compare_hdl_vs_model.py
+
+# Package the hand-written Verilog as an IP Catalog component (no Model Composer).
+# Stage V03: the MTS base project BASE_XPR points at.  Not a stepNN_ stage because
+# it is AMD's tree and its output is a Vivado project, not an IP.  Idempotent.
+# Does the design fit the ZCU208, and does post-route timing close?  Reads the reports
+# step10/step11 already write; says NOT-MEASURED (exit 2) rather than assuming.
+fit:
+	@python3 scripts/check_fit.py $(if $(strip $(FIT_ARGS)),$(FIT_ARGS))
+
+mts-base:
+	@./scripts/build_mts_base.sh
+
+ip-from-hdl:
+	@mkdir -p "$(IP_REPO)" "$(LOG_DIR)"
+	@echo "packaging ip/model_composer/channelizer/channelizer_dut.v as an IP"
+	@IP_REPO="$(IP_REPO)" MC_PART="$(PART)" $(VIVADO) -mode batch -notrace \
+		-source scripts/package_channelizer_ip.tcl \
+		-log $(LOG_DIR)/package_channelizer_ip.log \
+		-journal $(LOG_DIR)/package_channelizer_ip.jou
+	@test -f $(IP_REPO)/channelizer_ip/component.xml \
+		|| (echo "packaging failed; see $(LOG_DIR)/package_channelizer_ip.log"; exit 1)
+	@python3 scripts/check_ip_component.py $(IP_REPO)/channelizer_ip/component.xml
+	@echo "IP_PACKAGE_OK $(IP_REPO)/channelizer_ip/component.xml"
+
+mc-probe:
+	@./scripts/mc_eval.sh "mc_probe_generate"
+
+# Why is a Model Composer block missing?  Report where the libraries are.
+mc-libs:
+	@./scripts/mc_libs.sh
+
+# A release-matched AMD example to compare against (branch 2023.2).  Downloaded
+# into build/, never committed: that repository has no LICENSE file.
+mc-example:
+	@./scripts/fetch_mc_example.sh $(EXAMPLE)
+
+# Where is the .slx?  Nothing is guessed: every candidate is listed with its date.
+# A .slx is a zip: the Hub's settings are XML inside it, so they can be read on a
+# machine with no MATLAB.  This is how the 2023.2 Hub's real parameter names were
+# found (ExportType ships as "System Generator"; there is no SubsystemName).
+#   make mc-hub-dump                              -- the example
+#   make mc-hub-dump MODEL=build/channelizer.slx  -- what our builder wrote
+#   make mc-hub-dump MODEL=... AGAINST=...        -- diff against another model
+SLX_HUB_MODEL ?= $(firstword $(wildcard build/mc_examples/*.slx) build/channelizer.slx)
+mc-hub-dump:
+	@python3 scripts/slx_hub_params.py "$(SLX_HUB_MODEL)" $(if $(AGAINST),--against "$(AGAINST)") $(if $(CHECK),--check)
+
+mc-find:
+	@./scripts/find_mc_models.sh
+
+# The exact absolute path `make mc` uses here, and whether it exists.
+mc-path:
+	@if [ -n "$(strip $(MODEL_COMPOSER_MODEL))" ]; then \
+	    echo "from MODEL_COMPOSER_MODEL: $(MODEL_COMPOSER_MODEL)"; fi; \
+	 if [ -n "$(MC_MODEL)" ]; then \
+	    echo "make mc would build: $(abspath $(MC_MODEL))"; \
+	 else \
+	    echo "make mc has no model yet. It looks for:"; \
+	    echo "  $(CURDIR)/ip/model_composer/channelizer/channelizer.slx"; \
+	    echo "(that file does not exist -- a .slx is built once in the GUI, never committed)"; fi
+
+# Fallback after a GUI compile: install the component.xml the token left next to
+# the model, then run the same artifact check the headless build runs.
+mc-verify:
+	@if [ -z "$(MC_MODEL)" ]; then \
+	    echo "mc-verify needs the model: make mc-verify MODEL_COMPOSER_MODEL=/abs/path/x.slx"; \
+	    exit 2; fi
+	@./scripts/mc_collect_ip.sh "$(MC_MODEL)" "$(IP_REPO)"
+	@$(MAKE) --no-print-directory -C ip/model_composer/channelizer verify \
+	    MODEL_COMPOSER_MODEL="$(MC_MODEL)" IP_REPO="$(IP_REPO)"
 
 graph:
 	@cat docs/build-stages.mmd
@@ -134,6 +413,7 @@ step04_hls_beam: $(STAMP_DIR)/step04_hls_beam.done
 step05_hls_repack: $(STAMP_DIR)/step05_hls_repack.done
 step05_channelizer: $(STAMP_DIR)/step05_channelizer.done
 step05_subband_bridge: $(STAMP_DIR)/step05_subband_bridge.done
+step05_hls_phase_interf: $(STAMP_DIR)/step05_hls_phase_interf.done
 step06_collect_ip: $(STAMP_DIR)/step06_collect_ip.done
 step07_vivado_project step07_create_project: $(STAMP_DIR)/step07_vivado_project.done
 step08_vivado_integrate step08_integrate: $(STAMP_DIR)/step08_vivado_integrate.done
@@ -172,6 +452,9 @@ $(STAMP_DIR)/step05_channelizer.done: $(shell find ip/matlab/channelizer_hdl ip/
 $(STAMP_DIR)/step05_subband_bridge.done: $(shell find ip/custom/doa_subband_bridge_4ch -type f 2>/dev/null) common/scripts/check_component_vlnv.sh config.mk config/ip_versions.tcl common/vivado/common.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step05_subband_bridge --stamp "$@" --log "$(LOG_DIR)/step05_subband_bridge.log" -- make --no-print-directory -C ip/custom/doa_subband_bridge_4ch all
 
+$(STAMP_DIR)/step05_hls_phase_interf.done: $(shell find ip/custom/phase_interf_4ch -type f 2>/dev/null) config.mk common/scripts/check_component_vlnv.sh scripts/run_stage.sh $(FORCE_DEP)
+	@./scripts/run_stage.sh --id step05_hls_phase_interf --stamp "$@" --log "$(LOG_DIR)/step05_hls_phase_interf.log" -- make --no-print-directory -C ip/custom/phase_interf_4ch all
+
 $(STAMP_DIR)/step06_collect_ip.done: scripts/collect_ip.sh config.mk config/ip_versions.tcl scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step06_collect_ip --stamp "$@" --log "$(LOG_DIR)/step06_collect_ip.log" -- ./scripts/collect_ip.sh
 
@@ -202,6 +485,192 @@ $(STAMP_DIR)/step14_hil_vectors.done: hil/matlab/generate_zcu208_hil_vectors.m s
 $(STAMP_DIR)/step15_package.done: scripts/package_release.sh config.mk scripts/run_stage.sh $(FORCE_DEP)
 	@./scripts/run_stage.sh --id step15_package --stamp "$@" --log "$(LOG_DIR)/step15_package.log" -- ./scripts/package_release.sh
 
+# V07 phase-interferometry checks that need no Vitis/Vivado licence: the
+# estimator Monte-Carlo, the front-end resource screen, and the bit-exact host
+# test of the production HLS core.  Deliberately not part of pipeline/all
+# (they need python3+numpy and a host C++ compiler, not the FPGA tools).
+.PHONY: verify-phase-interf
+# Optional: parse check of the MATLAB reference files with MISS_HIT (pip install
+# miss_hit).  Skips cleanly when the tool is absent, so it is not part of the
+# default gate; the same three files were checked with MISS_HIT 0.9.44 and the
+# output is stored in docs/evidence/2026-11-06-phase-interf/.
+matlab-lint:
+	@if command -v mh_lint >/dev/null 2>&1; then \
+	    mh_lint --brief matlab_v7/PhaseInterferometryEstimator.m \
+	        step0_antenna/matlab/step0_antenna_model.m \
+	        step0_antenna/matlab/step0_make_scene.m \
+	        step1_rfadc_mts/matlab/step1_capture_header.m \
+	        step2_pl_ip/matlab/step2_fixed_point_budget.m \
+	        step3_r5_doa/matlab/step3_doa_from_capture.m \
+	        step4_r5_amc/matlab/step4_classify_burst.m \
+	        step4_r5_amc/matlab/step4_build_r5.m \
+	        step5_r5_tracking/matlab/step5_ladder_costs.m \
+	        matlab_v7/phase_from_cordic_q13.m \
+	        matlab_v7/verify_phase_interferometry_2x2.m \
+	        matlab_v7/classify_modulation.m matlab_v7/amc_features.m \
+	        matlab_v7/amc_model_params.m matlab_v7/build_amc_r5.m \
+	        matlab_v7/verify_amc_vectors.m \
+	        ip/model_composer/channelizer/*.m; \
+	else \
+	    echo "SKIP matlab-lint: mh_lint (pip install miss_hit) not installed"; \
+	fi
+
+# Section 10 of V07: wideband interferometry vs 2D MUSIC, plus the manifold-rank
+# result that decides how many emitters this array can represent at all.
+# Section 11 of V07: the 2x2 spacing rule over 2-4 GHz and the estimator study
+# that decides ADOPT/REJECT for the review's frequency-domain chain.
+.PHONY: compare-estimators wideband-df multisource-df narrowband-targets decoy-df radar-decoy g7-selftest hopping-target target-clusters moving-targets feature-models modulation-clusters policy amc-port amc-export tools diagram steps scenes step0 step1 step2 step3 step4 step5 step6 step7
+compare-estimators:
+	@python3 scripts/compare_wpi_vs_music.py
+	@python3 scripts/compare_wideband_estimators.py
+	@python3 scripts/multisource_capacity.py
+	@python3 scripts/narrowband_targets.py
+	@python3 scripts/decoy_discrimination.py
+	@python3 scripts/radar_decoys.py
+	@python3 scripts/hopping_target.py
+	@python3 scripts/target_clustering.py
+	@python3 scripts/moving_targets.py
+
+wideband-df:
+	@python3 scripts/compare_wideband_estimators.py
+
+# Section 12 of V07: how many emitters the geometry can represent at all, and
+# what an eight-emitter / 2 GHz requirement does to the array and the algorithm.
+multisource-df:
+	@python3 scripts/multisource_capacity.py
+
+# Section 12.4 of V07: eight 1-50 MHz targets at different carriers on the
+# shipped 2x2 -- detection, accuracy vs bandwidth and dwell, co-channel failure.
+narrowband-targets:
+	@python3 scripts/narrowband_targets.py
+
+# Section 13 of V07: one protected 2.5 GHz emitter behind decoys -- the
+# carrier/angle/coherence/joint-ML ladder and the case that cannot be solved.
+decoy-df:
+	@python3 scripts/decoy_discrimination.py
+
+# Section 13.7 of V07: the source is a radar (transmit + receive), so the decoy
+# must hear the pulse first -- leading-edge gate, the tail, and the delay.
+radar-decoy:
+	@python3 scripts/radar_decoys.py
+
+# Gate G7 post-processing, on a synthetic capture: proves the replay path that
+# G7b will run on hardware data, without hardware. ~2 s.
+g7-selftest:
+	@python3 scripts/radar_decoys.py --selftest
+
+# Section 14 of V07: a hopping emitter in 2.7-3.5 GHz -- per-hop accuracy, the
+# alias-free range, the synthetic aperture across hops, and association.
+hopping-target:
+	@python3 scripts/hopping_target.py
+
+# Section 15 of V07: clustering emitters in the (frequency, azimuth, time) cube
+# -- label the cells, do not mask them, and what masking would cost.
+target-clusters:
+	@python3 scripts/target_clustering.py
+
+# Section 16 of V07: a MOVING emitter -- direction becomes a prediction, and
+# what carries identity when the geometry is lost.
+moving-targets:
+	@python3 scripts/moving_targets.py
+
+# Section 17 of V07: one model per feature -- continuous change gets a rate,
+# a jump gets a pattern or nothing, and a fast feature never enters the cost.
+feature-models:
+	@python3 scripts/feature_models.py
+
+# Section 18 of V07: modulation as the constant -- AMC is a MODE, so it enters
+# the cost as a voted label and never as a position key.
+modulation-clusters:
+	@python3 scripts/modulation_clustering.py
+
+# Section 19 of V07: one general policy -- an ordered ladder of indices, from
+# modulation down to a verification index, selectable with --policy.
+policy:
+	@python3 scripts/cluster_policy.py
+
+# Section 20 of V07: the modulation classifier as the R5F will link it. G8a is
+# the host check (firmware against the model); G8b/G8c need MATLAB and the board.
+amc-export:
+	@python3 scripts/amc_export.py
+
+amc-port:
+	@python3 scripts/amc_port_check.py
+
+# Which vendor tools exist on this machine, and which gate each one unlocks.
+# MATLAB=1 also starts MATLAB and lists its toolboxes (takes a licence).
+tools:
+	@bash scripts/check_tools.sh $(if $(MATLAB),--matlab,)
+
+# The diagram of record: docs/diagrams/system_block.png and .svg
+diagram:
+	@python3 scripts/draw_system.py
+
+# ---------------------------------------------------------------------------
+# The eight step folders.  `make steps` runs every test bench in order; each
+# step also has its own target, so a reader can run one thing.
+# ---------------------------------------------------------------------------
+.PHONY: steps step0 step1 step2 step3 step4 step5 step6 step7 scenes
+steps: step0 step1 step2 step3 step4 step5 step6 step7
+	@echo "all eight test benches passed"
+
+scenes:
+	@python3 step0_antenna/py/make_scenes.py
+
+step0:
+	@python3 step0_antenna/testbench/run_testbench.py
+step1:
+	@python3 step1_rfadc_mts/testbench/run_testbench.py
+step2:
+	@python3 step2_pl_ip/testbench/run_testbench.py
+step3:
+	@python3 step3_r5_doa/testbench/run_testbench.py
+step4:
+	@python3 step4_r5_amc/testbench/run_testbench.py
+step5:
+	@python3 step5_r5_tracking/testbench/run_testbench.py
+step6:
+	@python3 step6_ps_linux/testbench/run_testbench.py
+step7:
+	@python3 step7_board_bringup/testbench/run_testbench.py
+
+verify-phase-interf:
+	@python3 scripts/phase_interf_verify.py
+	@python3 scripts/estimate_wideband_dsp_resources.py
+	@python3 scripts/compare_wpi_vs_music.py
+	@python3 scripts/compare_wideband_estimators.py --quick
+	@python3 scripts/multisource_capacity.py --quick
+	@python3 scripts/narrowband_targets.py --quick
+	@python3 scripts/decoy_discrimination.py --quick
+	@python3 scripts/radar_decoys.py --selftest
+	@python3 scripts/hopping_target.py --quick
+	@python3 scripts/target_clustering.py --quick
+	@python3 scripts/moving_targets.py --quick
+	@python3 scripts/feature_models.py --quick
+	@python3 scripts/modulation_clustering.py --quick
+	@python3 scripts/cluster_policy.py --quick
+	@python3 scripts/amc_port_check.py
+	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-check
+	@$(MAKE) --no-print-directory -C ip/custom/phase_interf_4ch host-kernel-check
+
+# Every custom HLS model in this kit, in dependency-free order.  Each block is
+# the same `make -C ip/custom/<ip> all` that its numbered stage runs, so this
+# target builds exactly what step02...step05 build, without the Vivado stages.
+# Needs Vitis HLS 2023.2 (the version lock in config.mk).
+HLS_IPS = doa_covariance_4ch_v4 spectrum_power4 candidate_peak4 beam_weight_4ch \
+          rfdc_repack4 doa_subband_bridge_4ch phase_interf_4ch
+.PHONY: hls-all hls-clean
+hls-all:
+	@for ip in $(HLS_IPS); do \
+	    echo "=== HLS $$ip ==="; \
+	    $(MAKE) --no-print-directory -C ip/custom/$$ip all || exit 1; \
+	done
+
+hls-clean:
+	@for ip in $(HLS_IPS); do \
+	    $(MAKE) --no-print-directory -C ip/custom/$$ip clean || true; \
+	done
+
 # Deliberate user action only: never part of pipeline/all.
 .PHONY: publish-evidence
 publish-evidence:
@@ -210,6 +679,16 @@ publish-evidence:
 .PHONY: publish-debug-logs
 publish-debug-logs:
 	@CHANNELIZER_FLOW="$(CHANNELIZER_FLOW)" BUILD="$(BUILD)" bash scripts/publish_debug_logs.sh
+
+# Commit AND push the current build/logs + build/output allowlist without the
+# interactive prompt, so gated runs can end with one command.  Review the staged
+# snapshot first: the script prints `git diff --cached --stat` before committing,
+# and stage logs can contain hostnames and local paths.
+.PHONY: push-gate-logs
+push-gate-logs:
+	@EVIDENCE_YES=1 EVIDENCE_PUSH=1 \
+	    CHANNELIZER_FLOW="$(CHANNELIZER_FLOW)" BUILD="$(BUILD)" IP_REPO="$(IP_REPO)" \
+	    bash scripts/publish_debug_logs.sh
 
 # Run one stage, then snapshot its logs even if the stage fails. The snapshot
 # is committed locally; use GitHub Desktop's Push origin on machines without

@@ -1,0 +1,57 @@
+V07 PHASE-INTERFEROMETRY REFERENCE CHECK
+generated      : 2026-11-06T16:31:58Z
+model          : 4 coherent channels, Fs=2.000 GS/s, N_fft=16384, F_C=3.000 GHz, bin=122.070 kHz
+trials per row : 150
+estimators     : coherent_wpi, single_bin, slope_ideal (oracle unwrap),
+                 slope_naive (external review code)
+SNR convention : PER-BIN SNR (one 122.07 kHz bin), flat noise density
+                 across the 2 GHz captured band
+
+CASE 1  NARROWBAND 50 MHz emitter at 3.500 GHz, d = 25 mm, 20 dB/bin
+        (~410 occupied bins; matlab_v7 Source.BandwidthHz = 50e6)
+estimator        RMSE [deg]     median        max
+coherent_wpi          0.222      0.169        0.6
+single_bin            1.776      1.459        4.2
+slope_ideal         101.417     48.330      180.0
+slope_naive         120.026     67.824      180.0
+
+CASE 2  WIDEBAND 2.0 GHz emitter (fills the captured band), d = 25 mm, 20 dB/bin
+estimator        RMSE [deg]     median        max
+coherent_wpi          0.036      0.032        0.1
+slope_ideal           0.206      0.165        0.5
+slope_naive         177.722    180.000      180.0
+
+CASE 3  per-bin SNR sweep, NARROWBAND 50 MHz at 3.500 GHz, d = 25 mm, RMSE [deg]
+   dB/bin   coherent_wpi     single_bin    slope_ideal
+     10.0          0.764          6.258        174.779
+     15.0          0.418          3.429        148.522
+     20.0          0.232          1.884        107.263
+     25.0          0.130          1.015         55.910
+
+CASE 4  GEOMETRY: 50 mm spacing at the 3.750 GHz band edge, az = 55 deg, BW = 50 MHz
+        unambiguous requires |sin(theta)| <= c/(2*f*d):  0.799 at 3.75 GHz, d = 50 mm
+                                                          1.599 at 3.75 GHz, d = 25 mm
+estimator          RMSE d=50 mm     RMSE d=25 mm
+coherent_wpi            106.249            0.268
+slope_ideal              96.157          115.579
+
+CASE 5  CALIBRATION residual (coherent_wpi, narrowband, 20 dB/bin, d = 25 mm)
+residual (CH2/CH3, opposite signs)   RMSE [deg]
+none                                      0.210
+0.2 dB / 1.0 deg                          0.825
+0.5 dB / 3.0 deg                          2.398
+
+CASE 6  SNAPSHOT averaging, coherent_wpi, narrowband 50 MHz, 10 dB/bin, d = 25 mm
+ snapshots     RMSE [deg]
+         1          0.671
+         8          0.240
+        64          0.091
+
+VERDICTS
+  [PASS] narrowband 50 MHz: coherent bin-summed WPI = 0.222 deg (0.5 deg target)
+  [PASS] narrowband 50 MHz: even with oracle unwrap the slope fit is 457x worse (101.42 deg); theory predicts sqrt(12)*f_c/B = 242x
+  [PASS] wideband 2 GHz: slope fit 0.206 deg is 5.8x WORSE than coherent WPI 0.036 deg; theory predicts sqrt(12)*f_c/B = 6.1x, so the 2 GHz bandwidth never becomes a lever arm for a known carrier
+  [PASS] wideband 2 GHz: the review's literal unwrap+polyfit gives 177.7 deg where the estimator is worth 0.206 deg -> naive unwrap is not deployable
+  [PASS] 50 mm at 3.75 GHz, az 55 deg: 106.2 deg (ambiguous) vs 0.268 deg at 25 mm
+
+RESULT=PASS

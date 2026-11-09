@@ -6,6 +6,23 @@ PROJECT_NAME ?= doa_v7_zcu208
 VIVADO ?= vivado
 VITIS_HLS ?= vitis_hls
 MATLAB ?= matlab
+# Two MATLABs are normal on a machine that also has Model Composer.  The
+# command-line one (MATLAB, default 'matlab') runs the codegen, the HIL vectors
+# and the preflight; Model Composer 2023.2 needs the release it shipped with
+# (R2022b) and its own launcher.  Set both absolutely in config.local.mk or on
+# the command line; only `step05_channelizer CHANNELIZER_FLOW=model_composer`
+# reads them.
+#
+#   make step05_channelizer CHANNELIZER_FLOW=model_composer \
+#        MODEL_COMPOSER=/path/Model_Composer/2023.2/bin/model_composer \
+#        MODEL_COMPOSER_MODEL=/abs/path/channelizer.slx
+# This workstation (the ZCU208 host), as measured by `make tools` on 2026-11-07:
+# MATLAB R2024a is the `matlab` on PATH; R2022b is installed next to Model
+# Composer and has no symlink, so it is named by its absolute path.  Model
+# Composer 2023.2 only runs with R2022b.  Override either in config.local.mk
+# (plain `=` there) or on the command line.
+MATLAB_2022B   ?= /media/joshua/Linux/Programs/R2022b/bin/matlab
+MODEL_COMPOSER ?= /media/joshua/Linux/Programs/X20232/Model_Composer/2023.2/bin/model_composer
 JOBS ?= 8
 
 BUILD ?= $(CURDIR)/build
@@ -22,6 +39,9 @@ EXPECTED_MATLAB_RELEASE ?= R2024a
 # Set to 1 only for a tool-presence smoke test on a machine without Vivado;
 # a production step00 must run the catalog proof.
 SKIP_IP_CATALOG_CHECK ?= 0
+# 1 turns the missing MTS base project (stage V03) from a preflight failure into a
+# warning, so steps 02-06 can be built before that base exists.
+PREFLIGHT_ALLOW_MISSING_BASE ?= 0
 
 # Base design: Xilinx RFSoC-MTS (boards/ZCU208, standard MTS), pinned in
 # config/upstream_repositories.tsv.  It was generated with Vivado 2022.1.2
@@ -42,6 +62,7 @@ IPVER_BEAM ?= 2.1
 IPVER_RFDC_REPACK4 ?= 1.0
 IPVER_CHANNELIZER ?= 7.0
 IPVER_SUBBAND_BRIDGE ?= 1.0
+IPVER_PHASE_INTERF ?= 1.0
 
 # --- OPFB Plan-B IP lock -------------------------------------------------------
 # Exact custom-IP VLNVs used by the pinned RFSoC_OPFB bd/opfb_streaming.tcl
@@ -99,6 +120,19 @@ CHANNELIZER_NORMALIZE ?= 0
 CHANNELIZER_FILTER_STRUCTURE ?= transposed
 CHANNELIZER_BIN_SPACING_HZ ?= 1953125
 DOA_CLOCK_HZ ?= 125000000
+# V07 phase-interferometry contract (V07_PHASE_INTERFEROMETRY.md).  The DOA
+# angles are estimated from per-bin cross-spectra, not from a frame covariance
+# alone.  Array geometry is set by the wrap-free rule for a SQUARE 2x2 in a cone
+# of half-angle ARRAY_CONE_HALF_ANGLE_DEG at the top of the band:
+#     d * sqrt(2) * sin(theta) <= lambda_min / 2
+#     => d <= c / (2*sqrt(2)*f_high*sin(theta)) = 32.3 mm at 4.0 GHz, 55 deg.
+# 30 mm is the widest round spacing inside that rule (62 deg of cone at 4 GHz);
+# the review's 50 mm needs 32 deg and is rejected, and 25 mm is kept as the
+# fallback for a +/-90 deg field.  Measured in
+# docs/evidence/2026-11-06-phase-interf/wideband_df_check.txt (V07 section 11).
+ARRAY_AXIS_SPACING_M ?= 0.030
+ARRAY_CONE_HALF_ANGLE_DEG ?= 55
+PHASE_INTERF_FRAME_SAMPLES ?= 4096
 
 # matlab_hdl, model_composer, opfb, or external. MATLAB HDL transposed is
 # the selected Plan-A core, but step05 packaging remains guarded until its
@@ -137,11 +171,18 @@ ADC_STREAM_BITS ?= 512
 V7_MATLAB_ROOT ?= $(CURDIR)/matlab_v7
 HIL_OUTPUT_DIR ?= $(BUILD)/hil_vectors
 
+# Per-machine overrides: tool paths, licences, the base project.  Not tracked
+# (see .gitignore), so every machine keeps its own.  Example:
+#   MATLAB_2022B   ?= /opt/MATLAB/R2022b/bin/matlab
+#   MODEL_COMPOSER ?= /opt/Model_Composer/2023.2/bin/model_composer
+#   BASE_XPR       ?= /data/vivado/mts/mts.xpr
+-include $(CURDIR)/config.local.mk
+
 export PART BOARD_PART PROJECT_NAME VIVADO VITIS_HLS MATLAB JOBS
 export BUILD UPSTREAM IP_REPO RELEASE_DIR EXPECTED_VIVADO_VERSION EXPECTED_MATLAB_RELEASE
-export SKIP_IP_CATALOG_CHECK BASE_KIND CUSTOM_IP_VENDOR CUSTOM_IP_LIBRARY
+export SKIP_IP_CATALOG_CHECK PREFLIGHT_ALLOW_MISSING_BASE BASE_KIND CUSTOM_IP_VENDOR CUSTOM_IP_LIBRARY
 export IPVER_COVARIANCE IPVER_SPECTRUM IPVER_CANDIDATE IPVER_BEAM IPVER_CHANNELIZER
-export IPVER_RFDC_REPACK4 IPVER_SUBBAND_BRIDGE
+export IPVER_RFDC_REPACK4 IPVER_SUBBAND_BRIDGE IPVER_PHASE_INTERF
 export OPFB_VLNV_ADC_TO_OPFB OPFB_VLNV_OPFB_FIR_CFG OPFB_VLNV_FIR_TO_FFT
 export OPFB_VLNV_SSRFFT OPFB_VLNV_PKG_FFT_OUTPUT OPFB_VLNV_CAPTURE_UPSIZER
 export OPFB_VLNV_FILTER_IQ OPFB_VLNV_FILTER_PHASE OPFB_VLNV_PAIR_IQ
@@ -152,7 +193,9 @@ export RFDC_PL_CLOCK_HZ COMPLEX_SAMPLE_RATE_HZ WIDEBAND_FABRIC_CLOCK_HZ WIDEBAND
 export WIDEBAND_SAMPLES_PER_CLOCK CHANNELIZER_NUM_BANDS
 export CHANNELIZER_TAPS_PER_BAND CHANNELIZER_STOPBAND_DB CHANNELIZER_NORMALIZE
 export CHANNELIZER_FILTER_STRUCTURE CHANNELIZER_BIN_SPACING_HZ DOA_CLOCK_HZ
+export ARRAY_AXIS_SPACING_M ARRAY_CONE_HALF_ANGLE_DEG PHASE_INTERF_FRAME_SAMPLES
 export CHANNELIZER_FLOW MODEL_COMPOSER_MODEL EXTERNAL_CHANNELIZER_IP
+export MODEL_COMPOSER MATLAB_2022B
 export FETCH_SET FETCH_RETRIES FETCH_TIMEOUT_SECONDS
 export BASE_XPR BASE_BD ZCU208_BD_MAP INTEGRATION_MODE WORK_XPR PL_CLOCK_PERIOD_NS FRAME_SAMPLES ADC_STREAM_BITS
 export V7_MATLAB_ROOT HIL_OUTPUT_DIR

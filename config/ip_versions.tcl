@@ -56,6 +56,7 @@ set ::IPVER_BEAM        [::doa_versions::env_or IPVER_BEAM        "2.1"]
 set ::IPVER_RFDC_REPACK4   [::doa_versions::env_or IPVER_RFDC_REPACK4   "1.0"]
 set ::IPVER_CHANNELIZER    [::doa_versions::env_or IPVER_CHANNELIZER    "7.0"]
 set ::IPVER_SUBBAND_BRIDGE [::doa_versions::env_or IPVER_SUBBAND_BRIDGE "1.0"]
+set ::IPVER_PHASE_INTERF   [::doa_versions::env_or IPVER_PHASE_INTERF   "1.0"]
 
 # --- AMD catalog IP for Vivado 2023.2 -----------------------------------------
 # Key naming: short role name used by doa_pinned_ip / doa_create_pinned_ip.
@@ -105,6 +106,8 @@ set ::IPVLNV(beam)       "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:beam_weight_4
 set ::IPVLNV(rfdc_repack4)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:rfdc_repack4:$::IPVER_RFDC_REPACK4"
 set ::IPVLNV(channelizer)    "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:matlab_channelizer:$::IPVER_CHANNELIZER"
 set ::IPVLNV(subband_bridge) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_subband_bridge_4ch:$::IPVER_SUBBAND_BRIDGE"
+# V07 per-bin phase interferometer (cross-spectrum + CORDIC phase):
+set ::IPVLNV(phase_interf)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:phase_interf_4ch:$::IPVER_PHASE_INTERF"
 
 # Keys that must exist in the *installed AMD catalog* at step00 (custom IP is
 # verified later, at step06/step08, after build/ip_repo is on the IP path).
@@ -117,7 +120,7 @@ set ::IP_CATALOG_KEYS {
     axis_switch fir_compiler util_ds_buf xpm_cdc_gen xlconcat xlconstant
     xlslice util_reduced_logic util_vector_logic ila vio
 }
-set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam rfdc_repack4 channelizer subband_bridge}
+set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam rfdc_repack4 channelizer subband_bridge phase_interf}
 
 # -----------------------------------------------------------------------------
 # Procedures.  They call Vivado-only commands (version, get_ipdefs,
