@@ -3,6 +3,9 @@
 For the Vivado host that ran the twenty stages. Everything below names a path that
 exists after `make pipeline`, or a GUI click in the tool that produced it.
 
+The full click-by-click version — which window, which pane, which button, which setting, for
+Vitis HLS, Vivado, MATLAB/HDL Coder and Vitis — is `docs/BLOCK_GUIDE.md` **Part 6**.
+
 ---
 
 ## 1. What each stage produced

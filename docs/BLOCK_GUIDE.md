@@ -17,6 +17,11 @@ Five system figures and twenty-three block figures go with it, all regenerated b
 | ![RPU](diagrams/blocks/rpu.png) | the RPU: the ladder, AMC and tracking as separate pictures | [Part 5.4](#54-the-rpu--four-pictures) |
 | ![APU](diagrams/blocks/apu.png) | the APU/Linux supervisor, and the host benches behind every gate | [Part 5.5](#55-the-apu--linux-side-step6_ps_linux) |
 
+**Part 6** is the other half of the same question and has no figure: it is the IDE walkthrough —
+which window opens which project, which pane or button generates and packages the IP, which pane
+runs a test bench, and what every setting must say in **Vitis HLS, Vivado, MATLAB/HDL Coder and
+Vitis** ([Part 6](#part-6--the-ides-click-by-click)).
+
 Measured on the ZCU208 host, 2026-11-08/09: **20/20 stages PASS**, CLB LUTs 48.48 %,
 Block RAM 71.62 % (tightest resource), DSPs 36.12 %, post-route **WNS +0.164 ns**.
 
@@ -118,7 +123,7 @@ Gates are marked on the figure; their state is Part 4.
   interleaving samples, which pushes an un-interleave into every consumer
   (`V05_RFDC_REPACK4_SPEC.md` §2).
 - **source:** `ip/custom/rfdc_repack4/src/rfdc_repack4.cpp`, interface in `…hpp`.
-- **build:** `make step05_hls_repack` → csim → csynth at 4.0 ns → IP Catalog export.
+- **build:** `make step05_hls_repack` → csim → csynth at 4.0 ns (`WIDEBAND_CLOCK_PERIOD_NS`, because it runs at 250 MHz) → IP Catalog export.
 - **IDE:** `vitis_hls -p ip/custom/rfdc_repack4/rfdc_repack4_hls` → `solution1` → C SIMULATION.
 - **test bench:** `ip/custom/rfdc_repack4/tb/rfdc_repack4_tb.cpp` — bit-exact packing, I/Q
   pairing and sample order; synthesis only runs if the csim match is exact.
@@ -341,7 +346,7 @@ bash step7_board_bringup/checklist.sh     # what needs the board, in order
 
 | tool | what it does here | folders |
 |---|---|---|
-| Vitis HLS 2023.2 | csim, csynth at 4.000 ns, IP Catalog export | `ip/custom/*` (six kernels) |
+| Vitis HLS 2023.2 | csim, csynth, IP Catalog export — 7.8125 ns (`PL_CLOCK_PERIOD_NS`) for covariance / spectrum / candidate / beam, 4.0 ns (`WIDEBAND_CLOCK_PERIOD_NS`) for repack4 and phase_interf | `ip/custom/*` (six kernels) |
 | MATLAB R2024a | HDL Coder for the channelizer; HIL vectors | `ip/matlab/channelizer_hdl`, `hil/matlab` |
 | MATLAB R2022b via Model Composer | the alternative channelizer route (`CHANNELIZER_FLOW=model_composer`), unfinished | `ip/model_composer/channelizer` |
 | Vivado 2023.2 | base project, BD integration, synthesis, implementation, bitstream, XSA | `common/vivado/` |
@@ -416,7 +421,7 @@ the script so it cannot drift away from the pictures:
 | `host` | 4. step3/4/5 -> G7a/G8a | doa_core.c is the R5F estimator, compiled on the host for G7a; amc.c is the exported classifier, checked by amc_port_check.py for G8a; ladder.py is the association and the decoy check, reused by step6 as the referee |
 | `mts_base` | 3. copy | removes the destination, then copies the pinned tree; the two patches are applied in place afterwards; build_mts_base.sh refuses this path unless MTS_BASE_FORCE=1 |
 | `mts_base` | 5. patch 2 | the MTS BD ships impl_1 set to a default strategy; the patch pins Performance_ExtraTimingOpt so every run is comparable; any other strategy silently changes the WNS in the final report |
-| `ip_flow` | 1. csim | run_csim.tcl per kernel against the vectors in tb/; a failing csim stops the flow before any packaging; the bridge uses its SystemVerilog bench instead of C simulation |
+| `ip_flow` | 1. csim | csim_design inside build_hls.tcl, against tb/ vectors; a failing csim stops the flow before any packaging; the bridge uses its SystemVerilog bench instead of C simulation |
 | `ip_flow` | 4. collect_ip.sh | one directory per IP under build/ip_repo, never a merged blob; each VLNV is compared with config/ip_versions.tcl before it is listed; ip_manifest.tsv is what step06 and step07 read |
 
 Three of those panels draw their sub-blocks as **boxes**, because the inside really is a
@@ -822,7 +827,8 @@ Nothing in these pictures is inferred from a block name. The ports and widths co
 - **In:** `ip/custom/*/src` (five HLS kernels), `ip/custom/rfdc_repack4` and
   `ip/custom/doa_subband_bridge_4ch` (two hand-written RTL blocks), and
   `ip/matlab/channelizer_hdl` (HDL Coder output).
-- **Inside, in order:** csim (`vitis_hls -f run_csim.tcl`) → csynth at 4.000 ns out of context
+- **Inside, in order:** csim (`csim_design`, called by `build_hls.tcl`) → csynth out of context at 7.8125 ns for the four DOA
+  kernels and 4.0 ns for `rfdc_repack4` and `phase_interf_4ch`
   → `export_design -format ip_catalog` → `collect_ip.sh` (checks every VLNV, writes
   `ip_manifest.tsv` into `build/ip_repo`) → `check_ip_component.py` → `doa_create_pinned_ip`
   in the BD.
@@ -877,3 +883,572 @@ INSIDE = {
 *Figures: five system-level (`make diagram`, Part 1–2) and twenty-three block-level
 (`scripts/draw_block_details.py`, this part). Sources and renders live under
 `docs/diagrams/`; nothing in them was produced by a vendor tool in this sandbox.*
+
+---
+
+# Part 6 — the IDEs, click by click
+
+Parts 1–5 describe what is built. This part is about the four windows you build it in:
+**Vitis HLS**, **Vivado**, **MATLAB with HDL Coder**, and **Vitis** — where the project is,
+what is inside it, which pane or button does the job, what the settings must say, how to run
+the test bench, and how the IP is generated and packaged.
+
+Two rules before anything else.
+
+1. **The scripts are the authority.** Every GUI action below has a command-line equivalent
+   that the repository actually runs; where the two could disagree, the script wins and the
+   GUI is the way to look at the result. The equivalents are tabulated in 6.7.
+2. **Nothing here was executed in this sandbox.** No Vivado, Vitis HLS, Vitis or MATLAB is
+   installed where this text was written. What is verified is the repository: paths,
+   project names, parts, periods, VLNVs, report names — all of them are read out of the
+   files named in each section.
+
+## 6.0 The five windows
+
+| tool | version this design is pinned to | what you open | how (from the repo root) |
+|---|---|---|---|
+| Vitis HLS | 2023.2 | one project per HLS kernel | `vitis_hls -p ip/custom/<kernel>/<project>` |
+| Vivado | 2023.2 | the built design, and the RTL IP packager | `vivado build/vivado/doa_v7_zcu208/doa_v7_zcu208.xpr &` |
+| MATLAB + HDL Coder | R2024a (R2022b only for Model Composer) | the channelizer model and its Workflow Advisor | `matlab -sd ip/matlab/channelizer_hdl` |
+| Vitis | 2023.2 | platform + applications for the PS | `vitis -w build/vitis_ws &` (after the XSA exists) |
+| a terminal | — | the eight host benches, which need no IDE at all | `make steps` |
+
+All commands in this part start from:
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+```
+
+## 6.1 The settings that must match, and where they come from
+
+Every number below is set once, in a file, and then inherited by the tools. If a GUI dialog
+shows a different value, the GUI is wrong.
+
+| setting | value | where it lives | where you see it in the GUI |
+|---|---|---|---|
+| part | `xczu48dr-fsvg1517-2-e` | `config.mk` → `PART` | Vitis HLS: Project Settings → Synthesis → Part. Vivado: Project Settings → General → Project device |
+| board part | `xilinx.com:zcu208:part0:2.0` | `config.mk` → `BOARD_PART` | Vivado: Project Settings → General (only used for the MTS base) |
+| HLS clock (DOA kernels) | **7.8125 ns** = 128 MHz | `config.mk` → `PL_CLOCK_PERIOD_NS` | Vitis HLS: Project Settings → Synthesis → Clock Period |
+| HLS clock (wideband) | **4.000 ns** = 250 MHz | `config.mk` → `WIDEBAND_CLOCK_PERIOD_NS` | same field, only for `rfdc_repack4` and `phase_interf_4ch` |
+| HLS flow target | Vivado IP | `config_export -format ip_catalog` | Vitis HLS: Project Settings → Synthesis → Flow Target |
+| IP vendor / library | `openai` / `doa` | `config.mk` → `CUSTOM_IP_VENDOR`, `CUSTOM_IP_LIBRARY` | Vitis HLS: Export RTL dialog → Vendor / Library |
+| IP versions | 7.1 covariance · 2.0 spectrum · 1.0 candidate · 2.1 beam · 1.0 repack4 · 7.0 channelizer · 1.0 bridge · 1.0 phase_interf | `config.mk` → `IPVER_*` | Export RTL dialog → Version |
+| RTL language | Verilog | `config_export -rtl verilog` | Export RTL dialog → (fixed by `config_export`) |
+| Vivado target language | Verilog | `common/vivado/*.tcl` | Vivado: Project Settings → General → Target language |
+| implementation strategy | `Performance_ExtraTimingOpt` | `common/vivado/11_impl.tcl` sets it if it differs (V03 records the choice) | Vivado: Design Runs → impl_1 → Edit Strategy |
+| Vivado version | 2023.2 | `config.mk` → `EXPECTED_VIVADO_VERSION` | Vivado: Help → About |
+| MATLAB release | R2024a | `config.mk` → `EXPECTED_MATLAB_RELEASE` | MATLAB: `version` |
+| Model Composer MATLAB | R2022b at `/media/joshua/Linux/Programs/R2022b/bin/matlab` | `config.mk` → `MATLAB_2022B` | see `docs/TWO_MATLABS.md` |
+
+The pinned VLNVs are the contract between all four tools: `openai:doa:<name>:<version>`. A
+project that exports `openai:doa:covariance:7.0` instead of `doa_covariance_4ch_v4:7.1` will
+package cleanly and then fail at stage 06 with the directory and the expected value named.
+
+## 6.2 Vitis HLS — one project per kernel
+
+### 6.2.1 Open it
+
+Six HLS kernels, six project folders (the folder names are not uniform — that is the first
+thing to know):
+
+| kernel | project folder | top function | export version |
+|---|---|---|---|
+| `doa_covariance_4ch_v4` | `ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj` | `doa_covariance_4ch_v4` | 7.1 |
+| `spectrum_power4` | `ip/custom/spectrum_power4/spectrum_power4_hls` | `spectrum_power4` | 2.0 |
+| `candidate_peak4` | `ip/custom/candidate_peak4/candidate_peak4_hls` | `candidate_peak4` | 1.0 |
+| `beam_weight_4ch` | `ip/custom/beam_weight_4ch/beam_weight_4ch_hls` | `beam_weight_4ch` | 2.1 |
+| `rfdc_repack4` | `ip/custom/rfdc_repack4/rfdc_repack4_hls` | `rfdc_repack4` | 1.0 |
+| `phase_interf_4ch` | `ip/custom/phase_interf_4ch/phase_interf_4ch_prj` | `phase_interf_4ch` | 1.0 |
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+vitis_hls -p ip/custom/doa_covariance_4ch_v4/doa_covariance_4ch_v4_prj      # open an existing project
+```
+
+The project only exists after a build. To create or re-create one exactly as the scripts do it
+(the Tcl uses paths relative to the kernel folder, so `cd` first):
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/custom/spectrum_power4
+vitis_hls -f build_hls.tcl          # opens the GUI project, runs csim, csynth, export
+```
+
+`build_hls.tcl` reads `PART`, `PL_CLOCK_PERIOD_NS` (or `WIDEBAND_CLOCK_PERIOD_NS`), `CUSTOM_IP_VENDOR`,
+`CUSTOM_IP_LIBRARY` and `IPVER_*` from the environment, which the top `Makefile` exports. From a
+bare shell, export them first or run `make -C ip/custom/spectrum_power4 all` and open the result.
+
+### 6.2.2 What is in the project folder
+
+```
+ip/custom/spectrum_power4/
+├── src/spectrum_power4.cpp          the kernel: top function + pragmas
+├── src/spectrum_power4.hpp          the axis typedefs and the signature
+├── tb/spectrum_power4_tb.cpp        the C test bench (csim runs this)
+├── build_hls.tcl                    the project recipe: part, clock, export settings
+├── Makefile                         all / hls / install / clean
+└── spectrum_power4_hls/             created by vitis_hls — safe to delete
+    ├── solution1/
+    │   ├── csim/build/              the compiled C test bench and its output
+    │   ├── syn/report/              *_csynth.rpt, *.xml — timing estimate and utilisation
+    │   ├── syn/verilog/             the generated RTL
+    │   └── impl/ip/                 component.xml + <name>.zip — the packaged IP
+    └── vitis_hls.log
+```
+
+`spectrum_power4_hls/` is git-ignored (`**/*_hls/`, `**/*_prj/`); the packaged copy under
+`build/ip_repo/` is what the block design consumes.
+
+### 6.2.3 The window: which pane does what
+
+| area | what it is | what you do there |
+|---|---|---|
+| Explorer (left) | `Project Settings`, `Source`, `Test Bench`, `Constraints`, `solution1` | double-click any file to edit; `solution1` holds `csim/`, `syn/`, `impl/` and the reports |
+| toolbar (top) | **C SIMULATION**, **C SYNTHESIS**, **C/RTL COSIMULATION**, **EXPORT RTL**, **PACKAGE** | the four actions of 6.2.5 – 6.2.8 |
+| console (bottom) | the tool log | the last lines are the verdict: `INFO: [SIM 211-1] CSim done with 0 errors`, `INFO: [HLS 200-111] Finished ...` |
+| Analysis perspective | Schedule Viewer, Dataflow Viewer, Module Hierarchy | *after* csynth: why a loop has II>1, and where the cycles go |
+
+`Window → Perspective → Analysis` (or the **Analysis** button in the toolbar) switches to the
+schedule/dataflow viewers. They are the only place the II and the loop latency are shown
+per loop rather than averaged.
+
+### 6.2.4 Project Settings — the two tabs that matter
+
+`Project → Project Settings` (or the gear icon):
+
+| tab | field | value here |
+|---|---|---|
+| Synthesis | Top Function | the kernel name, e.g. `spectrum_power4` |
+| Synthesis | Part | `xczu48dr-fsvg1517-2-e` |
+| Synthesis | Clock Period (ns) | **7.8125** for covariance / spectrum / candidate / beam; **4.0** for `rfdc_repack4` and `phase_interf_4ch` |
+| Synthesis | Flow Target | `Vivado IP` (this is what makes Export RTL produce a `component.xml`) |
+| Simulation | Test Bench File | `tb/<kernel>_tb.cpp` |
+| Simulation | C Simulation Arguments | empty in this project |
+
+If you change the clock period here, change `config.mk` too — otherwise the next `make`
+exports a different IP than the project you just tested.
+
+### 6.2.5 Run the test bench (C simulation)
+
+Toolbar **C SIMULATION**, or `Project → Run C Simulation`:
+
+- **Test Bench File**: `tb/<kernel>_tb.cpp` — already set.
+- **C Simulation Arguments**: empty.
+- **Enable Clean Build**: tick it after changing `#pragma`s; the incremental build can hide a
+  removed file.
+- **OK** → the console prints the test bench's own lines and ends with `CSim done with 0 errors`.
+
+What each bench proves is in Part 2 (one line per kernel). A failing csim is the only failure
+that stops the pipeline: `build_hls.tcl` calls `csim_design` before `csynth_design`, so a
+kernel with a broken bench is never synthesised, never exported, never packaged.
+
+### 6.2.6 Synthesise
+
+Toolbar **C SYNTHESIS**, or `Solution → Run C Synthesis → Active Solution`.
+
+Read, in this order:
+
+1. **Console tail** — `Finished C synthesis`. Warnings worth reading: `Cannot ... schedule` (II
+   could not be met) and any `ap_ctrl`/interface warning.
+2. `solution1/syn/report/<top>_csynth.rpt` — *Performance Estimates* (target period vs estimated
+   period, II per loop), *Utilisation Estimates* (LUT/FF/DSP/BRAM), *Interface* (which ports
+   became AXI4-Stream and which became `s_axilite`).
+3. The **Analysis** perspective for any loop that did not reach II=1.
+
+`#pragma HLS INTERFACE ap_ctrl_none port=return` appears in four kernels — `spectrum_power4`,
+`candidate_peak4`, `beam_weight_4ch` and `rfdc_repack4` — deliberately: they are free-running
+pipes at one beat per clock, and `beam_weight_4ch`'s comment records why v2.0's `s_axilite
+port=return` (i.e. `ap_ctrl_hs`) was removed. `doa_covariance_4ch_v4` and `phase_interf_4ch`
+keep `ap_ctrl_hs`: their `ap_start`/`ap_done` is how the PS triggers one integration frame.
+
+### 6.2.7 Export the IP
+
+Toolbar **EXPORT RTL**, or `Solution → Export RTL`. In the dialog:
+
+| field | value |
+|---|---|
+| Format | **Vivado IP** (a `component.xml` plus a zip) |
+| Output Location | leave `solution1/impl` |
+| IP name / Library / Vendor / Version / Display Name | exactly what `config_export` in `build_hls.tcl` already set — do not retype them, and never let the dialog invent a version |
+| Evaluate generated RTL | optional; it runs Vivado on the exported RTL and adds minutes |
+
+Result in the Explorer: `solution1 → impl → ip` with `component.xml`, the zip, and `hdl/`.
+A refused export almost always means the same three things: no `set_part`, no
+`create_clock`, or the part is not the one `config/ip_versions.tcl` pins.
+
+### 6.2.8 Package it into the repository (the step the GUI does not do for you)
+
+Export produces an IP; *packaging* means proving its VLNV and copying it where the block
+design looks. The scripts do both:
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+make -C ip/custom/spectrum_power4 install        # check_component_vlnv.sh + copy to build/ip_repo/spectrum_power4
+make step06_collect_ip                           # re-check every VLNV, write build/ip_repo/ip_manifest.tsv
+```
+
+`install` fails before it copies anything if `component.xml` says a different VLNV than
+`config.mk` pins. That is on purpose: a stale export is the single most common way to build a
+design that does not match its documentation. In the GUI the same check is
+`vitis_hls -p ...` → look at `component.xml` by hand, or run `scripts/check_ip_component.py <path>`.
+
+### 6.2.9 Co-simulation (optional)
+
+Toolbar **C/RTL COSIMULATION**. It runs the exported RTL against the C test bench in Vivado's
+xsim. It is not part of the pipeline here (the RTL-vs-model equivalence check is done by
+`make ip-equivalence` for the channelizer and by the Verilog bench for the bridge), but it is
+the fastest way to see a handshake problem the C model cannot show.
+
+## 6.3 Vivado — the design, and the two hand-written RTL blocks
+
+### 6.3.1 Open the project
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+vivado build/vivado/doa_v7_zcu208/doa_v7_zcu208.xpr &
+```
+
+The project exists after stage 07 (`make step07_vivado_project`). It is a *copy* of the MTS
+base — `BASE_XPR` was `mts/mts.xpr` — with the `/doa_v7` hierarchy added by stage 08.
+
+The **Flow Navigator** (left edge) is the map of everything you can do:
+
+| section | what it is for here |
+|---|---|
+| **Project Manager** → Project Settings / Add Sources / IP Catalog | part, target language, IP repository paths, and the pinned catalog |
+| **IP Integrator** → Open Block Design | `/mts` design: the RFDC, the clock tree, `/doa_v7`, the six AXI-Lite slaves |
+| **RTL Analysis** → Open Elaborated Design | the netlist before synthesis; useful for finding a mis-wired port |
+| **Synthesis** → Run Synthesis | stage 10; writes `post_synth_utilization.rpt` |
+| **Implementation** → Run Implementation | stage 11; writes `post_route_utilization.rpt` and `post_route_timing.rpt` |
+| **Program and Debug** → Generate Bitstream | stage 12; writes `doa_v7_zcu208.bit` |
+| **Program and Debug** → Hardware Manager | program the board, and the only place a real measurement starts |
+
+File → Export → Export Hardware (`doa_v7_zcu208.xsa`, tick *Include bitstream*) is stage 13 and
+is what Vitis opens as a platform.
+
+### 6.3.2 What is in the project folder
+
+```
+build/vivado/doa_v7_zcu208/
+├── doa_v7_zcu208.xpr          project; the only file you open
+├── doa_v7_zcu208.srcs/        sources, constraints, the BD tcl, IP
+├── doa_v7_zcu208.gen/         generated IP and the BD wrapper
+├── doa_v7_zcu208.cache/       synthesis cache — safe to delete, slow to rebuild
+└── doa_v7_zcu208.runs/        synth_1/ and impl_1/, each with its own reports and DCP
+```
+
+`build/` is git-ignored in full. The reports that matter are copied out to
+`build/output/` (and from there into `docs/evidence/`) precisely because the project folder is
+disposable.
+
+### 6.3.3 The three settings to check with your own eyes
+
+`Project Settings` → **General**: device `xczu48dr-fsvg1517-2-e`, target language `Verilog`.
+`Project Settings` → **IP** → *Repository*: `build/ip_repo` must be listed, and it must be the
+same directory `collect_ip.sh` wrote. `Design Runs` → `impl_1` → *Edit Strategy*:
+`Performance_ExtraTimingOpt`. You do not have to set it: stage 11 does. `common/vivado/11_impl.tcl`
+reads the current strategy, prints `Setting impl_1 strategy to Performance_ExtraTimingOpt (was …)`
+if it differs, resets `impl_1` and relaunches. If a GUI run says `Default`, that run is not
+comparable with the timing report in `docs/evidence/` — re-run `make step11_impl`.
+
+### 6.3.4 The reports, and where they are
+
+| report | GUI | file |
+|---|---|---|
+| utilisation | `Reports → Report Utilisation` (open implemented design first) | `post_route_utilization.rpt`, `..._hierarchical.rpt` |
+| timing | `Reports → Report Timing Summary` | `post_route_timing.rpt` |
+| DRC | `Reports → Report DRC` | `build/output/` after stage 09 |
+| clocks | `Reports → Report Clock Networks` | `synth_1/…/clockUtilization.rpt` |
+
+`make fit` reads exactly these files and refuses to print a number it cannot find: it returns
+NOT-MEASURED rather than an assumption.
+
+### 6.3.5 Package a hand-written RTL block as IP (the bridge)
+
+`doa_subband_bridge_4ch` is the one IP in the design that never passes through Vitis HLS or
+MATLAB: plain Verilog, packaged by the **Vivado IP packager**. (`rfdc_repack4` is also hand-written
+RTL, but it is wrapped as an HLS kernel and exported by `build_hls.tcl`, so 6.2 applies to it.)
+By hand:
+
+1. `Tools → Create and Package New IP → Next`.
+2. Choose **Package a specified directory**, point it at
+   `ip/custom/doa_subband_bridge_4ch/rtl`, `Next`.
+3. **IP location**: `build/ip_repo/doa_subband_bridge_4ch`, `Next → Finish`. The *Package IP*
+   editor opens with the new core in memory.
+4. **Identification**: name `doa_subband_bridge_4ch`, version `1.0`, vendor `openai`, library
+   `doa`, display name *DOA Four-Channel Subband Stream Bridge*. This block is the VLNV
+   contract; nothing downstream checks it more strictly than stage 06 does.
+5. **Compatibility**: family `zynquplusrfsoc`, life-cycle `Production`.
+6. **File Groups**: `rtl/doa_subband_bridge_4ch.v` as *Verilog Synthesis*,
+   `rtl/ooc_constraints.xdc` as *constraint*.
+7. **Ports and Interfaces** — this is the pane that decides whether the block can be wired at
+   all:
+   - `aclk`: `ASSOCIATED_BUSIF` = all thirteen interfaces, in this exact order —
+     `s_axis_ch0:s_axis_ch1:s_axis_ch2:s_axis_ch3:s_axis_candidate:m_axis_search:m_axis_capture:m_axis_beam:m_axis_mon_ch0:m_axis_mon_ch1:m_axis_mon_ch2:m_axis_mon_ch3:s_axi_ctrl`
+     — and `ASSOCIATED_RESET` = `aresetn`. The packager infers the interfaces from the port
+     names; this pane only tells it they all belong to `aclk`.
+   - `aresetn`: `POLARITY` = `ACTIVE_LOW`. The RTL drives `s_axis_ch*_tready = aresetn` and
+     `s_axis_candidate_tready = aresetn`, so a wrong polarity here would show up as a stream that
+     never accepts a beat while reset is released.
+   - `s_axi_ctrl`: interface type `AXI4Lite`, mode `Slave`, and in **Addressing and Memory** set
+     the address block range to **4096** — the script does exactly this so that
+     `assign_bd_address` allocates a standard 4 KB window for the 0x00–0x3C register file.
+8. **Review and Package → Package IP**. The result is
+   `build/ip_repo/doa_subband_bridge_4ch/component.xml`, and the block design can then
+   instantiate `openai:doa:doa_subband_bridge_4ch:1.0`.
+
+The scripted path does the same thing and adds the two checks a wizard cannot:
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+make step05_subband_bridge
+```
+
+`ip/custom/doa_subband_bridge_4ch/package_ip.tcl` runs, in order: the self-checking XSim bench,
+an out-of-context synthesis at 4.000 ns (the bridge runs at 250 MHz), `ipx::package_project`
+with the bus parameters above set explicitly, a strict VLNV verification, and a throw-away
+block-design smoke test that instantiates the block next to `axis_clock_converter`,
+`axis_dwidth_converter`, `axi_fifo_mm_s`, `xpm_cdc_gen`, `clk_wiz` and `proc_sys_reset`. Its
+report is `build/output/doa_subband_bridge_4ch_package.rpt`. Use the GUI to *look* at a
+packaged IP; use this script to produce one.
+
+### 6.3.6 Run an RTL test bench in XSim
+
+For the bridge (`tb/tb_doa_subband_bridge_4ch.sv`):
+
+1. `Flow Navigator → Simulation → Run Simulation → Run Behavioral Simulation`. Vivado offers
+   to create a simulation set if there is none.
+2. Or, without the project: `File → Add Sources → Add or create simulation sources`, add
+   `tb_doa_subband_bridge_4ch.sv` and `rtl/doa_subband_bridge_4ch.v`, right-click the bench →
+   `Set as Top`, then run.
+3. Toolbar: **Run All** (or `Run for 1 ms` — this bench finishes in microseconds), **Restart**
+   before re-running, and the Scopes/Waveform panes for the four 416-bit `s_axis_ch*` inputs and
+   the 512-bit `m_axis_search`/`m_axis_capture`/`m_axis_beam` outputs.
+4. The bench is self-checking: the pass line is in the **Tcl Console**, not in the waveform.
+   Anything else is a fail, whatever the waveform looks like.
+
+The same bench is what `package_ip.tcl` runs in batch, so a GUI pass and a scripted pass mean
+the same thing.
+
+## 6.4 MATLAB + HDL Coder — the channelizer
+
+### 6.4.1 Which MATLAB, and in which folder
+
+R2024a is the `matlab` on PATH and the release the design is pinned to
+(`EXPECTED_MATLAB_RELEASE`). R2022b exists on the same machine only for Model Composer; it is
+a *different* product route to the same function and is documented in
+`docs/TWO_MATLABS.md` and `docs/GUI_MODEL_COMPOSER_IP.md`. Do not mix them in one session.
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+matlab -sd ip/matlab/channelizer_hdl
+```
+
+### 6.4.2 What is in the folder
+
+```
+ip/matlab/channelizer_hdl/
+├── ZU48DRChannelizer.m              the System object: dsphdl.Channelizer with model defaults
+├── build_model.m                    builds the model from scratch: new_system → add_block → save_system,
+│                                    producing zu48dr_channelizer_ip.slx with the DUT subsystem
+│                                    Channelizer_DUT > ChannelizerCore (a MATLAB System block)
+├── generate_hdl.m                   the HDL Coder call, on zu48dr_channelizer_ip/Channelizer_DUT
+├── channelizer_axis_wrapper.sv      the AXI4-Stream shell: lanes, TREADY, TLAST cadence
+├── tb_channelizer_axis_wrapper*.sv  two benches: handshake/framing, and bit-exact vs golden
+├── package_generated_rtl.tcl        packages wrapper + generated RTL as openai:doa:matlab_channelizer:7.0
+├── v06_probe_ssr8_1024.m            gate 0: does the object give the type/pin/phase we expect
+├── v06_gate1_generate_hdl.m         gate 1T: generate the transposed RTL
+├── v06_gate2/3/4_*.{m,tcl,xdc}      OOC synthesis, numerics, wrapper checks
+└── hdl_prj/hdlsrc_transposed/       generated: Channelizer_DUT.v + 227 more files (git-ignored)
+```
+
+### 6.4.3 The settings, and where they are set
+
+The model does not carry magic numbers; `build_model.m` computes them from `config.mk` and
+pushes them into the model workspace. The same values appear in the **HDL Coder** app / the
+`dsphdl.Channelizer` block mask:
+
+| setting | value | variable in the model workspace |
+|---|---|---|
+| NumBands | 1024 | `doaChannelizerNumBands` |
+| SamplesPerCycle (SSR) | 8 | `doaChannelizerSamplesPerCycle` |
+| NumTapsPerBand | 12 (→ 12 288 coefficients) | `doaChannelizerTapsPerBand` |
+| StopbandAttenuation | 100 dB | `doaChannelizerStopbandDb` |
+| NormalizeFFT | **false** | `doaChannelizerNormalize` |
+| FilterStructure | **transposed** | `FilterStructure` (constrained list) |
+| target device | `xczu48dr-fsvg1517-2-e` | device field in the Workflow Advisor |
+| target frequency | 250 MHz (4.0 ns) | **not** a model setting: the model is generated unhurried and the 4.000 ns period lives in `v06_gate2_ooc.xdc` (`create_clock -period 4.000`), whose Tcl refuses to run if `WIDEBAND_CLOCK_PERIOD_NS` is anything else |
+
+`Normalize=false` is why the output is `sfix26_En24` rather than a normalised type, and
+`transposed` is why the block fits: the systolic form put 57 670 shift-register LUTs in the
+FilterBank.
+
+The model file `zu48dr_channelizer_ip.slx` is **not** checked in. `build_model.m` recreates it every
+time, block by block, and pushes the config.mk values into the model workspace on the way; that is
+why the mask can never drift from the repository. If the model looks empty, you opened the folder
+before running `make model` (or `build_model` in MATLAB) once.
+
+### 6.4.4 Generate the IP
+
+By script (what the build does):
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+make step05_channelizer            # CHANNELIZER_FLOW=matlab_hdl (the default)
+```
+
+By hand, in the GUI:
+
+1. `build_model` in the Command Window — this is what creates `zu48dr_channelizer_ip.slx` and fills
+   the mask values. `open_system('zu48dr_channelizer_ip')` then shows a three-block chain:
+   `dataIn/validIn → Channelizer_DUT → dataOut/validOut`, and the DUT holds the single
+   `ChannelizerCore` MATLAB System block.
+2. Apps tab → **HDL Coder** → **Workflow Advisor**, or
+   `hdladvisor('zu48dr_channelizer_ip/Channelizer_DUT')`.
+3. **1. Set Target** → *1.1 Set target device and synthesis tool*: device
+   `xczu48dr-fsvg1517-2-e`, synthesis tool `Vivado 2023.2`. *1.2 Set target frequency*:
+   250 MHz.
+4. **2. Fixed-Point Conversion** — not used: the model is already fixed-point (`sfix16_En15`
+   in, `sfix26_En24` out). The Advisor reports it as not applicable.
+5. **3. HDL Code Generation** → *3.1 Generate RTL code and testbench* → **Run This Task**.
+   Output goes to `hdl_prj/hdlsrc_transposed/`, with `Channelizer_DUT.v` at the top.
+6. *3.2 Generate RTL testbench* and **4. Verify** → run the generated testbench if you want a
+   second opinion; the repo's own evidence is the wrappers' benches (`v06_gate4_*`), which
+   compare against the MATLAB golden sample by sample.
+7. **Package**: `package_generated_rtl.tcl` wraps `Channelizer_DUT.v` in
+   `channelizer_axis_wrapper.sv` and packages the pair as
+   `openai:doa:matlab_channelizer:7.0` into `build/ip_repo/`. From the GUI the equivalent is
+   Vivado → *Create and Package New IP* on the generated directory, with the same
+   Identification pane as 6.3.5 — and the wrapper added as a second file group.
+
+   The scripted route is gated on purpose: `make -C ip/matlab/channelizer_hdl package` exits 2
+   with *"MATLAB channelizer packaging is disabled by ALLOW_CHANNELIZER_PACKAGE="* unless you
+   set that variable (`config.local.mk` is the place). The gate exists because
+   `generate_hdl.m` deliberately does not package: the original rule was that V06 packaging
+   waits until the AXI4-Stream wrapper contract is frozen after the generation / OOC / numerical
+   gates. Set the flag only when you accept the wrapper as frozen:
+
+   ```bash
+   ALLOW_CHANNELIZER_PACKAGE=1 make -C ip/matlab/channelizer_hdl package
+   ```
+
+The GUI will not tell you the one thing that matters: the generated core has **no TREADY**. The
+wrapper turns the core's clock enable into the handshake (`core_clk_enable = m_axis_tready`)
+and drives `s_axis_tready` from it. If you re-generate the RTL, re-check the wrapper's port
+list before you package.
+
+### 6.4.5 The Model Composer route (R2022b)
+
+A different product, the same channelizer, and an unfinished route: the Hub subsystem selector
+is where the scripted attempt stops. `docs/GUI_MODEL_COMPOSER_IP.md` is the click-by-click
+procedure, `docs/TWO_MATLABS.md` explains which `matlab` binary to launch, and
+`make mc-gui` starts the right one. The verified IP is the HDL Coder one above.
+
+## 6.5 Vitis — the PS side
+
+**State of this section, stated plainly:** the repository has no Vitis project, because
+building one needs the XSA and a licence, and neither the R5 application (G8b) nor anything on
+the board (G5, G6, G7b, G8c) has been run. What exists is the hardware hand-off
+(`build/output/doa_v7_zcu208.xsa`), the firmware sources (`firmware/amc_r5/amc.c`,
+`amc.h`, `amc_model.h`, `test_amc.c`), the A53 supervisor (`step6_ps_linux/c/supervisor.cpp`)
+and its host build. The steps below are the procedure to follow, not a record of one.
+
+### 6.5.1 Create the platform from the XSA
+
+1. `File → New → Platform Project` (classic Vitis IDE; in the Unified IDE it is
+   `File → New Component → Platform`).
+2. Name it `doa_v7_zcu208`, `Next`.
+3. **Create from hardware specification (XSA)**, browse to
+   `build/output/doa_v7_zcu208.xsa`, `Finish`.
+4. In the platform, open `platform.spr` and add two domains:
+   - `psu_cortexr5_0` — **standalone**, language C. This is where the AMC firmware lives.
+   - `psu_cortexa53_0` — **Linux** if you boot PetaLinux, or standalone for a smoke test.
+5. Build the platform (`Project → Build Project`). It writes
+   `build/vitis_ws/doa_v7_zcu208/export/doa_v7_zcu208/`, which is what applications link
+   against.
+
+### 6.5.2 Create the two applications
+
+| application | sources | domain | notes |
+|---|---|---|---|
+| `amc_r5` | `firmware/amc_r5/amc.c`, `amc.h`, `amc_model.h` + a `main` | `psu_cortexr5_0` | the classifier; `test_amc.c` is the host twin, not the board main |
+| `doa_r5` (to write) | `step3_r5_doa/c/doa_core.c` + `doa_core.h` | `psu_cortexr5_0` | the estimator is portable C with a host twin (`step3_r5_doa/testbench/`), but no board `main` exists yet |
+| `doa_supervisor` | `step6_ps_linux/c/supervisor.cpp` | `psu_cortexa53_0` | C++17; it is normally cross-built with the PetaLinux SDK instead (6.5.4) |
+
+`File → New → Application Project` → pick the platform → *Create a new platform from hardware*
+is not needed here (the platform already exists) → domain → template **Empty Application
+(C)** → `Finish`. Then `src → Import → File System` and point at `firmware/amc_r5`.
+
+Build: `Project → Build Project` produces `Debug/amc_r5.elf` in the application folder.
+
+### 6.5.3 Run and debug on the board
+
+1. Power the ZCU208, connect the JTAG USB and the UART USB.
+2. `Xilinx → Program FPGA` (or `Run → Run Configurations → Target Setup`): bitstream
+   `build/output/doa_v7_zcu208.bit`, init `psu_init.tcl`. This is the only step that touches
+   silicon.
+3. `Run → Run Configurations → System Project Debug → New`: target `localhost`, application
+   `amc_r5.elf`, ☑ *Reset entire system*, ☑ *Program FPGA before Run*.
+4. **Run**. The Debug perspective opens: `Debug` view (threads), `Variables`, `Breakpoints`,
+   `Memory`, and `Terminal` for the UART (`115200 8N1`).
+5. What you are looking for, per gate: G8c is a cycle count printed by the application (or read
+   from the R5 performance counter); G5/G6/G7b need the capture files that `step6` writes, not
+   a debug session.
+
+### 6.5.4 The A53 supervisor without Vitis
+
+The supervisor is ordinary C++17 and is built twice by its own Makefile — once on the host
+(that is what T6.1–T6.5 test) and once for the board with the PetaLinux SDK:
+
+```bash
+cd /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit
+make -C step6_ps_linux/c                  # host binary  -> build/step6/supervisor
+make -C step6_ps_linux/c cross            # aarch64      -> build/step6/supervisor_aarch64
+scp build/step6/supervisor_aarch64 root@<board>:/usr/bin/doa_supervisor
+```
+
+The cross target refuses politely when the SDK is not on `PATH`
+(`source /opt/petalinux/2023.2/environment-setup-cortexa72-cortexa53-xilinx-linux` first).
+
+## 6.6 Which test bench runs in which tool
+
+| bench | file | runs in | command / button | what it proves |
+|---|---|---|---|---|
+| HLS C benches (6) | `ip/custom/*/tb/*_tb.cpp` | Vitis HLS | **C SIMULATION** or `make hls-all` | the kernel's fixed-point arithmetic |
+| bridge RTL bench | `ip/custom/doa_subband_bridge_4ch/tb/tb_doa_subband_bridge_4ch.sv` | Vivado xsim | 6.3.6 | register map, framing, packers |
+| wrapper benches | `ip/matlab/channelizer_hdl/tb_channelizer_axis_wrapper*.sv` | Vivado xsim | `make -C ip/matlab/channelizer_hdl gate4-axis-wrapper-sim` | handshake, TLAST cadence, bit-exactness |
+| channelizer model check | `ip/model_composer/channelizer/testbench/compare_hdl_vs_model.py` | host python | `make ip-equivalence` | model vs Verilog twin, 16 384 samples |
+| host step benches (8) | `stepN_*/testbench/run_testbench.py` | host python | `make steps` | G0, G1a/c, G7a, G8a, T6.x |
+| board bring-up | `step7_board_bringup/checklist.sh` | board | `bash step7_board_bringup/checklist.sh` | the twelve commands that lead to silicon |
+
+## 6.7 GUI action → the command that does the same thing
+
+| in the IDE | equivalent here |
+|---|---|
+| Vitis HLS **C SIMULATION** | `vitis_hls -f build_hls.tcl` (the tcl calls `csim_design` first) |
+| Vitis HLS **C SYNTHESIS** | same script, `csynth_design` |
+| Vitis HLS **EXPORT RTL** | same script, `export_design` (settings from `config_export`) |
+| Vitis HLS **PACKAGE** | `make -C ip/custom/<kernel> install` |
+| all six HLS kernels, and the bridge | `make hls-all` — seven IP folders: the six kernels (`all: hls install`) plus `doa_subband_bridge_4ch` (`all: ip` → `verify` = the Python golden-model check, then `package_ip.tcl`, which runs the xsim bench itself) |
+| Vivado *Run Synthesis / Implementation / Bitstream / Export Hardware* | `make step10_synth step11_impl step12_bitstream step13_export_xsa` |
+| Vivado *Create and Package New IP* | `make step05_subband_bridge` (`ipx::package_project` in `package_ip.tcl`) |
+| Vivado *Run Behavioral Simulation* | the same `package_ip.tcl`, which runs xsim in batch |
+| MATLAB *Workflow Advisor* → generate RTL | `make step05_channelizer` (`generate_hdl.m`) |
+| MATLAB packaging of the channelizer | `ALLOW_CHANNELIZER_PACKAGE=1 make -C ip/matlab/channelizer_hdl package` (`package_generated_rtl.tcl`) |
+| Vitis *Build Project* (platform) | no script: the XSA is the hand-off, the project is yours |
+| reading the reports | `make fit` and `make status` |
+
+## 6.8 Troubleshooting, by symptom
+
+| symptom | cause | fix |
+|---|---|---|
+| stage 06 fails naming a VLNV | a stale `component.xml` from an earlier export | re-run that kernel's `make ... install`, never hand-edit `component.xml` |
+| Export RTL refuses | no `set_part`, no `create_clock`, or the part disagrees with `config/ip_versions.tcl` | run `build_hls.tcl`, not the bare GUI |
+| csynth passes at the wrong period | project created by hand without a clock, or with `PL_CLOCK_PERIOD_NS` on a 250 MHz block | check the period against 6.1; `phase_interf_4ch` and `rfdc_repack4` must say 4.0 |
+| Vivado timing differs from `docs/evidence/` | the run used the `Default` strategy, not `Performance_ExtraTimingOpt` | run `make step11_impl` — `11_impl.tcl` sets the strategy and relaunches |
+| block design cannot find an IP | `build/ip_repo` not in `Project Settings → IP → Repository` | add it; `collect_ip.sh` wrote it |
+| MATLAB cannot find `dsphdl.Channelizer` | wrong release (R2022b has no `dsphdl`), or the path is not the channelizer folder | R2024a, started with `-sd ip/matlab/channelizer_hdl` |
+| Model Composer Hub selector empty | the known dead end of the scripted route | use `docs/GUI_MODEL_COMPOSER_IP.md` |
+| Vitis cannot open the XSA | XSA exported without a bitstream | re-run `make step13_export_xsa` |
+| the cross build "refuses politely" | no PetaLinux SDK on `PATH` | source `environment-setup-*` first |
+| channelizer packaging exits 2 | `ALLOW_CHANNELIZER_PACKAGE` unset — the wrapper contract is not accepted yet | `ALLOW_CHANNELIZER_PACKAGE=1 make -C ip/matlab/channelizer_hdl package` |
+| `make ... install` re-runs the whole HLS flow | `install: hls` in every kernel Makefile — `all: hls install`, so there is no copy-only target | that is intended; re-running csynth is cheap next to a wrong IP |
