@@ -53,6 +53,7 @@ help:
 	@echo "Force one stage:     make rebuild STEP=step02_hls_covariance"
 	@echo "Remove one result:   make clean-stage STEP=step02_hls_covariance"
 	@echo "Where the build is:  docs/WHERE_WE_ARE.md"
+	@echo "Every block, explained: docs/BLOCK_GUIDE.md   (figures: make diagram)"
 	@echo "Does it fit the part: make fit   (after step10_synth / step11_impl)"
 	@echo "Inspect progress:    make status"
 	@echo "Static validation:   make lint"
@@ -605,6 +606,7 @@ tools:
 # The diagram of record: docs/diagrams/system_block.png and .svg
 diagram:
 	@python3 scripts/draw_system.py
+	@python3 scripts/draw_datapath.py
 
 # ---------------------------------------------------------------------------
 # The eight step folders.  `make steps` runs every test bench in order; each
