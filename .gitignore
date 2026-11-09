@@ -23,3 +23,23 @@ config.local.mk
 
 # A copy of AMD's example dropped here by hand (reference only, never committed)
 /mc_bisect/
+
+# Debug snapshots are published on purpose by scripts/publish_debug_logs.sh, so the
+# blanket *.log / *.jou rules above must not swallow them again: a snapshot whose logs
+# are ignored commits only its progress.txt and looks like it worked.
+!docs/debug-logs/**/*.log
+!docs/debug-logs/**/*.jou
+
+# Model Composer working files: the builder script is the reviewable artifact
+# (make mc-scratch), so the model and its generated trees stay out of git.
+/ip/model_composer/channelizer/channelizer.slx
+/ip/model_composer/channelizer/channelizer.slxc
+/ip/model_composer/channelizer/code/
+/ip/model_composer/channelizer/slprj/
+
+# Fetched reference trees: pinned in config/upstream_repositories.tsv, cloned by
+# make step01_fetch_references (tens of MB, AMD/MazinLab's, not ours to commit).
+/upstream/
+
+# Scratch bundles produced by the bisect harness
+*.bundle
