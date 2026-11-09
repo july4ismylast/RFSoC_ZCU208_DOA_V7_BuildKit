@@ -607,6 +607,7 @@ tools:
 diagram:
 	@python3 scripts/draw_system.py
 	@python3 scripts/draw_datapath.py
+	@python3 scripts/draw_stages.py
 
 # ---------------------------------------------------------------------------
 # The eight step folders.  `make steps` runs every test bench in order; each
