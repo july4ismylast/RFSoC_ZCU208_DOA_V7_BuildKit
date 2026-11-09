@@ -1003,7 +1003,7 @@ ip/custom/spectrum_power4/
 | area | what it is | what you do there |
 |---|---|---|
 | Explorer (left) | `Project Settings`, `Source`, `Test Bench`, `Constraints`, `solution1` | double-click any file to edit; `solution1` holds `csim/`, `syn/`, `impl/` and the reports |
-| toolbar (top) | **C SIMULATION**, **C SYNTHESIS**, **C/RTL COSIMULATION**, **EXPORT RTL**, **PACKAGE** | the four actions of 6.2.5 – 6.2.8 |
+| toolbar (top) | **C SIMULATION**, **C SYNTHESIS**, **C/RTL COSIMULATION**, **EXPORT RTL**, **PACKAGE** | the actions of 6.2.5 – 6.2.7; **PACKAGE** here belongs to the Vitis-kernel flow and is *not* how an IP reaches `build/ip_repo` — that is 6.2.8, and it is a make target |
 | console (bottom) | the tool log | the last lines are the verdict: `INFO: [SIM 211-1] CSim done with 0 errors`, `INFO: [HLS 200-111] Finished ...` |
 | Analysis perspective | Schedule Viewer, Dataflow Viewer, Module Hierarchy | *after* csynth: why a loop has II>1, and where the cycles go |
 
