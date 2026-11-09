@@ -364,6 +364,70 @@ the **function, module, register or tcl line that implements it** — `doa_wpi()
 `amc_classify()`, `Store.update()` — so a reader can go from a picture to the line of code
 without guessing which file holds it.
 
+Where a stage is itself a block — `ChannelizerCore`, `Channelizer_DUT`, the bridge's search
+FSM, the covariance accumulator, the CORDIC, `u_FilterBank` — the picture opens it: a shaded
+**"what is inside it"** panel inside the stage box lists its sub-blocks, their sizes or
+resources, and the internal ordering. Nothing goes one level down and stops at a name.
+
+44 stages carry such a panel. This is the list, generated from the `INSIDE` table in
+the script so it cannot drift away from the pictures:
+
+| picture | stage opened | what the panel shows |
+|---|---|---|
+| `rfdc` | 1. fine mixer R2C | NCO_Freq = -RF_CENTER = -3.000 GHz (PG269 absolute-NCO convention); Nyquist=1 selects zone 2; the 2-4 GHz band lands at baseband; from here on the samples are complex: one I stream and one Q stream |
+| `rfdc` | 2. decimate by 2 | decimating filter inside the tile (PG269), CalOpt_Mode=1; 4.000 GSPS real -> 2.000 GSPS complex per channel; Decimation_Mode=2 is set by the DOA map, not by upstream MTS |
+| `rfdc` | 3. fabric format | each 128-bit word carries 8 samples of 16 bit; two streams per channel: m00/m01 = I/Q of ADC0, and so on; 8 samples x 250 MHz = 2.000 GSPS: the rate every width assumes |
+| `rfdc` | 4. MTS alignment | SYSREF reaches all four tiles from clocktreeMTS; NCO phase and decimator state reset together on every SYSREF; mts_all_true() is asserted post-validate or the map script aborts |
+| `rfdc_repack4` | 2. pair I and Q | sample s of the input beat becomes sample s of the output beat; {Q[31:16], I[15:0]} is the project-wide complex packing; 8 samples per 256-bit output beat, order never permuted |
+| `matlab_channelizer` | 2. Channelizer_DUT | atomic subsystem: ChannelizerCore is its only MATLAB System block; u_FilterBank + u_FFT are the two generated children; 228 generated files, one per pipeline register group |
+| `matlab_channelizer` | 3. ChannelizerCore | chips: u_FilterBank -> u_FFT; FilterBank: 12 288 coefficients (1024 bands x 12 taps), 16 subFilters x 12 DSPs; FFT: 25 102 LUTs, 43 571 FFs, 120 DSPs; 351 cycles end to end; transposed: 10 800 LUTs + 176 RAMB36 (systolic: 63 439 LUTs, 57 670 SRLs) |
+| `matlab_channelizer` | 5. snapshot framing | one snapshot = 128 accepted beats = 1024 bins x 8 lanes; TLAST on the beat whose index is 127, then the counter wraps; counters are per channel: four wrappers, four TLASTs, one per antenna |
+| `subband_bridge` | 3. stage 1 alignment | 4 channels x 8 subbands quantised per beat, then registered; q_lo512 / q_hi512 hold the two halves of one 4-channel snapshot beat; in_beat_idx counts 0..127: one snapshot = 1024 bins |
+| `subband_bridge` | 4. search FSM | chips: SRCH_IDLE -> SRCH_CAPTURE -> serialiser; 4 bins x 4 channels per 512-bit beat: 16 words of 32 bit; srch_state[2:0] is readable in STATUS[26:24] at any time |
+| `subband_bridge` | 5. snapshot packer | extract active_bin[9:0] from all four channels, once per snapshot; pack 4 consecutive snapshots per 512-bit beat; active_bin locked for CAPTURE_BEATS=1024 beats = 4096 snapshots |
+| `subband_bridge` | 6. beam packetiser | TLAST every BEAM_PACKET_BEATS beats (default 64 = 256 snapshots); drop count increments if the downstream FIFO is ever not ready; beam_drop_count is the low half of 0x3C, readable from the PS |
+| `subband_bridge` | 7. register file | 0x00 CTRL, 0x04 MANUAL_BIN, 0x08 SCALE_SHIFT, 0x0C/0x10 beats; 0x14 STATUS, 0x18 LAST_CANDIDATE, 0x1C..0x28 peak and average; 0x2C..0x38 frame and candidate counters, 0x3C drop counts |
+| `cdc_forward` | 2. asynchronous FIFO | write pointer in the 250 MHz domain, read pointer in the 125 MHz one; grey-coded pointers, two flip-flops per bit across the boundary; TLAST crosses with TDATA, so a frame cannot be cut in half |
+| `cdc_candidate` | 2. asynchronous FIFO | written at 125 MHz, read at 250 MHz: the mirror image; bin[15:0], valid[16], peak[95:32], average[159:96] as one record; the bridge consumes it into pending_auto_bin / has_auto_bin |
+| `spectrum_power` | 3. channel_loop | 16 multipliers: 4 lanes x 4 channels, all unrolled; I*I + Q*Q in ap_int<32>, widened to ap_uint<33> per channel; four channels summed into one ap_uint<64> per lane |
+| `candidate_peak` | 1. static frame state | frameSum: ap_uint<80>, four 64-bit powers per beat for 1024 beats; framePeak: ap_uint<64>, peakBin: ap_uint<16>, binBase: ap_uint<16>; no BRAM and no ping-pong: the frame is one pass, the record is written at TLAST |
+| `candidate_peak` | 3. at TLAST: average | binCount = binBase + 4 after the last beat of the frame; average = nextSum / binCount, integer division; frameSum, framePeak, peakBin, binBase all cleared for the next frame |
+| `candidate_peak` | 5. record builder | bin[15:0], valid[16]; peak[95:32] and average[159:96], 64 bit each; keep and strb all ones, TLAST set: one beat per frame |
+| `covariance` | 4. accumulate | power[c] += |x_c|^2 for the four channels; crossReal[pair], crossImag[pair] for 01 02 03 12 13 23; ap_int<40> products into ap_int<64> accumulators |
+| `covariance` | 5. output_loop | index 0..3 powers, 4..9 cross real, 10..15 cross imaginary; TLAST on index 15: exactly one burst per integration frame |
+| `beam_monitor` | 2. lane_loop / channel_loop | 4 lanes x 4 channels unrolled into 16 complex multiplies; real = sum(xr*wr - xi*wi), imag = sum(xr*wi + xi*wr); ap_int<40> accumulator, >>15 after the loop, then saturate |
+| `phase_interf` | 3. atan2_q13() | 16 CORDIC iterations, vectoring mode, one instance only; kAtanQ30[32] table, Q2.30 angle accumulated then rounded to Q3.13; six phases time-multiplexed: 1 pair per beat-group, no sixfold area |
+| `clocking` | 2. doa_clk_wiz_125m | MMCM: 250 MHz in, 125 MHz out, phase aligned; CLKOUT1 only, integer divide, no fractional setting; doa_clk_wiz_125m is a pinned part of the DOA hierarchy |
+| `fifo_cov` | 2. doa_cov_fifo | RX FIFO 512 x 32 bit, no TX interface at all; C_USE_TX_DATA=0, C_USE_TX_CTRL=0, C_USE_RX_DATA=1; S_AXI exposes RRD/RDF, RLR, ISR/IER and the reset |
+| `fifo_beam` | 2. doa_beam_fifo | identical IP, only C_RX_FIFO_DEPTH differs: 2048 x 32 bit; RX only, so the diagnostic path can never write back; S_AXI at M11 of control_interconnect |
+| `control_ic` | 1. port count | one 128-bit master, thirteen mirrored slaves; M00..M06 belong to the MTS base and are left alone; M07..M12 are the DOA design: three kernels, two FIFOs, the bridge |
+| `rpu` | 2. DOA estimate | doa_wpi(): weighted least squares seed from six baselines; doa_bartlett(): 4 stages of 3x3, 36 ML evaluations; Gauss-Newton: gn_iterations steps with analytic gradient/Hessian |
+| `rpu_doa` | 2. doa_wpi() | coherence weight c/(1-c) per baseline, clipped to 0.05..100; phase[pair] = atan2(crossImag, crossReal); 2x2 normal equations (B^T W B) over the six baselines |
+| `rpu_doa` | 4. doa_bartlett() | chips: stage 1 -> stage 2-3 -> stage 4; 36 evaluations per estimate, each a 4x4 quadratic form; az clamped to +-55 deg, el to +-45 deg after every stage |
+| `rpu_doa` | 5. dominant_vector() | v = R v, normalised, four times: 4x4 complex matrix-vector per step; seeded with the steering vector of the Bartlett solution; gives the projector P = I - v v^H the Newton step needs |
+| `rpu_doa` | 6. Gauss-Newton | gradient 2*Re(conj(d) . (P a)) for the az and el basis; Hessian 2*Re(conj(d_i) . (P d_j)), 2x2; step solved from the same 2x2 helper, applied, then re-steered |
+| `rpu_amc` | 1. amc_features.m | |C40| fourth-order cumulant: the BPSK/QPSK discriminator; C42 = mean|x|^4 / power^2, sigma_ap = amplitude variation; gamma_max and freq_std from fft_complex(), spike for a carrier |
+| `rpu_amc` | 4. amc_features() | build_tables() once: twiddles, class scales; fft_complex(): 1024-point, in place, static buffers (16 kB + 4 kB); 1024 atan2 and 4 sqrt per burst, no allocation anywhere |
+| `rpu_tracking` | 5. cost() and associate() | passes(): every measurable rung must be inside its gate; cost(): C = sum w_r d_r^2 over the rungs that were measured; greedy: sort by cost, then by how many rungs were measurable |
+| `rpu_tracking` | 6. Store.update() | a cell with no track passes the gates creates a new track (birth); absorb() appends the cell, updates az/el and votes for the label; a track with no cell for RETIRE_FRAMES=3 frames is retired, ghosts included |
+| `apu` | 3. absorb() | smoothed az/el per track, label vote counts; verified flag and arrivals count carried on the track; an empty frame is legal and still advances the clock |
+| `host` | 1. step0 -> G0 | array_model.py: geometry, steering vectors, R = X X^H / K; make_scenes.py: the 0/5/10/20 dB scenarios and the decoy scene; closes G0: 5.996 GHz at 25 mm, 4.997 GHz at 30 mm |
+| `host` | 3. step2 -> G1a/G1c | kernels.tsv: one row per kernel, VLNV and rate; tb/*.cpp: the golden vectors every csim replays; closes G1a (fixed point) and G1c (VLNV contract) |
+| `host` | 4. step3/4/5 -> G7a/G8a | doa_core.c is the R5F estimator, compiled on the host for G7a; amc.c is the exported classifier, checked by amc_port_check.py for G8a; ladder.py is the association and the decoy check, reused by step6 as the referee |
+| `mts_base` | 3. copy | removes the destination, then copies the pinned tree; the two patches are applied in place afterwards; build_mts_base.sh refuses this path unless MTS_BASE_FORCE=1 |
+| `mts_base` | 5. patch 2 | the MTS BD ships impl_1 set to a default strategy; the patch pins Performance_ExtraTimingOpt so every run is comparable; any other strategy silently changes the WNS in the final report |
+| `ip_flow` | 1. csim | run_csim.tcl per kernel against the vectors in tb/; a failing csim stops the flow before any packaging; the bridge uses its SystemVerilog bench instead of C simulation |
+| `ip_flow` | 4. collect_ip.sh | one directory per IP under build/ip_repo, never a merged blob; each VLNV is compared with config/ip_versions.tcl before it is listed; ip_manifest.tsv is what step06 and step07 read |
+
+Three of those panels draw their sub-blocks as **boxes**, because the inside really is a
+chain: `ChannelizerCore` = `u_FilterBank` -> `u_FFT`, the bridge's search FSM =
+`SRCH_IDLE` -> `SRCH_CAPTURE` -> serialiser, and `doa_bartlett()` = its four grid
+stages. The rest are fact lists, because a list is what the source gives.
+
+Every picture has at least one opened stage; the ones with only one are blocks that genuinely
+have one block inside them (the FIFOs, the clock wizard, the CORDIC, `phase_interf`'s pair
+network).
+
 Every picture is generated, not drawn by hand, so it cannot drift away from the text:
 
 ```bash
@@ -435,7 +499,12 @@ Nothing in these pictures is inferred from a block name. The ports and widths co
   2. `Channelizer_DUT` — the HDL Coder subsystem (`hdl_prj/hdlsrc_transposed/Channelizer_DUT.v`,
      228 generated files).
   3. `ChannelizerCore` — the `dsphdl.Channelizer` object: **1024 bands, 12 taps per band,
-     12 288 prototype coefficients**, transposed direct form, output `sfix26_En24`.
+     12 288 prototype coefficients**, transposed direct form, output `sfix26_En24`. Opened
+     up its panel shows the two generated children: **`u_FilterBank`** — 16 real/imaginary
+     `subFilter` instances, 12 taps each, 10 800 LUTs / 15 055 FFs / **176 RAMB36** /
+     192 DSPs in the transposed form (the systolic form put the same delays in 57 670 SRLs
+     and cost 63 439 LUTs) — and **`u_FFT`**, the 1024-point transform at 25 102 LUTs,
+     43 571 FFs and 120 DSPs.
   4. The clock enable, not TREADY — `core_clk_enable = m_axis_tready`: the generated core has
      no TREADY port, so a stall holds all internal state and back-pressure is propagated as
      `s_axis_tready = m_axis_tready`.
@@ -785,10 +854,23 @@ Three rules for anyone editing it, learned the hard way. The middle column is *"
 code that does it"*: a stage without a real function, module, register or tcl line next to it
 is a summary, not a diagram — that is why `doa_channelizer_0..3` names `g_pack_lanes`,
 `Channelizer_DUT`, `ChannelizerCore`, `core_clk_enable`, `LAST_BEAT_IN_SNAPSHOT` and the
-52-bit lane packing instead of saying "the channelizer". Each stage gets one short sentence:
-a paragraph does not fit and will be cut. And any new fact must come from the block's own
-source, not from its name — a picture that guesses is worse than no picture, because it looks
-authoritative.
+52-bit lane packing instead of saying "the channelizer". If a stage is itself a block, it also
+gets an entry in the `INSIDE` table, keyed by block and stage number, and that entry is what
+the shaded panel draws; leave it out and the picture stops one level too early. Each line of a
+panel is one fact with a number or a name in it — "32-bit" is a fact, "handles data" is not.
+And any new fact must come from the block's own source, not from its name: a picture that
+guesses is worse than no picture, because it looks authoritative.
+
+```python
+# scripts/draw_block_details.py — the second level, keyed by (stem, stage number)
+INSIDE = {
+    ("matlab_channelizer", 3): [
+        "u_FilterBank: 16 real/imag subFilters, 12 taps each = 12 288 coefficients",
+        "u_FFT: 1024-point, 25 102 LUTs, 43 571 FFs, 120 DSPs",
+        ...
+    ],
+}
+```
 
 ---
 

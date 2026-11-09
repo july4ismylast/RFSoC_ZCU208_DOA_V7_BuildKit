@@ -411,6 +411,248 @@ BLOCKS = [
 ]
 
 
+# What is inside a stage that is itself a block: (stem, stage number) -> sub-blocks.
+# Facts only, each traceable to the source named in the stage line above it.
+INSIDE = {
+    ("matlab_channelizer", 2): [
+        "atomic subsystem: ChannelizerCore is its only MATLAB System block",
+        "u_FilterBank + u_FFT are the two generated children",
+        "228 generated files, one per pipeline register group",
+    ],
+    ("matlab_channelizer", 3): [
+        "FilterBank: 12 288 coefficients (1024 bands x 12 taps), 16 subFilters x 12 DSPs",
+        "FFT: 25 102 LUTs, 43 571 FFs, 120 DSPs; 351 cycles end to end",
+        "transposed: 10 800 LUTs + 176 RAMB36 (systolic: 63 439 LUTs, 57 670 SRLs)",
+    ],
+    ("subband_bridge", 3): [
+        "4 channels x 8 subbands quantised per beat, then registered",
+        "q_lo512 / q_hi512 hold the two halves of one 4-channel snapshot beat",
+        "in_beat_idx counts 0..127: one snapshot = 1024 bins",
+    ],
+    ("subband_bridge", 4): [
+        "4 bins x 4 channels per 512-bit beat: 16 words of 32 bit",
+        "srch_state[2:0] is readable in STATUS[26:24] at any time",
+    ],
+    ("subband_bridge", 5): [
+        "extract active_bin[9:0] from all four channels, once per snapshot",
+        "pack 4 consecutive snapshots per 512-bit beat",
+        "active_bin locked for CAPTURE_BEATS=1024 beats = 4096 snapshots",
+    ],
+    ("subband_bridge", 7): [
+        "0x00 CTRL, 0x04 MANUAL_BIN, 0x08 SCALE_SHIFT, 0x0C/0x10 beats",
+        "0x14 STATUS, 0x18 LAST_CANDIDATE, 0x1C..0x28 peak and average",
+        "0x2C..0x38 frame and candidate counters, 0x3C drop counts",
+    ],
+    ("cdc_forward", 2): [
+        "write pointer in the 250 MHz domain, read pointer in the 125 MHz one",
+        "grey-coded pointers, two flip-flops per bit across the boundary",
+        "TLAST crosses with TDATA, so a frame cannot be cut in half",
+    ],
+    ("cdc_candidate", 2): [
+        "written at 125 MHz, read at 250 MHz: the mirror image",
+        "bin[15:0], valid[16], peak[95:32], average[159:96] as one record",
+        "the bridge consumes it into pending_auto_bin / has_auto_bin",
+    ],
+    ("candidate_peak", 3): [
+        "binCount = binBase + 4 after the last beat of the frame",
+        "average = nextSum / binCount, integer division",
+        "frameSum, framePeak, peakBin, binBase all cleared for the next frame",
+    ],
+    ("candidate_peak", 5): [
+        "bin[15:0], valid[16]",
+        "peak[95:32] and average[159:96], 64 bit each",
+        "keep and strb all ones, TLAST set: one beat per frame",
+    ],
+    ("covariance", 4): [
+        "power[c] += |x_c|^2 for the four channels",
+        "crossReal[pair], crossImag[pair] for 01 02 03 12 13 23",
+        "ap_int<40> products into ap_int<64> accumulators",
+    ],
+    ("covariance", 5): [
+        "index 0..3 powers, 4..9 cross real, 10..15 cross imaginary",
+        "TLAST on index 15: exactly one burst per integration frame",
+    ],
+    ("phase_interf", 3): [
+        "16 CORDIC iterations, vectoring mode, one instance only",
+        "kAtanQ30[32] table, Q2.30 angle accumulated then rounded to Q3.13",
+        "six phases time-multiplexed: 1 pair per beat-group, no sixfold area",
+    ],
+    ("clocking", 2): [
+        "MMCM: 250 MHz in, 125 MHz out, phase aligned",
+        "CLKOUT1 only, integer divide, no fractional setting",
+        "doa_clk_wiz_125m is a pinned part of the DOA hierarchy",
+    ],
+    ("fifo_cov", 2): [
+        "RX FIFO 512 x 32 bit, no TX interface at all",
+        "C_USE_TX_DATA=0, C_USE_TX_CTRL=0, C_USE_RX_DATA=1",
+        "S_AXI exposes RRD/RDF, RLR, ISR/IER and the reset",
+    ],
+    ("fifo_beam", 2): [
+        "identical IP, only C_RX_FIFO_DEPTH differs: 2048 x 32 bit",
+        "RX only, so the diagnostic path can never write back",
+        "S_AXI at M11 of control_interconnect",
+    ],
+    ("control_ic", 1): [
+        "one 128-bit master, thirteen mirrored slaves",
+        "M00..M06 belong to the MTS base and are left alone",
+        "M07..M12 are the DOA design: three kernels, two FIFOs, the bridge",
+    ],
+    ("rpu", 2): [
+        "doa_wpi(): weighted least squares seed from six baselines",
+        "doa_bartlett(): 4 stages of 3x3, 36 ML evaluations",
+        "Gauss-Newton: gn_iterations steps with analytic gradient/Hessian",
+    ],
+    ("rpu_doa", 2): [
+        "coherence weight c/(1-c) per baseline, clipped to 0.05..100",
+        "phase[pair] = atan2(crossImag, crossReal)",
+        "2x2 normal equations (B^T W B) over the six baselines",
+    ],
+    ("rpu_doa", 6): [
+        "gradient 2*Re(conj(d) . (P a)) for the az and el basis",
+        "Hessian 2*Re(conj(d_i) . (P d_j)), 2x2",
+        "step solved from the same 2x2 helper, applied, then re-steered",
+    ],
+    ("rpu_amc", 1): [
+        "|C40| fourth-order cumulant: the BPSK/QPSK discriminator",
+        "C42 = mean|x|^4 / power^2, sigma_ap = amplitude variation",
+        "gamma_max and freq_std from fft_complex(), spike for a carrier",
+    ],
+    ("rpu_amc", 4): [
+        "build_tables() once: twiddles, class scales",
+        "fft_complex(): 1024-point, in place, static buffers (16 kB + 4 kB)",
+        "1024 atan2 and 4 sqrt per burst, no allocation anywhere",
+    ],
+    ("rpu_tracking", 5): [
+        "passes(): every measurable rung must be inside its gate",
+        "cost(): C = sum w_r d_r^2 over the rungs that were measured",
+        "greedy: sort by cost, then by how many rungs were measurable",
+    ],
+    ("matlab_channelizer", 5): [
+        "one snapshot = 128 accepted beats = 1024 bins x 8 lanes",
+        "TLAST on the beat whose index is 127, then the counter wraps",
+        "counters are per channel: four wrappers, four TLASTs, one per antenna",
+    ],
+    ("subband_bridge", 6): [
+        "TLAST every BEAM_PACKET_BEATS beats (default 64 = 256 snapshots)",
+        "drop count increments if the downstream FIFO is ever not ready",
+        "beam_drop_count is the low half of 0x3C, readable from the PS",
+    ],
+    ("candidate_peak", 1): [
+        "frameSum: ap_uint<80>, four 64-bit powers per beat for 1024 beats",
+        "framePeak: ap_uint<64>, peakBin: ap_uint<16>, binBase: ap_uint<16>",
+        "no BRAM and no ping-pong: the frame is one pass, the record is written at TLAST",
+    ],
+    ("rpu_doa", 4): [
+        "36 evaluations per estimate, each a 4x4 quadratic form",
+        "az clamped to +-55 deg, el to +-45 deg after every stage",
+    ],
+    ("rpu_doa", 5): [
+        "v = R v, normalised, four times: 4x4 complex matrix-vector per step",
+        "seeded with the steering vector of the Bartlett solution",
+        "gives the projector P = I - v v^H the Newton step needs",
+    ],
+    ("rpu_tracking", 6): [
+        "a cell with no track passes the gates creates a new track (birth)",
+        "absorb() appends the cell, updates az/el and votes for the label",
+        "a track with no cell for RETIRE_FRAMES=3 frames is retired, ghosts included",
+    ],
+    ("host", 4): [
+        "doa_core.c is the R5F estimator, compiled on the host for G7a",
+        "amc.c is the exported classifier, checked by amc_port_check.py for G8a",
+        "ladder.py is the association and the decoy check, reused by step6 as the referee",
+    ],
+    ("mts_base", 5): [
+        "the MTS BD ships impl_1 set to a default strategy",
+        "the patch pins Performance_ExtraTimingOpt so every run is comparable",
+        "any other strategy silently changes the WNS in the final report",
+    ],
+    ("ip_flow", 4): [
+        "one directory per IP under build/ip_repo, never a merged blob",
+        "each VLNV is compared with config/ip_versions.tcl before it is listed",
+        "ip_manifest.tsv is what step06 and step07 read",
+    ],
+    ("rfdc", 1): [
+        "NCO_Freq = -RF_CENTER = -3.000 GHz (PG269 absolute-NCO convention)",
+        "Nyquist=1 selects zone 2; the 2-4 GHz band lands at baseband",
+        "from here on the samples are complex: one I stream and one Q stream",
+    ],
+    ("rfdc", 2): [
+        "decimating filter inside the tile (PG269), CalOpt_Mode=1",
+        "4.000 GSPS real -> 2.000 GSPS complex per channel",
+        "Decimation_Mode=2 is set by the DOA map, not by upstream MTS",
+    ],
+    ("rfdc", 3): [
+        "each 128-bit word carries 8 samples of 16 bit",
+        "two streams per channel: m00/m01 = I/Q of ADC0, and so on",
+        "8 samples x 250 MHz = 2.000 GSPS: the rate every width assumes",
+    ],
+    ("rfdc", 4): [
+        "SYSREF reaches all four tiles from clocktreeMTS",
+        "NCO phase and decimator state reset together on every SYSREF",
+        "mts_all_true() is asserted post-validate or the map script aborts",
+    ],
+    ("rfdc_repack4", 2): [
+        "sample s of the input beat becomes sample s of the output beat",
+        "{Q[31:16], I[15:0]} is the project-wide complex packing",
+        "8 samples per 256-bit output beat, order never permuted",
+    ],
+    ("spectrum_power", 3): [
+        "16 multipliers: 4 lanes x 4 channels, all unrolled",
+        "I*I + Q*Q in ap_int<32>, widened to ap_uint<33> per channel",
+        "four channels summed into one ap_uint<64> per lane",
+    ],
+    ("beam_monitor", 2): [
+        "4 lanes x 4 channels unrolled into 16 complex multiplies",
+        "real = sum(xr*wr - xi*wi), imag = sum(xr*wi + xi*wr)",
+        "ap_int<40> accumulator, >>15 after the loop, then saturate",
+    ],
+    ("host", 1): [
+        "array_model.py: geometry, steering vectors, R = X X^H / K",
+        "make_scenes.py: the 0/5/10/20 dB scenarios and the decoy scene",
+        "closes G0: 5.996 GHz at 25 mm, 4.997 GHz at 30 mm",
+    ],
+    ("host", 3): [
+        "kernels.tsv: one row per kernel, VLNV and rate",
+        "tb/*.cpp: the golden vectors every csim replays",
+        "closes G1a (fixed point) and G1c (VLNV contract)",
+    ],
+    ("mts_base", 3): [
+        "removes the destination, then copies the pinned tree",
+        "the two patches are applied in place afterwards",
+        "build_mts_base.sh refuses this path unless MTS_BASE_FORCE=1",
+    ],
+    ("ip_flow", 1): [
+        "run_csim.tcl per kernel against the vectors in tb/",
+        "a failing csim stops the flow before any packaging",
+        "the bridge uses its SystemVerilog bench instead of C simulation",
+    ],
+    ("apu", 3): [
+        "smoothed az/el per track, label vote counts",
+        "verified flag and arrivals count carried on the track",
+        "an empty frame is legal and still advances the clock",
+    ],
+}
+
+
+# Stages whose inside is a chain of named sub-blocks: drawn as boxes, left to right.
+CHIPS = {
+    ("matlab_channelizer", 3): [
+        ("u_FilterBank", "16 subFilters, 12 taps"),
+        ("u_FFT", "1024-point, 120 DSPs"),
+    ],
+    ("subband_bridge", 4): [
+        ("SRCH_IDLE", "wait for 128 beats"),
+        ("SRCH_CAPTURE", "dual 128 x 512 BRAM"),
+        ("serialiser", "256 beats, TLAST 255"),
+    ],
+    ("rpu_doa", 4): [
+        ("stage 1", "0.5 deg, 3x3"),
+        ("stage 2-3", "0.1 / 0.02 deg"),
+        ("stage 4", "0.005 deg"),
+    ],
+}
+
+
 def short(text, width):
     """Port details sit in a fixed box: cut them rather than let them run outside."""
     return textwrap.shorten(str(text), width=width, placeholder="...")
@@ -424,7 +666,10 @@ def detail(stem, title, subtitle, colour, inputs, stages, outputs, notes, out_di
     rich = any(len(stage) > 2 for stage in stages)
     stage_h = 0.86 if rich else 0.60
     stage_gap = 0.20
-    chain_h = len(stages) * (stage_h + stage_gap)
+    sub_h = [0.27 * len(INSIDE.get((stem, index + 1), []))
+             + (0.62 if CHIPS.get((stem, index + 1)) else 0.0) for index in range(len(stages))]
+    chain_h = sum(0.92 + sub_h[index] + stage_gap for index in range(len(stages))) \
+        if rich else len(stages) * (stage_h + stage_gap)
     side_h = max(len(inputs), len(outputs)) * 0.68
     notes_text_h = len(wrapped_notes) * 0.21
     top = 3.24 + max(chain_h, side_h) + notes_text_h
@@ -465,10 +710,14 @@ def detail(stem, title, subtitle, colour, inputs, stages, outputs, notes, out_di
         name = stage[0]
         code = stage[1] if len(stage) > 2 else None
         desc = stage[2] if len(stage) > 2 else stage[1]
+        subs = INSIDE.get((stem, index + 1), [])
+        chip = CHIPS.get((stem, index + 1), [])
+        extra = 0.27 * len(subs) + (0.62 if chip else 0.0)
+        height = (0.92 if rich else 0.60) + extra
         box_top = y
-        box_bottom = y - stage_h
+        box_bottom = y - height
         ax.add_patch(patches.FancyBboxPatch(
-            (2.95, box_bottom), 5.00, stage_h, boxstyle="round,pad=0.02,rounding_size=0.06",
+            (2.95, box_bottom), 5.00, height, boxstyle="round,pad=0.02,rounding_size=0.06",
             linewidth=1.2, edgecolor=colour, facecolor="#ffffff", zorder=3))
         ax.text(3.06, box_top - 0.17, "%d. %s" % (index + 1, name), fontsize=6.3,
                 fontweight="bold", va="center", color="#222222", zorder=4)
@@ -480,8 +729,36 @@ def detail(stem, title, subtitle, colour, inputs, stages, outputs, notes, out_di
                     va="center", family="monospace", zorder=4)
             ax.text(3.06, box_top - 0.65, short(desc, 96), fontsize=4.9, color="#555555",
                     va="center", family="monospace", zorder=4)
+        if subs or chip:
+            panel_top = box_top - 0.78
+            ax.add_patch(patches.FancyBboxPatch(
+                (3.02, box_bottom + 0.10), 4.86, panel_top - box_bottom - 0.10,
+                boxstyle="round,pad=0.01,rounding_size=0.04", linewidth=0.7,
+                edgecolor=colour, facecolor="#f3f3f6", zorder=4))
+            text_top = panel_top - 0.10
+            if chip:
+                width = (4.70 - 0.30 * (len(chip) - 1)) / len(chip)
+                for chip_index, (chip_name, chip_sub) in enumerate(chip):
+                    chip_x = 3.10 + chip_index * (width + 0.30)
+                    ax.add_patch(patches.FancyBboxPatch(
+                        (chip_x, panel_top - 0.62), width, 0.44,
+                        boxstyle="round,pad=0.01,rounding_size=0.04", linewidth=0.8,
+                        edgecolor=colour, facecolor="white", zorder=5))
+                    ax.text(chip_x + 0.06, panel_top - 0.34, short(chip_name, 26), fontsize=5.2,
+                            fontweight="bold", family="monospace", va="center", zorder=6)
+                    ax.text(chip_x + 0.06, panel_top - 0.52, short(chip_sub, 30), fontsize=4.5,
+                            color="#555555", family="monospace", va="center", zorder=6)
+                    if chip_index < len(chip) - 1:
+                        ax.annotate("", xy=(chip_x + width + 0.27, panel_top - 0.40),
+                                    xytext=(chip_x + width + 0.04, panel_top - 0.40),
+                                    arrowprops=dict(arrowstyle="-|>", color=colour, lw=0.9,
+                                                    mutation_scale=7), zorder=6)
+                text_top = panel_top - 0.72
+            for sub_index, sub in enumerate(subs):
+                ax.text(3.10, text_top - sub_index * 0.27, "- " + short(sub, 82),
+                        fontsize=4.7, color="#3b3b3b", va="top", family="monospace", zorder=5)
         boxes.append((box_bottom, box_top))
-        y -= stage_h + stage_gap
+        y -= height + stage_gap
 
     for index in range(len(boxes) - 1):
         ax.annotate("", xy=(5.45, boxes[index + 1][1] + 0.015),
