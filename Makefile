@@ -324,14 +324,14 @@ mc-shell-help:
 ip-equivalence:
 	@python3 ip/model_composer/channelizer/testbench/compare_hdl_vs_model.py
 
-# Package the hand-written Verilog as an IP Catalog component (no Model Composer).
-# Stage V03: the MTS base project BASE_XPR points at.  Not a stepNN_ stage because
-# it is AMD's tree and its output is a Vivado project, not an IP.  Idempotent.
 # Does the design fit the ZCU208, and does post-route timing close?  Reads the reports
 # step10/step11 already write; says NOT-MEASURED (exit 2) rather than assuming.
 fit:
 	@python3 scripts/check_fit.py $(if $(strip $(FIT_ARGS)),$(FIT_ARGS))
 
+# Package the hand-written Verilog as an IP Catalog component (no Model Composer).
+# Stage V03: the MTS base project BASE_XPR points at.  Not a stepNN_ stage because
+# it is AMD's tree and its output is a Vivado project, not an IP.  Idempotent.
 mts-base:
 	@./scripts/build_mts_base.sh
 

@@ -1,0 +1,27 @@
+Captured UTC: 2026-11-08T16:36:36Z
+Source commit: f8ae1b062263c99ec3bf72087c70b914a7f9c2c0
+Branch: arena/7c14d5da-rfsoc-zcu208-doa-v7-buildkit
+Requested channelizer flow: matlab_hdl
+BUILD: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build
+
+STAGE                        STATUS       FINISHED_UTC
+step00_preflight             FAILED/INCOMPLETE see step00_preflight.log
+step01_fetch_references      PASS         2026-11-08T16:30:14Z
+step02_hls_covariance        NOT-RUN      -
+step03_hls_spectrum          NOT-RUN      -
+step04_hls_candidate         NOT-RUN      -
+step04_hls_beam              NOT-RUN      -
+step05_hls_repack            NOT-RUN      -
+step05_channelizer           FAILED/INCOMPLETE see step05_channelizer.log
+step05_subband_bridge        NOT-RUN      -
+step05_hls_phase_interf      NOT-RUN      -
+step06_collect_ip            NOT-RUN      -
+step07_vivado_project        NOT-RUN      -
+step08_vivado_integrate      NOT-RUN      -
+step09_vivado_validate       NOT-RUN      -
+step10_synth                 NOT-RUN      -
+step11_impl                  NOT-RUN      -
+step12_bitstream             NOT-RUN      -
+step13_export_xsa            NOT-RUN      -
+step14_hil_vectors           NOT-RUN      -
+step15_package               NOT-RUN      -
