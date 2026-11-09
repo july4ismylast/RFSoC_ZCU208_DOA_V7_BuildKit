@@ -1,0 +1,9 @@
+name	vendor	library	version	expected_vlnv	component_xml
+doa_covariance_4ch_v4	openai	doa	7.1	openai:doa:doa_covariance_4ch_v4:7.1	/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/doa_covariance_4ch_v4/component.xml
+spectrum_power4	openai	doa	2.0	openai:doa:spectrum_power4:2.0	/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/spectrum_power4/component.xml
+candidate_peak4	openai	doa	1.0	openai:doa:candidate_peak4:1.0	/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/candidate_peak4/component.xml
+beam_weight_4ch	openai	doa	2.1	openai:doa:beam_weight_4ch:2.1	/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/beam_weight_4ch/component.xml
+rfdc_repack4	openai	doa	1.0	openai:doa:rfdc_repack4:1.0	/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/rfdc_repack4/component.xml
+phase_interf_4ch	openai	doa	1.0	openai:doa:phase_interf_4ch:1.0	/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/phase_interf_4ch/component.xml
+matlab_channelizer	openai	doa	7.0	openai:doa:matlab_channelizer:7.0	/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/matlab_channelizer/component.xml
+doa_subband_bridge_4ch	openai	doa	1.0	openai:doa:doa_subband_bridge_4ch:1.0	/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/doa_subband_bridge_4ch/component.xml

@@ -1,0 +1,733 @@
+stage=step05_channelizer
+started_utc=2026-11-08T16:44:10Z
+command=./scripts/build_channelizer.sh matlab_hdl 
+/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/scripts/run_matlab_clean.sh "matlab" -batch "generate_hdl"
+INFO: bypassing user .matlab7rc.sh for this MATLAB build invocation
+INFO: MATLAB loader isolation enabled; startup directory=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl
+INFO: MATLAB factory startup file=/media/joshua/Linux/Programs/2024a/bin/.matlab7rc.sh
+Created fixed-point vector harness zu48dr_channelizer_ip.slx: 1024 bands, 8 samples/cycle, 12 taps/band, 12288 coefficients, 100 dB, Normalize=0, FilterStructure=Direct form transposed.
+### Working on the model <a href="matlab:open_system('zu48dr_channelizer_ip')">zu48dr_channelizer_ip</a>
+### Generating HDL for <a href="matlab:open_system('zu48dr_channelizer_ip/Channelizer_DUT')">zu48dr_channelizer_ip/Channelizer_DUT</a>
+### Using the config set for model <a href="matlab:configset.showParameterGroup('zu48dr_channelizer_ip', { 'HDL Code Generation' } )">zu48dr_channelizer_ip</a> for HDL code generation parameters.
+### Running HDL checks on the model 'zu48dr_channelizer_ip'.
+### Begin compilation of the model 'zu48dr_channelizer_ip'...
+### Working on the model 'zu48dr_channelizer_ip'...
+### Working on... <a href="matlab:configset.internal.open('zu48dr_channelizer_ip', 'GenerateModel')">GenerateModel</a>
+### Begin model generation 'gm_zu48dr_channelizer_ip'...
+### Rendering DUT with optimization related changes (IO, Area, Pipelining)...
+### Model generation complete.
+### Generated model saved at <a href="matlab:open_system('/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/gm_zu48dr_channelizer_ip.slx')">/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/gm_zu48dr_channelizer_ip.slx</a>
+### Begin Verilog Code Generation for 'zu48dr_channelizer_ip'.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/FilterCoef as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/subFilter/FilterTap as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterTap.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/subFilter/delayLine/SimpleDualPortRAM_generic as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SimpleDualPortRAM_generic.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/subFilter/delayLine as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/delayLine.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/subFilter as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/subFilter.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/FilterCoef as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/FilterCoef as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/FilterCoef as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/FilterCoef as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/FilterCoef as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/FilterCoef as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank/FilterCoef as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterCoef_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FilterBank as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FilterBank.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1/SDFCommutator1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1/SDFCommutator1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1/SDFCommutator1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1/SDFCommutator1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1/SDFCommutator1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1/SDFCommutator1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1/SDFCommutator1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1/SDFCommutator1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator1_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_1_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_CTRL1_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2/SDFCommutator2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2/SDFCommutator2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2/SDFCommutator2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2/SDFCommutator2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2/SDFCommutator2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2/SDFCommutator2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2/SDFCommutator2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2/SDFCommutator2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator2_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_2_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_CTRL1_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_3_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/SDFCommutator3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_3_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/SDFCommutator3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_3_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/SDFCommutator3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_3_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/SDFCommutator3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_3_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/SDFCommutator3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_3_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/SDFCommutator3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_3_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/SDFCommutator3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_3_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_3_8.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3/SDFCommutator3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator3_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_3_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_CTRL1_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4/SDFCommutator4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4/SDFCommutator4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4/SDFCommutator4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4/SDFCommutator4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4/SDFCommutator4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4/SDFCommutator4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4/SDFCommutator4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4/SDFCommutator4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator4_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_4_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_CTRL1_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_5_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/SDFCommutator5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_5_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block8.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/SDFCommutator5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_5_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block9.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/SDFCommutator5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_5_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block10.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/SDFCommutator5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_5_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block11.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/SDFCommutator5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_5_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block12.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/SDFCommutator5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_5_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block13.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/SDFCommutator5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_5_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_5_8.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block14.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5/SDFCommutator5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator5_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_5_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_CTRL1_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6/SDFCommutator6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6/SDFCommutator6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6/SDFCommutator6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6/SDFCommutator6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6/SDFCommutator6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6/SDFCommutator6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6/SDFCommutator6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6/SDFCommutator6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator6_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF2_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF2_6_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_CTRL1_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_7_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block15.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/SDFCommutator7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_7_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block16.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/SDFCommutator7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_7_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block17.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/SDFCommutator7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_7_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block18.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/SDFCommutator7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_7_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block19.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/SDFCommutator7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_7_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block20.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/SDFCommutator7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_7_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block21.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/SDFCommutator7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_7_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_7_8.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block22.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7/SDFCommutator7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/SDFCommutator7_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDF1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDF1_7_block6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_CTRL1_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_CTRL1_7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF2_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_8.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF2_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_8_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF2_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_8_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF2_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_8_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_9_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block23.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLMULT_SDNF1_9.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_9_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_9_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block24.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block25.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLMULT_SDNF1_9_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_9_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block26.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLMULT_SDNF1_9_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_9_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLROM_9_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLROM_9_8.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block27.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9/Complex4Multiply as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Complex4Multiply_block28.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/TWDLMULT_SDNF1_9 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/TWDLMULT_SDNF1_9_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF1_9 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF1_9.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF1_9 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF1_9_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF1_9 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF1_9_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF1_9 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF1_9_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF2_10 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_10.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF2_10 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_10_block.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF2_10 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_10_block1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_SDNF2_10 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_SDNF2_10_block2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNatural_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNatural_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNatural_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNatural_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNatural_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNatural_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNatural_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNatural_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNatural_8.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNaturalMux_1 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_1.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNaturalMux_2 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_2.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNaturalMux_3 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_3.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNaturalMux_4 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_4.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNaturalMux_5 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_5.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNaturalMux_6 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_6.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNaturalMux_7 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_7.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT/RADIX22FFT_bitNaturalMux_8 as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/RADIX22FFT_bitNaturalMux_8.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer/FFT as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/FFT.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore/dsphdl.Channelizer as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/dsphdl_Channelizer.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT/ChannelizerCore as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/ChannelizerCore.v.
+### Working on zu48dr_channelizer_ip/Channelizer_DUT as /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT.v.
+### Code Generation for 'zu48dr_channelizer_ip' completed.
+### Generating HTML files for code generation report at <a href="matlab:hdlcoder.report.openDdg('/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/html/zu48dr_channelizer_ip_codegen_rpt.html')">zu48dr_channelizer_ip_codegen_rpt.html</a>
+### Creating HDL Code Generation Check Report file:///media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT_report.html
+### HDL check for 'zu48dr_channelizer_ip' complete with 0 errors, 0 warnings, and 0 messages.
+### HDL code generation complete.
+HDL filter-structure choice: transposed
+HDL generated top: /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT.v
+Packaging is intentionally not performed by generate_hdl.
+
+ans =
+
+    '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT.v'
+
+vivado -mode batch -nojournal -nolog -source package_generated_rtl.tcl -tclargs hdl_prj/hdlsrc_transposed channelizer_axis_wrapper xczu48dr-fsvg1517-2-e channelizer_axis_wrapper.sv
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source package_generated_rtl.tcl
+# if {[llength $argv] < 2} { error "Need rtl_dir and top_module" }
+# set rtl_dir [file normalize [lindex $argv 0]]
+# set top     [lindex $argv 1]
+# set script_dir [file dirname [file normalize [info script]]]
+# set root_dir   [file normalize [file join $script_dir .. .. ..]]
+# source [file join $root_dir common vivado common.tcl]
+## set ::doa_common_dir [file dirname [file normalize [info script]]]
+## set ::doa_root_dir [file normalize [file join $::doa_common_dir .. ..]]
+## source [file join $::doa_root_dir config ip_versions.tcl]
+### namespace eval ::doa_versions {}
+### proc ::doa_versions::env_or {name default_value} {
+###     if {[info exists ::env($name)] && [string trim $::env($name)] ne ""} {
+###         return [string trim $::env($name)]
+###     }
+###     return $default_value
+### }
+### set ::VIVADO_LOCK_CERTIFIED "2023.2"
+### set ::VIVADO_LOCK_VERSION [::doa_versions::env_or EXPECTED_VIVADO_VERSION $::VIVADO_LOCK_CERTIFIED]
+### set ::PART_PINNED         [::doa_versions::env_or PART "xczu48dr-fsvg1517-2-e"]
+### set ::BOARD_PART_PINNED   [::doa_versions::env_or BOARD_PART "xilinx.com:zcu208:part0:2.0"]
+### set ::BASE_KIND_PINNED    [::doa_versions::env_or BASE_KIND "mts"]
+### set ::CUSTOM_IP_VENDOR  [::doa_versions::env_or CUSTOM_IP_VENDOR  "openai"]
+### set ::CUSTOM_IP_LIBRARY [::doa_versions::env_or CUSTOM_IP_LIBRARY "doa"]
+### set ::IPVER_COVARIANCE  [::doa_versions::env_or IPVER_COVARIANCE  "7.1"]
+### set ::IPVER_SPECTRUM    [::doa_versions::env_or IPVER_SPECTRUM    "2.0"]
+### set ::IPVER_CANDIDATE   [::doa_versions::env_or IPVER_CANDIDATE   "1.0"]
+### set ::IPVER_BEAM        [::doa_versions::env_or IPVER_BEAM        "2.1"]
+### set ::IPVER_RFDC_REPACK4   [::doa_versions::env_or IPVER_RFDC_REPACK4   "1.0"]
+### set ::IPVER_CHANNELIZER    [::doa_versions::env_or IPVER_CHANNELIZER    "7.0"]
+### set ::IPVER_SUBBAND_BRIDGE [::doa_versions::env_or IPVER_SUBBAND_BRIDGE "1.0"]
+### set ::IPVER_PHASE_INTERF   [::doa_versions::env_or IPVER_PHASE_INTERF   "1.0"]
+### set ::IPVLNV(rfdc)                 "xilinx.com:ip:usp_rf_data_converter:2.6"
+### set ::IPVLNV(ps)                   "xilinx.com:ip:zynq_ultra_ps_e:3.5"
+### set ::IPVLNV(axis_data_fifo)       "xilinx.com:ip:axis_data_fifo:2.0"
+### set ::IPVLNV(axi_data_fifo)        "xilinx.com:ip:axi_data_fifo:2.1"
+### set ::IPVLNV(axi_fifo_mm_s)        "xilinx.com:ip:axi_fifo_mm_s:4.3"
+### set ::IPVLNV(axi_bram_ctrl)        "xilinx.com:ip:axi_bram_ctrl:4.1"
+### set ::IPVLNV(blk_mem_gen)          "xilinx.com:ip:blk_mem_gen:8.4"
+### set ::IPVLNV(axi_dma)              "xilinx.com:ip:axi_dma:7.1"
+### set ::IPVLNV(axi_datamover)        "xilinx.com:ip:axi_datamover:5.1"
+### set ::IPVLNV(axi_interconnect)     "xilinx.com:ip:axi_interconnect:2.1"
+### set ::IPVLNV(smartconnect)         "xilinx.com:ip:smartconnect:1.0"
+### set ::IPVLNV(axi_clock_converter)  "xilinx.com:ip:axi_clock_converter:2.1"
+### set ::IPVLNV(axi_dwidth_converter) "xilinx.com:ip:axi_dwidth_converter:2.1"
+### set ::IPVLNV(axi_register_slice)   "xilinx.com:ip:axi_register_slice:2.1"
+### set ::IPVLNV(axi_gpio)             "xilinx.com:ip:axi_gpio:2.0"
+### set ::IPVLNV(axi_intc)             "xilinx.com:ip:axi_intc:4.1"
+### set ::IPVLNV(proc_sys_reset)       "xilinx.com:ip:proc_sys_reset:5.0"
+### set ::IPVLNV(clk_wiz)              "xilinx.com:ip:clk_wiz:6.0"
+### set ::IPVLNV(ddr4)                 "xilinx.com:ip:ddr4:2.2"
+### set ::IPVLNV(axis_clock_converter)   "xilinx.com:ip:axis_clock_converter:1.1"
+### set ::IPVLNV(axis_dwidth_converter)  "xilinx.com:ip:axis_dwidth_converter:1.1"
+### set ::IPVLNV(axis_register_slice)    "xilinx.com:ip:axis_register_slice:1.1"
+### set ::IPVLNV(axis_broadcaster)       "xilinx.com:ip:axis_broadcaster:1.1"
+### set ::IPVLNV(axis_combiner)          "xilinx.com:ip:axis_combiner:1.1"
+### set ::IPVLNV(axis_switch)            "xilinx.com:ip:axis_switch:1.1"
+### set ::IPVLNV(fir_compiler)           "xilinx.com:ip:fir_compiler:7.2"
+### set ::IPVLNV(util_ds_buf)            "xilinx.com:ip:util_ds_buf:2.2"
+### set ::IPVLNV(xpm_cdc_gen)            "xilinx.com:ip:xpm_cdc_gen:1.0"
+### set ::IPVLNV(xlconcat)               "xilinx.com:ip:xlconcat:2.1"
+### set ::IPVLNV(xlconstant)             "xilinx.com:ip:xlconstant:1.1"
+### set ::IPVLNV(xlslice)                "xilinx.com:ip:xlslice:1.0"
+### set ::IPVLNV(util_reduced_logic)     "xilinx.com:ip:util_reduced_logic:2.0"
+### set ::IPVLNV(util_vector_logic)      "xilinx.com:ip:util_vector_logic:2.0"
+### set ::IPVLNV(ila)                    "xilinx.com:ip:ila:6.2"
+### set ::IPVLNV(vio)                    "xilinx.com:ip:vio:3.0"
+### set ::IPVLNV(covariance) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_covariance_4ch_v4:$::IPVER_COVARIANCE"
+### set ::IPVLNV(spectrum)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:spectrum_power4:$::IPVER_SPECTRUM"
+### set ::IPVLNV(candidate)  "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:candidate_peak4:$::IPVER_CANDIDATE"
+### set ::IPVLNV(beam)       "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:beam_weight_4ch:$::IPVER_BEAM"
+### set ::IPVLNV(rfdc_repack4)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:rfdc_repack4:$::IPVER_RFDC_REPACK4"
+### set ::IPVLNV(channelizer)    "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:matlab_channelizer:$::IPVER_CHANNELIZER"
+### set ::IPVLNV(subband_bridge) "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:doa_subband_bridge_4ch:$::IPVER_SUBBAND_BRIDGE"
+### set ::IPVLNV(phase_interf)   "$::CUSTOM_IP_VENDOR:$::CUSTOM_IP_LIBRARY:phase_interf_4ch:$::IPVER_PHASE_INTERF"
+### set ::IP_CATALOG_KEYS {
+###     rfdc ps axis_data_fifo axi_data_fifo axi_fifo_mm_s axi_bram_ctrl
+###     blk_mem_gen axi_dma axi_datamover axi_interconnect smartconnect
+###     axi_clock_converter axi_dwidth_converter axi_register_slice axi_gpio
+###     axi_intc proc_sys_reset clk_wiz ddr4 axis_clock_converter
+###     axis_dwidth_converter axis_register_slice axis_broadcaster axis_combiner
+###     axis_switch fir_compiler util_ds_buf xpm_cdc_gen xlconcat xlconstant
+###     xlslice util_reduced_logic util_vector_logic ila vio
+### }
+### set ::IP_CUSTOM_KEYS {covariance spectrum candidate beam rfdc_repack4 channelizer subband_bridge phase_interf}
+### proc doa_require_vivado_lock {} {
+###     if {$::VIVADO_LOCK_VERSION ne $::VIVADO_LOCK_CERTIFIED} {
+###         error "Vivado lock: config/ip_versions.tcl is certified only for \
+### $::VIVADO_LOCK_CERTIFIED, but EXPECTED_VIVADO_VERSION=$::VIVADO_LOCK_VERSION. \
+### Re-verify every VLNV in this file for that release before changing the lock."
+###     }
+###     set running [version -short]
+###     if {[string first $::VIVADO_LOCK_VERSION $running] == -1} {
+###         error "Vivado lock: need Vivado $::VIVADO_LOCK_VERSION, running $running. \
+### Do not let another Vivado release open/upgrade this project.  If an upgrade \
+### is intended, follow the BD-Tcl guard procedure: run the design in \
+### $::VIVADO_LOCK_VERSION, open it in the new release, use Report IP Status to \
+### upgrade, then write_bd_tcl and re-certify config/ip_versions.tcl."
+###     }
+###     puts "DOA version lock OK: Vivado $running, part $::PART_PINNED, board $::BOARD_PART_PINNED"
+### }
+### proc doa_vlnv {key} {
+###     if {![info exists ::IPVLNV($key)]} {
+###         error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+###     }
+###     return $::IPVLNV($key)
+### }
+### proc doa_pinned_ip {key} {
+###     if {![info exists ::IPVLNV($key)]} {
+###         error "Unknown IP key '$key'.  Add its pinned VLNV to config/ip_versions.tcl first."
+###     }
+###     set vlnv $::IPVLNV($key)
+###     set defs [get_ipdefs -all -filter "VLNV == $vlnv"]
+###     if {[llength $defs] != 1} {
+###         set ip_name [lindex [split $vlnv :] 2]
+###         set available [get_ipdefs -all -filter "NAME == $ip_name"]
+###         error "Pinned IP for key '$key' not found exactly once: $vlnv \
+### (found [llength $defs]).  Available definitions for NAME=$ip_name: $available. \
+### Fix config/ip_versions.tcl (one line) or rebuild the custom IP -- do not \
+### fall back to a wildcard."
+###     }
+###     return $vlnv
+### }
+### proc doa_create_pinned_ip {key instance} {
+###     return [create_bd_cell -type ip -vlnv [doa_pinned_ip $key] $instance]
+### }
+## proc require_env {name} {
+##     if {![info exists ::env($name)] || [string trim $::env($name)] eq ""} {
+##         error "Required environment variable $name is empty"
+##     }
+##     return $::env($name)
+## }
+## proc doa_append_ip_repo_paths {new_paths} {
+##     set merged {}
+##     foreach path [concat $new_paths [get_property ip_repo_paths [current_project]]] {
+##         set norm [file normalize $path]
+##         if {[lsearch -exact $merged $norm] < 0} { lappend merged $norm }
+##     }
+##     set_property ip_repo_paths $merged [current_project]
+##     update_ip_catalog
+##     return $merged
+## }
+## proc open_work_project {} {
+##     doa_require_vivado_lock
+##     set project [file normalize [require_env WORK_XPR]]
+##     if {![file exists $project]} {
+##         error "Working project not found: $project. Run step07_vivado_project first."
+##     }
+##     open_project $project
+##     set expected_part [require_env PART]
+##     if {[get_property PART [current_project]] ne $expected_part} {
+##         error "Project part [get_property PART [current_project]] does not match $expected_part"
+##     }
+##     set board [get_property BOARD_PART [current_project]]
+##     if {$board ne "" && $board ne $::BOARD_PART_PINNED} {
+##         error "Project board part '$board' does not match pinned '$::BOARD_PART_PINNED' (config/ip_versions.tcl)"
+##     }
+## }
+## proc select_base_bd {} {
+##     set requested ""
+##     if {[info exists ::env(BASE_BD)]} { set requested [string trim $::env(BASE_BD)] }
+##     if {$requested ne ""} {
+##         set candidates [get_files -quiet -all */${requested}.bd]
+##     } else {
+##         set candidates [get_files -quiet -all *.bd]
+##     }
+##     if {[llength $candidates] != 1} {
+##         error "Expected exactly one base BD (or set BASE_BD); found: $candidates"
+##     }
+##     open_bd_design [lindex $candidates 0]
+##     return [current_bd_design]
+## }
+## proc ensure_output_directory {} {
+##     set build [file normalize [require_env BUILD]]
+##     set output [file join $build output]
+##     file mkdir $output
+##     return $output
+## }
+## proc require_successful_run {run_name} {
+##     set run [get_runs -quiet $run_name]
+##     if {[llength $run] != 1} { error "Vivado run $run_name does not exist" }
+##     set status [get_property STATUS $run]
+##     if {![string match "*Complete*" $status]} {
+##         error "Vivado run $run_name is not complete: $status"
+##     }
+## }
+## proc invalidate_downstream_stamps {stamp_names} {
+##     set stamp_dir ""
+##     if {[info exists ::env(STAMP_DIR)] && [string trim $::env(STAMP_DIR)] ne ""} {
+##         set stamp_dir [file normalize $::env(STAMP_DIR)]
+##     } elseif {[info exists ::env(BUILD)] && [string trim $::env(BUILD)] ne ""} {
+##         set stamp_dir [file join [file normalize $::env(BUILD)] .stamps]
+##     }
+##     if {$stamp_dir ne "" && [file isdirectory $stamp_dir]} {
+##         foreach sname $stamp_names {
+##             file delete -force [file join $stamp_dir $sname]
+##         }
+##     }
+## }
+# set part [expr {[llength $argv] > 2 ? [lindex $argv 2] : $::PART_PINNED}]
+# set wrapper_file [expr {[llength $argv] > 3 ? [file normalize [lindex $argv 3]] : [file join $script_dir channelizer_axis_wrapper.sv]}]
+# set build_root [expr {[info exists ::env(BUILD)] ? [file normalize $::env(BUILD)] : [file join $root_dir build]}]
+# set ip_repo    [expr {[info exists ::env(IP_REPO)] ? [file normalize $::env(IP_REPO)] : [file join $build_root ip_repo]}]
+# set ip_root    [file join $ip_repo matlab_channelizer]
+# set work_root  [file join $build_root v06_gate5_package]
+# set report_file [file join $build_root output v06_gate5_package.rpt]
+# file mkdir [file dirname $report_file]
+# file delete -force $work_root
+# file mkdir $work_root
+# set report_fh [open $report_file w]
+# proc g5_log {fh msg} {
+#     puts $msg
+#     puts $fh $msg
+#     flush $fh
+# }
+# proc collect_hdl_files {dir} {
+#     set result {}
+#     foreach entry [glob -nocomplain -directory $dir *] {
+#         if {[file isdirectory $entry]} {
+#             set result [concat $result [collect_hdl_files $entry]]
+#         } elseif {[regexp -nocase {\.(v|sv|vhd|vhdl)$} [file extension $entry]]} {
+#             lappend result [file normalize $entry]
+#         }
+#     }
+#     return $result
+# }
+# set status FAIL
+# set err_msg ""
+# set err_info ""
+VIVADO_VERSION=2023.2
+PART=xczu48dr-fsvg1517-2-e
+RTL_DIR=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed
+PACKAGE_TOP=channelizer_axis_wrapper
+PACKAGED_HDL_FILE_COUNT=229
+TOP_SOURCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/channelizer_axis_wrapper.v
+DUT_SOURCE=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/ip/matlab/channelizer_hdl/hdl_prj/hdlsrc_transposed/zu48dr_channelizer_ip/Channelizer_DUT.v
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/media/joshua/Linux/Programs/X20232/Vivado/2023.2/data/ip'.
+INFO: [IP_Flow 19-5107] Inferred bus interface 'm_axis' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 's_axis' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'aresetn' of definition 'xilinx.com:signal:reset:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'aclk' of definition 'xilinx.com:signal:clock:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-4728] Bus Interface 'aresetn': Added interface parameter 'POLARITY' with value 'ACTIVE_LOW'.
+INFO: [IP_Flow 19-4728] Bus Interface 'aclk': Added interface parameter 'ASSOCIATED_BUSIF' with value 'm_axis'.
+INFO: [IP_Flow 19-4728] Bus Interface 'aclk': Added interface parameter 'ASSOCIATED_RESET' with value 'aresetn'.
+WARNING: [IP_Flow 19-11770] Clock interface 'aclk' has no FREQ_HZ parameter.
+INFO: [IP_Flow 19-2181] Payment Required is not set for this core.
+INFO: [IP_Flow 19-2187] The Product Guide file is missing.
+WARNING: [IP_Flow 19-4623] Unrecognized family  zynquplusrfsoc.  Please verify spelling and reissue command to set the supported files.
+SUPPORTED_FAMILIES=zynquplusrfsoc Production zynquplus Production
+ACLK_ASSOCIATED_BUSIF=s_axis:m_axis
+ACLK_ASSOCIATED_RESET=aresetn
+WARNING: [IP_Flow 19-2403] Component Definition 'openai:doa:matlab_channelizer:7.0 (MATLAB DSP HDL SSR-8 1024-Band Transposed Channelizer)': Unrecognized Family "zynquplusrfsoc"
+WARNING: [IP_Flow 19-11770] Clock interface 'aclk' has no FREQ_HZ parameter.
+INFO: [IP_Flow 19-2181] Payment Required is not set for this core.
+INFO: [IP_Flow 19-2187] The Product Guide file is missing.
+INFO: [Ipptcl 7-1486] check_integrity: Integrity check passed.
+PASS packaged VLNV openai:doa:matlab_channelizer:7.0
+PACKAGED_VLNV=openai:doa:matlab_channelizer:7.0
+COMPONENT_XML=/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/matlab_channelizer/component.xml
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1700] Loaded user IP repository '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo'.
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/media/joshua/Linux/Programs/X20232/Vivado/2023.2/data/ip'.
+WARNING: [IP_Flow 19-1663] Duplicate IP found for 'User_Company:VMC:DDC_DUT:1.0'. The one found in IP location '/media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/ssr_bisect_step5' will take precedence over the same IP in locations: 
+   /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/ssr_bisect_step3
+   /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/ssr_bisect_step2
+   /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/ssr_bisect_step4
+   /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/ssr_bisect_step1
+Wrote  : </media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/vhdl_bd_smoke/channelizer_bd_smoke.srcs/sources_1/bd/chan_smoke_bd/chan_smoke_bd.bd> 
+BD_S_AXIS_BYTES=32
+BD_M_AXIS_BYTES=52
+Wrote  : </media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/vhdl_bd_smoke/channelizer_bd_smoke.srcs/sources_1/bd/chan_smoke_bd/chan_smoke_bd.bd> 
+INFO: [BD 41-1662] The design 'chan_smoke_bd.bd' is already validated. Therefore parameter propagation will not be re-run.
+VHDL Output written to : /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/vhdl_bd_smoke/channelizer_bd_smoke.gen/sources_1/bd/chan_smoke_bd/synth/chan_smoke_bd.vhd
+VHDL Output written to : /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/vhdl_bd_smoke/channelizer_bd_smoke.gen/sources_1/bd/chan_smoke_bd/sim/chan_smoke_bd.vhd
+VHDL Output written to : /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/vhdl_bd_smoke/channelizer_bd_smoke.gen/sources_1/bd/chan_smoke_bd/hdl/chan_smoke_bd_wrapper.vhd
+INFO: [BD 41-1029] Generation completed for the IP Integrator block ch0 .
+Exporting to file /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/vhdl_bd_smoke/channelizer_bd_smoke.gen/sources_1/bd/chan_smoke_bd/hw_handoff/chan_smoke_bd.hwh
+Generated Hardware Definition File /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/v06_gate5_package/vhdl_bd_smoke/channelizer_bd_smoke.gen/sources_1/bd/chan_smoke_bd/synth/chan_smoke_bd.hwdef
+VHDL_BD_SMOKE_RESULT=PASS
+# set catch_rc [catch {
+#     g5_log $report_fh "VIVADO_VERSION=[version -short]"
+#     g5_log $report_fh "PART=$part"
+#     g5_log $report_fh "RTL_DIR=$rtl_dir"
+#     g5_log $report_fh "PACKAGE_TOP=$top"
+# 
+#     set files [lsort -unique [collect_hdl_files $rtl_dir]]
+#     if {[llength $files] == 0} {
+#         error "No generated HDL files found recursively under $rtl_dir"
+#     }
+#     if {$top eq "channelizer_axis_wrapper"} {
+#         if {![file isfile $wrapper_file]} {
+#             error "AXI4-Stream wrapper file is missing: $wrapper_file"
+#         }
+#         # channelizer_axis_wrapper.sv is pure IEEE 1364-2001 Verilog; stage a .v
+#         # copy for IP packaging so Vivado IPX avoids [IP_Flow 19-5101] (.sv top)
+#         # and downstream VHDL target-language Block Designs see a native .v top.
+#         set staged_wrapper_v [file join $work_root channelizer_axis_wrapper.v]
+#         file copy -force $wrapper_file $staged_wrapper_v
+#         lappend files [file normalize $staged_wrapper_v]
+#         set files [lsort -unique $files]
+#     }
+# 
+#     set top_matches {}
+#     set dut_matches {}
+#     foreach hdl_file $files {
+#         set rname [file rootname [file tail $hdl_file]]
+#         if {$rname eq $top} {
+#             lappend top_matches $hdl_file
+#         }
+#         if {$rname eq "Channelizer_DUT"} {
+#             lappend dut_matches $hdl_file
+#         }
+#     }
+#     if {[llength $top_matches] == 0} {
+#         error "Top module '$top' was not found in packaged file set"
+#     }
+#     if {[llength $dut_matches] == 0} {
+#         error "Generated core 'Channelizer_DUT' was not found under $rtl_dir"
+#     }
+#     g5_log $report_fh "PACKAGED_HDL_FILE_COUNT=[llength $files]"
+#     g5_log $report_fh "TOP_SOURCE=[lindex $top_matches 0]"
+#     g5_log $report_fh "DUT_SOURCE=[lindex $dut_matches 0]"
+# 
+#     file delete -force $ip_root
+#     file mkdir $ip_root
+#     set pkg_proj_dir [file join $work_root matlab_channelizer_pkg]
+#     create_project -force matlab_channelizer_pkg $pkg_proj_dir -part $part
+#     add_files -norecurse $files
+#     set_property top $top [current_fileset]
+#     update_compile_order -fileset sources_1
+# 
+#     set ip_vendor "openai"
+#     if {[info exists ::env(CUSTOM_IP_VENDOR)] && [string trim $::env(CUSTOM_IP_VENDOR)] ne ""} {
+#         set ip_vendor [string trim $::env(CUSTOM_IP_VENDOR)]
+#     }
+#     set ip_library "doa"
+#     if {[info exists ::env(CUSTOM_IP_LIBRARY)] && [string trim $::env(CUSTOM_IP_LIBRARY)] ne ""} {
+#         set ip_library [string trim $::env(CUSTOM_IP_LIBRARY)]
+#     }
+#     # Keep the version strictly as a Tcl string literal (never numeric expr).
+#     set ip_version "7.0"
+#     if {[info exists ::env(IPVER_CHANNELIZER)] && [string trim $::env(IPVER_CHANNELIZER)] ne ""} {
+#         set ip_version [string trim $::env(IPVER_CHANNELIZER)]
+#     }
+#     if {![regexp {^[0-9]+\.[0-9]+$} $ip_version]} {
+#         error "IPVER_CHANNELIZER must be a major.minor version string, got '$ip_version'"
+#     }
+# 
+#     ipx::package_project -root_dir $ip_root -vendor $ip_vendor -library $ip_library \
+#         -taxonomy /UserIP -import_files -set_current true
+#     set core [ipx::current_core]
+#     set_property name matlab_channelizer $core
+#     set_property display_name "MATLAB DSP HDL SSR-8 1024-Band Transposed Channelizer" $core
+#     set_property description "Single-channel 2.0 GSPS complex SSR-8 1024-band transposed polyphase FFT channelizer with AXI4-Stream wrapper (256-bit in -> 416-bit out)" $core
+#     set_property version $ip_version $core
+#     set_property supported_families {zynquplusrfsoc Production zynquplus Production} $core
+#     g5_log $report_fh "SUPPORTED_FAMILIES=[get_property supported_families $core]"
+# 
+#     if {$top eq "channelizer_axis_wrapper"} {
+#         foreach bif_name {s_axis m_axis} {
+#             set bif [ipx::get_bus_interfaces $bif_name -of_objects $core]
+#             if {[llength $bif] == 0} {
+#                 error "IP Packager failed to infer AXI4-Stream interface '$bif_name' on $top"
+#             }
+#             ipx::associate_bus_interfaces -busif $bif_name -clock aclk $core
+#         }
+#         set rst_bif [ipx::get_bus_interfaces aresetn -of_objects $core]
+#         if {[llength $rst_bif] == 0} {
+#             error "IP Packager failed to infer reset interface 'aresetn' on $top"
+#         }
+#         set rst_pol [ipx::get_bus_parameters POLARITY -of_objects $rst_bif]
+#         if {[llength $rst_pol] == 0} {
+#             set rst_pol [ipx::add_bus_parameter POLARITY $rst_bif]
+#         }
+#         set_property value ACTIVE_LOW $rst_pol
+# 
+#         set clk_bif [ipx::get_bus_interfaces aclk -of_objects $core]
+#         if {[llength $clk_bif] == 0} {
+#             error "IP Packager failed to infer clock interface 'aclk' on $top"
+#         }
+#         set clk_busif [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects $clk_bif]
+#         if {[llength $clk_busif] == 0} {
+#             set clk_busif [ipx::add_bus_parameter ASSOCIATED_BUSIF $clk_bif]
+#         }
+#         set_property value "s_axis:m_axis" $clk_busif
+#         set clk_rst [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects $clk_bif]
+#         if {[llength $clk_rst] == 0} {
+#             set clk_rst [ipx::add_bus_parameter ASSOCIATED_RESET $clk_bif]
+#         }
+#         set_property value aresetn $clk_rst
+#         g5_log $report_fh "ACLK_ASSOCIATED_BUSIF=[get_property value $clk_busif]"
+#         g5_log $report_fh "ACLK_ASSOCIATED_RESET=[get_property value $clk_rst]"
+#     }
+# 
+#     ipx::create_xgui_files $core
+#     ipx::update_checksums $core
+#     ipx::check_integrity $core
+#     ipx::save_core $core
+#     close_project
+# 
+#     set comp_xml [file join $ip_root component.xml]
+#     set expected_vlnv [doa_vlnv channelizer]
+#     exec bash [file join $root_dir common scripts check_component_vlnv.sh] $comp_xml $expected_vlnv >@stdout 2>@1
+#     g5_log $report_fh "PACKAGED_VLNV=$expected_vlnv"
+#     g5_log $report_fh "COMPONENT_XML=$comp_xml"
+# 
+#     # VHDL Block Design instantiation & target-generation smoke test
+#     if {$top eq "channelizer_axis_wrapper"} {
+#         set bd_proj_dir [file join $work_root vhdl_bd_smoke]
+#         create_project -force channelizer_bd_smoke $bd_proj_dir -part $part
+#         set_property target_language VHDL [current_project]
+#         set_property ip_repo_paths [list $ip_repo] [current_project]
+#         update_ip_catalog -rebuild
+# 
+#         create_bd_design chan_smoke_bd
+#         set clk250 [create_bd_port -dir I -type clk -freq_hz 250000000 aclk]
+#         set rst250 [create_bd_port -dir I -type rst aresetn]
+#         set_property CONFIG.POLARITY ACTIVE_LOW $rst250
+#         set s_in  [create_bd_intf_port -mode Slave  -vlnv xilinx.com:interface:axis_rtl:1.0 S_AXIS]
+#         set m_out [create_bd_intf_port -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 M_AXIS]
+#         set_property -dict [list CONFIG.TDATA_NUM_BYTES {32} CONFIG.HAS_TREADY {1} CONFIG.HAS_TLAST {0}] $s_in
+#         set_property CONFIG.ASSOCIATED_BUSIF {S_AXIS:M_AXIS} $clk250
+#         set_property CONFIG.ASSOCIATED_RESET {aresetn} $clk250
+# 
+#         set ch0 [doa_create_pinned_ip channelizer ch0]
+#         connect_bd_net $clk250 [get_bd_pins $ch0/aclk]
+#         connect_bd_net $rst250 [get_bd_pins $ch0/aresetn]
+#         connect_bd_intf_net $s_in [get_bd_intf_pins $ch0/s_axis]
+#         connect_bd_intf_net [get_bd_intf_pins $ch0/m_axis] $m_out
+# 
+#         validate_bd_design
+#         set s_bytes [get_property CONFIG.TDATA_NUM_BYTES [get_bd_intf_pins $ch0/s_axis]]
+#         set m_bytes [get_property CONFIG.TDATA_NUM_BYTES [get_bd_intf_pins $ch0/m_axis]]
+#         g5_log $report_fh "BD_S_AXIS_BYTES=$s_bytes"
+#         g5_log $report_fh "BD_M_AXIS_BYTES=$m_bytes"
+#         if {$s_bytes != 32 || $m_bytes != 52} {
+#             error "Unexpected BD TDATA_NUM_BYTES on packaged channelizer: s_axis=$s_bytes (exp 32), m_axis=$m_bytes (exp 52)"
+#         }
+#         save_bd_design
+#         generate_target synthesis [get_files *chan_smoke_bd.bd]
+#         close_project
+#         g5_log $report_fh "VHDL_BD_SMOKE_RESULT=PASS"
+#     }
+# 
+#     set status PASS
+# } err_msg err_info]
+# if {$catch_rc != 0} {
+#     g5_log $report_fh "ERROR=$err_msg"
+#     g5_log $report_fh "ERROR_INFO=$err_info"
+# }
+# g5_log $report_fh "V06 GATE5 PACKAGE RESULT=$status"
+V06 GATE5 PACKAGE RESULT=PASS
+# close $report_fh
+# puts "Packaged MATLAB-generated RTL at $ip_root (RESULT=$status)"
+Packaged MATLAB-generated RTL at /media/joshua/Linux/Vivado_prj/Doc1/seek/FP/RFSoC_ZCU208_DOA_V7_BuildKit_STEP05_PACKAGE_FIX_V5/RFSoC_ZCU208_DOA_V7_BuildKit/build/ip_repo/matlab_channelizer (RESULT=PASS)
+# if {$catch_rc != 0} { exit 1 }
+# exit 0
+INFO: [Common 17-206] Exiting Vivado at Sun Nov  8 20:16:11 2026...
+PASS packaged VLNV openai:doa:matlab_channelizer:7.0
+finished_utc=2026-11-08T16:46:11Z
+result=PASS
