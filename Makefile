@@ -103,6 +103,7 @@ help:
 	@echo "Every step bench:    make steps"
 	@echo "Bring-up checklist:  bash step7_board_bringup/checklist.sh"
 	@echo "Every custom HLS IP: make hls-all"
+	@echo "Check the AI skill:  make skill-check   (skills/rfsoc-doa-v7)"
 	@echo
 	@echo "Stages (each can be invoked independently):"
 	@echo "  step00_preflight         Check tools, part, versions, and configuration"
@@ -140,6 +141,12 @@ list:
 
 lint:
 	@./scripts/static_validate.sh
+	@python3 scripts/check_skill.py --quiet
+
+# The AI skill in skills/ is documentation with numbers in it; this proves every one of them is
+# still in the file that carries it, and every command still exists.  Also run by `make lint`.
+skill-check:
+	@python3 scripts/check_skill.py
 
 all: pipeline
 

@@ -64,6 +64,8 @@ RFDC base-design pin names. For a structural-only BD check, use
 - [First-draft audit and direct comparison](AUDIT_AND_COMPARISON.md)
 - [What was and was not validated here](VALIDATION_REPORT.md)
 - [Original draft source matrix](SOURCE_MATRIX.md)
+- [Block guide: every stage, every block, every figure](docs/BLOCK_GUIDE.md) — Part 6 is the IDE walkthrough
+- [AI skill for chat bots](skills/README.md) — `skills/rfsoc-doa-v7/`, checked by `make skill-check`
 
 ## Why the DOA estimator is phase interferometry, not phase slope
 
